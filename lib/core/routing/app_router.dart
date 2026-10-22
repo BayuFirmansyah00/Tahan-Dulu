@@ -1,0 +1,359 @@
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../features/auth/presentation/screens/login_screen.dart';
+import '../../../features/auth/presentation/screens/register_screen.dart';
+import '../../../features/profile/presentation/screens/about_screen.dart';
+import '../../../features/profile/presentation/screens/app_settings_screen.dart';
+import '../../../features/profile/presentation/screens/edit_profile_screen.dart';
+import '../../../features/profile/presentation/screens/help_screen.dart';
+import '../../../features/profile/presentation/screens/privacy_screen.dart';
+import '../../../features/profile/presentation/screens/profile_screen.dart';
+import '../../../features/profile/presentation/screens/security_screen.dart';
+import '../../../features/notifications/presentation/screens/notification_settings_screen.dart';
+import '../../../features/notifications/presentation/screens/notifications_screen.dart';
+import '../../../features/notifications/presentation/screens/saving_reminder_screen.dart';
+import '../../../features/accounts/presentation/screens/account_detail_screen.dart';
+import '../../../features/accounts/presentation/screens/accounts_screen.dart';
+import '../../../features/accounts/presentation/screens/add_account_screen.dart';
+import '../../../features/accounts/presentation/screens/edit_account_screen.dart';
+import '../../../features/dashboard/presentation/screens/dashboard_screen.dart';
+import '../../../features/goals/presentation/screens/goal_achieved_screen.dart';
+import '../../../features/goals/presentation/screens/goal_create_screen.dart';
+import '../../../features/goals/presentation/screens/goal_deposit_screen.dart';
+import '../../../features/goals/presentation/screens/goal_detail_screen.dart';
+import '../../../features/goals/presentation/screens/goal_edit_screen.dart';
+import '../../../features/goals/presentation/screens/goal_history_screen.dart';
+import '../../../features/goals/presentation/screens/goal_priority_screen.dart';
+import '../../../features/goals/presentation/screens/goal_setup_screen.dart';
+import '../../../features/goals/presentation/screens/goal_simulate_screen.dart';
+import '../../../features/goals/presentation/screens/goals_list_screen.dart';
+import '../../../features/tahandulu/presentation/screens/tahandulu_add_screen.dart';
+import '../../../features/tahandulu/presentation/screens/tahandulu_analysis_screen.dart';
+import '../../../features/tahandulu/presentation/screens/tahandulu_decide_screen.dart';
+import '../../../features/tahandulu/presentation/screens/tahandulu_form_screen.dart';
+import '../../../features/tahandulu/presentation/screens/tahandulu_link_screen.dart';
+import '../../../features/tahandulu/presentation/screens/tahandulu_list_screen.dart';
+import '../../../features/tahandulu/presentation/screens/tahandulu_simulate_screen.dart';
+import '../../../features/tahandulu/presentation/screens/tahandulu_success_screen.dart';
+import '../../../features/tahandulu/presentation/screens/tahandulu_wait_screen.dart';
+import '../../../data/models/transaction_model.dart';
+import '../../../features/transactions/presentation/screens/transaction_form_screen.dart';
+import '../../../features/transactions/presentation/screens/transaction_review_screen.dart';
+import '../../../features/transactions/presentation/screens/transaction_success_screen.dart';
+import '../../../features/transactions/presentation/screens/transactions_screen.dart';
+import '../../../features/onboarding/presentation/screens/expenses_screen.dart';
+import '../../../features/onboarding/presentation/screens/goals_screen.dart';
+import '../../../features/onboarding/presentation/screens/plan_screen.dart';
+import '../../../features/reports/presentation/screens/report_expenses_screen.dart';
+import '../../../features/reports/presentation/screens/report_export_screen.dart';
+import '../../../features/reports/presentation/screens/report_health_screen.dart';
+import '../../../features/reports/presentation/screens/report_savings_screen.dart';
+import '../../../features/reports/presentation/screens/reports_screen.dart';
+import '../../../features/onboarding/presentation/screens/instruments_screen.dart';
+import '../../../features/onboarding/presentation/screens/salary_screen.dart';
+import '../../../features/splash/presentation/screens/splash_screen.dart';
+import 'app_routes.dart';
+
+/// Transisi antar-menu utama: fade + geser horizontal ringan.
+/// 250ms easeOutCubic, berlaku maju dan mundur (back button aman).
+CustomTransitionPage<void> tabPage(LocalKey key, Widget child) {
+  return CustomTransitionPage<void>(
+    key: key,
+    child: child,
+    transitionDuration: const Duration(milliseconds: 250),
+    reverseTransitionDuration: const Duration(milliseconds: 250),
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      final curved = CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeOutCubic,
+        reverseCurve: Curves.easeOutCubic,
+      );
+      return FadeTransition(
+        opacity: curved,
+        child: SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0.04, 0),
+            end: Offset.zero,
+          ).animate(curved),
+          child: child,
+        ),
+      );
+    },
+  );
+}
+
+/// Router terpusat (go_router). Path dan nama route tidak berubah;
+/// hanya 4 root menu utama memakai [tabPage] agar transisi smooth.
+GoRouter createAppRouter() {
+  return GoRouter(
+    initialLocation: AppRoutes.splash,
+    routes: [
+      GoRoute(
+        path: AppRoutes.splash,
+        builder: (context, state) => const SplashScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.login,
+        builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.register,
+        builder: (context, state) => const RegisterScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.onboarding,
+        // Halaman intro dihapus: /onboarding pas mendarat di Input Gaji.
+        // Hanya path persis yang di-redirect agar sub-route tidak terbajak.
+        redirect: (context, state) =>
+            state.uri.toString() == AppRoutes.onboarding
+            ? AppRoutes.onboardingSalary
+            : null,
+        routes: [
+          GoRoute(
+            path: 'salary',
+            builder: (context, state) => const SalaryScreen(),
+          ),
+          GoRoute(
+            path: 'instruments',
+            builder: (context, state) => const InstrumentsScreen(),
+          ),
+          GoRoute(
+            path: 'recurring-expenses',
+            builder: (context, state) => const ExpensesScreen(),
+          ),
+          GoRoute(
+            path: 'goals',
+            builder: (context, state) => const GoalsScreen(),
+          ),
+          GoRoute(
+            path: 'plan',
+            builder: (context, state) => const PlanScreen(),
+          ),
+        ],
+      ),
+      GoRoute(
+        path: AppRoutes.dashboard,
+        pageBuilder: (context, state) =>
+            tabPage(state.pageKey, const DashboardScreen()),
+      ),
+      // Rute fitur — masih placeholder, diisi UI satu per satu.
+      GoRoute(
+        path: AppRoutes.transactions,
+        pageBuilder: (context, state) => tabPage(
+          state.pageKey,
+          TransactionsScreen(accountId: state.uri.queryParameters['account']),
+        ),
+        routes: [
+          GoRoute(
+            path: 'add',
+            builder: (context, state) {
+              final type = state.uri.queryParameters['type'];
+              return TransactionFormScreen(
+                initialType: type == 'income'
+                    ? TransactionType.income
+                    : type == 'expense'
+                    ? TransactionType.expense
+                    : null,
+              );
+            },
+          ),
+          GoRoute(
+            path: 'review',
+            builder: (context, state) => const TransactionReviewScreen(),
+          ),
+          GoRoute(
+            path: 'success',
+            builder: (context, state) => const TransactionSuccessScreen(),
+          ),
+        ],
+      ),
+      GoRoute(
+        path: AppRoutes.goals,
+        pageBuilder: (context, state) =>
+            tabPage(state.pageKey, const GoalsListScreen()),
+        routes: [
+          GoRoute(
+            path: 'new',
+            builder: (context, state) => const GoalCreateScreen(),
+          ),
+          GoRoute(
+            path: 'setup',
+            builder: (context, state) => const GoalSetupScreen(),
+          ),
+          GoRoute(
+            path: 'priority',
+            builder: (context, state) => const GoalPriorityScreen(),
+          ),
+          GoRoute(
+            path: ':id',
+            builder: (context, state) =>
+                GoalDetailScreen(goalId: state.pathParameters['id']!),
+            routes: [
+              GoRoute(
+                path: 'edit',
+                builder: (context, state) =>
+                    GoalEditScreen(goalId: state.pathParameters['id']!),
+              ),
+              GoRoute(
+                path: 'deposit',
+                builder: (context, state) =>
+                    GoalDepositScreen(goalId: state.pathParameters['id']!),
+              ),
+              GoRoute(
+                path: 'history',
+                builder: (context, state) =>
+                    GoalHistoryScreen(goalId: state.pathParameters['id']!),
+              ),
+              GoRoute(
+                path: 'simulate',
+                builder: (context, state) =>
+                    GoalSimulateScreen(goalId: state.pathParameters['id']!),
+              ),
+              GoRoute(
+                path: 'achieved',
+                builder: (context, state) =>
+                    GoalAchievedScreen(goalId: state.pathParameters['id']!),
+              ),
+            ],
+          ),
+        ],
+      ),
+      GoRoute(
+        path: AppRoutes.tahanDulu,
+        builder: (context, state) => const TahanDuluListScreen(),
+        routes: [
+          GoRoute(
+            path: 'add',
+            builder: (context, state) => const TahanDuluAddScreen(),
+          ),
+          GoRoute(
+            path: 'form',
+            builder: (context, state) => const TahanDuluFormScreen(),
+          ),
+          GoRoute(
+            path: 'link',
+            builder: (context, state) => const TahanDuluLinkScreen(),
+          ),
+          GoRoute(
+            path: ':id',
+            builder: (context, state) =>
+                TahanDuluAnalysisScreen(itemId: state.pathParameters['id']!),
+            routes: [
+              GoRoute(
+                path: 'simulate',
+                builder: (context, state) => TahanDuluSimulateScreen(
+                  itemId: state.pathParameters['id']!,
+                ),
+              ),
+              GoRoute(
+                path: 'wait',
+                builder: (context, state) =>
+                    TahanDuluWaitScreen(itemId: state.pathParameters['id']!),
+              ),
+              GoRoute(
+                path: 'decide',
+                builder: (context, state) =>
+                    TahanDuluDecideScreen(itemId: state.pathParameters['id']!),
+              ),
+              GoRoute(
+                path: 'success',
+                builder: (context, state) =>
+                    TahanDuluSuccessScreen(itemId: state.pathParameters['id']!),
+              ),
+            ],
+          ),
+        ],
+      ),
+      GoRoute(
+        path: AppRoutes.reports,
+        builder: (context, state) => const ReportsScreen(),
+        routes: [
+          GoRoute(
+            path: 'export',
+            builder: (context, state) => const ReportExportScreen(),
+          ),
+          GoRoute(
+            path: 'expenses',
+            builder: (context, state) => const ReportExpensesScreen(),
+          ),
+          GoRoute(
+            path: 'savings',
+            builder: (context, state) => const ReportSavingsScreen(),
+          ),
+          GoRoute(
+            path: 'health',
+            builder: (context, state) => const ReportHealthScreen(),
+          ),
+        ],
+      ),
+      GoRoute(
+        path: AppRoutes.accounts,
+        builder: (context, state) => const AccountsScreen(),
+        routes: [
+          GoRoute(
+            path: 'add',
+            builder: (context, state) => const AddAccountScreen(),
+          ),
+          GoRoute(
+            path: ':id',
+            builder: (context, state) =>
+                AccountDetailScreen(accountId: state.pathParameters['id']!),
+            routes: [
+              GoRoute(
+                path: 'edit',
+                builder: (context, state) =>
+                    EditAccountScreen(accountId: state.pathParameters['id']!),
+              ),
+            ],
+          ),
+        ],
+      ),
+      GoRoute(
+        path: AppRoutes.notifications,
+        builder: (context, state) => const NotificationsScreen(),
+        routes: [
+          GoRoute(
+            path: 'settings',
+            builder: (context, state) => const NotificationSettingsScreen(),
+          ),
+          GoRoute(
+            path: 'savings',
+            builder: (context, state) => const SavingReminderScreen(),
+          ),
+        ],
+      ),
+      GoRoute(
+        path: AppRoutes.settings,
+        pageBuilder: (context, state) =>
+            tabPage(state.pageKey, const ProfileScreen()),
+        routes: [
+          GoRoute(
+            path: 'edit',
+            builder: (context, state) => const EditProfileScreen(),
+          ),
+          GoRoute(
+            path: 'app',
+            builder: (context, state) => const AppSettingsScreen(),
+          ),
+          GoRoute(
+            path: 'security',
+            builder: (context, state) => const SecurityScreen(),
+          ),
+          GoRoute(
+            path: 'privacy',
+            builder: (context, state) => const PrivacyScreen(),
+          ),
+          GoRoute(
+            path: 'help',
+            builder: (context, state) => const HelpScreen(),
+          ),
+          GoRoute(
+            path: 'about',
+            builder: (context, state) => const AboutScreen(),
+          ),
+        ],
+      ),
+    ],
+  );
+}
