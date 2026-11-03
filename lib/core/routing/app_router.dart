@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:tahan_dulu/data/models/transaction_model.dart';
 import 'package:tahan_dulu/features/auth/presentation/screens/login_screen.dart';
 import 'package:tahan_dulu/features/auth/presentation/screens/register_screen.dart';
 import 'package:tahan_dulu/features/auth/presentation/providers/auth_controller.dart';
@@ -39,7 +39,6 @@ import 'package:tahan_dulu/features/tahandulu/presentation/screens/tahandulu_lis
 import 'package:tahan_dulu/features/tahandulu/presentation/screens/tahandulu_simulate_screen.dart';
 import 'package:tahan_dulu/features/tahandulu/presentation/screens/tahandulu_success_screen.dart';
 import 'package:tahan_dulu/features/tahandulu/presentation/screens/tahandulu_wait_screen.dart';
-import 'package:tahan_dulu/data/models/transaction_model.dart';
 import 'package:tahan_dulu/features/transactions/presentation/screens/transaction_form_screen.dart';
 import 'package:tahan_dulu/features/transactions/presentation/screens/transaction_record_method_screen.dart';
 import 'package:tahan_dulu/features/transactions/presentation/screens/transaction_review_screen.dart';
@@ -80,18 +79,7 @@ class AuthRouteNotifier extends ChangeNotifier {
   }
 }
 
-/// Provider GoRouter terpusat dengan AuthRouteNotifier untuk redirect guard otomatis.
-final goRouterProvider = Provider<GoRouter>((ref) {
-  final authNotifier = AuthRouteNotifier();
 
-  ref.listen<AuthState>(authControllerProvider, (_, next) {
-    authNotifier.update(next);
-  }, fireImmediately: true);
-
-  ref.onDispose(authNotifier.dispose);
-
-  return createAppRouter(authNotifier: authNotifier);
-});
 
 /// Transisi antar-menu utama: fade + geser horizontal ringan.
 /// 250ms easeOutCubic, berlaku maju dan mundur (back button aman).

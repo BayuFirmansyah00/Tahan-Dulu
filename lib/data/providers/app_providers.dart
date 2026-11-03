@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-export 'package:tahan_dulu/core/routing/app_router.dart' show goRouterProvider;
 
 import '../datasources/remote/api_config.dart';
 import '../datasources/remote/api_client.dart';
