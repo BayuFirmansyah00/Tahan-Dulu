@@ -1,7 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:tahan_dulu/core/routing/app_router.dart';
-export 'package:tahan_dulu/core/routing/app_router.dart' show goRouterProvider;
 import '../datasources/remote/api_config.dart';
 import '../datasources/remote/api_client.dart';
 import '../datasources/remote/remote_account_repository.dart';
@@ -33,9 +31,14 @@ import 'onboarding_providers.dart';
 import '../../features/auth/presentation/providers/auth_controller.dart';
 // Note: authRepositoryProvider is defined in auth_controller.dart
 // ---------------------------------------------------------------------------
-// GoRouter provider — didefinisikan di app_router.dart dan di-export di atas.
-// Repository tetap dapat memanggil ref.read(goRouterProvider).
+// Handler HTTP 401 Unauthorized terpusat: memicu logout pada AuthController,
+// yang secara otomatis mereset sesi dan memicu redirect guard GoRouter ke /login.
 // ---------------------------------------------------------------------------
+void _handleUnauthorized(Ref ref) {
+  try {
+    ref.read(authControllerProvider.notifier).logout();
+  } catch (_) {}
+}
 
 // ---------------------------------------------------------------------------
 // Repository providers — Default sekarang REMOTE (Laravel API).
@@ -49,11 +52,10 @@ import '../../features/auth/presentation/providers/auth_controller.dart';
 
 final dashboardRepositoryProvider = Provider<DashboardRepository>((ref) {
   if (!ApiConfig.useRemoteApi) return MockDashboardRepository();
-  final router = ref.read(goRouterProvider);
   return RemoteDashboardRepository(
     client: ApiClient(
       baseUrl: ApiConfig.baseUrl,
-      onUnauthorized: () => router.go('/login'),
+      onUnauthorized: () => _handleUnauthorized(ref),
     ),
     tokens: TokenStorage(),
   );
@@ -63,11 +65,10 @@ final accountRepositoryProvider = Provider<AccountRepository>((ref) {
   if (!ApiConfig.useRemoteApi) {
     return MockAccountRepository(ref.watch(onboardingRepositoryProvider));
   }
-  final router = ref.read(goRouterProvider);
   return RemoteAccountRepository(
     client: ApiClient(
       baseUrl: ApiConfig.baseUrl,
-      onUnauthorized: () => router.go('/login'),
+      onUnauthorized: () => _handleUnauthorized(ref),
     ),
     tokens: TokenStorage(),
   );
@@ -77,11 +78,10 @@ final instrumentTypeRepositoryProvider = Provider<InstrumentTypeRepository>((
   ref,
 ) {
   if (!ApiConfig.useRemoteApi) return MockInstrumentTypeRepository();
-  final router = ref.read(goRouterProvider);
   return RemoteInstrumentTypeRepository(
     client: ApiClient(
       baseUrl: ApiConfig.baseUrl,
-      onUnauthorized: () => router.go('/login'),
+      onUnauthorized: () => _handleUnauthorized(ref),
     ),
     tokens: TokenStorage(),
   );
@@ -99,11 +99,10 @@ final bankRepositoryProvider = Provider<BankRepository>((ref) {
   if (!ApiConfig.useRemoteApi) {
     return MockBankRepository();
   }
-  final router = ref.read(goRouterProvider);
   return RemoteBankRepository(
     client: ApiClient(
       baseUrl: ApiConfig.baseUrl,
-      onUnauthorized: () => router.go('/login'),
+      onUnauthorized: () => _handleUnauthorized(ref),
     ),
     tokens: TokenStorage(),
   );
@@ -139,11 +138,10 @@ final transactionRepositoryProvider = Provider<TransactionRepository>((ref) {
       () => ref.watch(authControllerProvider).user?.id,
     );
   }
-  final router = ref.read(goRouterProvider);
   return RemoteTransactionRepository(
     client: ApiClient(
       baseUrl: ApiConfig.baseUrl,
-      onUnauthorized: () => router.go('/login'),
+      onUnauthorized: () => _handleUnauthorized(ref),
     ),
     tokens: TokenStorage(),
   );
@@ -153,11 +151,10 @@ final goalRepositoryProvider = Provider<GoalRepository>((ref) {
   if (!ApiConfig.useRemoteApi) {
     return MockGoalRepository(() => ref.watch(authControllerProvider).user?.id);
   }
-  final router = ref.read(goRouterProvider);
   return RemoteGoalRepository(
     client: ApiClient(
       baseUrl: ApiConfig.baseUrl,
-      onUnauthorized: () => router.go('/login'),
+      onUnauthorized: () => _handleUnauthorized(ref),
     ),
     tokens: TokenStorage(),
   );
@@ -172,11 +169,10 @@ final investmentRepositoryProvider = Provider<InvestmentRepository>((ref) {
       tokens: TokenStorage(),
     );
   }
-  final router = ref.read(goRouterProvider);
   return RemoteInvestmentRepository(
     client: ApiClient(
       baseUrl: ApiConfig.baseUrl,
-      onUnauthorized: () => router.go('/login'),
+      onUnauthorized: () => _handleUnauthorized(ref),
     ),
     tokens: TokenStorage(),
   );
@@ -189,11 +185,10 @@ final recurringRepositoryProvider = Provider<RecurringRepository>((ref) {
       tokens: TokenStorage(),
     );
   }
-  final router = ref.read(goRouterProvider);
   return RemoteRecurringRepository(
     client: ApiClient(
       baseUrl: ApiConfig.baseUrl,
-      onUnauthorized: () => router.go('/login'),
+      onUnauthorized: () => _handleUnauthorized(ref),
     ),
     tokens: TokenStorage(),
   );
@@ -206,11 +201,10 @@ final purchaseDecisionRepositoryProvider = Provider<PurchaseDecisionRepository>(
         () => ref.watch(authControllerProvider).user?.id,
       );
     }
-    final router = ref.read(goRouterProvider);
-    return RemotePurchaseDecisionRepository(
+      return RemotePurchaseDecisionRepository(
       client: ApiClient(
         baseUrl: ApiConfig.baseUrl,
-        onUnauthorized: () => router.go('/login'),
+        onUnauthorized: () => _handleUnauthorized(ref),
       ),
       tokens: TokenStorage(),
     );
@@ -221,11 +215,10 @@ final notificationRepositoryProvider = Provider<NotificationRepository>((ref) {
   if (!ApiConfig.useRemoteApi) {
     return MockNotificationRepository();
   }
-  final router = ref.read(goRouterProvider);
   return RemoteNotificationRepository(
     client: ApiClient(
       baseUrl: ApiConfig.baseUrl,
-      onUnauthorized: () => router.go('/login'),
+      onUnauthorized: () => _handleUnauthorized(ref),
     ),
     tokens: TokenStorage(),
   );

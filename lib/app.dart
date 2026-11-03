@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/constants/app_constants.dart';
+import 'core/routing/app_router.dart';
 import 'core/theme/app_theme.dart';
-import 'data/providers/app_providers.dart';
 import 'features/profile/presentation/providers/profile_providers.dart';
 
 /// Root widget TahanDulu: theme + router terpusat.
