@@ -28,6 +28,9 @@ abstract class OnboardingRepository {
   Future<FinancialInstrument> addInstrument(FinancialInstrument instrument);
   Future<FinancialInstrument> updateInstrument(FinancialInstrument instrument);
   Future<void> removeInstrument(String id);
+
+  /// Bersihkan data / cache onboarding (digunakan saat logout / ganti akun).
+  void clear();
 }
 
 /// Penyimpanan sementara di memori, diisi default data demo canonical.
@@ -139,5 +142,10 @@ class InMemoryOnboardingRepository implements OnboardingRepository {
       [for (final e in _instruments()) if (e.id != id) e],
     );
     return mockDelay(null);
+  }
+
+  @override
+  void clear() {
+    _data = null;
   }
 }

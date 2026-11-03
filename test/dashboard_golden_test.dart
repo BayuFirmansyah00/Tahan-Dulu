@@ -34,18 +34,11 @@ void main() {
 
     await tapVisible(find.text(AppStrings.loginWithEmail));
     await tester.pumpAndSettle();
-    for (var i = 0; i < 3; i++) {
-      await tapVisible(
-        find.widgetWithText(ElevatedButton, AppStrings.continueButton),
-      );
+    // Langsung ke Dashboard; tutup popup onboarding bila muncul.
+    if (find.text(AppStrings.onboardingPopupLater).evaluate().isNotEmpty) {
+      await tapVisible(find.text(AppStrings.onboardingPopupLater));
       await tester.pumpAndSettle();
     }
-    await tapVisible(
-      find.widgetWithText(ElevatedButton, AppStrings.doneButton),
-    );
-    await tester.pumpAndSettle();
-    await tapVisible(find.text(AppStrings.startAppButton));
-    await tester.pumpAndSettle();
     expect(find.text(AppStrings.dashboardGreeting), findsOneWidget);
 
     // Ilustrasi aset butuh waktu async nyata untuk decode di test env.

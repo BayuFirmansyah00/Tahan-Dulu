@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tahan_dulu/core/utils/finance_math.dart';
 import 'package:tahan_dulu/data/models/financial_goal.dart';
+import 'package:tahan_dulu/data/providers/app_providers.dart';
 import 'package:tahan_dulu/features/goals/presentation/providers/goals_controller.dart';
 
 ProviderContainer _container() {
@@ -274,5 +275,70 @@ void main() {
     expect(priorityLabel(1, 3), 'Sedang');
     expect(priorityLabel(2, 3), 'Rendah');
     expect(priorityLabel(0, 1), 'Tinggi');
+  });
+
+  test('deleteGoal removes target and refreshes list', () async {
+    final container = _container();
+    final notifier = container.read(goalsControllerProvider.notifier);
+    _fillDraft(notifier);
+    final saved = (await notifier.saveGoal())!;
+
+    var list = await container.read(goalsListProvider.future);
+    expect(list.any((e) => e.id == saved.id), isTrue);
+
+    final ok = await notifier.deleteGoal(saved.id);
+    expect(ok, isTrue);
+
+    list = await container.read(goalsListProvider.future);
+    expect(list.any((e) => e.id == saved.id), isFalse);
+  });
+
+  test('goalsListProvider sorts by priority then nearest deadline', () async {
+    final container = _container();
+    final notifier = container.read(goalsControllerProvider.notifier);
+
+    // Goal A: Priority 1, deadline 200 days
+    notifier.setCategory(GoalCategory.savings);
+    notifier.setName('Goal A');
+    notifier.setTargetAmount(5000000);
+    notifier.setTargetDate(_future(200));
+    final goalA = (await notifier.saveGoal())!;
+
+    // Goal B: Priority 1, deadline 100 days (earlier than Goal A)
+    notifier.setCategory(GoalCategory.gadget);
+    notifier.setName('Goal B');
+    notifier.setTargetAmount(8000000);
+    notifier.setTargetDate(_future(100));
+    final goalB = (await notifier.saveGoal())!;
+
+    // Reorder them so both have priority 1
+    final repo = container.read(goalRepositoryProvider);
+    await repo.updateGoal(goalA.copyWith(priority: 1));
+    await repo.updateGoal(goalB.copyWith(priority: 1));
+
+    container.invalidate(goalsListProvider);
+    final sorted = await container.read(goalsListProvider.future);
+    final filtered = sorted.where((e) => e.id == goalA.id || e.id == goalB.id).toList();
+
+    // Goal B has nearer deadline, so should come before Goal A
+    expect(filtered.first.id, goalB.id);
+    expect(filtered.last.id, goalA.id);
+  });
+
+  test('progress and isReached calculation when exceeding target', () {
+    const goal = FinancialGoal(
+      id: 'g-over',
+      name: 'Exceeded',
+      targetAmount: 5000000,
+      currentAmount: 7500000,
+    );
+
+    expect(goal.isReached, isTrue);
+    expect(goal.progress, 1.5);
+    // UI display clamp logic
+    final displayPercent = ((goal.progress * 100).clamp(0, 100)).round();
+    expect(displayPercent, 100);
+    expect(goal.remaining, 0.0);
+    expect(goal.currentAmount, 7500000);
   });
 }

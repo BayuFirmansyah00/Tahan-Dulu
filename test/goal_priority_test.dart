@@ -89,6 +89,21 @@ class _FiveGoalRepository implements GoalRepository {
 
   @override
   Future<FinancialGoal> updateGoal(FinancialGoal goal) async => goal;
+
+  @override
+  Future<FinancialGoal> getGoalById(String id) async =>
+      _goals.firstWhere((g) => g.id == id);
+
+  @override
+  Future<void> deleteGoal(String id) async {
+    _goals.removeWhere((g) => g.id == id);
+  }
+
+  @override
+  Future<GoalDeposit> updateDeposit(GoalDeposit deposit) async => deposit;
+
+  @override
+  Future<void> deleteDeposit(String id) async {}
 }
 
 Finder _assetImage(String asset) => find.byWidgetPredicate(

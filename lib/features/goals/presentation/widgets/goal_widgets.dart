@@ -18,8 +18,9 @@ void goalsBottomNavTap(BuildContext context, int index) {
     case 0:
       context.go(AppRoutes.dashboard);
     case 1:
-    case 2:
       context.push(AppRoutes.transactions);
+    case 2:
+      context.push(AppRoutes.transactionRecordMethod);
     case 3:
       break;
     case 4:
@@ -57,7 +58,7 @@ class GoalCircularProgress extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final percent = '${(progress * 100).round()}%';
+    final percent = '${((progress * 100).clamp(0, 100)).round()}%';
     return SizedBox(
       width: size,
       height: size,

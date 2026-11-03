@@ -26,11 +26,19 @@ class ApiException implements Exception {
 
 /// Klien JSON tipis untuk API Laravel (format {success, message, data}).
 class ApiClient {
-  ApiClient({required this.baseUrl, http.Client? httpClient})
-    : _http = httpClient ?? http.Client();
+  ApiClient({
+    required this.baseUrl,
+    http.Client? httpClient,
+    this.onUnauthorized,
+  }) : _http = httpClient ?? http.Client();
 
   final String baseUrl;
   final http.Client _http;
+
+  /// Dipanggil bila server merespons 401 Unauthorized (token kadaluarsa
+  /// atau tidak valid). Digunakan untuk memaksa logout lokal & navigasi ke
+  /// halaman login.
+  final void Function()? onUnauthorized;
 
   static const Duration timeout = Duration(seconds: 15);
 
@@ -43,6 +51,7 @@ class ApiClient {
   }
 
   /// Decode body JSON; lempar [ApiException] bila status >= 400.
+  /// Memanggil [onUnauthorized] bila status 401.
   Map<String, dynamic> _decode(http.Response res) {
     dynamic body;
     try {
@@ -53,6 +62,19 @@ class ApiClient {
         statusCode: res.statusCode,
       );
     }
+
+    if (res.statusCode == 401) {
+      onUnauthorized?.call();
+      final message = body is Map && body['message'] is String
+          ? body['message'] as String
+          : 'Sesi habis atau tidak valid. Silakan login ulang.';
+      throw ApiException(
+        message,
+        statusCode: res.statusCode,
+        fieldErrors: _fieldErrors(body),
+      );
+    }
+
     if (res.statusCode >= 400) {
       final message = body is Map && body['message'] is String
           ? body['message'] as String
@@ -113,6 +135,67 @@ class ApiClient {
     try {
       final res = await _http
           .get(Uri.parse('$baseUrl$path'), headers: _headers(token))
+          .timeout(timeout);
+      return _decode(res);
+    } on TimeoutException {
+      throw ApiException('Server tidak merespons. Periksa koneksi.');
+    } on http.ClientException catch (e) {
+      throw ApiException('Tidak dapat menghubungi server: ${e.message}');
+    }
+  }
+
+  Future<Map<String, dynamic>> put(
+    String path,
+    Map<String, dynamic> payload, {
+    String? token,
+  }) async {
+    try {
+      final res = await _http
+          .put(
+            Uri.parse('$baseUrl$path'),
+            headers: _headers(token),
+            body: jsonEncode(payload),
+          )
+          .timeout(timeout);
+      return _decode(res);
+    } on TimeoutException {
+      throw ApiException('Server tidak merespons. Periksa koneksi.');
+    } on http.ClientException catch (e) {
+      throw ApiException('Tidak dapat menghubungi server: ${e.message}');
+    }
+  }
+
+  Future<Map<String, dynamic>> patch(
+    String path,
+    Map<String, dynamic> payload, {
+    String? token,
+  }) async {
+    try {
+      final res = await _http
+          .patch(
+            Uri.parse('$baseUrl$path'),
+            headers: _headers(token),
+            body: jsonEncode(payload),
+          )
+          .timeout(timeout);
+      return _decode(res);
+    } on TimeoutException {
+      throw ApiException('Server tidak merespons. Periksa koneksi.');
+    } on http.ClientException catch (e) {
+      throw ApiException('Tidak dapat menghubungi server: ${e.message}');
+    }
+  }
+
+  Future<Map<String, dynamic>> delete(
+    String path, {
+    String? token,
+  }) async {
+    try {
+      final res = await _http
+          .delete(
+            Uri.parse('$baseUrl$path'),
+            headers: _headers(token),
+          )
           .timeout(timeout);
       return _decode(res);
     } on TimeoutException {

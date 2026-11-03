@@ -16,8 +16,7 @@ Future<void> _tapVisible(WidgetTester tester, Finder finder) async {
   await tester.pump();
 }
 
-/// Login mock -> salary -> instruments -> expenses -> goals
-/// -> Selesai -> plan -> Mulai -> dashboard.
+/// Login mock -> Dashboard (onboarding is now optional via popup).
 Future<void> _pumpToDashboard(
   WidgetTester tester, {
   ProviderContainer? container,
@@ -39,23 +38,6 @@ Future<void> _pumpToDashboard(
   await tester.enterText(loginFields.at(1), 'rahasia123');
   await tester.pump();
   await _tapVisible(tester, find.text(AppStrings.loginWithEmail));
-  await tester.pumpAndSettle();
-
-  for (var i = 0; i < 3; i++) {
-    await _tapVisible(
-      tester,
-      find.widgetWithText(ElevatedButton, AppStrings.continueButton),
-    );
-    await tester.pumpAndSettle();
-  }
-  await _tapVisible(
-    tester,
-    find.widgetWithText(ElevatedButton, AppStrings.doneButton),
-  );
-  await tester.pumpAndSettle();
-  expect(find.text(AppStrings.planTitle), findsOneWidget);
-
-  await _tapVisible(tester, find.text(AppStrings.startAppButton));
   await tester.pumpAndSettle();
   expect(find.text(AppStrings.dashboardGreeting), findsOneWidget);
   expect(find.text('Bayu'), findsOneWidget);
@@ -149,11 +131,7 @@ void main() {
     addTearDown(container.dispose);
     await _pumpToDashboard(tester, container: container);
 
-    // Baca agregat dengan waktu nyata (Future.delayed butuh runAsync
-    // di dalam widget test yang memakai fake async).
-    final before = (await tester.runAsync(
-      () => container.read(dashboardDataProvider.future),
-    ))!;
+    final before = container.read(dashboardDataProvider).value!;
 
     // Catat pengeluaran 75rb hari ini lewat UI.
     await _tapVisible(
@@ -189,9 +167,7 @@ void main() {
     await _tapVisible(tester, find.text(AppStrings.backToHome));
     await tester.pumpAndSettle();
 
-    final after = (await tester.runAsync(
-      () => container.read(dashboardDataProvider.future),
-    ))!;
+    final after = container.read(dashboardDataProvider).value!;
     expect(
       after.actualMonthExpense,
       before.actualMonthExpense + 75000,

@@ -13,7 +13,7 @@ Future<void> _tapVisible(WidgetTester tester, Finder finder) async {
   await tester.pump();
 }
 
-/// Login mock -> salary -> instruments -> expenses -> goals -> Selesai.
+/// Login mock -> Dashboard (onboarding kini opsional via popup).
 Future<void> _pumpToPlan(WidgetTester tester) async {
   await tester.pumpWidget(const ProviderScope(child: TahanDuluApp()));
   await tester.pump(const Duration(milliseconds: 1300));
@@ -24,20 +24,16 @@ Future<void> _pumpToPlan(WidgetTester tester) async {
   await tester.pump();
   await _tapVisible(tester, find.text(AppStrings.loginWithEmail));
   await tester.pumpAndSettle();
-
-  for (var i = 0; i < 3; i++) {
-    await _tapVisible(
-      tester,
-      find.widgetWithText(ElevatedButton, AppStrings.continueButton),
-    );
+  // Langsung ke Dashboard; tutup popup onboarding bila muncul.
+  if (find.text(AppStrings.onboardingPopupLater).evaluate().isNotEmpty) {
+    await _tapVisible(tester, find.text(AppStrings.onboardingPopupLater));
     await tester.pumpAndSettle();
   }
-  expect(find.text(AppStrings.goalsTitle), findsOneWidget);
-
-  await _tapVisible(
-    tester,
-    find.widgetWithText(ElevatedButton, AppStrings.doneButton),
-  );
+  await _tapVisible(tester, find.text(AppStrings.navGoals));
+  await tester.pumpAndSettle();
+  await _tapVisible(tester, find.text(AppStrings.newGoalButton));
+  await tester.pumpAndSettle();
+  await _tapVisible(tester, find.text(AppStrings.saveGoalButton));
   await tester.pumpAndSettle();
   expect(find.text(AppStrings.planTitle), findsOneWidget);
 }

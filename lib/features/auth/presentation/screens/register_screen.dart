@@ -11,7 +11,8 @@ import '../providers/auth_controller.dart';
 import '../widgets/auth_scaffold.dart';
 
 /// Register: Nama, Email, Password, Konfirmasi Password.
-/// Sukses (mock) -> /onboarding. "Masuk" kembali ke Login.
+/// Sukses -> /onboarding/salary (pengguna baru wajib onboarding).
+/// "Masuk" kembali ke Login.
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
 
@@ -38,9 +39,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     super.dispose();
   }
 
-  void _goOnboarding(AuthState? prev, AuthState next) {
+  void _goDashboard(AuthState? prev, AuthState next) {
     if (next.status == AuthStatus.authenticated) {
-      context.go(AppRoutes.onboardingSalary);
+      // Pengguna baru (is_onboarded=false) wajib menyelesaikan onboarding.
+      // Pengguna lama yang sudah migrasi (is_onboarded=true) langsung dashboard.
+      final isOnboarded = next.user?.isOnboarded ?? false;
+      context.go(isOnboarded ? AppRoutes.dashboard : AppRoutes.onboardingSalary);
     }
   }
 
@@ -62,7 +66,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<AuthState>(authControllerProvider, _goOnboarding);
+    ref.listen<AuthState>(authControllerProvider, _goDashboard);
     final authState = ref.watch(authControllerProvider);
     final textTheme = Theme.of(context).textTheme;
 
@@ -86,6 +90,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               hint: AppStrings.fullNameHint,
               validator: (v) => Validators.required(v, AppStrings.nameRequired),
             ),
+            if (authState.hasFieldError('name')) ...[
+              const SizedBox(height: 6),
+              _FieldError(text: authState.fieldErrors!['name']!.first),
+            ],
             const SizedBox(height: 12),
             AppTextField(
               controller: _emailController,
@@ -98,6 +106,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 invalidMessage: AppStrings.emailInvalid,
               ),
             ),
+            if (authState.hasFieldError('email')) ...[
+              const SizedBox(height: 6),
+              _FieldError(text: authState.fieldErrors!['email']!.first),
+            ],
             const SizedBox(height: 12),
             AppTextField(
               controller: _passwordController,
@@ -116,6 +128,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               validator: (v) =>
                   Validators.required(v, AppStrings.passwordRequired),
             ),
+            if (authState.hasFieldError('password')) ...[
+              const SizedBox(height: 6),
+              _FieldError(text: authState.fieldErrors!['password']!.first),
+            ],
             const SizedBox(height: 12),
             AppTextField(
               controller: _confirmController,
@@ -143,6 +159,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 return null;
               },
             ),
+            if (authState.hasFieldError('password_confirmation')) ...[
+              const SizedBox(height: 6),
+              _FieldError(text: authState.fieldErrors!['password_confirmation']!.first),
+            ],
             const SizedBox(height: 20),
             AppButton(
               label: AppStrings.registerButton,
@@ -169,6 +189,22 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _FieldError extends StatelessWidget {
+  const _FieldError({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: Theme.of(context).colorScheme.error,
+          ),
     );
   }
 }

@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/utils/finance_math.dart';
+import '../datasources/remote/api_config.dart';
 import '../models/financial_account.dart';
 import '../models/transaction_model.dart';
 import 'app_providers.dart';
@@ -48,11 +49,13 @@ final accountsOverviewProvider =
     for (final account in accounts)
       AccountOverview(
         account: account,
-        currentBalance: accountBalanceOf(
-          initial: account.balance,
-          income: incomeByAccount[account.id] ?? 0,
-          expense: expenseByAccount[account.id] ?? 0,
-        ),
+        currentBalance: ApiConfig.useRemoteApi
+            ? account.balance
+            : accountBalanceOf(
+                initial: account.balance,
+                income: incomeByAccount[account.id] ?? 0,
+                expense: expenseByAccount[account.id] ?? 0,
+              ),
         transactionCount: countByAccount[account.id] ?? 0,
       ),
   ];

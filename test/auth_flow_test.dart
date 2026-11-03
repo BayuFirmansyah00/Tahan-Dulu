@@ -65,7 +65,7 @@ void main() {
     expect(find.text(AppStrings.salaryTitle), findsNothing);
   });
 
-  testWidgets('Login success navigates to salary input', (
+  testWidgets('Login success navigates to Dashboard', (
     WidgetTester tester,
   ) async {
     await _pumpToLogin(tester);
@@ -74,10 +74,10 @@ void main() {
     await _tapVisible(tester, find.text(AppStrings.loginWithEmail));
     await tester.pumpAndSettle();
 
-    expect(find.text(AppStrings.salaryTitle), findsOneWidget);
+    expect(find.text(AppStrings.dashboardGreeting), findsOneWidget);
   });
 
-  testWidgets('Google sign-in success navigates to salary input', (
+  testWidgets('Google sign-in success navigates to Dashboard', (
     WidgetTester tester,
   ) async {
     await _pumpToLogin(tester);
@@ -85,7 +85,7 @@ void main() {
     await _tapVisible(tester, find.text(AppStrings.continueWithGoogle));
     await tester.pumpAndSettle();
 
-    expect(find.text(AppStrings.salaryTitle), findsOneWidget);
+    expect(find.text(AppStrings.dashboardGreeting), findsOneWidget);
   });
 
   testWidgets('Daftar link opens register screen', (
@@ -123,7 +123,7 @@ void main() {
     expect(find.text(AppStrings.salaryTitle), findsNothing);
   });
 
-  testWidgets('Register success navigates to salary input', (
+  testWidgets('Register success navigates to Onboarding Salary', (
     WidgetTester tester,
   ) async {
     await _pumpToLogin(tester);

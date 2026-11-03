@@ -232,6 +232,22 @@ class TahanDuluController extends Notifier<ConsiderationDraft> {
     }
   }
 
+  Future<bool> deleteItem(String id) async {
+    if (_saving) return false;
+    _saving = true;
+    try {
+      await ref
+          .read(purchaseDecisionRepositoryProvider)
+          .deleteConsideration(id);
+      _refreshAll();
+      return true;
+    } catch (_) {
+      return false;
+    } finally {
+      _saving = false;
+    }
+  }
+
   void _refreshAll() {
     ref.invalidate(considerationsProvider);
     ref.invalidate(dashboardDataProvider);

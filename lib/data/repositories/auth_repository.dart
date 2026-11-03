@@ -28,6 +28,14 @@ abstract class AuthRepository {
     String? bio,
   });
 
+  /// Perbarui informasi keuangan pengguna (monthly_income + salary_day + is_onboarded)
+  /// secara permanen di backend.
+  Future<UserModel> updateFinancialInfo({
+    int? monthlyIncome,
+    int? salaryDay,
+    bool? isOnboarded,
+  });
+
   /// Keluar sesi. Mock: hanya mereset status sesi, data keuangan tetap ada.
   Future<void> logout();
 }
@@ -51,7 +59,12 @@ class MockAuthRepository implements AuthRepository {
     required String email,
     required String password,
   }) {
-    _current = UserModel(id: 'user-1', name: name, email: email);
+    _current = UserModel(
+      id: 'user-${DateTime.now().millisecondsSinceEpoch}',
+      name: name,
+      email: email,
+      isOnboarded: false,
+    );
     return mockDelay(_current, 600);
   }
 
@@ -71,6 +84,20 @@ class MockAuthRepository implements AuthRepository {
     _current = _current.copyWith(
       name: trimmed,
       bio: () => bio?.trim().isEmpty ?? true ? null : bio!.trim(),
+    );
+    return mockDelay(_current);
+  }
+
+  @override
+  Future<UserModel> updateFinancialInfo({
+    int? monthlyIncome,
+    int? salaryDay,
+    bool? isOnboarded,
+  }) {
+    _current = _current.copyWith(
+      monthlyIncome: () => monthlyIncome ?? _current.monthlyIncome,
+      salaryDay: () => salaryDay ?? _current.salaryDay,
+      isOnboarded: isOnboarded ?? _current.isOnboarded,
     );
     return mockDelay(_current);
   }

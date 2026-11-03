@@ -3,11 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/utils/rupiah_input_formatter.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_states.dart';
 import '../../../../core/widgets/app_text_field.dart';
+import '../../../../data/datasources/remote/api_client.dart';
 import '../../../../data/models/financial_goal.dart';
 import '../../../dashboard/presentation/widgets/dashboard_bottom_nav.dart';
 import '../providers/goals_controller.dart';
@@ -35,6 +37,9 @@ class _GoalEditScreenState extends ConsumerState<GoalEditScreen> {
   bool _initialized = false;
   bool _attempted = false;
   bool _saving = false;
+
+  /// Error validasi per field dari backend (status 422).
+  Map<String, List<String>>? _fieldErrors;
 
   @override
   void dispose() {
@@ -93,10 +98,16 @@ class _GoalEditScreenState extends ConsumerState<GoalEditScreen> {
         date == null ||
         !date.isAfter(DateTime.now()) ||
         _category == null) {
-      setState(() => _attempted = true);
+      setState(() {
+        _attempted = true;
+        _fieldErrors = null;
+      });
       return;
     }
-    setState(() => _saving = true);
+    setState(() {
+      _saving = true;
+      _fieldErrors = null;
+    });
     try {
       final ok = await ref
           .read(goalsControllerProvider.notifier)
@@ -118,6 +129,60 @@ class _GoalEditScreenState extends ConsumerState<GoalEditScreen> {
           const SnackBar(content: Text(AppStrings.saveFailed)),
         );
       }
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _fieldErrors = e.fieldErrors;
+        _saving = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _saving = false);
+    }
+  }
+
+  Future<void> _confirmDelete(FinancialGoal goal) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Hapus target ini?'),
+        content: Text(
+          '“${goal.name}” akan dihapus. Riwayat transaksi pengeluaran aktual dan saldo akun kamu tetap utuh.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text(AppStrings.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: const Text('Hapus'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() => _saving = true);
+    try {
+      final ok = await ref
+          .read(goalsControllerProvider.notifier)
+          .deleteGoal(goal.id);
+      if (!mounted) return;
+      if (ok) {
+        context.go(AppRoutes.goals);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text(AppStrings.saveFailed)),
+        );
+      }
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text(AppStrings.saveFailed)),
+      );
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -215,11 +280,15 @@ class _GoalEditScreenState extends ConsumerState<GoalEditScreen> {
                                 hint: AppStrings.goalNameHint,
                                 onChanged: (v) => _customName = v,
                               ),
-                              if (nameInvalid) ...[
+                              if (_attempted && nameInvalid) ...[
+                                const SizedBox(height: 6),
+                                _FieldError(text: AppStrings.goalNameRequired),
+                              ],
+                              if (_fieldErrors != null &&
+                                  _fieldErrors!['title'] != null) ...[
                                 const SizedBox(height: 6),
                                 _FieldError(
-                                  text: AppStrings.goalNameRequired,
-                                ),
+                                    text: _fieldErrors!['title']!.first),
                               ],
                               const SizedBox(height: 12),
                             ],
@@ -239,6 +308,13 @@ class _GoalEditScreenState extends ConsumerState<GoalEditScreen> {
                                 text: AppStrings.goalAmountRequired,
                               ),
                             ],
+                            if (_fieldErrors != null &&
+                                _fieldErrors!['target_amount'] != null) ...[
+                              const SizedBox(height: 6),
+                              _FieldError(
+                                  text:
+                                      _fieldErrors!['target_amount']!.first),
+                            ],
                             const SizedBox(height: 12),
                             Text(
                               AppStrings.goalDate,
@@ -257,6 +333,12 @@ class _GoalEditScreenState extends ConsumerState<GoalEditScreen> {
                                 text: AppStrings.goalDateRequired,
                               ),
                             ],
+                            if (_fieldErrors != null &&
+                                _fieldErrors!['target_date'] != null) ...[
+                              const SizedBox(height: 6),
+                              _FieldError(
+                                  text: _fieldErrors!['target_date']!.first),
+                            ],
                           ],
                         ),
                       ),
@@ -264,11 +346,23 @@ class _GoalEditScreenState extends ConsumerState<GoalEditScreen> {
                     Padding(
                       padding:
                           const EdgeInsets.fromLTRB(24, 8, 24, 24),
-                      child: AppButton(
-                        label: AppStrings.saveChanges,
-                        isLoading: _saving,
-                        onPressed:
-                            _saving ? null : () => _save(goal),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          AppButton(
+                            label: AppStrings.saveChanges,
+                            isLoading: _saving,
+                            onPressed:
+                                _saving ? null : () => _save(goal),
+                          ),
+                          const SizedBox(height: 12),
+                          AppOutlineButton(
+                            label: 'Hapus Target',
+                            icon: Icons.delete_outline,
+                            foregroundColor: Theme.of(context).colorScheme.error,
+                            onPressed: _saving ? null : () => _confirmDelete(goal),
+                          ),
+                        ],
                       ),
                     ),
                   ],

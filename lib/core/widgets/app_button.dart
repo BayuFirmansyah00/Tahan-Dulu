@@ -64,15 +64,24 @@ class AppOutlineButton extends StatelessWidget {
     required this.label,
     required this.onPressed,
     this.icon,
+    this.foregroundColor,
   });
 
   final String label;
   final VoidCallback? onPressed;
   final IconData? icon;
+  final Color? foregroundColor;
 
   @override
   Widget build(BuildContext context) {
+    final style = foregroundColor != null
+        ? OutlinedButton.styleFrom(
+            foregroundColor: foregroundColor,
+            side: BorderSide(color: foregroundColor!),
+          )
+        : null;
     return OutlinedButton(
+      style: style,
       onPressed: onPressed,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,

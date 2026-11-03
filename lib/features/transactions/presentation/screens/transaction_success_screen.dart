@@ -9,6 +9,7 @@ import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../data/models/transaction_model.dart';
+import '../../../../data/providers/app_providers.dart';
 import '../../../../data/providers/onboarding_providers.dart';
 import '../providers/transactions_controller.dart';
 
@@ -41,11 +42,17 @@ class _TransactionSuccessScreenState
     final textTheme = Theme.of(context).textTheme;
     if (saved == null) return const Scaffold(body: SizedBox.shrink());
 
-    final data =
-        ref.watch(onboardingRepositoryProvider).getOnboardingData();
-    final accounts = {
-      for (final e in data?.financialInstruments ?? const []) e.id: e.name,
-    };
+    final accountsAsync = ref.watch(accountsProvider);
+    final accounts = accountsAsync.maybeWhen(
+      data: (items) => {for (final a in items) a.id: a.name},
+      orElse: () {
+        final data =
+            ref.watch(onboardingRepositoryProvider).getOnboardingData();
+        return {
+          for (final e in data?.financialInstruments ?? const []) e.id: e.name,
+        };
+      },
+    );
     final isIncome = saved.type == TransactionType.income;
     final amountColor =
         isIncome ? AppColors.primary : AppColors.error;

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../data/models/financial_instrument.dart';
 import '../../../../data/providers/onboarding_providers.dart';
+import '../../../../data/datasources/remote/remote_onboarding_repository.dart';
 
 /// State No.4: daftar instrumen + pilihan sebagai source of truth.
 class InstrumentsState extends Equatable {
@@ -81,26 +82,48 @@ class InstrumentsController extends Notifier<InstrumentsState> {
     );
   }
 
-  void addInstrument(FinancialInstrument instrument) {
-    state = state.copyWith(
-      instruments: [...state.instruments, instrument],
-    );
+  /// Tambah instrumen — langsung disimpan ke backend via repository.
+  /// Instrumen hanya masuk ke state setelah backend mengembalikan ID asli.
+  /// Tidak ada instrumen palsu atau saldo fiktif.
+  Future<void> addInstrument(FinancialInstrument instrument) async {
+    state = state.copyWith(isSaving: true);
+    try {
+      final saved =
+          await ref.read(onboardingRepositoryProvider).addInstrument(instrument);
+      state = state.copyWith(
+        instruments: [...state.instruments, saved],
+        isSaving: false,
+      );
+    } catch (_) {
+      state = state.copyWith(isSaving: false);
+      rethrow;
+    }
   }
 
-  /// Simpan instrumen terpilih. Berhasil -> true (UI ke No.5).
+  Future<void> loadExisting() async {
+    final repo = ref.read(onboardingRepositoryProvider);
+    if (repo is RemoteOnboardingRepository) {
+      final items = await repo.fetchExistingInstruments();
+      if (items.isNotEmpty && state.instruments.isEmpty) {
+        state = state.copyWith(instruments: items);
+      }
+    }
+  }
+
+  /// Reset state onboarding (digunakan saat logout / ganti akun).
+  void reset() {
+    state = InstrumentsState(instruments: const []);
+  }
+
+  /// Simpan — navigasi saja karena instrumen sudah tersimpan satu per satu
+  /// via [addInstrument]. Hanya validasi bahwa minimal satu instrumen dipilih.
   Future<bool> save() async {
     if (!state.canContinue) return false;
     state = state.copyWith(isSaving: true);
-    try {
-      await ref
-          .read(onboardingRepositoryProvider)
-          .saveInstruments(state.instruments);
-      state = state.copyWith(isSaving: false);
-      return true;
-    } catch (_) {
-      state = state.copyWith(isSaving: false);
-      return false;
-    }
+    // Tunggu satu frame agar UI terupdate loading state.
+    await Future.delayed(Duration.zero);
+    state = state.copyWith(isSaving: false);
+    return true;
   }
 }
 

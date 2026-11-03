@@ -25,7 +25,7 @@ class ReportsScreen extends ConsumerWidget {
       case 1:
         context.push(AppRoutes.transactions);
       case 2:
-        context.push(AppRoutes.transactions);
+        context.push(AppRoutes.transactionRecordMethod);
       case 3:
         context.push(AppRoutes.goals);
       case 4:

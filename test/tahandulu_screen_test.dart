@@ -25,20 +25,6 @@ Future<void> _pumpToTahanDulu(WidgetTester tester) async {
   await _tapVisible(tester, find.text(AppStrings.loginWithEmail));
   await tester.pumpAndSettle();
 
-  for (var i = 0; i < 3; i++) {
-    await _tapVisible(
-      tester,
-      find.widgetWithText(ElevatedButton, AppStrings.continueButton),
-    );
-    await tester.pumpAndSettle();
-  }
-  await _tapVisible(
-    tester,
-    find.widgetWithText(ElevatedButton, AppStrings.doneButton),
-  );
-  await tester.pumpAndSettle();
-  await _tapVisible(tester, find.text(AppStrings.startAppButton));
-  await tester.pumpAndSettle();
   await _tapVisible(tester, find.text(AppStrings.tahanDuluSee));
   await tester.pumpAndSettle();
   expect(find.text(AppStrings.tahanDuluPageTitle), findsOneWidget);
@@ -259,27 +245,18 @@ void main() {
     await tester.pump();
     await tapV(find.text(AppStrings.loginWithEmail));
     await tester.pumpAndSettle();
-    for (var i = 0; i < 3; i++) {
-      await tapV(
-        find.widgetWithText(ElevatedButton, AppStrings.continueButton),
-      );
+    // Langsung ke Dashboard; tutup popup onboarding bila muncul.
+    if (find.text(AppStrings.onboardingPopupLater).evaluate().isNotEmpty) {
+      await tapV(find.text(AppStrings.onboardingPopupLater));
       await tester.pumpAndSettle();
     }
-    await tapV(
-      find.widgetWithText(ElevatedButton, AppStrings.doneButton),
-    );
-    await tester.pumpAndSettle();
-    await tapV(find.text(AppStrings.startAppButton));
+    await tapV(find.text(AppStrings.tahanDuluSee));
     await tester.pumpAndSettle();
 
     final txBefore = await tester.runAsync(() => container
         .read(transactionRepositoryProvider)
         .getRecentTransactions()
         .then((l) => l.length));
-
-    // Buka kartu seed (tanpa wait aktif -> langsung decide).
-    await tapV(find.text(AppStrings.tahanDuluSee));
-    await tester.pumpAndSettle();
     await tapV(find.text('Adidas Samba'));
     await tester.pumpAndSettle();
     expect(find.text(AppStrings.decideTitle), findsOneWidget);

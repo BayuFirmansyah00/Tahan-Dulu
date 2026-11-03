@@ -12,8 +12,9 @@ void profileOnNav(int index, BuildContext context) {
     case 0:
       context.go(AppRoutes.dashboard);
     case 1:
-    case 2:
       context.push(AppRoutes.transactions);
+    case 2:
+      context.push(AppRoutes.transactionRecordMethod);
     case 3:
       context.push(AppRoutes.goals);
     case 4:

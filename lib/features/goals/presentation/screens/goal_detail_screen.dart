@@ -27,7 +27,54 @@ class GoalDetailScreen extends ConsumerWidget {
     final goals = ref.watch(goalsListProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text(AppStrings.goalDetailTitle)),
+      appBar: AppBar(
+        title: const Text(AppStrings.goalDetailTitle),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.delete_outline),
+            tooltip: 'Hapus Target',
+            onPressed: () async {
+              final items = goals.asData?.value;
+              final match = items?.where((e) => e.id == goalId).firstOrNull;
+              if (match == null) return;
+              final confirmed = await showDialog<bool>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Hapus target ini?'),
+                  content: Text(
+                    '“${match.name}” akan dihapus. Riwayat transaksi pengeluaran aktual dan saldo akun kamu tetap utuh.',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(false),
+                      child: const Text(AppStrings.cancel),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(true),
+                      style: TextButton.styleFrom(
+                        foregroundColor: Theme.of(context).colorScheme.error,
+                      ),
+                      child: const Text('Hapus'),
+                    ),
+                  ],
+                ),
+              );
+              if (confirmed != true || !context.mounted) return;
+              final ok = await ref
+                  .read(goalsControllerProvider.notifier)
+                  .deleteGoal(goalId);
+              if (!context.mounted) return;
+              if (ok) {
+                context.go(AppRoutes.goals);
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text(AppStrings.saveFailed)),
+                );
+              }
+            },
+          ),
+        ],
+      ),
       bottomNavigationBar: DashboardBottomNav(
         currentIndex: 3,
         onTap: (i) => goalsBottomNavTap(context, i),

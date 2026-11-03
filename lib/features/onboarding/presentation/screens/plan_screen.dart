@@ -9,15 +9,28 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../data/models/financial_plan.dart';
+import '../../../../data/providers/app_providers.dart';
+import '../../../../data/providers/dashboard_providers.dart';
 import '../../../../data/providers/onboarding_providers.dart';
+import '../../../auth/presentation/providers/auth_controller.dart';
+import '../../../onboarding/presentation/providers/salary_controller.dart';
+import '../../../profile/presentation/providers/profile_providers.dart';
+import '../providers/onboarding_status_provider.dart';
 
 /// Layar penyelesaian onboarding: ringkasan rencana keuangan + CTA masuk.
 /// Bukan Dashboard — Dashboard tetap placeholder tahap ini.
-class PlanScreen extends ConsumerWidget {
+class PlanScreen extends ConsumerStatefulWidget {
   const PlanScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PlanScreen> createState() => _PlanScreenState();
+}
+
+class _PlanScreenState extends ConsumerState<PlanScreen> {
+  bool _completing = false;
+
+  @override
+  Widget build(BuildContext context) {
     final plan = ref.watch(financialPlanProvider);
     final textTheme = Theme.of(context).textTheme;
 
@@ -151,7 +164,40 @@ class PlanScreen extends ConsumerWidget {
                   padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
                   child: AppButton(
                     label: AppStrings.startAppButton,
-                    onPressed: () => context.go(AppRoutes.dashboard),
+                    isLoading: _completing,
+                    onPressed: _completing
+                        ? null
+                        : () async {
+                            final router = GoRouter.of(context);
+                            final messenger = ScaffoldMessenger.of(context);
+                            setState(() => _completing = true);
+                            try {
+                              final salary = ref.read(salaryControllerProvider);
+                              await ref
+                                  .read(authControllerProvider.notifier)
+                                  .updateFinancialInfo(
+                                monthlyIncome: salary.monthlyIncome > 0
+                                    ? salary.monthlyIncome.toInt()
+                                    : null,
+                                salaryDay: salary.salaryDay,
+                                isOnboarded: true,
+                              );
+                              ref.invalidate(dashboardDataProvider);
+                              ref.invalidate(accountsProvider);
+                              ref.invalidate(profileUserProvider);
+                              ref.invalidate(onboardingStatusProvider);
+                              if (!mounted) return;
+                              router.go(AppRoutes.dashboard);
+                            } catch (_) {
+                              if (!mounted) return;
+                              messenger.showSnackBar(
+                                const SnackBar(
+                                    content: Text(AppStrings.saveFailed)),
+                              );
+                            } finally {
+                              if (mounted) setState(() => _completing = false);
+                            }
+                          },
                   ),
                 ),
               ],

@@ -8,8 +8,10 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../data/datasources/remote/api_client.dart';
 import '../../../../data/models/financial_instrument.dart';
 import '../../../../data/models/transaction_model.dart';
+import '../../../../data/providers/app_providers.dart';
 import '../../../../data/providers/onboarding_providers.dart';
 import '../providers/transactions_controller.dart';
 import '../utils/transaction_categories.dart';
@@ -28,16 +30,23 @@ class _TransactionReviewScreenState
     extends ConsumerState<TransactionReviewScreen> {
   bool _submitting = false;
   bool _saveFailed = false;
+  String? _saveErrorMessage;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final data =
-          ref.read(onboardingRepositoryProvider).getOnboardingData();
-      final instruments =
-          data?.financialInstruments ?? const <FinancialInstrument>[];
-      final ids = {for (final e in instruments) e.id};
+      final accounts = ref.read(accountsProvider).value;
+      final ids = (accounts != null && accounts.isNotEmpty)
+          ? {for (final a in accounts) a.id}
+          : {
+              for (final e in ref
+                      .read(onboardingRepositoryProvider)
+                      .getOnboardingData()
+                      ?.financialInstruments ??
+                  const <FinancialInstrument>[])
+                e.id
+            };
       if (!ref.read(transactionFormProvider).isComplete(ids)) {
         if (mounted) context.go(AppRoutes.transactionAdd);
       }
@@ -48,6 +57,7 @@ class _TransactionReviewScreenState
     setState(() {
       _submitting = true;
       _saveFailed = false;
+      _saveErrorMessage = null;
     });
     try {
       final ok =
@@ -58,6 +68,18 @@ class _TransactionReviewScreenState
       } else {
         setState(() => _saveFailed = true);
       }
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _saveFailed = true;
+        _saveErrorMessage = e.message;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _submitting = false;
+        _saveFailed = true;
+      });
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -67,11 +89,17 @@ class _TransactionReviewScreenState
   Widget build(BuildContext context) {
     final draft = ref.watch(transactionFormProvider);
     final textTheme = Theme.of(context).textTheme;
-    final data =
-        ref.watch(onboardingRepositoryProvider).getOnboardingData();
-    final accounts = {
-      for (final e in data?.financialInstruments ?? const []) e.id: e.name,
-    };
+    final accountsAsync = ref.watch(accountsProvider);
+    final accounts = accountsAsync.maybeWhen(
+      data: (items) => {for (final a in items) a.id: a.name},
+      orElse: () {
+        final data =
+            ref.watch(onboardingRepositoryProvider).getOnboardingData();
+        return {
+          for (final e in data?.financialInstruments ?? const []) e.id: e.name,
+        };
+      },
+    );
     final isIncome = draft.type == TransactionType.income;
     final amountColor =
         isIncome ? AppColors.primary : AppColors.error;
@@ -162,7 +190,7 @@ class _TransactionReviewScreenState
                         if (_saveFailed) ...[
                           const SizedBox(height: 12),
                           Text(
-                            AppStrings.saveFailed,
+                            _saveErrorMessage ?? AppStrings.saveFailed,
                             style: textTheme.bodyMedium?.copyWith(
                               color: Theme.of(context).colorScheme.error,
                             ),

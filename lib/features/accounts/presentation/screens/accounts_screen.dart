@@ -32,7 +32,7 @@ class _AccountsScreenState extends ConsumerState<AccountsScreen> {
       case 1:
         context.push(AppRoutes.transactions);
       case 2:
-        context.push(AppRoutes.transactions);
+        context.push(AppRoutes.transactionRecordMethod);
       case 3:
         context.push(AppRoutes.goals);
       case 4:
@@ -126,15 +126,29 @@ class _List extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              Flexible(
-                child: TextButton.icon(
-                  onPressed: () => context.push(AppRoutes.accountAdd),
-                  icon: const Icon(Icons.add, size: 18),
-                  label: const Text(
-                    AppStrings.addAccount,
-                    overflow: TextOverflow.ellipsis,
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (items.length >= 2) ...[
+                    TextButton.icon(
+                      onPressed: () => context.push(AppRoutes.accountTransfer),
+                      icon: const Icon(Icons.swap_horiz_rounded, size: 18),
+                      label: const Text(
+                        AppStrings.transferAction,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                  ],
+                  TextButton.icon(
+                    onPressed: () => context.push(AppRoutes.accountAdd),
+                    icon: const Icon(Icons.add, size: 18),
+                    label: const Text(
+                      AppStrings.addAccount,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
-                ),
+                ],
               ),
             ],
           ),
@@ -260,6 +274,9 @@ class _AccountCard extends StatelessWidget {
             AccountProviderIcon(
               type: item.account.type,
               institutionName: item.account.institutionName,
+              bankName: item.account.bankName,
+              bankSlug: item.account.bankSlug,
+              bankLogoUrl: item.account.bankLogoUrl,
               size: 44,
             ),
             const SizedBox(width: 12),
@@ -269,7 +286,7 @@ class _AccountCard extends StatelessWidget {
                 children: [
                   Text(item.account.name, style: textTheme.titleMedium),
                   Text(
-                    accountTypeLabel(item.account.type),
+                    item.account.bankName ?? accountTypeLabel(item.account.type),
                     style: textTheme.bodyMedium,
                   ),
                 ],

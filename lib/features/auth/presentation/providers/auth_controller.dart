@@ -7,18 +7,31 @@ import '../../../../data/datasources/remote/api_config.dart';
 import '../../../../data/datasources/remote/remote_auth_repository.dart';
 import '../../../../data/datasources/remote/token_storage.dart';
 import '../../../../data/models/user_model.dart';
+import '../../../../data/providers/account_providers.dart';
+import '../../../../data/providers/app_providers.dart';
+import '../../../../data/providers/dashboard_providers.dart';
+import '../../../../data/providers/onboarding_providers.dart';
+import '../../../../data/providers/reports_providers.dart';
 import '../../../../data/repositories/auth_repository.dart';
+import '../../../onboarding/presentation/providers/expenses_controller.dart';
+import '../../../onboarding/presentation/providers/goal_controller.dart';
+import '../../../onboarding/presentation/providers/instruments_controller.dart';
+import '../../../onboarding/presentation/providers/onboarding_status_provider.dart';
+import '../../../onboarding/presentation/providers/salary_controller.dart';
+import '../../../goals/presentation/providers/goals_controller.dart';
+import '../../../profile/presentation/providers/profile_providers.dart';
 
 /// Provider repository auth.
 ///
-/// Default (termasuk seluruh test): mock lokal yang offline.
-/// Aktifkan backend via `--dart-define=USE_REMOTE_AUTH=true`
-/// (opsional `API_BASE_URL`, default emulator 10.0.2.2:8000/api).
+/// Default sekarang REMOTE (Laravel Sanctum). Aktifkan mock lokal via
+/// `--dart-define=USE_REMOTE_AUTH=false`.
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
   if (!ApiConfig.useRemoteAuth) return MockAuthRepository();
   final tokens = TokenStorage();
   return RemoteAuthRepository(
-    client: ApiClient(baseUrl: ApiConfig.baseUrl),
+    client: ApiClient(
+      baseUrl: ApiConfig.baseUrl,
+    ),
     tokens: tokens,
   );
 });
@@ -32,9 +45,17 @@ class AuthState extends Equatable {
     this.user,
     this.errorMessage,
     this.loginMethod,
+    this.fieldErrors,
   });
 
   const AuthState.initial() : this._(status: AuthStatus.initial);
+
+  const AuthState.authenticated(UserModel user, {String? loginMethod})
+      : this._(
+          status: AuthStatus.authenticated,
+          user: user,
+          loginMethod: loginMethod ?? 'email',
+        );
 
   final AuthStatus status;
   final UserModel? user;
@@ -43,10 +64,19 @@ class AuthState extends Equatable {
   /// Metode login sesi: 'email' atau 'google'. Null bila belum masuk.
   final String? loginMethod;
 
+  /// Rincian error validasi per field dari backend (status 422).
+  /// Kunci: nama field (mis. 'email', 'password'), nilai: daftar pesan.
+  final Map<String, List<String>>? fieldErrors;
+
   bool get isLoading => status == AuthStatus.loading;
 
+  /// true bila ada error validasi pada field tertentu.
+  bool hasFieldError(String field) =>
+      fieldErrors?[field]?.isNotEmpty ?? false;
+
   @override
-  List<Object?> get props => [status, user, errorMessage, loginMethod];
+  List<Object?> get props =>
+      [status, user, errorMessage, loginMethod, fieldErrors];
 }
 
 /// Controller auth: dipanggil UI, meneruskan ke [AuthRepository].
@@ -66,6 +96,7 @@ class AuthController extends Notifier<AuthState> {
       final user = await ref
           .read(authRepositoryProvider)
           .loginWithEmail(email: email, password: password);
+      _resetUserData();
       state = AuthState._(
         status: AuthStatus.authenticated,
         user: user,
@@ -73,11 +104,13 @@ class AuthController extends Notifier<AuthState> {
       );
       return true;
     } catch (e) {
+      final fieldErrors = e is ApiException ? e.fieldErrors : null;
       state = AuthState._(
         status: AuthStatus.error,
         errorMessage: e is ApiException
             ? e.message
             : AppStrings.authLoginFailed,
+        fieldErrors: fieldErrors,
       );
       return false;
     }
@@ -93,6 +126,7 @@ class AuthController extends Notifier<AuthState> {
       final user = await ref
           .read(authRepositoryProvider)
           .register(name: name, email: email, password: password);
+      _resetUserData();
       state = AuthState._(
         status: AuthStatus.authenticated,
         user: user,
@@ -100,9 +134,11 @@ class AuthController extends Notifier<AuthState> {
       );
       return true;
     } catch (e) {
+      final fieldErrors = e is ApiException ? e.fieldErrors : null;
       state = AuthState._(
         status: AuthStatus.error,
         errorMessage: _registerMessage(e),
+        fieldErrors: fieldErrors,
       );
       return false;
     }
@@ -124,6 +160,7 @@ class AuthController extends Notifier<AuthState> {
     state = const AuthState._(status: AuthStatus.loading);
     try {
       final user = await ref.read(authRepositoryProvider).signInWithGoogle();
+      _resetUserData();
       state = AuthState._(
         status: AuthStatus.authenticated,
         user: user,
@@ -139,7 +176,7 @@ class AuthController extends Notifier<AuthState> {
     }
   }
 
-  /// Perbarui nama + bio sesi. Email tidak diubah. Guard ganda bawaan.
+  /// Perbarui nama + bio sesi. Email tidak diubah.
   Future<bool> updateProfile({required String name, String? bio}) async {
     if (_saving || name.trim().isEmpty) return false;
     _saving = true;
@@ -160,13 +197,92 @@ class AuthController extends Notifier<AuthState> {
     }
   }
 
-  /// Keluar sesi. Data keuangan tidak dihapus (milik repository lain).
+  /// Perbarui monthly_income + salary_day + is_onboarded secara permanen di backend.
+  Future<bool> updateFinancialInfo({
+    int? monthlyIncome,
+    int? salaryDay,
+    bool? isOnboarded,
+  }) async {
+    if (_saving) return false;
+    _saving = true;
+    try {
+      final updated = await ref
+          .read(authRepositoryProvider)
+          .updateFinancialInfo(
+            monthlyIncome: monthlyIncome,
+            salaryDay: salaryDay,
+            isOnboarded: isOnboarded,
+          );
+      state = AuthState._(
+        status: state.status,
+        user: updated,
+        loginMethod: state.loginMethod,
+      );
+      return true;
+    } catch (_) {
+      return false;
+    } finally {
+      _saving = false;
+    }
+  }
+
+  /// Membersihkan seluruh data sesi pengguna sebelumnya dari memory, cache repository,
+  /// dan provider Riverpod agar tidak terjadi kebocoran data antar-akun.
+  void _resetUserData() {
+    // 1. Reset state input onboarding
+    ref.read(salaryControllerProvider.notifier).reset();
+    ref.read(instrumentsControllerProvider.notifier).reset();
+    ref.read(expensesControllerProvider.notifier).reset();
+    ref.read(goalControllerProvider.notifier).reset();
+    ref.read(goalsControllerProvider.notifier).reset();
+
+    // 2. Clear cache onboarding repository
+    try {
+      ref.read(onboardingRepositoryProvider).clear();
+    } catch (_) {}
+
+    // 3. Clear cache purchase decision / Tahan Dulu
+    try {
+      ref.read(purchaseDecisionRepositoryProvider).clear();
+    } catch (_) {}
+
+    // 4. Invalidate semua data providers yang mengikat data user
+    ref.invalidate(onboardingRepositoryProvider);
+    ref.invalidate(userProvider);
+    ref.invalidate(summaryProvider);
+    ref.invalidate(profileUserProvider);
+    ref.invalidate(accountsProvider);
+    ref.invalidate(accountsOverviewProvider);
+    ref.invalidate(recentTransactionsProvider);
+    ref.invalidate(transactionsProvider);
+    ref.invalidate(goalsProvider);
+    ref.invalidate(goalsListProvider);
+    ref.invalidate(currentBudgetProvider);
+    ref.invalidate(budgetRepositoryProvider);
+    ref.invalidate(dashboardRepositoryProvider);
+    ref.invalidate(accountRepositoryProvider);
+    ref.invalidate(transactionRepositoryProvider);
+    ref.invalidate(goalRepositoryProvider);
+    ref.invalidate(purchaseDecisionRepositoryProvider);
+    ref.invalidate(dashboardDataProvider);
+    ref.invalidate(considerationsProvider);
+    ref.invalidate(notificationsProvider);
+    ref.invalidate(onboardingStatusProvider);
+    ref.invalidate(monthlyReportProvider);
+    ref.invalidate(financialPlanProvider);
+    ref.invalidate(onboardingPopupShownNotifierProvider);
+  }
+
+  /// Keluar sesi dan bersihkan seluruh data pengguna agar akun baru tidak mewarisi data lama.
   Future<void> logout() async {
     try {
       await ref.read(authRepositoryProvider).logout();
     } catch (_) {
       // Logout lokal tetap dilanjutkan walau repo gagal.
     }
+
+    _resetUserData();
+
     state = const AuthState.initial();
   }
 
@@ -185,7 +301,10 @@ class AuthController extends Notifier<AuthState> {
         loginMethod: 'email',
       );
       return true;
-    } catch (_) {
+    } catch (e) {
+      if (e is ApiException && e.statusCode == 401) {
+        await repo.logout();
+      }
       return false;
     }
   }

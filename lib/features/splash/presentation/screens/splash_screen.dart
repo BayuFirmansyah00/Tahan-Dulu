@@ -33,7 +33,15 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       await Future.delayed(const Duration(milliseconds: 1200) - elapsed);
     }
     if (!mounted) return;
-    context.go(restored ? AppRoutes.dashboard : AppRoutes.login);
+    if (!restored) {
+      context.go(AppRoutes.login);
+      return;
+    }
+    // Cek status onboarding dari user yang dipulihkan.
+    // Pengguna yang belum selesai onboarding diarahkan untuk melanjutkan.
+    final user = ref.read(authControllerProvider).user;
+    final isOnboarded = user?.isOnboarded ?? false;
+    context.go(isOnboarded ? AppRoutes.dashboard : AppRoutes.onboardingSalary);
   }
 
   @override

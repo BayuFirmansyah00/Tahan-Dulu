@@ -23,21 +23,11 @@ Future<void> _pumpToGoals(WidgetTester tester) async {
   await tester.pump();
   await _tapVisible(tester, find.text(AppStrings.loginWithEmail));
   await tester.pumpAndSettle();
-
-  for (var i = 0; i < 3; i++) {
-    await _tapVisible(
-      tester,
-      find.widgetWithText(ElevatedButton, AppStrings.continueButton),
-    );
+  // Langsung ke Dashboard; tutup popup onboarding bila muncul.
+  if (find.text(AppStrings.onboardingPopupLater).evaluate().isNotEmpty) {
+    await _tapVisible(tester, find.text(AppStrings.onboardingPopupLater));
     await tester.pumpAndSettle();
   }
-  await _tapVisible(
-    tester,
-    find.widgetWithText(ElevatedButton, AppStrings.doneButton),
-  );
-  await tester.pumpAndSettle();
-  await _tapVisible(tester, find.text(AppStrings.startAppButton));
-  await tester.pumpAndSettle();
   await _tapVisible(
     tester,
     find.descendant(

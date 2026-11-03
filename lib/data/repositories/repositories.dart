@@ -1,4 +1,6 @@
 import '../datasources/mock/mock_data.dart';
+import '../models/api_financial_instrument.dart';
+import '../models/api_recurring_transaction.dart';
 import '../models/app_notification.dart';
 import '../models/financial_account.dart';
 import '../models/financial_goal.dart';
@@ -29,20 +31,113 @@ abstract class AccountRepository {
   Future<FinancialAccount> addAccount(FinancialAccount account);
   Future<FinancialAccount> updateAccount(FinancialAccount account);
   Future<void> removeAccount(String id);
+
+  /// Transfer antar-akun milik pengguna yang sama.
+  Future<void> transfer({
+    required String fromId,
+    required String toId,
+    required double amount,
+    String? notes,
+    String? idempotencyKey,
+  });
+}
+
+/// Repository untuk data master tipe instrumen (dari instrument_types).
+/// Data ini dikelola admin melalui website, Flutter hanya membaca.
+abstract class InstrumentTypeRepository {
+  Future<List<ApiInstrumentType>> getInstrumentTypes();
 }
 
 abstract class TransactionRepository {
   Future<List<AppTransaction>> getRecentTransactions();
   Future<AppTransaction> addTransaction(AppTransaction transaction);
+
+  /// Detail satu transaksi.
+  Future<AppTransaction> getTransactionById(String id);
+
+  /// Daftar transaksi dengan filter opsional (dipakai halaman daftar transaksi).
+  Future<List<AppTransaction>> getTransactions({
+    String? type,
+    String? category,
+    int? instrumentId,
+    int? perPage,
+  });
+
+  /// Perbarui transaksi yang ada.
+  Future<AppTransaction> updateTransaction(AppTransaction transaction);
+
+  /// Hapus transaksi.
+  Future<void> deleteTransaction(String id);
 }
 
 abstract class GoalRepository {
   Future<List<FinancialGoal>> getGoals();
   Future<FinancialGoal> addGoal(FinancialGoal goal);
   Future<FinancialGoal> updateGoal(FinancialGoal goal);
+  Future<FinancialGoal> getGoalById(String id);
+  Future<void> deleteGoal(String id);
   Future<List<GoalDeposit>> getDeposits(String goalId);
   Future<GoalDeposit> addDeposit(GoalDeposit deposit);
+  Future<GoalDeposit> updateDeposit(GoalDeposit deposit);
+  Future<void> deleteDeposit(String id);
   Future<void> saveGoalOrder(List<String> orderedIds);
+}
+
+abstract class InvestmentRepository {
+  Future<List<FinancialAccount>> getInvestments();
+  Future<FinancialAccount> addInvestment(FinancialAccount investment);
+  Future<FinancialAccount> updateInvestment(FinancialAccount investment);
+  Future<void> removeInvestment(String id);
+  Future<List<FinancialGoal>> getInvestmentTransactions(String investmentId);
+}
+
+abstract class RecurringRepository {
+  Future<List<ApiRecurringTransaction>> getRecurringIncomes();
+  Future<List<ApiRecurringTransaction>> getRecurringExpenses();
+  Future<ApiRecurringTransaction> addRecurringIncome({
+    required String title,
+    required String category,
+    required double amount,
+    required String frequency,
+    required String nextDueDate,
+    required int instrumentId,
+    bool isActive,
+    bool makeAutomatic,
+  });
+  Future<ApiRecurringTransaction> addRecurringExpense({
+    required String title,
+    required String category,
+    required double amount,
+    required String frequency,
+    required String nextDueDate,
+    int? instrumentId,
+    bool isActive,
+    bool makeAutomatic,
+  });
+  Future<ApiRecurringTransaction> updateRecurringIncome({
+    required String id,
+    required String title,
+    required String category,
+    required double amount,
+    required String frequency,
+    required String nextDueDate,
+    int? instrumentId,
+    bool isActive,
+    bool makeAutomatic,
+  });
+  Future<ApiRecurringTransaction> updateRecurringExpense({
+    required String id,
+    required String title,
+    required String category,
+    required double amount,
+    required String frequency,
+    required String nextDueDate,
+    int? instrumentId,
+    bool isActive,
+    bool makeAutomatic,
+  });
+  Future<void> removeRecurringIncome(String id);
+  Future<void> removeRecurringExpense(String id);
 }
 
 abstract class PurchaseDecisionRepository {
@@ -53,10 +148,16 @@ abstract class PurchaseDecisionRepository {
   Future<PurchaseConsideration> updateConsideration(
     PurchaseConsideration item,
   );
+
+  Future<void> deleteConsideration(String id);
+
+  /// Bersihkan data / cache consideration
+  void clear();
 }
 
 abstract class NotificationRepository {
-  Future<List<AppNotification>> getNotifications();
+  Future<List<AppNotification>> getNotifications([dynamic filter]);
+  Future<int> getUnreadCount();
   Future<void> markAsRead(String id);
   Future<void> markAllAsRead();
   Future<List<ReminderPreference>> getPreferences();
@@ -98,6 +199,7 @@ class MockAccountRepository implements AccountRepository {
   MockAccountRepository(this._onboarding);
 
   final OnboardingRepository _onboarding;
+  final Map<String, ({int? bankId, String? bankSlug, String? bankName, String? bankLogoUrl})> _bankMeta = {};
 
   List<FinancialInstrument> get _items =>
       _onboarding.getOnboardingData()?.financialInstruments ?? const [];
@@ -124,13 +226,17 @@ class MockAccountRepository implements AccountRepository {
     }
   }
 
-  static FinancialAccount _toAccount(FinancialInstrument e) {
+  FinancialAccount _toAccount(FinancialInstrument e) {
     return FinancialAccount(
       id: e.id,
       name: e.name,
       type: _toAccountType(e.type),
       balance: e.initialBalance,
       institutionName: e.institutionName,
+      bankId: _bankMeta[e.id]?.bankId,
+      bankSlug: _bankMeta[e.id]?.bankSlug,
+      bankName: _bankMeta[e.id]?.bankName,
+      bankLogoUrl: _bankMeta[e.id]?.bankLogoUrl,
     );
   }
 
@@ -145,6 +251,17 @@ class MockAccountRepository implements AccountRepository {
 
   @override
   Future<FinancialAccount> addAccount(FinancialAccount account) async {
+    final res = await _addAccountInternal(account);
+    return res;
+  }
+
+  Future<FinancialAccount> _addAccountInternal(FinancialAccount account) async {
+    _bankMeta[account.id] = (
+      bankId: account.bankId,
+      bankSlug: account.bankSlug,
+      bankName: account.bankName,
+      bankLogoUrl: account.bankLogoUrl,
+    );
     final saved = await _onboarding.addInstrument(
       FinancialInstrument(
         id: account.id,
@@ -161,6 +278,12 @@ class MockAccountRepository implements AccountRepository {
   @override
   Future<FinancialAccount> updateAccount(FinancialAccount account) async {
     final existing = _items.firstWhere((e) => e.id == account.id);
+    _bankMeta[account.id] = (
+      bankId: account.bankId,
+      bankSlug: account.bankSlug,
+      bankName: account.bankName,
+      bankLogoUrl: account.bankLogoUrl,
+    );
     final saved = await _onboarding.updateInstrument(
       existing.copyWith(
         name: account.name,
@@ -174,12 +297,57 @@ class MockAccountRepository implements AccountRepository {
 
   @override
   Future<void> removeAccount(String id) {
+    _bankMeta.remove(id);
     return _onboarding.removeInstrument(id);
+  }
+
+  @override
+  Future<void> transfer({
+    required String fromId,
+    required String toId,
+    required double amount,
+    String? notes,
+    String? idempotencyKey,
+  }) async {
+    final fromAcc = _items.firstWhere((e) => e.id == fromId);
+    final toAcc = _items.firstWhere((e) => e.id == toId);
+    if (fromAcc.initialBalance < amount) {
+      throw Exception('Saldo instrumen sumber tidak mencukupi.');
+    }
+    await _onboarding.updateInstrument(
+      fromAcc.copyWith(initialBalance: fromAcc.initialBalance - amount),
+    );
+    await _onboarding.updateInstrument(
+      toAcc.copyWith(initialBalance: toAcc.initialBalance + amount),
+    );
   }
 }
 
+/// Mock data master tipe instrumen (untuk development tanpa backend).
+class MockInstrumentTypeRepository implements InstrumentTypeRepository {
+  @override
+  Future<List<ApiInstrumentType>> getInstrumentTypes() =>
+      mockDelay(const [
+        ApiInstrumentType(id: 1, name: 'Bank', type: 'bank', logoUrl: null),
+        ApiInstrumentType(id: 2, name: 'Bank Digital', type: 'digitalBank', logoUrl: null),
+        ApiInstrumentType(id: 3, name: 'E-Wallet', type: 'ewallet', logoUrl: null),
+      ]);
+}
+
 class MockTransactionRepository implements TransactionRepository {
-  final List<AppTransaction> _items = List.of(MockData.recentTransactions);
+  MockTransactionRepository([this._currentUserIdProvider]);
+
+  final String? Function()? _currentUserIdProvider;
+  String get _currentUserId => _currentUserIdProvider?.call() ?? 'default';
+
+  final Map<String, List<AppTransaction>> _userItems = {};
+
+  List<AppTransaction> get _items => _userItems.putIfAbsent(
+        _currentUserId,
+        () => _currentUserId == 'user-1' || _currentUserId == 'default'
+            ? List.of(MockData.recentTransactions)
+            : <AppTransaction>[],
+      );
 
   @override
   Future<List<AppTransaction>> getRecentTransactions() =>
@@ -190,11 +358,70 @@ class MockTransactionRepository implements TransactionRepository {
     _items.add(transaction);
     return mockDelay(transaction);
   }
+
+  @override
+  Future<AppTransaction> getTransactionById(String id) async {
+    await mockDelay(null);
+    final item = _items.firstWhere((e) => e.id == id);
+    return item;
+  }
+
+  @override
+  Future<List<AppTransaction>> getTransactions({
+    String? type,
+    String? category,
+    int? instrumentId,
+    int? perPage,
+  }) async {
+    await mockDelay(null);
+    var result = List.of(_items);
+    if (type != null) {
+      result = result.where((e) => e.type.toString() == 'TransactionType.$type').toList();
+    }
+    if (category != null) {
+      result = result.where((e) => e.category == category).toList();
+    }
+    if (perPage != null) {
+      result = result.take(perPage).toList();
+    }
+    return result;
+  }
+
+  @override
+  Future<AppTransaction> updateTransaction(AppTransaction transaction) async {
+    final index = _items.indexWhere((e) => e.id == transaction.id);
+    if (index == -1) throw StateError('Transaksi tidak ditemukan');
+    _items[index] = transaction;
+    return mockDelay(transaction);
+  }
+
+  @override
+  Future<void> deleteTransaction(String id) async {
+    _items.removeWhere((e) => e.id == id);
+    return mockDelay(null);
+  }
 }
 
 class MockGoalRepository implements GoalRepository {
-  final List<FinancialGoal> _goals = [MockData.investmentGoal];
-  final List<GoalDeposit> _deposits = [];
+  MockGoalRepository([this._currentUserIdProvider]);
+
+  final String? Function()? _currentUserIdProvider;
+  String get _currentUserId => _currentUserIdProvider?.call() ?? 'default';
+
+  final Map<String, List<FinancialGoal>> _userGoals = {};
+  final Map<String, List<GoalDeposit>> _userDeposits = {};
+
+  List<FinancialGoal> get _goals => _userGoals.putIfAbsent(
+        _currentUserId,
+        () => _currentUserId == 'user-1' || _currentUserId == 'default'
+            ? [MockData.investmentGoal]
+            : <FinancialGoal>[],
+      );
+
+  List<GoalDeposit> get _deposits => _userDeposits.putIfAbsent(
+        _currentUserId,
+        () => <GoalDeposit>[],
+      );
 
   @override
   Future<List<FinancialGoal>> getGoals() =>
@@ -252,12 +479,50 @@ class MockGoalRepository implements GoalRepository {
       ]);
     return mockDelay(null);
   }
+
+  @override
+  Future<FinancialGoal> getGoalById(String id) async {
+    await mockDelay(null);
+    final item = _goals.firstWhere((e) => e.id == id);
+    return item;
+  }
+
+  @override
+  Future<void> deleteGoal(String id) async {
+    _goals.removeWhere((e) => e.id == id);
+    return mockDelay(null);
+  }
+
+  @override
+  Future<GoalDeposit> updateDeposit(GoalDeposit deposit) async {
+    final index = _deposits.indexWhere((e) => e.id == deposit.id);
+    if (index == -1) throw StateError('Setoran tidak ditemukan');
+    _deposits[index] = deposit;
+    return mockDelay(deposit);
+  }
+
+  @override
+  Future<void> deleteDeposit(String id) async {
+    _deposits.removeWhere((e) => e.id == id);
+    return mockDelay(null);
+  }
 }
 
 class MockPurchaseDecisionRepository
     implements PurchaseDecisionRepository {
-  final List<PurchaseConsideration> _items =
-      List.of(MockData.tahanDuluItems);
+  MockPurchaseDecisionRepository([this._currentUserIdProvider]);
+
+  final String? Function()? _currentUserIdProvider;
+  String get _currentUserId => _currentUserIdProvider?.call() ?? 'default';
+
+  final Map<String, List<PurchaseConsideration>> _userItems = {};
+
+  List<PurchaseConsideration> get _items => _userItems.putIfAbsent(
+        _currentUserId,
+        () => _currentUserId == 'user-1' || _currentUserId == 'default'
+            ? List.of(MockData.tahanDuluItems)
+            : <PurchaseConsideration>[],
+      );
 
   @override
   Future<List<PurchaseConsideration>> getConsiderations() =>
@@ -279,6 +544,17 @@ class MockPurchaseDecisionRepository
     if (index == -1) throw StateError('Barang tidak ditemukan');
     _items[index] = item;
     return mockDelay(item);
+  }
+
+  @override
+  Future<void> deleteConsideration(String id) {
+    _items.removeWhere((e) => e.id == id);
+    return mockDelay(null);
+  }
+
+  @override
+  void clear() {
+    _userItems.clear();
   }
 }
 
@@ -368,8 +644,22 @@ class MockNotificationRepository implements NotificationRepository {
   }
 
   @override
-  Future<List<AppNotification>> getNotifications() =>
-      mockDelay(List.of(_items));
+  Future<List<AppNotification>> getNotifications([dynamic filter]) {
+    var result = List.of(_items);
+    if (filter != null) {
+      final name = filter is Enum ? filter.name : filter.toString();
+      if (name == 'unread') {
+        result = result.where((e) => !e.isRead).toList();
+      } else if (name == 'reminder') {
+        result = result.where((e) => e.isReminder).toList();
+      }
+    }
+    return mockDelay(result);
+  }
+
+  @override
+  Future<int> getUnreadCount() =>
+      mockDelay(_items.where((e) => !e.isRead).length);
 
   @override
   Future<void> markAsRead(String id) {

@@ -7,8 +7,9 @@ import '../../../../core/theme/app_colors.dart';
 /// pill putih, Home aktif (mint + dot), struk + badge Rp, tombol Catat
 /// lingkaran emerald terangkat, target-panah, profil outline.
 ///
-/// API publik, urutan menu, label, dan pemetaan indeks tidak berubah
-/// sehingga route, handler per layar, dan test yang ada tetap berlaku.
+/// Lima tab saja: 0 dashboard, 1 transaksi, 2 catat (tombol tengah),
+/// 3 goals, 4 profil. Tab Akun dan Laporan dihapus dari nav bawah
+/// (fitur tetap diakses lewat kartu dashboard dan route masing-masing).
 /// `currentIndex` null (layar tanpa tab) berarti tidak ada tab aktif.
 /// Sinkronisasi aktif mengikuti halaman aktual berdasarkan
 /// `currentIndex` yang dideklarasikan tiap layar (terverifikasi benar

@@ -137,4 +137,13 @@ void main() {
       throwsStateError,
     );
   });
+
+  test('deleteGoal removes goal', () async {
+    final repo = _repo();
+    await repo.addGoal(_goal('to-delete'));
+    expect((await repo.getGoals()).any((e) => e.id == 'to-delete'), isTrue);
+
+    await repo.deleteGoal('to-delete');
+    expect((await repo.getGoals()).any((e) => e.id == 'to-delete'), isFalse);
+  });
 }

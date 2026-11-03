@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/utils/finance_math.dart';
 import '../../../../core/utils/rupiah_input_formatter.dart';
+import '../../../../data/datasources/remote/api_client.dart';
 import '../../../../data/models/transaction_model.dart';
+import '../../../../data/providers/account_providers.dart';
 import '../../../../data/providers/app_providers.dart';
 import '../../../../data/providers/onboarding_providers.dart';
 import '../../../../data/providers/reports_providers.dart';
@@ -90,6 +92,10 @@ class TransactionFormController extends Notifier<TransactionDraft> {
 
   /// ID akun/instrumen yang valid saat ini.
   Set<String> _accountIds() {
+    final accounts = ref.read(accountsProvider).value;
+    if (accounts != null && accounts.isNotEmpty) {
+      return {for (final a in accounts) a.id};
+    }
     final data =
         ref.read(onboardingRepositoryProvider).getOnboardingData();
     return {
@@ -181,9 +187,18 @@ class TransactionFormController extends Notifier<TransactionDraft> {
             ),
           );
       _lastSaved = saved;
+      // Invalidate semua provider yang bergantung pada transaksi dan saldo akun:
       ref.invalidate(transactionsProvider);
+      ref.invalidate(recentTransactionsProvider);
+      ref.invalidate(accountsProvider);
+      ref.invalidate(accountsOverviewProvider);
+      ref.invalidate(currentBudgetProvider);
       ref.invalidate(monthlyReportProvider);
       return true;
+    } on ApiException {
+      // Error validasi dari backend (422) akan ditangani oleh UI melalui
+      // rethrow ke caller yang dapat membaca e.fieldErrors.
+      rethrow;
     } catch (_) {
       return false;
     } finally {
@@ -196,4 +211,3 @@ final transactionFormProvider =
     NotifierProvider<TransactionFormController, TransactionDraft>(
   TransactionFormController.new,
 );
-

@@ -354,6 +354,11 @@ abstract final class AppStrings {
   static const String dashboardSubtitle =
       'Tetap konsisten dengan rencana keuanganmu';
   static const String safeTodayTitle = 'UANG AMAN HARI INI';
+  static const String dailyAverageLimitPrefix = 'Batas rata-rata:';
+  static const String perDaySuffix = '/hari';
+  static const String todayOverspentBadge = 'Kelebihan jatah hari ini';
+  static const String todayRemainingDesc =
+      'Sisa jatah belanja kebutuhan pokok hari ini';
   static const String safeEstimateHint =
       'Estimasi berdasarkan rencana keuanganmu';
   static const String remainingBudgetLabel = 'Sisa budget bulan ini';
@@ -557,7 +562,11 @@ abstract final class AppStrings {
   static const String navTransactions = 'Transaksi';
   static const String navRecord = 'Catat';
   static const String navGoals = 'Tujuan';
+  static const String navAccounts = 'Akun';
+  static const String navReports = 'Laporan';
   static const String navProfile = 'Profil';
+
+  static const String saveGoalButton = 'Simpan Target';
 
   // Accounts (Tahap 9 — Akun Keuangan).
   static const String accountsTitle = 'Akun Keuangan';
@@ -568,6 +577,10 @@ abstract final class AppStrings {
   static const String addAccount = '+ Tambah Akun';
   static const String addAccountTitle = 'Tambah Akun';
   static const String chooseAccountType = 'Pilih jenis akun';
+  static const String chooseInstrumentType = 'Pilih tipe instrumen';
+  static const String instrumentTypeEmpty =
+      'Belum ada tipe instrumen. Hubungi admin untuk menambahkan data master.';
+  static const String instrumentTypeRequired = 'Tipe instrumen wajib dipilih.';
   static const String accountName = 'Nama Akun';
   static const String accountNameHint = 'cth. BCA';
   static const String accountTypeLabel = 'Jenis Akun';
@@ -582,6 +595,25 @@ abstract final class AppStrings {
   static const String recordedBalanceHint =
       'Saldo berdasarkan transaksi yang tercatat.';
   static const String transferAction = 'Transfer';
+  static const String transferTitle = 'Transfer Antar Akun';
+  static const String transferSubtitle =
+      'Pindahkan saldo antar akun keuangan Anda dengan aman dan konsisten.';
+  static const String transferSourceAccount = 'Akun Sumber';
+  static const String transferDestinationAccount = 'Akun Tujuan';
+  static const String transferAmount = 'Nominal Transfer';
+  static const String transferNotes = 'Catatan (Opsional)';
+  static const String transferNotesHint =
+      'Misal: Simpanan darurat, top-up e-wallet';
+  static const String transferSubmit = 'Konfirmasi Transfer';
+  static const String transferSuccess = 'Transfer berhasil dilakukan!';
+  static const String transferInsufficientBalance =
+      'Saldo akun sumber tidak mencukupi.';
+  static const String transferSameAccountError =
+      'Akun tujuan harus berbeda dengan akun sumber.';
+  static const String transferMinAccountsError =
+      'Anda membutuhkan minimal 2 akun aktif untuk melakukan transfer.';
+  static const String transferExplanation =
+      'Transfer internal tidak memotong anggaran kebutuhan atau mengubah total aset Anda.';
   static const String transferComingSoon =
       'Fitur transfer antar akun akan tersedia pada tahap berikutnya.';
   static const String editAccountTitle = 'Edit Akun';
@@ -757,6 +789,102 @@ abstract final class AppStrings {
   static const String editProfileCancel = 'Batal';
   static const String editProfileSaved = 'Profil berhasil diperbarui.';
   static const String editProfileFailed = 'Gagal menyimpan. Coba lagi.';
+
+  static const String editProfileMonthlyIncome = 'Gaji Bulanan';
+  static const String editProfileMonthlyIncomeHint = 'cth. 5000000';
+  static const String editProfileSalaryDay = 'Hari Gaji';
+  static const String editProfileSalaryDayHint = 'cth. 25';
+  static const String editProfileSaveFinancial = 'Simpan Informasi Keuangan';
+  static const String editProfileFinancialSaved = 'Informasi keuangan berhasil disimpan.';
+  static const String editProfileFinancialFailed = 'Gagal menyimpan informasi keuangan.';
+
+  // Onboarding invitation popup.
+  static const String onboardingPopupTitle = 'Lengkapi Profil Keuanganmu';
+  static const String onboardingPopupDescription =
+      'Yuk, lengkapi profil dan kebutuhan bulananmu agar TahanDulu '
+      'bisa membantu mengatur anggaran sesuai kondisi keuanganmu.';
+  static const String onboardingPopupCompleteNow = 'Lengkapi Sekarang';
+  static const String onboardingPopupLater = 'Nanti Saja';
+
+  // Investasi.
+  static const String investmentsTitle = 'Portofolio Investasi';
+  static const String investmentsSubtitle =
+      'Pantau dan kelola seluruh investasimu di satu tempat.';
+  static const String investmentsListTitle = 'Daftar Investasi';
+  static const String addInvestment = 'Tambah Investasi';
+  static const String addInvestmentTitle = 'Tambah Investasi';
+  static const String investmentTitle = 'Detail Investasi';
+  static const String investmentName = 'Nama Investasi';
+  static const String investmentNameHint = 'cth. Reksa Dana Pasar Uang';
+  static const String investmentNameRequired = 'Nama investasi wajib diisi.';
+  static const String investmentType = 'Jenis Investasi';
+  static const String investmentTypeLabel = 'Jenis';
+  static const String investmentTypeHint = 'cth. Saham, Reksa Dana, Obligasi';
+  static const String investmentAchieved = 'Nilai Capaian';
+  static const String investmentAchievedLabel = 'Nilai Capaian Saat Ini';
+  static const String investmentAchievedRequired = 'Nilai capaian wajib diisi.';
+  static const String investmentTarget = 'Target';
+  static const String investmentTargetLabel = 'Target (opsional)';
+  static const String saveInvestment = 'Simpan Investasi';
+  static const String emptyInvestments = 'Belum ada investasi';
+  static const String emptyInvestmentsHint = 'Mulai menambahkan portofolio investasi Anda.';
+
+  // Transaksi Berulang - Pemasukan.
+  static const String recurringIncomesTitle = 'Pemasukan Rutin';
+  static const String recurringIncomesSubtitle = 'Kelola pemasukan yang terjadi secara berulang.';
+  static const String recurringIncomesListTitle = 'Daftar Pemasukan Rutin';
+  static const String addRecurringIncome = 'Tambah Pemasukan Rutin';
+  static const String addRecurringIncomeTitle = 'Tambah Pemasukan Rutin';
+  static const String recurringIncomeTitle = 'Detail Pemasukan Rutin';
+  static const String recurringIncomeName = 'Nama Pemasukan';
+  static const String recurringIncomeNameHint = 'cth. Gaji Bulanan';
+  static const String recurringIncomeNameRequired = 'Nama pemasukan wajib diisi.';
+  static const String recurringIncomeCategory = 'Kategori';
+  static const String recurringIncomeCategoryHint = 'cth. Gaji Utama';
+  static const String recurringIncomeCategoryRequired = 'Kategori wajib diisi.';
+  static const String recurringIncomeAmount = 'Jumlah';
+  static const String recurringIncomeAmountRequired = 'Jumlah harus lebih dari 0.';
+  static const String recurringIncomeFrequency = 'Frekuensi';
+  static const String recurringIncomeNextDueDate = 'Tanggal Jatuh Tempo';
+  static const String recurringIncomeNextDueDateLabel = 'Tanggal Jatuh Tempo';
+  static const String recurringIncomeNextDueDateRequired = 'Tanggal jatuh tempo wajib diisi.';
+  static const String recurringIncomeInstrument = 'Instrumen';
+  static const String recurringIncomeInstrumentEmpty = 'Belum ada instrumen. Tambah akun terlebih dahulu.';
+  static const String recurringIncomeInstrumentRequired = 'Instrumen wajib dipilih.';
+  static const String saveRecurringIncome = 'Simpan Pemasukan Rutin';
+
+  // Transaksi Berulang - Pengeluaran.
+  static const String recurringExpensesTitle = 'Pengeluaran Rutin';
+  static const String recurringExpensesSubtitle = 'Kelola pengeluaran & tagihan yang terjadi secara berulang.';
+  static const String recurringExpensesListTitle = 'Daftar Pengeluaran Rutin';
+  static const String addRecurringExpense = 'Tambah Pengeluaran Rutin';
+  static const String addRecurringExpenseTitle = 'Tambah Pengeluaran Rutin';
+  static const String recurringExpenseTitle = 'Detail Pengeluaran Rutin';
+  static const String recurringExpenseName = 'Nama Pengeluaran';
+  static const String recurringExpenseNameHint = 'cth. Langganan Netflix';
+  static const String recurringExpenseNameRequired = 'Nama pengeluaran wajib diisi.';
+  static const String recurringExpenseCategory = 'Kategori';
+  static const String recurringExpenseCategoryHint = 'cth. Hiburan';
+  static const String recurringExpenseCategoryRequired = 'Kategori wajib diisi.';
+  static const String recurringExpenseAmount = 'Jumlah';
+  static const String recurringExpenseAmountRequired = 'Jumlah harus lebih dari 0.';
+  static const String recurringExpenseFrequency = 'Frekuensi';
+  static const String recurringExpenseNextDueDate = 'Tanggal Jatuh Tempo';
+  static const String recurringExpenseNextDueDateLabel = 'Tanggal Jatuh Tempo';
+  static const String recurringExpenseNextDueDateRequired = 'Tanggal jatuh tempo wajib diisi.';
+  static const String recurringExpenseInstrument = 'Instrumen (opsional)';
+  static const String recurringExpenseInstrumentEmpty = 'Belum ada instrumen.';
+  static const String recurringExpenseInstrumentNone = 'Tidak ada';
+  static const String saveRecurringExpense = 'Simpan Pengeluaran Rutin';
+
+  static const String active = 'Aktif';
+  static const String inactive = 'Tidak Aktif';
+
+  static const String emptyRecurringIncomes = 'Belum ada pemasukan rutin';
+  static const String emptyRecurringIncomesHint = 'Mulai menambahkan pemasukan rutin Anda.';
+
+  static const String emptyRecurringExpenses = 'Belum ada pengeluaran rutin';
+  static const String emptyRecurringExpensesHint = 'Mulai menambahkan pengeluaran rutin Anda.';
 
   // Pengaturan aplikasi.
   static const String appSettingsTitle = 'Pengaturan Aplikasi';

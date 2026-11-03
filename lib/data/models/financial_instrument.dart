@@ -13,6 +13,7 @@ class FinancialInstrument extends Equatable {
     required this.id,
     required this.name,
     required this.type,
+    this.typeId,
     required this.initialBalance,
     this.institutionName,
     this.monthlyAdminFee = 0,
@@ -23,6 +24,9 @@ class FinancialInstrument extends Equatable {
   final String id;
   final String name;
   final InstrumentType type;
+
+  /// ID tipe instrumen dari instrument_types Laravel (type_id).
+  final int? typeId;
 
   /// Saldo awal (numeric). Contoh: 5000000.
   final double initialBalance;
@@ -42,6 +46,7 @@ class FinancialInstrument extends Equatable {
     String? id,
     String? name,
     InstrumentType? type,
+    int? typeId,
     double? initialBalance,
     String? institutionName,
     double? monthlyAdminFee,
@@ -52,6 +57,7 @@ class FinancialInstrument extends Equatable {
       id: id ?? this.id,
       name: name ?? this.name,
       type: type ?? this.type,
+      typeId: typeId ?? this.typeId,
       initialBalance: initialBalance ?? this.initialBalance,
       institutionName: institutionName ?? this.institutionName,
       monthlyAdminFee: monthlyAdminFee ?? this.monthlyAdminFee,
@@ -65,6 +71,7 @@ class FinancialInstrument extends Equatable {
         id,
         name,
         type,
+        typeId,
         initialBalance,
         institutionName,
         monthlyAdminFee,
@@ -72,3 +79,4 @@ class FinancialInstrument extends Equatable {
         isSelected,
       ];
 }
+

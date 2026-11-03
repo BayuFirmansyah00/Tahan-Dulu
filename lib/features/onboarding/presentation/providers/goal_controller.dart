@@ -2,7 +2,6 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/utils/finance_math.dart';
-import '../../../../data/datasources/mock/mock_data.dart';
 import '../../../../data/models/financial_goal.dart';
 import '../../../../data/providers/onboarding_providers.dart';
 
@@ -60,12 +59,12 @@ class GoalController extends Notifier<GoalState> {
   GoalState build() {
     final saved =
         ref.read(onboardingRepositoryProvider).getOnboardingData();
-    final goal = saved?.financialGoal ?? MockData.defaultGoal;
+    final goal = saved?.financialGoal;
     return GoalState(
-      name: goal.name,
-      category: goal.category,
-      targetAmount: goal.targetAmount,
-      targetDate: goal.deadline ?? DateTime(2027, 6, 30),
+      name: goal?.name ?? '',
+      category: goal?.category ?? GoalCategory.investment,
+      targetAmount: goal?.targetAmount ?? 0,
+      targetDate: goal?.deadline ?? DateTime(2027, 6, 30),
     );
   }
 
@@ -106,6 +105,16 @@ class GoalController extends Notifier<GoalState> {
       state = state.copyWith(isSaving: false);
       return false;
     }
+  }
+
+  /// Reset state (digunakan saat logout / ganti akun).
+  void reset() {
+    state = GoalState(
+      name: '',
+      category: GoalCategory.investment,
+      targetAmount: 0,
+      targetDate: DateTime(2027, 6, 30),
+    );
   }
 }
 

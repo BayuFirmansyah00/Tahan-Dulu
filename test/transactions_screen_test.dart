@@ -19,13 +19,36 @@ class _EmptyTransactionRepo implements TransactionRepository {
   final List<AppTransaction> items = [];
 
   @override
-  Future<List<AppTransaction>> getRecentTransactions() async =>
-      List.of(items);
+  Future<List<AppTransaction>> getRecentTransactions() async => List.of(items);
 
   @override
   Future<AppTransaction> addTransaction(AppTransaction transaction) async {
     items.add(transaction);
     return transaction;
+  }
+
+  @override
+  Future<AppTransaction> getTransactionById(String id) async =>
+      items.firstWhere((t) => t.id == id);
+
+  @override
+  Future<List<AppTransaction>> getTransactions({
+    String? type,
+    String? category,
+    int? instrumentId,
+    int? perPage,
+  }) async => List.of(items);
+
+  @override
+  Future<AppTransaction> updateTransaction(AppTransaction transaction) async {
+    final idx = items.indexWhere((t) => t.id == transaction.id);
+    if (idx != -1) items[idx] = transaction;
+    return transaction;
+  }
+
+  @override
+  Future<void> deleteTransaction(String id) async {
+    items.removeWhere((t) => t.id == id);
   }
 }
 
@@ -46,10 +69,7 @@ class _NoAccountOnboardingRepo implements OnboardingRepository {
     required double monthlyIncome,
     required int salaryDay,
   }) async {
-    _data = _data!.copyWith(
-      monthlyIncome: monthlyIncome,
-      salaryDay: salaryDay,
-    );
+    _data = _data!.copyWith(monthlyIncome: monthlyIncome, salaryDay: salaryDay);
     return _data!;
   }
 
@@ -97,9 +117,15 @@ class _NoAccountOnboardingRepo implements OnboardingRepository {
   Future<void> removeInstrument(String id) async {
     _data = _data!.copyWith(
       financialInstruments: [
-        for (final e in _data!.financialInstruments) if (e.id != id) e,
+        for (final e in _data!.financialInstruments)
+          if (e.id != id) e,
       ],
     );
+  }
+
+  @override
+  void clear() {
+    _data = null;
   }
 }
 
@@ -112,16 +138,11 @@ Future<void> _tapVisible(WidgetTester tester, Finder finder) async {
 
 /// Judul AppBar (membedakan dari tombol berlabel sama di body).
 Finder _appBarTitle(WidgetTester tester, String text) {
-  return find.descendant(
-    of: find.byType(AppBar),
-    matching: find.text(text),
-  );
+  return find.descendant(of: find.byType(AppBar), matching: find.text(text));
 }
 
 Future<void> _pumpApp(WidgetTester tester) async {
-  await tester.pumpWidget(
-    const ProviderScope(child: TahanDuluApp()),
-  );
+  await tester.pumpWidget(const ProviderScope(child: TahanDuluApp()));
   await tester.pump(const Duration(milliseconds: 1300));
   await tester.pump();
   // Login mock lalu selesaikan onboarding sampai dashboard.
@@ -131,21 +152,11 @@ Future<void> _pumpApp(WidgetTester tester) async {
   await tester.pump();
   await _tapVisible(tester, find.text(AppStrings.loginWithEmail));
   await tester.pumpAndSettle();
-
-  for (var i = 0; i < 3; i++) {
-    await _tapVisible(
-      tester,
-      find.widgetWithText(ElevatedButton, AppStrings.continueButton),
-    );
+  // Langsung ke Dashboard; tutup popup onboarding bila muncul.
+  if (find.text(AppStrings.onboardingPopupLater).evaluate().isNotEmpty) {
+    await _tapVisible(tester, find.text(AppStrings.onboardingPopupLater));
     await tester.pumpAndSettle();
   }
-  await _tapVisible(
-    tester,
-    find.widgetWithText(ElevatedButton, AppStrings.doneButton),
-  );
-  await tester.pumpAndSettle();
-  await _tapVisible(tester, find.text(AppStrings.startAppButton));
-  await tester.pumpAndSettle();
   expect(find.text(AppStrings.dashboardGreeting), findsOneWidget);
 }
 
@@ -194,9 +205,7 @@ void main() {
     expect(top5 < top3 && top3 < top1, isTrue);
   });
 
-  testWidgets('Filters show only matching type', (
-    WidgetTester tester,
-  ) async {
+  testWidgets('Filters show only matching type', (WidgetTester tester) async {
     await _pumpApp(tester);
     await _tapNavTransactions(tester);
 
@@ -219,9 +228,7 @@ void main() {
     final repo = _EmptyTransactionRepo();
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [
-          transactionRepositoryProvider.overrideWithValue(repo),
-        ],
+        overrides: [transactionRepositoryProvider.overrideWithValue(repo)],
         child: const TahanDuluApp(),
       ),
     );
@@ -232,20 +239,6 @@ void main() {
     await tester.enterText(loginFields.at(1), 'rahasia123');
     await tester.pump();
     await _tapVisible(tester, find.text(AppStrings.loginWithEmail));
-    await tester.pumpAndSettle();
-    for (var i = 0; i < 3; i++) {
-      await _tapVisible(
-        tester,
-        find.widgetWithText(ElevatedButton, AppStrings.continueButton),
-      );
-      await tester.pumpAndSettle();
-    }
-    await _tapVisible(
-      tester,
-      find.widgetWithText(ElevatedButton, AppStrings.doneButton),
-    );
-    await tester.pumpAndSettle();
-    await _tapVisible(tester, find.text(AppStrings.startAppButton));
     await tester.pumpAndSettle();
     await _tapVisible(tester, find.text(AppStrings.navTransactions));
     await tester.pumpAndSettle();
@@ -262,9 +255,7 @@ void main() {
     final repo = _EmptyTransactionRepo();
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [
-          transactionRepositoryProvider.overrideWithValue(repo),
-        ],
+        overrides: [transactionRepositoryProvider.overrideWithValue(repo)],
         child: const TahanDuluApp(),
       ),
     );
@@ -275,20 +266,6 @@ void main() {
     await tester.enterText(loginFields.at(1), 'rahasia123');
     await tester.pump();
     await _tapVisible(tester, find.text(AppStrings.loginWithEmail));
-    await tester.pumpAndSettle();
-    for (var i = 0; i < 3; i++) {
-      await _tapVisible(
-        tester,
-        find.widgetWithText(ElevatedButton, AppStrings.continueButton),
-      );
-      await tester.pumpAndSettle();
-    }
-    await _tapVisible(
-      tester,
-      find.widgetWithText(ElevatedButton, AppStrings.doneButton),
-    );
-    await tester.pumpAndSettle();
-    await _tapVisible(tester, find.text(AppStrings.startAppButton));
     await tester.pumpAndSettle();
     await _tapVisible(tester, find.text(AppStrings.navTransactions));
     await tester.pumpAndSettle();
@@ -307,9 +284,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('Add button opens manual form', (
-    WidgetTester tester,
-  ) async {
+  testWidgets('Add button opens manual form', (WidgetTester tester) async {
     await _pumpApp(tester);
     await _tapNavTransactions(tester);
 
@@ -414,21 +389,21 @@ void main() {
     expect(find.text('-Rp41.000'), findsOneWidget);
   });
 
-  testWidgets('Bottom nav Catat opens form', (
-    WidgetTester tester,
-  ) async {
+  testWidgets('Bottom nav Catat opens record method and navigates to form', (WidgetTester tester) async {
     await _pumpApp(tester);
     await _tapNavTransactions(tester);
 
     await _tapVisible(tester, find.text(AppStrings.navRecord));
     await tester.pumpAndSettle();
 
+    expect(find.text('Pilih Metode Catat'), findsOneWidget);
+    await _tapVisible(tester, find.text('Input Manual'));
+    await tester.pumpAndSettle();
+
     expect(find.text(AppStrings.reviewAction), findsOneWidget);
   });
 
-  testWidgets('Back from form returns to history', (
-    WidgetTester tester,
-  ) async {
+  testWidgets('Back from form returns to history', (WidgetTester tester) async {
     await _pumpApp(tester);
     await _tapNavTransactions(tester);
     await _tapVisible(tester, find.byIcon(Icons.add).first);

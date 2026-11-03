@@ -58,6 +58,42 @@ class _SeedTxRepo implements TransactionRepository {
     items.add(transaction);
     return transaction;
   }
+
+  @override
+  Future<AppTransaction> getTransactionById(String id) async =>
+      items.firstWhere((t) => t.id == id);
+
+  @override
+  Future<List<AppTransaction>> getTransactions({
+    String? type,
+    String? category,
+    int? instrumentId,
+    int? perPage,
+  }) async {
+    var result = List.of(items);
+    if (type != null) {
+      result = result.where((t) => t.type.toString() == 'TransactionType.$type').toList();
+    }
+    if (category != null) {
+      result = result.where((t) => t.category == category).toList();
+    }
+    if (perPage != null) {
+      result = result.take(perPage).toList();
+    }
+    return result;
+  }
+
+  @override
+  Future<AppTransaction> updateTransaction(AppTransaction transaction) async {
+    final idx = items.indexWhere((t) => t.id == transaction.id);
+    if (idx != -1) items[idx] = transaction;
+    return transaction;
+  }
+
+  @override
+  Future<void> deleteTransaction(String id) async {
+    items.removeWhere((t) => t.id == id);
+  }
 }
 
 void main() {

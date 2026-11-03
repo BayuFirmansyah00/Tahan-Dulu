@@ -12,6 +12,7 @@ Future<void> _tapVisible(WidgetTester tester, Finder finder) async {
   await tester.pump();
 }
 
+/// Login mock -> Dashboard -> popup onboarding -> layar gaji.
 Future<void> _pumpToSalary(WidgetTester tester) async {
   await tester.pumpWidget(const ProviderScope(child: TahanDuluApp()));
   await tester.pump(const Duration(milliseconds: 1300));
@@ -23,7 +24,12 @@ Future<void> _pumpToSalary(WidgetTester tester) async {
   await tester.pump();
   await _tapVisible(tester, find.text(AppStrings.loginWithEmail));
   await tester.pumpAndSettle();
-  // Setelah login langsung di No.3 (halaman intro dihapus).
+  // Langsung ke Dashboard; popup onboarding muncul karena onboarding belum selesai.
+  // Tekan "Lengkapi Sekarang" untuk membuka layar gaji.
+  if (find.text(AppStrings.onboardingPopupCompleteNow).evaluate().isNotEmpty) {
+    await _tapVisible(tester, find.text(AppStrings.onboardingPopupCompleteNow));
+    await tester.pumpAndSettle();
+  }
   expect(find.text(AppStrings.salaryTitle), findsOneWidget);
 }
 

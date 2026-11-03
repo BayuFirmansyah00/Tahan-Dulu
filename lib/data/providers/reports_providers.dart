@@ -58,11 +58,20 @@ final monthlyReportProvider =
   final goalRepo = ref.watch(goalRepositoryProvider);
   final goals = await goalRepo.getGoals();
 
+  bool isTransferCategory(String? category) {
+    final cat = category?.toLowerCase().trim();
+    return cat == 'transfer' ||
+        cat == 'transfer reversal' ||
+        cat == 'internal_transfer';
+  }
+
   double income = 0;
   double expense = 0;
   final byCategory = <String, double>{};
   for (final t in transactions) {
     if (!_inMonth(t.date, month)) continue;
+    if (isTransferCategory(t.category)) continue;
+
     if (t.type == TransactionType.income) {
       income += t.amount;
     } else {
@@ -79,6 +88,8 @@ final monthlyReportProvider =
   double prevExpense = 0;
   for (final t in transactions) {
     if (!_inMonth(t.date, prev)) continue;
+    if (isTransferCategory(t.category)) continue;
+
     if (t.type == TransactionType.income) {
       prevIncome += t.amount;
     } else {

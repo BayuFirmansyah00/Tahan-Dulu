@@ -66,5 +66,14 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<!-- Permissions for Voice Input and Receipt Scanning -->
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Aplikasi membutuhkan izin mikrofon untuk merekam suara pencatatan transaksi secara langsung.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Aplikasi membutuhkan izin pengenalan suara untuk mengonversi ucapan transaksi menjadi teks.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Aplikasi membutuhkan izin kamera untuk memotret fisik struk belanja.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Aplikasi membutuhkan izin galeri untuk memilih foto struk belanja yang ingin dipindai.</string>
 </dict>
 </plist>

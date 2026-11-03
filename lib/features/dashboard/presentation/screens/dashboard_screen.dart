@@ -15,6 +15,7 @@ import '../../../../data/models/financial_goal.dart';
 import '../../../../data/models/transaction_model.dart';
 import '../../../../data/providers/app_providers.dart';
 import '../../../../data/providers/dashboard_providers.dart';
+import '../../../onboarding/presentation/widgets/onboarding_invitation_popup.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../transactions/presentation/providers/transactions_controller.dart';
 import '../widgets/dashboard_bottom_nav.dart';
@@ -56,8 +57,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       case 0:
         break;
       case 1:
-      case 2:
         context.push(AppRoutes.transactions);
+      case 2:
+        context.push(AppRoutes.transactionRecordMethod);
       case 3:
         context.push(AppRoutes.goals);
       case 4:
@@ -89,14 +91,26 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       ),
       body: SafeArea(
         child: data.when(
-          data: (d) => _Body(
-            data: d,
-            recent: recent,
-            obscured: _obscured,
-            onToggleObscure: () =>
-                setState(() => _obscured = !_obscured),
-            onNav: (i) => _onNav(i, context),
-            onRecord: (t) => _record(context, t),
+          data: (d) => Stack(
+            children: [
+              _Body(
+                data: d,
+                recent: recent,
+                obscured: _obscured,
+                onToggleObscure: () =>
+                    setState(() => _obscured = !_obscured),
+                onNav: (i) => _onNav(i, context),
+                onRecord: (t) => _record(context, t),
+                onRefresh: () async {
+                  ref.invalidate(dashboardDataProvider);
+                  ref.invalidate(accountsProvider);
+                  ref.invalidate(transactionsProvider);
+                  ref.invalidate(recentTransactionsProvider);
+                  ref.invalidate(currentBudgetProvider);
+                },
+              ),
+              const OnboardingInvitationPopup(),
+            ],
           ),
           loading: () => const AppLoading(),
           error: (error, _) => AppErrorState(onRetry: () => ref.invalidate(dashboardDataProvider)),
@@ -114,6 +128,7 @@ class _Body extends StatelessWidget {
     required this.onToggleObscure,
     required this.onNav,
     required this.onRecord,
+    required this.onRefresh,
   });
 
   final DashboardData data;
@@ -122,17 +137,21 @@ class _Body extends StatelessWidget {
   final VoidCallback onToggleObscure;
   final ValueChanged<int> onNav;
   final ValueChanged<TransactionType> onRecord;
+  final Future<void> Function() onRefresh;
 
   @override
   Widget build(BuildContext context) {
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 480),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
+        child: RefreshIndicator(
+          onRefresh: onRefresh,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
               _Header(data: data),
               const SizedBox(height: 12),
               GestureDetector(
@@ -247,7 +266,8 @@ class _Body extends StatelessWidget {
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 }
 
@@ -423,12 +443,46 @@ class _HeroCard extends StatelessWidget {
                             ),
                             maxLines: 1,
                             style: textTheme.displayLarge?.copyWith(
-                              color: Colors.white,
+                              color: data.isTodayOverspent || data.safeDaily < 0
+                                  ? const Color(0xFFFFD2D2)
+                                  : Colors.white,
                               fontSize: 36,
                               fontWeight: FontWeight.w800,
                             ),
                           ),
                         ),
+                        if (data.isTodayOverspent || data.safeDaily < 0) ...[
+                          const SizedBox(height: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFD32F2F),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              AppStrings.todayOverspentBadge,
+                              style: textTheme.labelSmall?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 10,
+                              ),
+                            ),
+                          ),
+                        ],
+                        if (data.safeDailyAverage > 0) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            '${AppStrings.dailyAverageLimitPrefix} ${CurrencyFormatter.formatCompact(data.safeDailyAverage)}${AppStrings.perDaySuffix}',
+                            style: textTheme.labelSmall?.copyWith(
+                              color: Colors.white.withValues(alpha: 0.9),
+                              fontWeight: FontWeight.w500,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
                         const SizedBox(height: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(

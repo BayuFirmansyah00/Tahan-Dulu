@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:tahan_dulu/app.dart';
 import 'package:tahan_dulu/core/constants/app_strings.dart';
+import 'package:tahan_dulu/features/dashboard/presentation/widgets/dashboard_bottom_nav.dart';
 
 /// No.5 — Pengeluaran Rutin (mock repository, tanpa backend).
 Future<void> _tapVisible(WidgetTester tester, Finder finder) async {
@@ -13,7 +14,7 @@ Future<void> _tapVisible(WidgetTester tester, Finder finder) async {
   await tester.pump();
 }
 
-/// Login mock -> salary -> Lanjut -> instruments -> Lanjut -> expenses.
+/// Login mock -> Dashboard (onboarding kini opsional via popup).
 Future<void> _pumpToExpenses(WidgetTester tester) async {
   await tester.pumpWidget(const ProviderScope(child: TahanDuluApp()));
   await tester.pump(const Duration(milliseconds: 1300));
@@ -24,18 +25,22 @@ Future<void> _pumpToExpenses(WidgetTester tester) async {
   await tester.pump();
   await _tapVisible(tester, find.text(AppStrings.loginWithEmail));
   await tester.pumpAndSettle();
-  expect(find.text(AppStrings.salaryTitle), findsOneWidget);
-
+  // Langsung ke Dashboard; tutup popup onboarding bila muncul.
+  if (find.text(AppStrings.onboardingPopupLater).evaluate().isNotEmpty) {
+    await _tapVisible(tester, find.text(AppStrings.onboardingPopupLater));
+    await tester.pumpAndSettle();
+  }
   await _tapVisible(
     tester,
-    find.widgetWithText(ElevatedButton, AppStrings.continueButton),
+    find.descendant(
+      of: find.byType(DashboardBottomNav),
+      matching: find.text(AppStrings.navReports),
+    ),
   );
   await tester.pumpAndSettle();
-  expect(find.text(AppStrings.instrumentsTitle), findsOneWidget);
-
   await _tapVisible(
     tester,
-    find.widgetWithText(ElevatedButton, AppStrings.continueButton),
+    find.text(AppStrings.dashboardSeeReport),
   );
   await tester.pumpAndSettle();
   expect(find.text(AppStrings.expensesTitle), findsOneWidget);

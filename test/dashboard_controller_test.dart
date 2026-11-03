@@ -90,6 +90,11 @@ class _EmptyOnboardingRepo implements OnboardingRepository {
       ],
     );
   }
+
+  @override
+  void clear() {
+    _data = null;
+  }
 }
 
 DateTime _previousMonth(DateTime now) =>

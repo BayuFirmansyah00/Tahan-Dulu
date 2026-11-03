@@ -11,32 +11,44 @@ import '../../../../core/utils/rupiah_input_formatter.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_icons.dart';
 import '../../../../core/widgets/app_text_field.dart';
+import '../../../../data/models/financial_account.dart';
 import '../../../../data/models/financial_instrument.dart';
 import '../../../../data/models/transaction_model.dart';
+import '../../../../data/providers/app_providers.dart';
 import '../../../../data/providers/onboarding_providers.dart';
 import '../providers/transactions_controller.dart';
 import '../utils/transaction_categories.dart';
 
-/// Label jenis instrumen untuk dropdown akun.
-String _instrumentTypeLabel(InstrumentType type) {
+AccountType _toAccountType(InstrumentType type) {
   switch (type) {
     case InstrumentType.bank:
-      return AppStrings.typeBank;
+      return AccountType.bank;
     case InstrumentType.digitalBank:
-      return AppStrings.typeDigitalBank;
+      return AccountType.digitalBank;
     case InstrumentType.ewallet:
+      return AccountType.ewallet;
+  }
+}
+
+String _accountTypeLabel(AccountType type) {
+  switch (type) {
+    case AccountType.bank:
+      return AppStrings.typeBank;
+    case AccountType.digitalBank:
+      return AppStrings.typeDigitalBank;
+    case AccountType.ewallet:
       return AppStrings.typeEWallet;
   }
 }
 
 /// "BCA — Bank": nama akun + institusi bila ada dan berbeda, jika tidak
 /// label jenis. Memudahkan bedakan beberapa rekening sejenis.
-String _accountOptionLabel(FinancialInstrument instrument) {
-  final institution = instrument.institutionName?.trim() ?? '';
-  final suffix = institution.isNotEmpty && institution != instrument.name
+String _accountOptionLabel(FinancialAccount account) {
+  final institution = account.institutionName?.trim() ?? '';
+  final suffix = institution.isNotEmpty && institution != account.name
       ? institution
-      : _instrumentTypeLabel(instrument.type);
-  return '${instrument.name} — $suffix';
+      : _accountTypeLabel(account.type);
+  return '${account.name} — $suffix';
 }
 
 /// Form input manual: jenis, nominal, kategori, akun, tanggal, catatan.
@@ -121,13 +133,27 @@ class _TransactionFormScreenState
     final draft = ref.watch(transactionFormProvider);
     final notifier = ref.read(transactionFormProvider.notifier);
     final textTheme = Theme.of(context).textTheme;
-    final data =
-        ref.watch(onboardingRepositoryProvider).getOnboardingData();
-    final instruments = data?.financialInstruments ?? const [];
-    final ids = {for (final e in instruments) e.id};
+    final accountsAsync = ref.watch(accountsProvider);
+    final accounts = accountsAsync.maybeWhen(
+      data: (items) => items,
+      orElse: () {
+        final data =
+            ref.watch(onboardingRepositoryProvider).getOnboardingData();
+        return (data?.financialInstruments ?? const [])
+            .map((e) => FinancialAccount(
+                  id: e.id,
+                  name: e.name,
+                  type: _toAccountType(e.type),
+                  balance: e.initialBalance,
+                  institutionName: e.institutionName,
+                ))
+            .toList();
+      },
+    );
+    final ids = {for (final e in accounts) e.id};
     final showAmountError = _attempted && !draft.isAmountValid;
     final showAccountError =
-        _attempted && instruments.isNotEmpty && !draft.isAccountValid(ids);
+        _attempted && accounts.isNotEmpty && !draft.isAccountValid(ids);
 
     return Scaffold(
       appBar: AppBar(title: const Text(AppStrings.addTransaction)),
@@ -221,7 +247,7 @@ class _TransactionFormScreenState
                           style: textTheme.titleMedium,
                         ),
                         const SizedBox(height: 8),
-                        if (instruments.isEmpty)
+                        if (accounts.isEmpty)
                           _NoAccountBanner()
                         else
                           DropdownButtonFormField<String>(
@@ -232,7 +258,7 @@ class _TransactionFormScreenState
                             hint:
                                 const Text(AppStrings.accountHint),
                             items: [
-                              for (final e in instruments)
+                              for (final e in accounts)
                                 DropdownMenuItem(
                                   value: e.id,
                                   child: Text(
@@ -301,7 +327,7 @@ class _TransactionFormScreenState
                   child: AppButton(
                     label: AppStrings.reviewAction,
                     onPressed: () =>
-                        _review(ids, instruments.isNotEmpty),
+                        _review(ids, accounts.isNotEmpty),
                   ),
                 ),
               ],

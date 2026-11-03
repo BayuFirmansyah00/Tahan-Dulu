@@ -76,6 +76,11 @@ class ExpensesController extends Notifier<ExpensesState> {
       return false;
     }
   }
+
+  /// Reset state (digunakan saat logout / ganti akun).
+  void reset() {
+    state = ExpensesState(expenses: const []);
+  }
 }
 
 final expensesControllerProvider =

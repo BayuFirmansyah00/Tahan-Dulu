@@ -37,9 +37,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     super.dispose();
   }
 
-  void _goOnboarding(AuthState? prev, AuthState next) {
+  void _goDashboard(AuthState? prev, AuthState next) {
     if (next.status == AuthStatus.authenticated) {
-      context.go(AppRoutes.onboardingSalary);
+      // Cek status onboarding: pengguna yang belum selesai diarahkan ke onboarding,
+      // pengguna yang sudah selesai langsung masuk Dashboard.
+      final isOnboarded = next.user?.isOnboarded ?? false;
+      context.go(isOnboarded ? AppRoutes.dashboard : AppRoutes.onboardingSalary);
     }
   }
 
@@ -69,7 +72,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<AuthState>(authControllerProvider, _goOnboarding);
+    ref.listen<AuthState>(authControllerProvider, _goDashboard);
     final authState = ref.watch(authControllerProvider);
     final textTheme = Theme.of(context).textTheme;
 
@@ -118,6 +121,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 invalidMessage: AppStrings.emailInvalid,
               ),
             ),
+            if (authState.hasFieldError('email')) ...[
+              const SizedBox(height: 6),
+              _FieldError(text: authState.fieldErrors!['email']!.first),
+            ],
             const SizedBox(height: 16),
             AppTextField(
               controller: _passwordController,
@@ -136,6 +143,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               validator: (v) =>
                   Validators.required(v, AppStrings.passwordRequired),
             ),
+            if (authState.hasFieldError('password')) ...[
+              const SizedBox(height: 6),
+              _FieldError(text: authState.fieldErrors!['password']!.first),
+            ],
             const SizedBox(height: 20),
             AppButton(
               label: AppStrings.loginWithEmail,
@@ -221,6 +232,22 @@ class _GoogleBadge extends StatelessWidget {
       height: 24,
       fit: BoxFit.contain,
       alignment: Alignment.center,
+    );
+  }
+}
+
+class _FieldError extends StatelessWidget {
+  const _FieldError({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: Theme.of(context).colorScheme.error,
+          ),
     );
   }
 }

@@ -305,17 +305,12 @@ void main() {
       await tester.enterText(loginFields.at(1), 'rahasia123');
       await tester.pump();
       await _tapVisible(tester, find.text(AppStrings.loginWithEmail));
-      for (var i = 0; i < 3; i++) {
-        await _tapVisible(
-          tester,
-          find.widgetWithText(ElevatedButton, AppStrings.continueButton),
-        );
+      await tester.pumpAndSettle();
+      // Langsung ke Dashboard; tutup popup onboarding bila muncul.
+      if (find.text(AppStrings.onboardingPopupLater).evaluate().isNotEmpty) {
+        await _tapVisible(tester, find.text(AppStrings.onboardingPopupLater));
+        await tester.pumpAndSettle();
       }
-      await _tapVisible(
-        tester,
-        find.widgetWithText(ElevatedButton, AppStrings.doneButton),
-      );
-      await _tapVisible(tester, find.text(AppStrings.startAppButton));
       await _tapVisible(tester, find.text(AppStrings.dashboardSeeReport));
       expect(find.text(AppStrings.reportsTitle), findsOneWidget);
 

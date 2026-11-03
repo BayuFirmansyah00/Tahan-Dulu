@@ -445,7 +445,7 @@ class _GoalCard extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '${(goal.progress * 100).round()}%',
+                  '${((goal.progress * 100).clamp(0, 100)).round()}%',
                   style: textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),

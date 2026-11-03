@@ -5,6 +5,7 @@ import '../theme/app_colors.dart';
 import '../../data/models/financial_account.dart';
 import '../../data/models/financial_goal.dart';
 import '../../data/models/transaction_model.dart';
+import '../../features/accounts/presentation/widgets/bank_logo_badge.dart';
 
 /// Aset ikon 3D per kategori transaksi (enum).
 /// String kosong berarti tidak ada aset khusus -> fallback outline.
@@ -233,22 +234,42 @@ class TransactionTypeIcon extends StatelessWidget {
   }
 }
 
-/// Logo penyedia rekening: placeholder terstruktur per jenis akun.
-/// BUKAN logo resmi — diganti katalog logo valid bila tersedia.
+/// Logo penyedia rekening: menampilkan logo/badge bank resmi jika tersedia,
+/// atau fallback ke visual per jenis akun.
 class AccountProviderIcon extends StatelessWidget {
   const AccountProviderIcon({
     super.key,
     required this.type,
     this.institutionName,
+    this.bankName,
+    this.bankSlug,
+    this.bankLogoUrl,
     this.size = 44,
   });
 
   final AccountType type;
   final String? institutionName;
+  final String? bankName;
+  final String? bankSlug;
+  final String? bankLogoUrl;
   final double size;
 
   @override
   Widget build(BuildContext context) {
+    final effectiveBankName = bankName ??
+        ((type == AccountType.bank || type == AccountType.digitalBank)
+            ? institutionName
+            : null);
+
+    if (effectiveBankName != null || bankSlug != null || bankLogoUrl != null) {
+      return BankLogoBadge(
+        bankName: effectiveBankName,
+        bankSlug: bankSlug,
+        bankLogoUrl: bankLogoUrl,
+        size: size,
+      );
+    }
+
     return Image.asset(
       accountIconForType(type),
       width: size,

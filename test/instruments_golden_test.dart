@@ -24,15 +24,12 @@ void main() {
     await tester.pump();
     await tester.tap(find.text(AppStrings.loginWithEmail));
     await tester.pumpAndSettle();
-    expect(find.text(AppStrings.salaryTitle), findsOneWidget);
-
-    final salaryButton = find.widgetWithText(
-      ElevatedButton,
-      AppStrings.continueButton,
-    );
-    await tester.ensureVisible(salaryButton);
-    await tester.pumpAndSettle();
-    await tester.tap(salaryButton);
+    // Langsung ke Dashboard; tutup popup onboarding bila muncul.
+    if (find.text(AppStrings.onboardingPopupLater).evaluate().isNotEmpty) {
+      await tester.tap(find.text(AppStrings.onboardingPopupLater));
+      await tester.pumpAndSettle();
+    }
+    await tester.tap(find.text(AppStrings.navAccounts));
     await tester.pumpAndSettle();
     expect(find.text(AppStrings.instrumentsTitle), findsOneWidget);
 

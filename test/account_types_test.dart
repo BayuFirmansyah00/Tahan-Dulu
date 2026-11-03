@@ -160,6 +160,9 @@ void main() {
       await tester.pumpAndSettle();
 
       await _tapVisible(tester, find.text(AppStrings.addInstrument));
+      await tester.pumpAndSettle();
+      await _tapVisible(tester, find.text('Pilih instrumen...'));
+      await tester.pumpAndSettle();
       expect(find.text(AppStrings.typeBank), findsOneWidget);
       expect(find.text(AppStrings.typeDigitalBank), findsOneWidget);
       expect(find.text(AppStrings.typeEWallet), findsOneWidget);
@@ -167,17 +170,21 @@ void main() {
       expect(find.text('Investasi'), findsNothing);
     });
 
-    testWidgets('grid tambah akun tepat tiga kartu', (tester) async {
+    testWidgets('dropdown tambah akun memuat tipe instrumen master', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         const ProviderScope(child: MaterialApp(home: AddAccountScreen())),
       );
       await tester.pumpAndSettle();
 
+      // Tipe instrumen dimuat dari data master (dropdown, bukan grid kartu).
+      await _tapVisible(tester, find.byType(DropdownButtonFormField<int>));
       expect(find.text(AppStrings.typeBank), findsOneWidget);
       expect(find.text(AppStrings.typeDigitalBank), findsOneWidget);
       expect(find.text(AppStrings.typeEWallet), findsOneWidget);
       expect(find.text('Tunai'), findsNothing);
-      // Simpan Bank Digital + institusi manual.
+      // Pilih Bank Digital + institusi manual.
       await _tapVisible(tester, find.text(AppStrings.typeDigitalBank));
       final fields = find.byType(TextFormField);
       await tester.enterText(fields.at(0), 'SeaBank');

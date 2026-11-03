@@ -13,9 +13,9 @@ import '../../../../core/widgets/app_icons.dart';
 import '../../../../core/widgets/app_states.dart';
 import '../../../../data/models/transaction_model.dart';
 import '../../../../data/providers/app_providers.dart';
+import '../providers/transactions_controller.dart';
 import '../../../../data/providers/onboarding_providers.dart';
 import '../../../dashboard/presentation/widgets/dashboard_bottom_nav.dart';
-import '../providers/transactions_controller.dart';
 
 enum _Filter { all, income, expense }
 
@@ -61,7 +61,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
       case 1:
         break;
       case 2:
-        _openAdd();
+        context.push(AppRoutes.transactionRecordMethod);
       case 3:
         context.push(AppRoutes.goals);
       case 4:

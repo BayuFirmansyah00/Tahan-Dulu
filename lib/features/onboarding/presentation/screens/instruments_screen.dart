@@ -10,7 +10,10 @@ import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/rupiah_input_formatter.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
+import '../../../../data/datasources/remote/api_client.dart';
+import '../../../../data/models/api_financial_instrument.dart';
 import '../../../../data/models/financial_instrument.dart';
+import '../../../../data/providers/app_providers.dart';
 import '../providers/instruments_controller.dart';
 
 /// Visual per tipe instrumen: aset 3D lokal + fallback outline + tint.
@@ -58,30 +61,59 @@ String _typeLabel(InstrumentType type) {
 
 /// No.4 — Pilih Instrumen Keuangan: daftar, pilih, tambah, detail fee.
 /// Sukses simpan -> No.5 (/onboarding/recurring-expenses).
-class InstrumentsScreen extends ConsumerWidget {
+class InstrumentsScreen extends ConsumerStatefulWidget {
   const InstrumentsScreen({super.key});
 
-  Future<void> _continue(BuildContext context, WidgetRef ref) async {
+  @override
+  ConsumerState<InstrumentsScreen> createState() => _InstrumentsScreenState();
+}
+
+class _InstrumentsScreenState extends ConsumerState<InstrumentsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref.read(instrumentsControllerProvider.notifier).loadExisting();
+      }
+    });
+  }
+
+  Future<void> _continue() async {
     final ok = await ref.read(instrumentsControllerProvider.notifier).save();
-    if (ok && context.mounted) {
-      context.push(AppRoutes.onboardingExpenses);
+    if (ok && mounted) {
+      context.push(AppRoutes.onboardingBudget);
     }
   }
 
-  Future<void> _addInstrument(BuildContext context, WidgetRef ref) async {
+  Future<void> _addInstrument() async {
     final instrument = await showDialog<FinancialInstrument>(
       context: context,
       builder: (context) => const _AddInstrumentDialog(),
     );
-    if (instrument != null) {
-      ref.read(instrumentsControllerProvider.notifier).addInstrument(
-            instrument,
+    if (instrument != null && mounted) {
+      try {
+        await ref
+            .read(instrumentsControllerProvider.notifier)
+            .addInstrument(instrument);
+      } on ApiException catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(e.message)),
           );
+        }
+      } catch (_) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text(AppStrings.saveFailed)),
+          );
+        }
+      }
     }
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final state = ref.watch(instrumentsControllerProvider);
     final textTheme = Theme.of(context).textTheme;
     final focused = state.focusedBank;
@@ -145,7 +177,7 @@ class InstrumentsScreen extends ConsumerWidget {
                         Align(
                           alignment: Alignment.centerLeft,
                           child: TextButton.icon(
-                            onPressed: () => _addInstrument(context, ref),
+                            onPressed: _addInstrument,
                             icon: const Icon(Icons.add, size: 18),
                             label: const Text(AppStrings.addInstrument),
                             style: TextButton.styleFrom(
@@ -178,8 +210,7 @@ class InstrumentsScreen extends ConsumerWidget {
                   child: AppButton(
                     label: AppStrings.continueButton,
                     isLoading: state.isSaving,
-                    onPressed:
-                        state.canContinue ? () => _continue(context, ref) : null,
+                    onPressed: state.canContinue ? _continue : null,
                   ),
                 ),
               ],
@@ -392,51 +423,70 @@ class _FeeDayDropdown extends StatelessWidget {
   }
 }
 
-/// Dialog tambah instrumen: tipe, nama, saldo, (+ fee & tanggal utk Bank).
-class _AddInstrumentDialog extends StatefulWidget {
+InstrumentType _mapStringToInstrumentType(String? type) {
+  switch (type?.toLowerCase()) {
+    case 'bank':
+      return InstrumentType.bank;
+    case 'digitalbank':
+    case 'digital bank':
+      return InstrumentType.digitalBank;
+    case 'ewallet':
+    case 'e-wallet':
+    case 'e wallet':
+      return InstrumentType.ewallet;
+    default:
+      return InstrumentType.bank;
+  }
+}
+
+/// Dialog tambah instrumen: pilih dari dropdown data master admin + saldo awal.
+class _AddInstrumentDialog extends ConsumerStatefulWidget {
   const _AddInstrumentDialog();
 
   @override
-  State<_AddInstrumentDialog> createState() => _AddInstrumentDialogState();
+  ConsumerState<_AddInstrumentDialog> createState() => _AddInstrumentDialogState();
 }
 
-class _AddInstrumentDialogState extends State<_AddInstrumentDialog> {
-  InstrumentType _type = InstrumentType.bank;
-  final _nameController = TextEditingController();
+class _AddInstrumentDialogState extends ConsumerState<_AddInstrumentDialog> {
+  int? _selectedTypeId;
   final _balanceController = TextEditingController();
   final _feeController = TextEditingController();
   int _feeDay = 15;
-  String? _nameError;
-  String? _balanceError;
+  bool _attempted = false;
+  bool _saving = false;
 
   @override
   void dispose() {
-    _nameController.dispose();
     _balanceController.dispose();
     _feeController.dispose();
     super.dispose();
   }
 
-  void _save() {
-    final name = _nameController.text.trim();
+  void _save(List<ApiInstrumentType> types) {
+    if (_saving) return;
     final balance = RupiahInputFormatter.parse(_balanceController.text);
     setState(() {
-      _nameError =
-          name.isEmpty ? AppStrings.instrumentNameRequired : null;
-      _balanceError =
-          balance <= 0 ? AppStrings.balanceRequired : null;
+      _attempted = true;
     });
-    if (_nameError != null || _balanceError != null) return;
+
+    if (_selectedTypeId == null || balance <= 0) return;
+
+    final selectedType = types.firstWhere((t) => t.id == _selectedTypeId);
+    final mappedType = _mapStringToInstrumentType(selectedType.type);
+    final isBank = mappedType == InstrumentType.bank;
+
+    setState(() => _saving = true);
 
     Navigator.of(context).pop(
       FinancialInstrument(
         id: 'inst-${DateTime.now().millisecondsSinceEpoch}',
-        name: name,
-        type: _type,
+        name: selectedType.name,
+        type: mappedType,
+        typeId: selectedType.id,
         initialBalance: balance,
-        monthlyAdminFee: _type == InstrumentType.bank
-            ? RupiahInputFormatter.parse(_feeController.text)
-            : 0,
+        institutionName: selectedType.name,
+        monthlyAdminFee:
+            isBank ? RupiahInputFormatter.parse(_feeController.text) : 0,
         adminFeeDay: _feeDay,
         isSelected: true,
       ),
@@ -446,71 +496,127 @@ class _AddInstrumentDialogState extends State<_AddInstrumentDialog> {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final isBank = _type == InstrumentType.bank;
+    final typesAsync = ref.watch(instrumentTypesProvider);
 
     return AlertDialog(
       title: const Text(AppStrings.addInstrumentTitle),
       content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(AppStrings.instrumentType, style: textTheme.labelLarge),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final type in InstrumentType.values)
-                  _TypeChip(
-                    label: _typeLabel(type),
-                    selected: _type == type,
-                    onTap: () => setState(() => _type = type),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            AppTextField(
-              controller: _nameController,
-              label: AppStrings.instrumentName,
-              hint: AppStrings.instrumentNameHint,
-            ),
-            if (_nameError != null) ...[
-              const SizedBox(height: 6),
-              _DialogError(text: _nameError!),
-            ],
-            const SizedBox(height: 12),
-            AppTextField(
-              controller: _balanceController,
-              label: AppStrings.initialBalance,
-              hint: '0',
-              prefixText: 'Rp ',
-              keyboardType: TextInputType.number,
-              inputFormatters: [RupiahInputFormatter()],
-            ),
-            if (_balanceError != null) ...[
-              const SizedBox(height: 6),
-              _DialogError(text: _balanceError!),
-            ],
-            if (isBank) ...[
-              const SizedBox(height: 12),
-              AppTextField(
-                controller: _feeController,
-                label: AppStrings.adminFee,
-                hint: '0',
-                prefixText: 'Rp ',
-                keyboardType: TextInputType.number,
-                inputFormatters: [RupiahInputFormatter()],
+        child: typesAsync.when(
+          loading: () => const SizedBox(
+            height: 100,
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(strokeWidth: 2.5),
+                  SizedBox(height: 12),
+                  Text('Memuat instrumen master...'),
+                ],
               ),
-              const SizedBox(height: 12),
-              Text(AppStrings.feeDay, style: textTheme.labelLarge),
+            ),
+          ),
+          error: (err, _) => Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Gagal memuat tipe instrumen: $err',
+                style: textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.error,
+                ),
+              ),
               const SizedBox(height: 8),
-              _FeeDayDropdown(
-                value: _feeDay,
-                onChanged: (day) => setState(() => _feeDay = day),
+              TextButton(
+                onPressed: () => ref.invalidate(instrumentTypesProvider),
+                child: const Text('Coba Lagi'),
               ),
             ],
-          ],
+          ),
+          data: (types) {
+            if (types.isEmpty) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Text(
+                  AppStrings.instrumentTypeEmpty,
+                  style: textTheme.bodyMedium,
+                ),
+              );
+            }
+
+            final showTypeError = _attempted && _selectedTypeId == null;
+            final balance = RupiahInputFormatter.parse(_balanceController.text);
+            final showBalanceError = _attempted && balance <= 0;
+
+            final selectedType = _selectedTypeId != null
+                ? types.where((t) => t.id == _selectedTypeId).firstOrNull
+                : null;
+            final isBank = selectedType != null &&
+                _mapStringToInstrumentType(selectedType.type) ==
+                    InstrumentType.bank;
+
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(AppStrings.instrumentType, style: textTheme.labelLarge),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<int>(
+                  initialValue: _selectedTypeId,
+                  hint: const Text('Pilih instrumen...'),
+                  items: types
+                      .map((t) => DropdownMenuItem<int>(
+                            value: t.id,
+                            child: Text(t.name),
+                          ))
+                      .toList(),
+                  onChanged: (val) {
+                    setState(() => _selectedTypeId = val);
+                  },
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 12),
+                  ),
+                ),
+                if (showTypeError) ...[
+                  const SizedBox(height: 6),
+                  _DialogError(text: AppStrings.instrumentTypeRequired),
+                ],
+                const SizedBox(height: 16),
+                AppTextField(
+                  controller: _balanceController,
+                  label: AppStrings.initialBalance,
+                  hint: '0',
+                  prefixText: 'Rp ',
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [RupiahInputFormatter()],
+                ),
+                if (showBalanceError) ...[
+                  const SizedBox(height: 6),
+                  _DialogError(text: AppStrings.balanceRequired),
+                ],
+                if (isBank) ...[
+                  const SizedBox(height: 12),
+                  AppTextField(
+                    controller: _feeController,
+                    label: AppStrings.adminFee,
+                    hint: '0',
+                    prefixText: 'Rp ',
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [RupiahInputFormatter()],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(AppStrings.feeDay, style: textTheme.labelLarge),
+                  const SizedBox(height: 8),
+                  _FeeDayDropdown(
+                    value: _feeDay,
+                    onChanged: (day) => setState(() => _feeDay = day),
+                  ),
+                ],
+              ],
+            );
+          },
         ),
       ),
       actions: [
@@ -518,49 +624,25 @@ class _AddInstrumentDialogState extends State<_AddInstrumentDialog> {
           onPressed: () => Navigator.of(context).pop(),
           child: const Text(AppStrings.cancel),
         ),
-        TextButton(
-          onPressed: _save,
-          child: const Text(AppStrings.save),
+        typesAsync.maybeWhen(
+          data: (types) => TextButton(
+            onPressed:
+                (_saving || types.isEmpty) ? null : () => _save(types),
+            child: _saving
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Text(AppStrings.save),
+          ),
+          orElse: () => const SizedBox.shrink(),
         ),
       ],
     );
   }
 }
 
-class _TypeChip extends StatelessWidget {
-  const _TypeChip({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: selected ? AppColors.primary : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: selected ? AppColors.primary : AppColors.border,
-          ),
-        ),
-        child: Text(
-          label,
-          style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                color: selected ? Colors.white : AppColors.textPrimary,
-              ),
-        ),
-      ),
-    );
-  }
-}
 
 class _DialogError extends StatelessWidget {
   const _DialogError({required this.text});

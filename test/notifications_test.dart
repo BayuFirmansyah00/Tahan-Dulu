@@ -19,7 +19,9 @@ import 'package:tahan_dulu/features/notifications/presentation/screens/saving_re
 /// Fake kosong untuk menguji empty state.
 class _EmptyNotifications implements NotificationRepository {
   @override
-  Future<List<AppNotification>> getNotifications() async => [];
+  Future<List<AppNotification>> getNotifications([dynamic filter]) async => [];
+  @override
+  Future<int> getUnreadCount() async => 0;
   @override
   Future<void> markAsRead(String id) async {}
   @override

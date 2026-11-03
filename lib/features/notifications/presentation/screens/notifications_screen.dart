@@ -24,8 +24,9 @@ class NotificationsScreen extends ConsumerWidget {
       case 0:
         context.go(AppRoutes.dashboard);
       case 1:
-      case 2:
         context.push(AppRoutes.transactions);
+      case 2:
+        context.push(AppRoutes.transactionRecordMethod);
       case 3:
         context.push(AppRoutes.goals);
       case 4:
@@ -60,7 +61,11 @@ class NotificationsScreen extends ConsumerWidget {
     if (!context.mounted) return;
     final route = item.targetRoute;
     if (route != null && route.isNotEmpty) {
-      context.push(route);
+      try {
+        context.push(route);
+      } catch (_) {
+        // Fallback navigasi aman bila target route tidak terdaftar di router
+      }
     }
   }
 

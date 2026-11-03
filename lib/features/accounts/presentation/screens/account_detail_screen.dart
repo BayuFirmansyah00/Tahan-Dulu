@@ -8,6 +8,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_icons.dart';
 import '../../../../core/widgets/app_states.dart';
 import '../../../../data/models/transaction_model.dart';
 import '../../../../data/providers/account_providers.dart';
@@ -38,7 +39,7 @@ class _AccountDetailScreenState
       case 1:
         context.push(AppRoutes.transactions);
       case 2:
-        context.push(AppRoutes.transactions);
+        context.push(AppRoutes.transactionRecordMethod);
       case 3:
         context.push(AppRoutes.goals);
       case 4:
@@ -109,7 +110,6 @@ class _Body extends ConsumerWidget {
         const [];
     final textTheme = Theme.of(context).textTheme;
     final account = item.account;
-    final visual = accountVisual(account.type);
 
     return Center(
       child: ConstrainedBox(
@@ -122,31 +122,29 @@ class _Body extends ConsumerWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Container(
-                    width: 56,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      color: visual.background,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Icon(
-                      visual.icon,
-                      color: visual.foreground,
-                      size: 28,
-                    ),
+                  AccountProviderIcon(
+                    type: account.type,
+                    institutionName: account.institutionName,
+                    bankName: account.bankName,
+                    bankSlug: account.bankSlug,
+                    bankLogoUrl: account.bankLogoUrl,
+                    size: 56,
                   ),
                   const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(account.name, style: textTheme.headlineMedium),
-                      Text(
-                        accountTypeLabel(account.type),
-                        style: textTheme.bodyMedium,
-                      ),
-                    ],
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(account.name, style: textTheme.headlineMedium),
+                        Text(
+                          account.bankName != null
+                              ? '${account.bankName} • ${accountTypeLabel(account.type)}'
+                              : accountTypeLabel(account.type),
+                          style: textTheme.bodyMedium,
+                        ),
+                      ],
+                    ),
                   ),
-                  const Spacer(),
                   IconButton(
                     icon: const Icon(Icons.edit_outlined),
                     color: AppColors.primary,
@@ -203,12 +201,8 @@ class _Body extends ConsumerWidget {
                     child: AppButton(
                       label: AppStrings.transferAction,
                       icon: Icons.arrow_outward,
-                      onPressed: () =>
-                          ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content:
-                              Text(AppStrings.transferComingSoon),
-                        ),
+                      onPressed: () => context.push(
+                        '${AppRoutes.accountTransfer}?from=$accountId',
                       ),
                     ),
                   ),

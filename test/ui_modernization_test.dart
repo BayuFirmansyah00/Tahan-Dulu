@@ -19,6 +19,27 @@ class _FailingTransactionRepo implements TransactionRepository {
   @override
   Future<AppTransaction> addTransaction(AppTransaction transaction) async =>
       transaction;
+
+  @override
+  Future<AppTransaction> getTransactionById(String id) =>
+      Future.error(StateError('offline'));
+
+  @override
+  Future<List<AppTransaction>> getTransactions({
+    String? type,
+    String? category,
+    int? instrumentId,
+    int? perPage,
+  }) =>
+      Future.error(StateError('offline'));
+
+  @override
+  Future<AppTransaction> updateTransaction(AppTransaction transaction) =>
+      Future.error(StateError('offline'));
+
+  @override
+  Future<void> deleteTransaction(String id) =>
+      Future.error(StateError('offline'));
 }
 
 Future<void> _pumpTransactions(

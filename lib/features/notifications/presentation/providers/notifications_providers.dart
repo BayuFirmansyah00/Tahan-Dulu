@@ -26,11 +26,12 @@ final notificationFilterProvider =
 /// Daftar notifikasi terurut terbaru, difilter sesuai tab aktif.
 final notificationsListProvider =
     FutureProvider<List<AppNotification>>((ref) async {
+  final filter = ref.watch(notificationFilterProvider);
   final items =
-      await ref.watch(notificationRepositoryProvider).getNotifications();
+      await ref.watch(notificationRepositoryProvider).getNotifications(filter);
   final sorted = List.of(items)
     ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
-  switch (ref.watch(notificationFilterProvider)) {
+  switch (filter) {
     case NotificationFilter.all:
       return sorted;
     case NotificationFilter.unread:
@@ -42,9 +43,7 @@ final notificationsListProvider =
 
 /// Jumlah belum dibaca (untuk badge / indikator).
 final unreadCountProvider = FutureProvider<int>((ref) async {
-  final items =
-      await ref.watch(notificationRepositoryProvider).getNotifications();
-  return items.where((e) => !e.isRead).length;
+  return ref.watch(notificationRepositoryProvider).getUnreadCount();
 });
 
 /// Aksi baca notifikasi: tandai satu / semua. Guard ganda bawaan.

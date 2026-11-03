@@ -24,17 +24,12 @@ void main() {
     await tester.pump();
     await tapVisible(tester, find.text(AppStrings.loginWithEmail));
     await tester.pumpAndSettle();
-    for (var i = 0; i < 3; i++) {
-      await tapVisible(tester, 
-        find.widgetWithText(ElevatedButton, AppStrings.continueButton),
-      );
+    // Langsung ke Dashboard; tutup popup onboarding bila muncul.
+    if (find.text(AppStrings.onboardingPopupLater).evaluate().isNotEmpty) {
+      await tapVisible(tester, find.text(AppStrings.onboardingPopupLater));
       await tester.pumpAndSettle();
     }
-    await tapVisible(tester, 
-      find.widgetWithText(ElevatedButton, AppStrings.doneButton),
-    );
-    await tester.pumpAndSettle();
-    await tapVisible(tester, find.text(AppStrings.startAppButton));
+    await tapVisible(tester, find.text(AppStrings.navReports));
     await tester.pumpAndSettle();
     await tapVisible(tester, find.text(AppStrings.dashboardSeeReport));
     await tester.pumpAndSettle();

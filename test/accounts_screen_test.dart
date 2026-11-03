@@ -89,6 +89,11 @@ class _EmptyOnboardingRepo implements OnboardingRepository {
       ],
     );
   }
+
+  @override
+  void clear() {
+    _data = null;
+  }
 }
 
 Future<void> _tapVisible(WidgetTester tester, Finder finder) async {
@@ -98,7 +103,7 @@ Future<void> _tapVisible(WidgetTester tester, Finder finder) async {
   await tester.pump();
 }
 
-/// Login mock -> onboarding -> plan -> dashboard -> Rekening.
+/// Login mock -> Dashboard (onboarding kini opsional via popup).
 Future<void> _pumpToAccounts(WidgetTester tester) async {
   await tester.pumpWidget(const ProviderScope(child: TahanDuluApp()));
   await tester.pump(const Duration(milliseconds: 1300));
@@ -109,21 +114,11 @@ Future<void> _pumpToAccounts(WidgetTester tester) async {
   await tester.pump();
   await _tapVisible(tester, find.text(AppStrings.loginWithEmail));
   await tester.pumpAndSettle();
-
-  for (var i = 0; i < 3; i++) {
-    await _tapVisible(
-      tester,
-      find.widgetWithText(ElevatedButton, AppStrings.continueButton),
-    );
+  // Langsung ke Dashboard; tutup popup onboarding bila muncul.
+  if (find.text(AppStrings.onboardingPopupLater).evaluate().isNotEmpty) {
+    await _tapVisible(tester, find.text(AppStrings.onboardingPopupLater));
     await tester.pumpAndSettle();
   }
-  await _tapVisible(
-    tester,
-    find.widgetWithText(ElevatedButton, AppStrings.doneButton),
-  );
-  await tester.pumpAndSettle();
-  await _tapVisible(tester, find.text(AppStrings.startAppButton));
-  await tester.pumpAndSettle();
   await _tapVisible(tester, find.text(AppStrings.totalBalanceTitle));
   await tester.pumpAndSettle();
   expect(find.text(AppStrings.accountsTitle), findsOneWidget);
@@ -180,7 +175,10 @@ void main() {
     expect(find.text(AppStrings.accountNameRequired), findsOneWidget);
 
     // Isi lalu simpan.
-    await _tapVisible(tester, find.text(AppStrings.typeEWallet));
+    await _tapVisible(tester, find.byType(DropdownButtonFormField<int>));
+    await tester.pumpAndSettle();
+    await _tapVisible(tester, find.text(AppStrings.typeEWallet).last);
+    await tester.pumpAndSettle();
     final fields = find.byType(TextFormField);
     await tester.enterText(fields.at(0), 'DANA');
     await tester.enterText(fields.at(2), '750000');

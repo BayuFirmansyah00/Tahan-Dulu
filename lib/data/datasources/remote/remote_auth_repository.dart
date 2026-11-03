@@ -27,6 +27,17 @@ class RemoteAuthRepository implements AuthRepository {
       id: '${json['id']}',
       name: '${json['name'] ?? ''}',
       email: json['email'] as String?,
+      monthlyIncome: json['monthly_income'] != null
+          ? (json['monthly_income'] is int
+              ? json['monthly_income'] as int
+              : int.tryParse('${json['monthly_income']}'))
+          : null,
+      salaryDay: json['salary_day'] != null
+          ? (json['salary_day'] is int
+              ? json['salary_day'] as int
+              : int.tryParse('${json['salary_day']}'))
+          : null,
+      isOnboarded: json['is_onboarded'] as bool? ?? false,
     );
   }
 
@@ -83,7 +94,30 @@ class RemoteAuthRepository implements AuthRepository {
 
   @override
   Future<UserModel> updateProfile({required String name, String? bio}) {
-    throw UnsupportedError('Ubah profil belum tersedia di backend.');
+    throw UnsupportedError('Ubah nama/bio belum tersedia di backend.');
+  }
+
+  @override
+  Future<UserModel> updateFinancialInfo({
+    int? monthlyIncome,
+    int? salaryDay,
+    bool? isOnboarded,
+  }) async {
+    final token = await _tokens.readToken();
+    if (token == null || token.isEmpty) {
+      throw ApiException('Token tidak tersedia. Silakan login ulang.',
+          statusCode: 401);
+    }
+    final payload = <String, dynamic>{};
+    if (monthlyIncome != null) payload['monthly_income'] = monthlyIncome;
+    if (salaryDay != null) payload['salary_day'] = salaryDay;
+    if (isOnboarded != null) payload['is_onboarded'] = isOnboarded;
+    final body = await _client.put('/user', payload, token: token);
+    final data = body['data'];
+    if (data is! Map<String, dynamic>) {
+      throw ApiException('Respons update tidak lengkap.');
+    }
+    return _toUser(data);
   }
 
   /// Ambil profil sesi berjalan. Mengembalikan null bila tanpa token.

@@ -26,25 +26,16 @@ void main() {
     await tester.pump();
     await tester.tap(find.text(AppStrings.loginWithEmail));
     await tester.pumpAndSettle();
-
-    for (var i = 0; i < 3; i++) {
-      final next = find.widgetWithText(
-        ElevatedButton,
-        AppStrings.continueButton,
-      );
-      await tester.ensureVisible(next);
-      await tester.pumpAndSettle();
-      await tester.tap(next);
+    // Langsung ke Dashboard; tutup popup onboarding bila muncul.
+    if (find.text(AppStrings.onboardingPopupLater).evaluate().isNotEmpty) {
+      await tester.tap(find.text(AppStrings.onboardingPopupLater));
       await tester.pumpAndSettle();
     }
-
-    final done = find.widgetWithText(
-      ElevatedButton,
-      AppStrings.doneButton,
-    );
-    await tester.ensureVisible(done);
+    await tester.tap(find.text(AppStrings.navGoals));
     await tester.pumpAndSettle();
-    await tester.tap(done);
+    await tester.tap(find.text(AppStrings.newGoalButton));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(AppStrings.saveGoalButton));
     await tester.pumpAndSettle();
     expect(find.text(AppStrings.planTitle), findsOneWidget);
 

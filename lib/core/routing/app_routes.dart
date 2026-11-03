@@ -8,15 +8,29 @@ abstract final class AppRoutes {
   static const String onboarding = '/onboarding';
   static const String onboardingSalary = '/onboarding/salary';
   static const String onboardingInstruments = '/onboarding/instruments';
+  static const String onboardingBudget = '/onboarding/budget';
   static const String onboardingExpenses = '/onboarding/recurring-expenses';
   static const String onboardingGoals = '/onboarding/goals';
   static const String onboardingPlan = '/onboarding/plan';
   static const String dashboard = '/dashboard';
 
   static const String transactions = '/transactions';
+  static const String transactionRecordMethod = '/transactions/record-method';
+  static const String transactionVoice = '/transactions/voice';
+  static const String transactionScan = '/transactions/scan';
   static const String transactionAdd = '/transactions/add';
   static const String transactionReview = '/transactions/review';
   static const String transactionSuccess = '/transactions/success';
+
+  // Investasi.
+  static const String investments = '/investments';
+  static const String investmentAdd = '/investments/add';
+
+  // Transaksi berulang.
+  static const String recurringIncomes = '/recurring-incomes';
+  static const String recurringIncomeAdd = '/recurring-incomes/add';
+  static const String recurringExpenses = '/recurring-expenses';
+  static const String recurringExpenseAdd = '/recurring-expenses/add';
   static const String goals = '/goals';
   static const String goalsNew = '/goals/new';
   static const String goalsSetup = '/goals/setup';
@@ -32,6 +46,7 @@ abstract final class AppRoutes {
   static const String reportsHealth = '/reports/health';
   static const String accounts = '/accounts';
   static const String accountAdd = '/accounts/add';
+  static const String accountTransfer = '/accounts/transfer';
   static const String notifications = '/notifications';
   static const String notificationSettings = '/notifications/settings';
   static const String notificationSavings = '/notifications/savings';

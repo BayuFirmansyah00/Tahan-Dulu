@@ -58,6 +58,19 @@ class _EmptyGoalRepository implements GoalRepository {
 
   @override
   Future<FinancialGoal> updateGoal(FinancialGoal goal) async => goal;
+
+  @override
+  Future<FinancialGoal> getGoalById(String id) async =>
+      const FinancialGoal(id: '', name: '', targetAmount: 0, currentAmount: 0);
+
+  @override
+  Future<void> deleteGoal(String id) async {}
+
+  @override
+  Future<GoalDeposit> updateDeposit(GoalDeposit deposit) async => deposit;
+
+  @override
+  Future<void> deleteDeposit(String id) async {}
 }
 
 void main() {

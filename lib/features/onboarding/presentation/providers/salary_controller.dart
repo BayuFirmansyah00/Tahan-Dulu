@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../data/providers/onboarding_providers.dart';
+import '../../../auth/presentation/providers/auth_controller.dart';
 
 /// State No.3: numeric income + hari gajian sebagai source of truth.
 /// UI hanya menampilkan & meneruskan event.
@@ -42,9 +43,18 @@ class SalaryController extends Notifier<SalaryState> {
   @override
   SalaryState build() {
     final saved = ref.read(onboardingRepositoryProvider).getSalarySetup();
+    final user = ref.read(authControllerProvider).user;
+    final income = (saved != null && saved.monthlyIncome > 0)
+        ? saved.monthlyIncome
+        : (user?.monthlyIncome?.toDouble() ?? 0.0);
+    final day = (saved != null && saved.salaryDay >= 1 && saved.salaryDay <= 31)
+        ? saved.salaryDay
+        : (user?.salaryDay != null && user!.salaryDay! >= 1 && user.salaryDay! <= 31
+            ? user.salaryDay!
+            : 25);
     return SalaryState(
-      monthlyIncome: saved?.monthlyIncome ?? 0,
-      salaryDay: saved?.salaryDay ?? 25,
+      monthlyIncome: income,
+      salaryDay: day,
     );
   }
 
@@ -57,6 +67,12 @@ class SalaryController extends Notifier<SalaryState> {
   }
 
   /// Simpan setup gaji. Berhasil -> true (UI bernavigasi ke No.4).
+  ///
+  /// Selain menyimpan ke repository onboarding (dipakai langkah berikutnya),
+  /// juga memersistensikan `monthly_income` + `salary_day` ke profil akun di
+  /// backend lewat [AuthController.updateFinancialInfo] (PUT /user). Ini
+  /// membuat penanda "onboarding selesai" (yang dibaca dari profil) benar-benar
+  /// terisi, sehingga popup ajakan tidak muncul lagi untuk akun ini.
   Future<bool> save() async {
     if (!state.canContinue) return false;
     state = state.copyWith(isSaving: true);
@@ -65,12 +81,25 @@ class SalaryController extends Notifier<SalaryState> {
             monthlyIncome: state.monthlyIncome,
             salaryDay: state.salaryDay,
           );
+
+      // Persist ke profil akun (sumber kebenaran status onboarding).
+      // Best-effort: kegagalan persist tidak membatalkan langkah onboarding.
+      await ref.read(authControllerProvider.notifier).updateFinancialInfo(
+            monthlyIncome: state.monthlyIncome.round(),
+            salaryDay: state.salaryDay,
+          );
+
       state = state.copyWith(isSaving: false);
       return true;
     } catch (_) {
       state = state.copyWith(isSaving: false);
       return false;
     }
+  }
+
+  /// Reset state (digunakan saat logout / ganti akun).
+  void reset() {
+    state = const SalaryState(monthlyIncome: 0, salaryDay: 25);
   }
 }
 

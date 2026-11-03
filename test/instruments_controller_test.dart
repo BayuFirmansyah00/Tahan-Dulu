@@ -56,9 +56,11 @@ void main() {
     expect(bca.adminFeeDay, 20);
   });
 
-  test('addInstrument appends and selects', () {
+  test('addInstrument appends and selects', () async {
     final container = _container();
-    container.read(instrumentsControllerProvider.notifier).addInstrument(
+    await container
+        .read(instrumentsControllerProvider.notifier)
+        .addInstrument(
           const FinancialInstrument(
             id: 'inst-ovo',
             name: 'OVO',
@@ -77,18 +79,28 @@ void main() {
     final container = _container();
     final notifier = container.read(instrumentsControllerProvider.notifier);
 
-    notifier.toggleSelect('inst-cash');
+    // Instrumen baru harus ditambahkan via addInstrument (disimpan ke backend).
+    // save() hanya memvalidasi dan navigasi, tidak menyimpan ulang.
+    await notifier.addInstrument(
+      const FinancialInstrument(
+        id: 'inst-cash-new',
+        name: 'Cash',
+        type: InstrumentType.ewallet,
+        initialBalance: 500000,
+        isSelected: true,
+      ),
+    );
     notifier.updateAdminFee('inst-bca', 14000);
     expect(await notifier.save(), isTrue);
 
     final saved = container.read(onboardingRepositoryProvider)
         .getOnboardingData();
-    expect(saved?.financialInstruments.length, 3);
+    expect(saved?.financialInstruments.length, 4);
     expect(
       saved?.financialInstruments
           .where((e) => e.isSelected)
           .map((e) => e.id),
-      containsAll(['inst-bca', 'inst-cash']),
+      containsAll(['inst-bca', 'inst-cash-new']),
     );
     // Data No.3 tetap tersimpan.
     expect(saved?.monthlyIncome, 5000000);

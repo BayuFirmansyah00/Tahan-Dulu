@@ -46,3 +46,8 @@ app.*.map.json
 
 # Artefak hasil generate golden test
 test/failures/
+
+# Local cache & test output
+.cache/
+*.txt
+

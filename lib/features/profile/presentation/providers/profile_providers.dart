@@ -117,26 +117,38 @@ class EditProfileDraft extends Equatable {
   const EditProfileDraft({
     this.name = '',
     this.bio = '',
+    this.monthlyIncome,
+    this.salaryDay,
     this.loaded = false,
   });
 
   final String name;
   final String bio;
+  final int? monthlyIncome;
+  final int? salaryDay;
   final bool loaded;
 
   bool get isNameValid => name.trim().isNotEmpty;
   bool get isBioValid => bio.length <= 120;
 
-  EditProfileDraft copyWith({String? name, String? bio, bool? loaded}) {
+  EditProfileDraft copyWith({
+    String? name,
+    String? bio,
+    int? Function()? monthlyIncome,
+    int? Function()? salaryDay,
+    bool? loaded,
+  }) {
     return EditProfileDraft(
       name: name ?? this.name,
       bio: bio ?? this.bio,
+      monthlyIncome: monthlyIncome != null ? monthlyIncome() : this.monthlyIncome,
+      salaryDay: salaryDay != null ? salaryDay() : this.salaryDay,
       loaded: loaded ?? this.loaded,
     );
   }
 
   @override
-  List<Object?> get props => [name, bio, loaded];
+  List<Object?> get props => [name, bio, monthlyIncome, salaryDay, loaded];
 }
 
 class EditProfileController extends Notifier<EditProfileDraft> {
@@ -150,12 +162,17 @@ class EditProfileController extends Notifier<EditProfileDraft> {
     state = EditProfileDraft(
       name: user.name,
       bio: user.bio ?? '',
+      monthlyIncome: user.monthlyIncome,
+      salaryDay: user.salaryDay,
       loaded: true,
     );
   }
 
   void setName(String value) => state = state.copyWith(name: value);
   void setBio(String value) => state = state.copyWith(bio: value);
+  void setMonthlyIncome(int? value) =>
+      state = state.copyWith(monthlyIncome: () => value);
+  void setSalaryDay(int? value) => state = state.copyWith(salaryDay: () => value);
 
   Future<bool> save() async {
     if (_saving || !state.isNameValid || !state.isBioValid) return false;
@@ -164,6 +181,20 @@ class EditProfileController extends Notifier<EditProfileDraft> {
       return await ref.read(authControllerProvider.notifier).updateProfile(
             name: state.name,
             bio: state.bio,
+          );
+    } finally {
+      _saving = false;
+    }
+  }
+
+  /// Simpan monthly_income + salary_day secara permanen ke backend.
+  Future<bool> saveFinancialInfo() async {
+    if (_saving) return false;
+    _saving = true;
+    try {
+      return await ref.read(authControllerProvider.notifier).updateFinancialInfo(
+            monthlyIncome: state.monthlyIncome,
+            salaryDay: state.salaryDay,
           );
     } finally {
       _saving = false;

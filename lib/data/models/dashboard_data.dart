@@ -18,6 +18,11 @@ class DashboardData extends Equatable {
     required this.goals,
     required this.pendingCount,
     required this.hasUnread,
+    this.safeDailyAverage = 0,
+    this.todayRemaining,
+    this.todayAllowance = 0,
+    this.todaySpent = 0,
+    this.isTodayOverspent = false,
   });
 
   final UserModel user;
@@ -25,7 +30,25 @@ class DashboardData extends Equatable {
   final double expensesTotal;
   final double goalContribution;
   final double remainingFlexible;
+
+  /// Nilai utama: Sisa jatah belanja hari ini (bisa negatif jika overspent).
   final double safeDaily;
+
+  /// Nilai pendukung: Batas rata-rata harian terbaru.
+  final double safeDailyAverage;
+
+  /// Alias eksplisit untuk [safeDaily].
+  final double? todayRemaining;
+
+  /// Jatah awal hari ini.
+  final double todayAllowance;
+
+  /// Pengeluaran kebutuhan pokok hari ini.
+  final double todaySpent;
+
+  /// Status kelebihan jatah belanja hari ini.
+  final bool isTodayOverspent;
+
   final double totalBalance;
 
   /// Aktual bulan berjalan (transaksi nyata, bukan rencana).
@@ -48,6 +71,11 @@ class DashboardData extends Equatable {
         goalContribution,
         remainingFlexible,
         safeDaily,
+        safeDailyAverage,
+        todayRemaining,
+        todayAllowance,
+        todaySpent,
+        isTodayOverspent,
         totalBalance,
         actualMonthExpense,
         actualMonthIncome,

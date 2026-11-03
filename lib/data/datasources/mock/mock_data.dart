@@ -21,6 +21,9 @@ abstract final class MockData {
   static const user = UserModel(
     id: 'user-1',
     name: 'Bayu Firmansyah',
+    monthlyIncome: 5000000,
+    salaryDay: 25,
+    isOnboarded: true,
   );
 
   static const double income = 5000000;

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/goal_math.dart';
 import '../../../../core/utils/rupiah_input_formatter.dart';
+import '../../../../data/datasources/remote/api_client.dart';
 import '../../../../data/models/financial_goal.dart';
 import '../../../../data/models/goal_deposit.dart';
 import '../../../../data/providers/app_providers.dart';
@@ -14,7 +15,16 @@ import '../../../../data/providers/reports_providers.dart';
 final goalsListProvider = FutureProvider<List<FinancialGoal>>((ref) async {
   final goals = await ref.watch(goalRepositoryProvider).getGoals();
   final sorted = List.of(goals)
-    ..sort((a, b) => a.priority.compareTo(b.priority));
+    ..sort((a, b) {
+      final p = a.priority.compareTo(b.priority);
+      if (p != 0) return p;
+      if (a.deadline != null && b.deadline != null) {
+        return a.deadline!.compareTo(b.deadline!);
+      }
+      if (a.deadline != null) return -1;
+      if (b.deadline != null) return 1;
+      return a.id.compareTo(b.id);
+    });
   return sorted;
 });
 
@@ -195,6 +205,9 @@ class GoalsController extends Notifier<GoalDraft> {
               );
       _refreshGoals();
       return saved;
+    } on ApiException {
+      // Error validasi dari backend (422) akan ditangani oleh UI melalui state.
+      rethrow;
     } catch (_) {
       return null;
     } finally {
@@ -233,6 +246,25 @@ class GoalsController extends Notifier<GoalDraft> {
           );
       _refreshGoals();
       return true;
+    } on ApiException {
+      rethrow;
+    } catch (_) {
+      return false;
+    } finally {
+      _saving = false;
+    }
+  }
+
+  /// Hapus target keuangan. Riwayat transaksi aktual & saldo akun tidak tersentuh.
+  Future<bool> deleteGoal(String id) async {
+    if (_saving) return false;
+    _saving = true;
+    try {
+      await ref.read(goalRepositoryProvider).deleteGoal(id);
+      _refreshGoals();
+      return true;
+    } on ApiException {
+      rethrow;
     } catch (_) {
       return false;
     } finally {
@@ -257,11 +289,14 @@ class GoalsController extends Notifier<GoalDraft> {
                   amount: amount,
                   date: DateTime.now(),
                   accountId: accountId,
+                  note: null,
                 ),
               );
       _refreshGoals();
       ref.invalidate(goalDepositsProvider(goalId));
       return saved;
+    } on ApiException {
+      rethrow;
     } catch (_) {
       return null;
     } finally {
@@ -289,6 +324,8 @@ class GoalsController extends Notifier<GoalDraft> {
           );
       _refreshGoals();
       return true;
+    } on ApiException {
+      rethrow;
     } catch (_) {
       return false;
     } finally {
@@ -304,6 +341,8 @@ class GoalsController extends Notifier<GoalDraft> {
       await ref.read(goalRepositoryProvider).saveGoalOrder(orderedIds);
       _refreshGoals();
       return true;
+    } on ApiException {
+      rethrow;
     } catch (_) {
       return false;
     } finally {
@@ -313,6 +352,8 @@ class GoalsController extends Notifier<GoalDraft> {
 
   void _refreshGoals() {
     ref.invalidate(goalsListProvider);
+    ref.invalidate(goalsProvider);
+    ref.invalidate(accountsProvider);
     ref.invalidate(dashboardDataProvider);
     ref.invalidate(monthlyReportProvider);
   }
