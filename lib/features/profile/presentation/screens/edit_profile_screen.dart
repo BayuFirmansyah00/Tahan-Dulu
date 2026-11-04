@@ -7,6 +7,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_image_icon.dart';
 import '../../../../core/widgets/app_states.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../data/models/user_model.dart';
@@ -125,7 +126,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.backgroundWarm,
-      appBar: AppBar(title: const Text(AppStrings.editProfileTitle)),
+      appBar: AppBar(
+        leading: const AppBackButton(),
+        title: const Text(AppStrings.editProfileTitle),
+      ),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -268,7 +272,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         controller: _emailController,
                         label: AppStrings.email,
                         readOnly: true,
-                        suffixIcon: const Icon(Icons.lock_outline, size: 18),
+                        suffixIcon: const Padding(
+                          padding: EdgeInsets.all(12),
+                          child: AppImageIcon(
+                            assetPath: AppAssets.setSecurity,
+                            size: 18,
+                            fallbackIcon: Icons.lock_outline,
+                          ),
+                        ),
                         onChanged: (_) {},
                       ),
                       const SizedBox(height: 4),

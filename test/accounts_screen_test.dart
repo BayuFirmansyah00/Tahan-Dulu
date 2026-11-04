@@ -213,7 +213,7 @@ void main() {
     expect(find.text(AppStrings.editAccountTitle), findsWidgets);
   });
 
-  testWidgets('Transfer button informs upcoming feature', (
+  testWidgets('Transfer button opens transfer screen', (
     WidgetTester tester,
   ) async {
     await _pumpToAccounts(tester);
@@ -221,9 +221,9 @@ void main() {
     await tester.pumpAndSettle();
 
     await _tapVisible(tester, find.text(AppStrings.transferAction));
-    await tester.pump();
+    await tester.pumpAndSettle();
 
-    expect(find.text(AppStrings.transferComingSoon), findsOneWidget);
+    expect(find.text(AppStrings.transferTitle), findsWidgets);
   });
 
   testWidgets('Edit preserves values and saves changes', (
@@ -232,7 +232,7 @@ void main() {
     await _pumpToAccounts(tester);
     await _tapVisible(tester, find.text('BCA').first);
     await tester.pumpAndSettle();
-    await _tapVisible(tester, find.byIcon(Icons.edit_outlined).first);
+    await _tapVisible(tester, find.byTooltip(AppStrings.editAccountTitle).first);
     await tester.pumpAndSettle();
 
     // Nilai awal dipertahankan (nama + institusi seed BCA).
@@ -256,7 +256,7 @@ void main() {
     await _pumpToAccounts(tester);
     await _tapVisible(tester, find.text('Bank Jago'));
     await tester.pumpAndSettle();
-    await _tapVisible(tester, find.byIcon(Icons.edit_outlined).first);
+    await _tapVisible(tester, find.byTooltip(AppStrings.editAccountTitle).first);
     await tester.pumpAndSettle();
 
     await tester.ensureVisible(find.text(AppStrings.deleteAccount));

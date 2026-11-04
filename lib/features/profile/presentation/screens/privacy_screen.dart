@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/app_image_icon.dart';
 import '../utils/profile_ui.dart';
 
 /// Privasi: kebijakan, penggunaan data, hapus akun (konfirmasi jujur).
@@ -12,6 +13,7 @@ class PrivacyScreen extends StatelessWidget {
   Future<void> _confirmDelete(BuildContext context) async {
     final confirmed = await showConfirmDialog(
       context: context,
+      assetPath: AppAssets.setDeleteAccount,
       icon: Icons.delete_outline,
       iconForeground: AppColors.error,
       iconBackground: const Color(0xFFFEE2E2),
@@ -34,6 +36,7 @@ class PrivacyScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.backgroundWarm,
       appBar: AppBar(
+        leading: const AppBackButton(),
         title: const Text(AppStrings.privacyTitle),
         flexibleSpace: const AppBarMintCorner(),
       ),
@@ -57,7 +60,6 @@ class PrivacyScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   SettingsMenuRow(
-                    icon: Icons.description_outlined,
                     iconForeground: AppColors.secondary,
                     iconBackground: AppColors.secondarySoft,
                     asset: AppAssets.setPrivacyPolicy,
@@ -71,7 +73,6 @@ class PrivacyScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   SettingsMenuRow(
-                    icon: Icons.bar_chart_outlined,
                     iconForeground: AppColors.error,
                     iconBackground: const Color(0xFFFEE2E2),
                     asset: AppAssets.setDataUsage,
@@ -85,7 +86,6 @@ class PrivacyScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   SettingsMenuRow(
-                    icon: Icons.delete_outline,
                     iconForeground: AppColors.error,
                     iconBackground: const Color(0xFFFEE2E2),
                     asset: AppAssets.setDeleteAccount,

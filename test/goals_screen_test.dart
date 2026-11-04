@@ -97,7 +97,7 @@ void main() {
     expect(
       find.descendant(
         of: find.byType(DashboardBottomNav),
-        matching: find.byIcon(Icons.add),
+        matching: find.byKey(const Key('record_button')),
       ),
       findsOneWidget,
     );

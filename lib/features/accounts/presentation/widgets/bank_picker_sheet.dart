@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/constants/app_assets.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/app_image_icon.dart';
 import '../../../../data/models/api_bank.dart';
 import '../../../../data/providers/app_providers.dart';
 import 'bank_logo_badge.dart';
@@ -169,7 +171,11 @@ class _BankPickerSheetState extends ConsumerState<BankPickerSheet> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.cloud_off, size: 40, color: AppColors.error),
+                      const AppImageIcon(
+                        assetPath: AppAssets.statusError,
+                        size: 40,
+                        fallbackIcon: Icons.cloud_off,
+                      ),
                       const SizedBox(height: 8),
                       Text(
                         'Gagal memuat katalog bank',
@@ -184,7 +190,11 @@ class _BankPickerSheetState extends ConsumerState<BankPickerSheet> {
                       const SizedBox(height: 16),
                       TextButton.icon(
                         onPressed: () => ref.invalidate(banksProvider),
-                        icon: const Icon(Icons.refresh),
+                        icon: const AppImageIcon(
+                          assetPath: AppAssets.actionRefresh,
+                          size: 18,
+                          fallbackIcon: Icons.refresh,
+                        ),
                         label: const Text('Coba Lagi'),
                       ),
                     ],
@@ -261,7 +271,11 @@ class _BankPickerSheetState extends ConsumerState<BankPickerSheet> {
                         ),
                       ),
                       trailing: isSelected
-                          ? const Icon(Icons.check_circle, color: AppColors.primary)
+                          ? const AppImageIcon(
+                              assetPath: AppAssets.statusSuccess,
+                              size: 20,
+                              fallbackIcon: Icons.check_circle,
+                            )
                           : null,
                       onTap: () => Navigator.of(context).pop(bank),
                     );
@@ -277,7 +291,11 @@ class _BankPickerSheetState extends ConsumerState<BankPickerSheet> {
             color: AppColors.backgroundWarm,
             child: Row(
               children: [
-                const Icon(Icons.info_outline, size: 14, color: AppColors.textSecondary),
+                const AppImageIcon(
+                  assetPath: AppAssets.statusInfo,
+                  size: 14,
+                  fallbackIcon: Icons.info_outline,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(

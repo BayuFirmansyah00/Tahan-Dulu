@@ -9,6 +9,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_icons.dart';
 import '../../../../core/widgets/app_states.dart';
 import '../../../../data/models/financial_goal.dart';
 import '../../../dashboard/presentation/widgets/dashboard_bottom_nav.dart';
@@ -41,16 +42,10 @@ class GoalsListScreen extends ConsumerWidget {
                   color: AppColors.primary.withValues(alpha: 0.25),
                 ),
               ),
-              child: Image.asset(
-                AppAssets.priorityNavIcon,
-                width: 30,
-                height: 30,
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) => const Icon(
-                  Icons.leaderboard_outlined,
-                  color: AppColors.primary,
-                  size: 24,
-                ),
+              child: const AppImageIcon(
+                assetPath: AppAssets.priorityNavIcon,
+                size: 30,
+                fallbackIcon: Icons.leaderboard_outlined,
               ),
             ),
           ),
@@ -197,18 +192,10 @@ class _ListState extends State<_List> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Image.asset(
-                              AppAssets.txSavings,
-                              width: 40,
-                              height: 40,
-                              fit: BoxFit.contain,
-                              errorBuilder:
-                                  (context, error, stackTrace) =>
-                                      const Icon(
-                                Icons.savings_outlined,
-                                color: AppColors.warning,
-                                size: 32,
-                              ),
+                            const AppImageIcon(
+                              assetPath: AppAssets.txSavings,
+                              size: 40,
+                              fallbackIcon: Icons.savings_outlined,
                             ),
                             const SizedBox(width: 8),
                             Flexible(
@@ -465,17 +452,10 @@ class _GoalCard extends StatelessWidget {
             const SizedBox(height: 8),
             Row(
               children: [
-                Image.asset(
-                  AppAssets.goalActionCalendar,
-                  width: 16,
-                  height: 16,
-                  fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) =>
-                      const Icon(
-                    Icons.calendar_month_outlined,
-                    size: 16,
-                    color: AppColors.textSecondary,
-                  ),
+                const AppImageIcon(
+                  assetPath: AppAssets.actionCalendar,
+                  size: 16,
+                  fallbackIcon: Icons.calendar_month_outlined,
                 ),
                 const SizedBox(width: 4),
                 Expanded(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -23,10 +24,7 @@ import '../providers/accounts_controller.dart';
 /// - Transfer bersifat net-neutral: tidak mengubah total saldo aset pengguna
 ///   dan tidak memotong anggaran belanja kebutuhan harian.
 class TransferScreen extends ConsumerStatefulWidget {
-  const TransferScreen({
-    super.key,
-    this.initialSourceAccountId,
-  });
+  const TransferScreen({super.key, this.initialSourceAccountId});
 
   final String? initialSourceAccountId;
 
@@ -74,7 +72,11 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
     _transferAttemptKey = null;
   }
 
-  Future<void> _submitTransfer(AccountOverview source, AccountOverview dest, double amount) async {
+  Future<void> _submitTransfer(
+    AccountOverview source,
+    AccountOverview dest,
+    double amount,
+  ) async {
     if (_submitting) return;
 
     if (amount <= 0) {
@@ -102,7 +104,9 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
     });
 
     try {
-      final success = await ref.read(accountsControllerProvider).transfer(
+      final success = await ref
+          .read(accountsControllerProvider)
+          .transfer(
             fromId: source.account.id,
             toId: dest.account.id,
             amount: amount,
@@ -138,7 +142,8 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = 'Terjadi kesalahan tidak terduga saat memproses transfer.';
+        _errorMessage =
+            'Terjadi kesalahan tidak terduga saat memproses transfer.';
         _submitting = false;
       });
     }
@@ -151,6 +156,7 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: const AppBackButton(),
         title: const Text(AppStrings.transferTitle),
         centerTitle: true,
       ),
@@ -162,7 +168,11 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.error_outline, size: 48, color: AppColors.error),
+                const AppImageIcon(
+                  assetPath: AppAssets.statusError,
+                  size: 48,
+                  fallbackIcon: Icons.error_outline,
+                ),
                 const SizedBox(height: 12),
                 Text(
                   'Gagal memuat daftar akun: $err',
@@ -194,22 +204,26 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
                           color: AppColors.secondarySoft,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(
-                          Icons.swap_horiz_rounded,
+                        child: const AppImageIcon(
+                          assetPath: AppAssets.txTransfer,
                           size: 48,
-                          color: AppColors.primary,
+                          fallbackIcon: Icons.swap_horiz_rounded,
                         ),
                       ),
                       const SizedBox(height: 20),
                       Text(
                         AppStrings.transferTitle,
-                        style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                        style: textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         AppStrings.transferMinAccountsError,
                         textAlign: TextAlign.center,
-                        style: textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
                       ),
                       const SizedBox(height: 24),
                       AppButton(
@@ -225,8 +239,11 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
           }
 
           // Inisialisasi akun sumber
-          _selectedSourceId ??= (widget.initialSourceAccountId != null &&
-                  accounts.any((a) => a.account.id == widget.initialSourceAccountId))
+          _selectedSourceId ??=
+              (widget.initialSourceAccountId != null &&
+                  accounts.any(
+                    (a) => a.account.id == widget.initialSourceAccountId,
+                  ))
               ? widget.initialSourceAccountId
               : accounts.first.account.id;
 
@@ -236,12 +253,18 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
           );
 
           // Akun tujuan hanya akun aktif milik user selain akun sumber terpilih
-          final destCandidates = accounts.where((a) => a.account.id != sourceAccount.account.id).toList();
+          final destCandidates = accounts
+              .where((a) => a.account.id != sourceAccount.account.id)
+              .toList();
 
           if (_selectedDestinationId == null ||
               _selectedDestinationId == sourceAccount.account.id ||
-              !destCandidates.any((a) => a.account.id == _selectedDestinationId)) {
-            _selectedDestinationId = destCandidates.isNotEmpty ? destCandidates.first.account.id : null;
+              !destCandidates.any(
+                (a) => a.account.id == _selectedDestinationId,
+              )) {
+            _selectedDestinationId = destCandidates.isNotEmpty
+                ? destCandidates.first.account.id
+                : null;
           }
 
           final destAccount = destCandidates.firstWhere(
@@ -249,8 +272,11 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
             orElse: () => destCandidates.first,
           );
 
-          final enteredAmount = RupiahInputFormatter.parse(_amountController.text);
-          final isBalanceSufficient = enteredAmount <= sourceAccount.currentBalance;
+          final enteredAmount = RupiahInputFormatter.parse(
+            _amountController.text,
+          );
+          final isBalanceSufficient =
+              enteredAmount <= sourceAccount.currentBalance;
           final isAmountValid = enteredAmount > 0 && isBalanceSufficient;
 
           return Center(
@@ -267,17 +293,25 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
                       decoration: BoxDecoration(
                         color: AppColors.primarySoft,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+                        border: Border.all(
+                          color: AppColors.primary.withValues(alpha: 0.2),
+                        ),
                       ),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.info_outline, size: 20, color: AppColors.primary),
+                          const AppImageIcon(
+                            assetPath: AppAssets.statusInfo,
+                            size: 20,
+                            fallbackIcon: Icons.info_outline,
+                          ),
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
                               AppStrings.transferExplanation,
-                              style: textTheme.bodySmall?.copyWith(color: AppColors.textPrimary),
+                              style: textTheme.bodySmall?.copyWith(
+                                color: AppColors.textPrimary,
+                              ),
                             ),
                           ),
                         ],
@@ -288,7 +322,9 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
                     // Dropdown Akun Sumber
                     Text(
                       AppStrings.transferSourceAccount,
-                      style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                      style: textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     _buildAccountDropdown(
@@ -301,7 +337,9 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
                             _selectedSourceId = newId;
                             _transferAttemptKey = null;
                             if (_selectedDestinationId == newId) {
-                              final other = accounts.firstWhere((a) => a.account.id != newId);
+                              final other = accounts.firstWhere(
+                                (a) => a.account.id != newId,
+                              );
                               _selectedDestinationId = other.account.id;
                             }
                           });
@@ -313,7 +351,9 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
                     // Dropdown Akun Tujuan
                     Text(
                       AppStrings.transferDestinationAccount,
-                      style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                      style: textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     _buildAccountDropdown(
@@ -334,16 +374,27 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
                     // Nominal Transfer
                     Text(
                       AppStrings.transferAmount,
-                      style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                      style: textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     TextField(
                       controller: _amountController,
                       keyboardType: TextInputType.number,
                       inputFormatters: [RupiahInputFormatter()],
-                      style: textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                      style: textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                       decoration: InputDecoration(
-                        prefixIcon: const Icon(Icons.payments_outlined, color: AppColors.primary),
+                        prefixIcon: const Padding(
+                          padding: EdgeInsets.all(12),
+                          child: AppImageIcon(
+                            assetPath: AppAssets.actionAddMoney,
+                            size: 20,
+                            fallbackIcon: Icons.payments_outlined,
+                          ),
+                        ),
                         hintText: 'Rp 0',
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -373,7 +424,8 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
                               fontWeight: FontWeight.w600,
                               color: AppColors.primary,
                             ),
-                            onPressed: () => _setAmount(sourceAccount.currentBalance),
+                            onPressed: () =>
+                                _setAmount(sourceAccount.currentBalance),
                           ),
                       ],
                     ),
@@ -382,7 +434,9 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
                     // Catatan Opsional
                     Text(
                       AppStrings.transferNotes,
-                      style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                      style: textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     TextField(
@@ -390,7 +444,10 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
                       maxLength: 255,
                       decoration: InputDecoration(
                         hintText: AppStrings.transferNotesHint,
-                        prefixIcon: const Icon(Icons.notes_outlined, color: AppColors.textSecondary),
+                        prefixIcon: const Icon(
+                          Icons.notes_outlined,
+                          color: AppColors.textSecondary,
+                        ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: const BorderSide(color: AppColors.border),
@@ -412,12 +469,18 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
                         children: [
                           Row(
                             children: [
-                              const Icon(Icons.sync_alt, size: 20, color: AppColors.primary),
+                              const AppImageIcon(
+                                assetPath: AppAssets.txTransfer,
+                                size: 20,
+                                fallbackIcon: Icons.sync_alt,
+                              ),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
                                   'Simulasi Saldo Setelah Transfer',
-                                  style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                                  style: textTheme.titleSmall?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
                             ],
@@ -426,14 +489,16 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
                           _buildAccountBalanceRow(
                             label: 'Sumber: ${sourceAccount.account.name}',
                             currentBalance: sourceAccount.currentBalance,
-                            projectedBalance: sourceAccount.currentBalance - enteredAmount,
+                            projectedBalance:
+                                sourceAccount.currentBalance - enteredAmount,
                             isDeduction: true,
                           ),
                           const SizedBox(height: 10),
                           _buildAccountBalanceRow(
                             label: 'Tujuan: ${destAccount.account.name}',
                             currentBalance: destAccount.currentBalance,
-                            projectedBalance: destAccount.currentBalance + enteredAmount,
+                            projectedBalance:
+                                destAccount.currentBalance + enteredAmount,
                             isDeduction: false,
                           ),
                         ],
@@ -448,16 +513,24 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
                         decoration: BoxDecoration(
                           color: AppColors.error.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+                          border: Border.all(
+                            color: AppColors.error.withValues(alpha: 0.3),
+                          ),
                         ),
                         child: Row(
                           children: [
-                            Icon(Icons.error_outline, size: 20, color: AppColors.error),
+                            const AppImageIcon(
+                              assetPath: AppAssets.statusError,
+                              size: 20,
+                              fallbackIcon: Icons.error_outline,
+                            ),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
                                 _errorMessage!,
-                                style: textTheme.bodySmall?.copyWith(color: AppColors.error),
+                                style: textTheme.bodySmall?.copyWith(
+                                  color: AppColors.error,
+                                ),
                               ),
                             ),
                           ],
@@ -469,10 +542,15 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
                     // Tombol Konfirmasi Transfer
                     AppButton(
                       label: AppStrings.transferSubmit,
+                      assetPath: AppAssets.txTransfer,
                       icon: Icons.send_rounded,
                       isLoading: _submitting,
                       onPressed: isAmountValid && !_submitting
-                          ? () => _submitTransfer(sourceAccount, destAccount, enteredAmount)
+                          ? () => _submitTransfer(
+                              sourceAccount,
+                              destAccount,
+                              enteredAmount,
+                            )
                           : null,
                     ),
                   ],
@@ -512,12 +590,16 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
             children: [
               Text(
                 label,
-                style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                style: textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
                 overflow: TextOverflow.ellipsis,
               ),
               Text(
                 'Saldo saat ini: ${CurrencyFormatter.formatCompact(currentBalance)}',
-                style: textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+                style: textTheme.bodySmall?.copyWith(
+                  color: AppColors.textSecondary,
+                ),
               ),
             ],
           ),
@@ -527,7 +609,9 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
           children: [
             Text(
               'Menjadi',
-              style: textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+              style: textTheme.bodySmall?.copyWith(
+                color: AppColors.textSecondary,
+              ),
             ),
             Text(
               CurrencyFormatter.formatCompact(projectedBalance),
@@ -593,9 +677,11 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: AppColors.border),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 12,
+        ),
       ),
     );
   }
 }
-

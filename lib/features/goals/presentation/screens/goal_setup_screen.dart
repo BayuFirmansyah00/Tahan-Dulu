@@ -11,6 +11,7 @@ import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/utils/goal_math.dart';
 import '../../../../core/utils/rupiah_input_formatter.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_icons.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../data/models/financial_goal.dart';
 import '../../../dashboard/presentation/widgets/dashboard_bottom_nav.dart';
@@ -121,7 +122,10 @@ class _GoalSetupScreenState extends ConsumerState<GoalSetupScreen> {
         eta.isAfter(draft.targetDate!);
 
     return Scaffold(
-      appBar: AppBar(title: const Text(AppStrings.setupGoalTitle)),
+      appBar: AppBar(
+        leading: const AppBackButton(),
+        title: const Text(AppStrings.setupGoalTitle),
+      ),
       bottomNavigationBar: DashboardBottomNav(
         currentIndex: 3,
         onTap: (i) => goalsBottomNavTap(context, i),

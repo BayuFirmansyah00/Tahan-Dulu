@@ -458,11 +458,11 @@ void main() {
         expect(find.text('Rp 25.000'), findsOneWidget);
 
         // Edit transcription
-        await _tapVisible(tester, find.byIcon(Icons.edit_outlined));
+        await _tapVisible(tester, find.byTooltip('Sunting'));
         expect(find.byType(TextField), findsOneWidget);
 
         // Save edited transcription
-        await _tapVisible(tester, find.byIcon(Icons.check));
+        await _tapVisible(tester, find.byTooltip('Simpan'));
         expect(find.text('Lanjutkan ke Form Transaksi'), findsOneWidget);
 
         // Navigate to form

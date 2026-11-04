@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/utils/rupiah_input_formatter.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_icons.dart';
 import '../../../../core/widgets/app_states.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../data/datasources/remote/api_client.dart';
@@ -194,7 +196,10 @@ class _GoalEditScreenState extends ConsumerState<GoalEditScreen> {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text(AppStrings.editGoalAction)),
+      appBar: AppBar(
+        leading: const AppBackButton(),
+        title: const Text(AppStrings.editGoalAction),
+      ),
       bottomNavigationBar: DashboardBottomNav(
         currentIndex: 3,
         onTap: (i) => goalsBottomNavTap(context, i),
@@ -358,6 +363,7 @@ class _GoalEditScreenState extends ConsumerState<GoalEditScreen> {
                           const SizedBox(height: 12),
                           AppOutlineButton(
                             label: 'Hapus Target',
+                            assetPath: AppAssets.actionDelete,
                             icon: Icons.delete_outline,
                             foregroundColor: Theme.of(context).colorScheme.error,
                             onPressed: _saving ? null : () => _confirmDelete(goal),

@@ -191,6 +191,7 @@ void main() {
     expect(find.text(AppStrings.navRecord), findsOneWidget);
     expect(find.text(AppStrings.navGoals), findsOneWidget);
     expect(find.text(AppStrings.navProfile), findsOneWidget);
-    expect(find.byIcon(Icons.add), findsOneWidget);
+    expect(find.byKey(const Key('record_button')), findsOneWidget);
+    expect(find.byKey(const Key('record_button_icon')), findsOneWidget);
   });
 }

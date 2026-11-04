@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -156,7 +157,10 @@ class _TransactionFormScreenState
         _attempted && accounts.isNotEmpty && !draft.isAccountValid(ids);
 
     return Scaffold(
-      appBar: AppBar(title: const Text(AppStrings.addTransaction)),
+      appBar: AppBar(
+        leading: const AppBackButton(),
+        title: const Text(AppStrings.addTransaction),
+      ),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -426,21 +430,13 @@ class _CategoryTile extends StatelessWidget {
               children: [
                 CategoryIcon.forCategory(category, size: 44),
                 if (selected)
-                  Positioned(
+                  const Positioned(
                     right: -4,
                     top: -4,
-                    child: Container(
-                      width: 20,
-                      height: 20,
-                      decoration: const BoxDecoration(
-                        color: AppColors.primary,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.check,
-                        color: Colors.white,
-                        size: 13,
-                      ),
+                    child: AppImageIcon(
+                      assetPath: AppAssets.statusSuccess,
+                      size: 20,
+                      fallbackIcon: Icons.check_circle,
                     ),
                   ),
               ],
@@ -483,9 +479,10 @@ class _DateBox extends StatelessWidget {
         ),
         child: Row(
           children: [
-            const Icon(
-              Icons.calendar_month_outlined,
-              color: AppColors.textSecondary,
+            const AppImageIcon(
+              assetPath: AppAssets.actionCalendar,
+              size: 20,
+              fallbackIcon: Icons.calendar_month_outlined,
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -494,9 +491,10 @@ class _DateBox extends StatelessWidget {
                 style: Theme.of(context).textTheme.bodyLarge,
               ),
             ),
-            const Icon(
-              Icons.chevron_right,
-              color: AppColors.textSecondary,
+            const AppImageIcon(
+              assetPath: AppAssets.navForward,
+              size: 20,
+              fallbackIcon: Icons.chevron_right,
             ),
           ],
         ),

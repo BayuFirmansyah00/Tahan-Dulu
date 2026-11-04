@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/finance_math.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_icons.dart';
 import '../../../../core/widgets/app_states.dart';
 import '../providers/tahandulu_controller.dart';
 import '../utils/tahandulu_ui.dart';
@@ -109,10 +111,10 @@ class TahanDuluSimulateScreen extends ConsumerWidget {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(
-                        Icons.info_outline,
+                      const AppImageIcon(
+                        assetPath: AppAssets.statusInfo,
                         size: 18,
-                        color: TdColors.slate,
+                        fallbackIcon: Icons.info_outline,
                       ),
                       const SizedBox(width: 8),
                       Expanded(
@@ -167,6 +169,7 @@ class _StateCard extends StatelessWidget {
           _Row(
             label: AppStrings.flexibleBudgetLabel,
             value: CurrencyFormatter.formatCompact(flexible),
+            assetPath: AppAssets.txWallet,
             icon: Icons.account_balance_wallet_outlined,
             emphasize: highlightDelta,
             alert: risky,
@@ -177,11 +180,13 @@ class _StateCard extends StatelessWidget {
               value: goalCurrent == null
                   ? '-'
                   : CurrencyFormatter.formatCompact(goalCurrent!),
+              assetPath: AppAssets.tdFlag,
               icon: Icons.flag_outlined,
             ),
           _Row(
             label: AppStrings.dailyBudgetLabel,
             value: CurrencyFormatter.formatCompact(safeDaily),
+            assetPath: AppAssets.instBank,
             icon: Icons.payments_outlined,
             emphasize: highlightDelta,
             alert: risky,
@@ -191,6 +196,7 @@ class _StateCard extends StatelessWidget {
               label: AppStrings.nextBudgetLabel,
               value:
                   '${AppStrings.delayEstimatePrefix}$delayDays ${AppStrings.daySuffix}',
+              assetPath: AppAssets.actionCalendar,
               icon: Icons.schedule_outlined,
               emphasize: true,
               alert: risky,
@@ -205,14 +211,16 @@ class _Row extends StatelessWidget {
   const _Row({
     required this.label,
     required this.value,
-    required this.icon,
+    this.icon,
+    this.assetPath,
     this.emphasize = false,
     this.alert = false,
   });
 
   final String label;
   final String value;
-  final IconData icon;
+  final IconData? icon;
+  final String? assetPath;
   final bool emphasize;
   final bool alert;
 
@@ -227,7 +235,14 @@ class _Row extends StatelessWidget {
           Expanded(
             child: Row(
               children: [
-                Icon(icon, size: 18, color: TdColors.slate),
+                if (assetPath != null)
+                  AppImageIcon(
+                    assetPath: assetPath!,
+                    size: 18,
+                    fallbackIcon: icon ?? Icons.category_outlined,
+                  )
+                else
+                  Icon(icon, size: 18, color: TdColors.slate),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(

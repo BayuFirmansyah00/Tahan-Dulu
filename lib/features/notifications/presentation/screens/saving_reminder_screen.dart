@@ -2,19 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/rupiah_input_formatter.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_image_icon.dart';
 import '../../../../core/widgets/app_states.dart';
 import '../../../../data/models/reminder_settings.dart';
 import '../../../dashboard/presentation/widgets/dashboard_bottom_nav.dart';
 import '../../../goals/presentation/providers/goals_controller.dart';
 import '../providers/notifications_providers.dart';
 
-/// Layar Pengingat Menabung: form jadwal menyisihkan dana per target.
+/// Layar Peng仪式 Menabung: form jadwal menyisihkan dana per target.
 class SavingReminderScreen extends ConsumerStatefulWidget {
   const SavingReminderScreen({super.key});
 
@@ -137,7 +139,10 @@ class _SavingReminderScreenState extends ConsumerState<SavingReminderScreen> {
     _syncAmountOnce(draft);
 
     return Scaffold(
-      appBar: AppBar(title: const Text(AppStrings.savingReminderTitle)),
+      appBar: AppBar(
+        leading: const AppBackButton(),
+        title: const Text(AppStrings.savingReminderTitle),
+      ),
       bottomNavigationBar: DashboardBottomNav(onTap: _onNav),
       body: SafeArea(
         child: Center(
@@ -354,9 +359,10 @@ class _Form extends ConsumerWidget {
                         style: textTheme.titleMedium,
                       ),
                     ),
-                    const Icon(
-                      Icons.chevron_right,
-                      color: AppColors.textSecondary,
+                    const AppImageIcon(
+                      assetPath: AppAssets.navForward,
+                      size: 20,
+                      fallbackIcon: Icons.chevron_right,
                     ),
                   ],
                 ),
@@ -412,18 +418,10 @@ class _IntroCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: const BoxDecoration(
-              color: Color(0xFFFEF3C7),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.savings_outlined,
-              color: AppColors.warning,
-              size: 24,
-            ),
+          const AppImageIcon(
+            assetPath: AppAssets.setSavingsPig,
+            size: 48,
+            fallbackIcon: Icons.savings_outlined,
           ),
           const SizedBox(width: 12),
           Expanded(

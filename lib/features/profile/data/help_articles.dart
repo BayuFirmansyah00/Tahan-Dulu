@@ -1,20 +1,24 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 
+import '../../../core/constants/app_assets.dart';
+
 /// Kategori bantuan (sesuai fitur aktual aplikasi).
 class HelpCategory extends Equatable {
   const HelpCategory({
     required this.id,
     required this.title,
-    required this.icon,
+    this.icon = Icons.help_outline,
+    this.asset,
   });
 
   final String id;
   final String title;
   final IconData icon;
+  final String? asset;
 
   @override
-  List<Object?> get props => [id, title];
+  List<Object?> get props => [id, title, asset];
 }
 
 /// Satu entri FAQ. Konten merujuk fitur yang benar-benar ada.
@@ -40,36 +44,43 @@ const List<HelpCategory> helpCategories = [
     id: 'account',
     title: 'Akun dan Profil',
     icon: Icons.person_outline,
+    asset: AppAssets.setProfile,
   ),
   HelpCategory(
     id: 'transactions',
     title: 'Transaksi',
     icon: Icons.receipt_long_outlined,
+    asset: AppAssets.navTransaction,
   ),
   HelpCategory(
     id: 'accounts',
     title: 'Akun Keuangan',
     icon: Icons.account_balance_wallet_outlined,
+    asset: AppAssets.txWallet,
   ),
   HelpCategory(
     id: 'goals',
     title: 'Target Keuangan',
     icon: Icons.flag_outlined,
+    asset: AppAssets.navTarget,
   ),
   HelpCategory(
     id: 'tahandulu',
     title: 'TahanDulu',
     icon: Icons.shopping_bag_outlined,
+    asset: AppAssets.setBag,
   ),
   HelpCategory(
     id: 'reports',
     title: 'Laporan Keuangan',
     icon: Icons.bar_chart_outlined,
+    asset: AppAssets.dashChart,
   ),
   HelpCategory(
     id: 'notifications',
     title: 'Pengingat & Notifikasi',
     icon: Icons.notifications_outlined,
+    asset: AppAssets.setNotif,
   ),
 ];
 

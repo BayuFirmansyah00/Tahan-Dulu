@@ -6,6 +6,7 @@ import 'package:tahan_dulu/core/constants/app_assets.dart';
 import 'package:tahan_dulu/core/constants/app_strings.dart';
 import 'package:tahan_dulu/core/routing/app_routes.dart';
 import 'package:tahan_dulu/core/utils/currency_formatter.dart';
+import 'package:tahan_dulu/core/widgets/app_image_icon.dart';
 import 'package:tahan_dulu/data/models/app_notification.dart';
 import 'package:tahan_dulu/data/models/reminder_settings.dart';
 import 'package:tahan_dulu/data/providers/app_providers.dart';
@@ -340,7 +341,7 @@ void main() {
     testWidgets('menu mengarah ke pengaturan', (tester) async {
       await _pumpNotifications(tester);
 
-      await _tapVisible(tester, find.byIcon(Icons.more_horiz));
+      await _tapVisible(tester, find.byType(PopupMenuButton<String>));
       await _tapVisible(tester, find.text(AppStrings.notifMenuSettings));
       expect(find.text(AppStrings.notifSettingsTitle), findsOneWidget);
     });
@@ -419,7 +420,7 @@ void main() {
         find.text(AppStrings.reminderSavingsTitle),
       );
       expect(find.text(AppStrings.savingReminderTitle), findsWidgets);
-      await tester.tap(find.byIcon(Icons.arrow_back));
+      await tester.tap(find.byType(AppBackButton));
       await tester.pumpAndSettle();
       final after = await tester.runAsync(
         () => container.read(reminderPreferencesProvider.future),
@@ -635,7 +636,7 @@ void main() {
         (tester) async {
       await _pumpNotifications(tester);
 
-      await _tapVisible(tester, find.byIcon(Icons.more_horiz));
+      await _tapVisible(tester, find.byType(PopupMenuButton<String>));
       await _tapVisible(tester, find.text(AppStrings.notifMenuSettings));
       expect(find.text(AppStrings.notifSettingsTitle), findsOneWidget);
       await _tapVisible(

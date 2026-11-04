@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_icons.dart';
 import '../../../../data/models/transaction_model.dart';
 import '../../../../data/providers/app_providers.dart';
 import '../../../../data/providers/onboarding_providers.dart';
@@ -69,18 +71,10 @@ class _TransactionSuccessScreenState
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   const SizedBox(height: 16),
-                  Container(
-                    width: 88,
-                    height: 88,
-                    decoration: const BoxDecoration(
-                      color: AppColors.primary,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.check,
-                      color: Colors.white,
-                      size: 48,
-                    ),
+                  const AppImageIcon(
+                    assetPath: AppAssets.statusSuccess,
+                    size: 88,
+                    fallbackIcon: Icons.check_circle,
                   ),
                   const SizedBox(height: 20),
                   Text(

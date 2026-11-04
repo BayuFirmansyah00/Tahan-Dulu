@@ -7,6 +7,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
+import '../../../../core/widgets/app_image_icon.dart';
 import '../../../auth/presentation/providers/auth_controller.dart';
 import '../utils/profile_ui.dart';
 
@@ -17,6 +18,7 @@ class SecurityScreen extends ConsumerWidget {
   Future<void> _confirmLogout(BuildContext context, WidgetRef ref) async {
     final confirmed = await showConfirmDialog(
       context: context,
+      assetPath: AppAssets.setLogoutIcon,
       icon: Icons.logout_outlined,
       iconForeground: AppColors.error,
       iconBackground: const Color(0xFFFEE2E2),
@@ -40,6 +42,7 @@ class SecurityScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.backgroundWarm,
       appBar: AppBar(
+        leading: const AppBackButton(),
         title: const Text(AppStrings.securityTitle),
         flexibleSpace: const AppBarMintCorner(),
       ),
@@ -120,6 +123,7 @@ class SecurityScreen extends ConsumerWidget {
                     const SizedBox(height: 8),
                     if (method == 'email')
                       SettingsMenuRow(
+                        asset: AppAssets.setSecurity,
                         icon: Icons.lock_outline,
                         iconForeground: AppColors.warning,
                         iconBackground: const Color(0xFFFEF3C7),
@@ -148,6 +152,7 @@ class SecurityScreen extends ConsumerWidget {
                       ),
                     const SizedBox(height: 8),
                     SettingsMenuRow(
+                      asset: AppAssets.setSession,
                       icon: Icons.devices_outlined,
                       iconForeground: AppColors.secondary,
                       iconBackground: AppColors.secondarySoft,
@@ -169,7 +174,6 @@ class SecurityScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 8),
                   SettingsMenuRow(
-                    icon: Icons.logout_outlined,
                     iconForeground: AppColors.error,
                     iconBackground: const Color(0xFFFEE2E2),
                     asset: AppAssets.setLogoutIcon,

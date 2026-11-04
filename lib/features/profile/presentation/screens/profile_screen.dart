@@ -6,6 +6,7 @@ import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/app_image_icon.dart';
 import '../../../../core/widgets/app_states.dart';
 import '../../../../data/models/user_model.dart';
 import '../../../auth/presentation/providers/auth_controller.dart';
@@ -20,6 +21,7 @@ class ProfileScreen extends ConsumerWidget {
   Future<void> _confirmLogout(BuildContext context, WidgetRef ref) async {
     final confirmed = await showConfirmDialog(
       context: context,
+      assetPath: AppAssets.setLogoutIcon,
       icon: Icons.logout_outlined,
       iconForeground: AppColors.error,
       iconBackground: const Color(0xFFFEE2E2),
@@ -77,10 +79,7 @@ class _HeaderBackButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return IconButton(
-      icon: const Icon(Icons.arrow_back),
-      color: AppColors.textPrimary,
-      tooltip: 'Kembali',
+    return AppBackButton(
       onPressed: () {
         if (context.canPop()) {
           context.pop();
@@ -154,10 +153,10 @@ class _Body extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(
-                    Icons.lightbulb_outline,
-                    color: AppColors.secondary,
+                  const AppImageIcon(
+                    assetPath: AppAssets.statusInfo,
                     size: 18,
+                    fallbackIcon: Icons.lightbulb_outline,
                   ),
                   const SizedBox(width: 8),
                   Expanded(
@@ -188,7 +187,6 @@ class _Body extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           SettingsMenuRow(
-            icon: Icons.person_outline,
             iconForeground: AppColors.secondary,
             iconBackground: AppColors.secondarySoft,
             asset: AppAssets.setProfile,
@@ -198,7 +196,6 @@ class _Body extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           SettingsMenuRow(
-            icon: Icons.tune_outlined,
             iconForeground: AppColors.primary,
             iconBackground: AppColors.primarySoft,
             asset: AppAssets.setApp,
@@ -208,7 +205,6 @@ class _Body extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           SettingsMenuRow(
-            icon: Icons.notifications_outlined,
             iconForeground: AppColors.warning,
             iconBackground: const Color(0xFFFEF3C7),
             asset: AppAssets.setNotif,
@@ -219,7 +215,6 @@ class _Body extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           SettingsMenuRow(
-            icon: Icons.shield_outlined,
             iconForeground: AppColors.secondary,
             iconBackground: AppColors.secondarySoft,
             asset: AppAssets.setSecurity,
@@ -229,7 +224,6 @@ class _Body extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           SettingsMenuRow(
-            icon: Icons.lock_outline,
             iconForeground: AppColors.primary,
             iconBackground: AppColors.primarySoft,
             asset: AppAssets.setPrivacy,
@@ -239,7 +233,6 @@ class _Body extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           SettingsMenuRow(
-            icon: Icons.help_outline,
             iconForeground: AppColors.warning,
             iconBackground: const Color(0xFFFEF3C7),
             asset: AppAssets.setHelp,
@@ -249,7 +242,6 @@ class _Body extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           SettingsMenuRow(
-            icon: Icons.info_outline,
             iconForeground: AppColors.secondary,
             iconBackground: AppColors.secondarySoft,
             asset: AppAssets.setAbout,
@@ -269,7 +261,11 @@ class _Body extends StatelessWidget {
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.logout_outlined, size: 18),
+                  AppImageIcon(
+                    assetPath: AppAssets.setLogoutIcon,
+                    size: 18,
+                    fallbackIcon: Icons.logout_outlined,
+                  ),
                   SizedBox(width: 8),
                   Text(AppStrings.profileLogoutAction),
                 ],
@@ -342,10 +338,10 @@ class _ProfileCard extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(
-                        Icons.verified_outlined,
-                        color: AppColors.primary,
+                      const AppImageIcon(
+                        assetPath: AppAssets.statusSuccess,
                         size: 14,
+                        fallbackIcon: Icons.verified_outlined,
                       ),
                       const SizedBox(width: 4),
                       Flexible(

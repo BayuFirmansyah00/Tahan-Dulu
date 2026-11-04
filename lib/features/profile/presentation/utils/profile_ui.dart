@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/constants/app_assets.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
+import '../../../../core/widgets/app_image_icon.dart';
 
 /// Navigasi bawah untuk layar Profil & Pengaturan.
 /// Profil adalah tab aktif (indeks 4).
@@ -77,9 +79,9 @@ class ProfileSectionHeader extends StatelessWidget {
 class SettingsMenuRow extends StatelessWidget {
   const SettingsMenuRow({
     super.key,
-    required this.icon,
-    required this.iconForeground,
-    required this.iconBackground,
+    this.icon,
+    this.iconForeground = AppColors.primary,
+    this.iconBackground = AppColors.primarySoft,
     required this.title,
     required this.description,
     this.asset,
@@ -89,7 +91,7 @@ class SettingsMenuRow extends StatelessWidget {
     this.onTap,
   });
 
-  final IconData icon;
+  final IconData? icon;
   final Color iconForeground;
   final Color iconBackground;
   final String title;
@@ -172,10 +174,10 @@ class SettingsMenuRow extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(
-              Icons.chevron_right,
-              color: AppColors.textSecondary,
+            const AppImageIcon(
+              assetPath: AppAssets.navForward,
               size: 20,
+              fallbackIcon: Icons.chevron_right,
             ),
           ],
         ),
@@ -195,7 +197,7 @@ class _MenuIcon extends StatelessWidget {
   });
 
   final String? asset;
-  final IconData icon;
+  final IconData? icon;
   final Color foreground;
   final Color background;
 
@@ -204,25 +206,17 @@ class _MenuIcon extends StatelessWidget {
     final path = asset ?? '';
     if (path.isEmpty) {
       return ProfileIconContainer(
-        icon: icon,
+        icon: icon ?? Icons.settings_outlined,
         foreground: foreground,
         background: background,
         size: 48,
         iconSize: 24,
       );
     }
-    return Image.asset(
-      path,
-      width: 48,
-      height: 48,
-      fit: BoxFit.contain,
-      errorBuilder: (context, error, stackTrace) => ProfileIconContainer(
-        icon: icon,
-        foreground: foreground,
-        background: background,
-        size: 48,
-        iconSize: 24,
-      ),
+    return AppImageIcon(
+      assetPath: path,
+      size: 48,
+      fallbackIcon: icon ?? Icons.settings_outlined,
     );
   }
 }
@@ -309,9 +303,10 @@ class AppBarMintCorner extends StatelessWidget {
 class ConfirmDialog extends StatelessWidget {
   const ConfirmDialog({
     super.key,
-    required this.icon,
-    required this.iconForeground,
-    required this.iconBackground,
+    this.icon,
+    this.assetPath,
+    this.iconForeground = AppColors.error,
+    this.iconBackground = AppColors.dangerSoft,
     required this.title,
     required this.message,
     this.cancelLabel = 'Batal',
@@ -319,7 +314,8 @@ class ConfirmDialog extends StatelessWidget {
     this.confirmColor = AppColors.error,
   });
 
-  final IconData icon;
+  final IconData? icon;
+  final String? assetPath;
   final Color iconForeground;
   final Color iconBackground;
   final String title;
@@ -338,13 +334,20 @@ class ConfirmDialog extends StatelessWidget {
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          ProfileIconContainer(
-            icon: icon,
-            foreground: iconForeground,
-            background: iconBackground,
-            size: 56,
-            iconSize: 28,
-          ),
+          if (assetPath != null && assetPath!.isNotEmpty)
+            AppImageIcon(
+              assetPath: assetPath!,
+              size: 56,
+              fallbackIcon: icon ?? Icons.warning_amber_rounded,
+            )
+          else
+            ProfileIconContainer(
+              icon: icon ?? Icons.warning_amber_rounded,
+              foreground: iconForeground,
+              background: iconBackground,
+              size: 56,
+              iconSize: 28,
+            ),
           const SizedBox(height: 12),
           Text(
             title,
@@ -394,9 +397,10 @@ class ConfirmDialog extends StatelessWidget {
 
 Future<bool> showConfirmDialog({
   required BuildContext context,
-  required IconData icon,
-  required Color iconForeground,
-  required Color iconBackground,
+  IconData? icon,
+  String? assetPath,
+  Color iconForeground = AppColors.error,
+  Color iconBackground = AppColors.dangerSoft,
   required String title,
   required String message,
   String cancelLabel = 'Batal',
@@ -407,6 +411,7 @@ Future<bool> showConfirmDialog({
     context: context,
     builder: (context) => ConfirmDialog(
       icon: icon,
+      assetPath: assetPath,
       iconForeground: iconForeground,
       iconBackground: iconBackground,
       title: title,

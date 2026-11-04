@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/constants/app_assets.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
@@ -11,6 +12,7 @@ import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_card.dart';
+import '../../../../core/widgets/app_icons.dart';
 import '../../../../data/models/transaction_model.dart';
 import '../../domain/receipt_parser.dart';
 import '../providers/native_input_providers.dart';
@@ -220,11 +222,7 @@ BCA DEBIT           65.000''';
       backgroundColor: AppColors.backgroundWarm,
       appBar: AppBar(
         title: const Text('Scan Struk'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          tooltip: 'Kembali',
-          onPressed: () => context.pop(),
-        ),
+        leading: AppBackButton(onPressed: () => context.pop()),
       ),
       body: SafeArea(
         child: Center(
@@ -268,10 +266,10 @@ BCA DEBIT           65.000''';
                       ),
                       child: Row(
                         children: [
-                          const Icon(
-                            Icons.error_outline_rounded,
-                            color: AppColors.error,
+                          const AppImageIcon(
+                            assetPath: AppAssets.statusError,
                             size: 20,
+                            fallbackIcon: Icons.error_outline_rounded,
                           ),
                           const SizedBox(width: 10),
                           Expanded(
@@ -486,14 +484,21 @@ BCA DEBIT           65.000''';
                           runSpacing: 8,
                           children: [
                             OutlinedButton.icon(
-                              icon: const Icon(Icons.receipt, size: 16),
+                              icon: const AppImageIcon(
+                                assetPath: AppAssets.setBills,
+                                size: 16,
+                                fallbackIcon: Icons.receipt,
+                              ),
                               label: const Text('Contoh Indomaret'),
                               onPressed: () =>
                                   _loadSampleReceipt(_sampleIndomaret),
                             ),
                             OutlinedButton.icon(
-                              icon: const Icon(Icons.shopping_bag_outlined,
-                                  size: 16),
+                              icon: const AppImageIcon(
+                                assetPath: AppAssets.setBag,
+                                size: 16,
+                                fallbackIcon: Icons.shopping_bag_outlined,
+                              ),
                               label: const Text('Contoh Superindo'),
                               onPressed: () =>
                                   _loadSampleReceipt(_sampleSuperindo),
@@ -523,13 +528,18 @@ BCA DEBIT           65.000''';
                                 ),
                               ),
                               IconButton(
-                                icon: Icon(
-                                  _isEditingText
-                                      ? Icons.check
-                                      : Icons.edit_outlined,
-                                  size: 18,
-                                  color: AppColors.secondary,
-                                ),
+                                icon: _isEditingText
+                                    ? const AppImageIcon(
+                                        assetPath: AppAssets.statusSuccess,
+                                        size: 18,
+                                        fallbackIcon: Icons.check,
+                                      )
+                                    : const AppImageIcon(
+                                        assetPath: AppAssets.actionEdit,
+                                        size: 18,
+                                        fallbackIcon: Icons.edit_outlined,
+                                      ),
+                                tooltip: _isEditingText ? 'Simpan' : 'Sunting',
                                 onPressed: () {
                                   if (_isEditingText) {
                                     _extractReceipt(
@@ -677,6 +687,7 @@ BCA DEBIT           65.000''';
                     // Confirm Action Button
                     AppButton(
                       label: 'Gunakan Data Struk di Form',
+                      assetPath: AppAssets.navForward,
                       icon: Icons.arrow_forward_rounded,
                       onPressed: _confirmAndNavigateToForm,
                     ),

@@ -5,6 +5,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
+import '../../../../core/widgets/app_icons.dart';
 import '../../../../core/widgets/app_states.dart';
 import '../../../../data/models/financial_goal.dart';
 import '../../../../data/models/goal_deposit.dart';
@@ -26,7 +27,10 @@ class GoalHistoryScreen extends ConsumerWidget {
     final deposits = ref.watch(goalDepositsProvider(goalId));
 
     return Scaffold(
-      appBar: AppBar(title: const Text(AppStrings.historyTitle)),
+      appBar: AppBar(
+        leading: const AppBackButton(),
+        title: const Text(AppStrings.historyTitle),
+      ),
       bottomNavigationBar: DashboardBottomNav(
         currentIndex: 3,
         onTap: (i) => goalsBottomNavTap(context, i),

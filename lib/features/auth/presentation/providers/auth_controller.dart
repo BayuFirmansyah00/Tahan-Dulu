@@ -168,9 +168,14 @@ class AuthController extends Notifier<AuthState> {
       );
       return true;
     } catch (e) {
-      state = const AuthState._(
+      final message = e is ApiException
+          ? e.message
+          : (e is UnsupportedError
+              ? (e.message ?? AppStrings.authGoogleFailed)
+              : AppStrings.authGoogleFailed);
+      state = AuthState._(
         status: AuthStatus.error,
-        errorMessage: AppStrings.authGoogleFailed,
+        errorMessage: message,
       );
       return false;
     }

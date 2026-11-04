@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../constants/app_strings.dart';
 import '../theme/app_colors.dart';
+import 'app_image_icon.dart';
 
 /// State kosong generik (dipakai semua fitur).
 class AppEmptyState extends StatelessWidget {
@@ -10,11 +11,13 @@ class AppEmptyState extends StatelessWidget {
     this.title = AppStrings.emptyTitle,
     this.subtitle = AppStrings.emptySubtitle,
     this.icon = Icons.inbox_outlined,
+    this.assetPath,
   });
 
   final String title;
   final String subtitle;
   final IconData icon;
+  final String? assetPath;
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +28,14 @@ class AppEmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 48, color: Theme.of(context).disabledColor),
+            if (assetPath != null)
+              AppImageIcon(
+                assetPath: assetPath!,
+                size: 48,
+                fallbackIcon: icon,
+              )
+            else
+              Icon(icon, size: 48, color: Theme.of(context).disabledColor),
             const SizedBox(height: 12),
             Text(title, style: textTheme.titleMedium),
             const SizedBox(height: 4),

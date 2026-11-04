@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
+import '../../../../core/widgets/app_icons.dart';
 import '../providers/tahandulu_controller.dart';
 import '../utils/tahandulu_ui.dart';
 import '../widgets/tahandulu_widgets.dart';
@@ -52,6 +54,7 @@ class TahanDuluAddScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
             _MethodCard(
+              assetPath: AppAssets.actionEdit,
               icon: Icons.edit_outlined,
               foreground: TdColors.warning,
               background: TdColors.warningBg,
@@ -97,10 +100,10 @@ class TahanDuluAddScreen extends ConsumerWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(
-                    Icons.notifications_outlined,
-                    color: TdColors.warning,
+                  const AppImageIcon(
+                    assetPath: AppAssets.setNotif,
                     size: 22,
+                    fallbackIcon: Icons.notifications_outlined,
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -124,7 +127,8 @@ class TahanDuluAddScreen extends ConsumerWidget {
 
 class _MethodCard extends StatelessWidget {
   const _MethodCard({
-    required this.icon,
+    this.icon,
+    this.assetPath,
     required this.foreground,
     required this.background,
     required this.title,
@@ -133,7 +137,8 @@ class _MethodCard extends StatelessWidget {
     this.badge,
   });
 
-  final IconData icon;
+  final IconData? icon;
+  final String? assetPath;
   final Color foreground;
   final Color background;
   final String title;
@@ -169,7 +174,15 @@ class _MethodCard extends StatelessWidget {
                 color: background,
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: Icon(icon, color: foreground, size: 26),
+              child: Center(
+                child: assetPath != null
+                    ? AppImageIcon(
+                        assetPath: assetPath!,
+                        size: 26,
+                        fallbackIcon: icon ?? Icons.edit_outlined,
+                      )
+                    : Icon(icon, color: foreground, size: 26),
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -219,7 +232,11 @@ class _MethodCard extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: TdColors.slate),
+            const AppImageIcon(
+              assetPath: AppAssets.navForward,
+              size: 20,
+              fallbackIcon: Icons.chevron_right,
+            ),
           ],
         ),
       ),

@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_icons.dart';
 import '../../../../core/widgets/app_states.dart';
 import '../../../../data/providers/app_providers.dart';
 import '../../../dashboard/presentation/widgets/dashboard_bottom_nav.dart';
@@ -56,10 +58,12 @@ class TahanDuluSuccessScreen extends ConsumerWidget {
                           color: TdColors.primary,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(
-                          Icons.check,
-                          color: TdColors.navy,
-                          size: 48,
+                        child: const Center(
+                          child: AppImageIcon(
+                            assetPath: AppAssets.tdSuccess,
+                            size: 52,
+                            fallbackIcon: Icons.check,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 20),

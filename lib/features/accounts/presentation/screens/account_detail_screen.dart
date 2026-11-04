@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -50,7 +51,7 @@ class _AccountDetailScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(),
+      appBar: AppBar(leading: const AppBackButton()),
       bottomNavigationBar: DashboardBottomNav(onTap: _onNav),
       body: SafeArea(
         child: _Body(
@@ -146,7 +147,12 @@ class _Body extends ConsumerWidget {
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.edit_outlined),
+                    tooltip: AppStrings.editAccountTitle,
+                    icon: const AppImageIcon(
+                      assetPath: AppAssets.actionEdit,
+                      size: 20,
+                      fallbackIcon: Icons.edit_outlined,
+                    ),
                     color: AppColors.primary,
                     onPressed: () => context.push(
                       '${AppRoutes.accounts}/$accountId/edit',
@@ -200,6 +206,7 @@ class _Body extends ConsumerWidget {
                   Expanded(
                     child: AppButton(
                       label: AppStrings.transferAction,
+                      assetPath: AppAssets.txTransfer,
                       icon: Icons.arrow_outward,
                       onPressed: () => context.push(
                         '${AppRoutes.accountTransfer}?from=$accountId',
@@ -210,6 +217,7 @@ class _Body extends ConsumerWidget {
                   Expanded(
                     child: AppOutlineButton(
                       label: AppStrings.editAccountTitle,
+                      assetPath: AppAssets.actionEdit,
                       icon: Icons.edit_outlined,
                       onPressed: () => context.push(
                         '${AppRoutes.accounts}/$accountId/edit',

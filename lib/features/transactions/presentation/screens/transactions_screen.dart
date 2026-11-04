@@ -342,6 +342,7 @@ class _EmptyAll extends StatelessWidget {
             const AppEmptyState(
               title: AppStrings.emptyTransactions,
               subtitle: AppStrings.emptyTransactionsHint,
+              assetPath: AppAssets.setBills,
               icon: Icons.receipt_long_outlined,
             ),
             const SizedBox(height: 8),
@@ -377,6 +378,7 @@ class _EmptyFiltered extends StatelessWidget {
           ? AppStrings.emptyFilterIncome
           : AppStrings.emptyFilterExpense,
       subtitle: AppStrings.emptyTransactionsHint,
+      assetPath: AppAssets.setBills,
       icon: Icons.receipt_long_outlined,
     );
   }

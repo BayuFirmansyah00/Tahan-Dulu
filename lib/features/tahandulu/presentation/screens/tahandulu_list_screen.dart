@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/finance_math.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_icons.dart';
 import '../../../../core/widgets/app_states.dart';
 import '../../../../data/models/purchase_consideration.dart';
 import '../../../../data/providers/app_providers.dart';
@@ -66,6 +68,7 @@ class _TahanDuluListScreenState extends ConsumerState<TahanDuluListScreen> {
     return Scaffold(
       backgroundColor: TdColors.background,
       appBar: AppBar(
+        leading: const AppBackButton(),
         title: const Text(AppStrings.tahanDuluPageTitle),
         backgroundColor: TdColors.background,
       ),
@@ -135,6 +138,7 @@ class _TahanDuluListScreenState extends ConsumerState<TahanDuluListScreen> {
                         const AppEmptyState(
                           title: AppStrings.emptyTahanDulu,
                           subtitle: AppStrings.emptyTahanDuluHint,
+                          assetPath: AppAssets.tdActionWait,
                           icon: Icons.pause_circle_outline,
                         )
                       else
@@ -149,6 +153,7 @@ class _TahanDuluListScreenState extends ConsumerState<TahanDuluListScreen> {
                       const SizedBox(height: 12),
                       AppButton(
                         label: AppStrings.addItemAction,
+                        assetPath: AppAssets.actionAddMoney,
                         icon: Icons.add,
                         backgroundColor: TdColors.primary,
                         foregroundColor: TdColors.navy,
@@ -235,10 +240,10 @@ class _HeroCard extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 4),
-                        const Icon(
-                          Icons.chevron_right,
+                        const AppImageIcon(
+                          assetPath: AppAssets.navForward,
                           size: 16,
-                          color: TdColors.navy,
+                          fallbackIcon: Icons.chevron_right,
                         ),
                       ],
                     ),
@@ -384,10 +389,10 @@ class _ItemCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      const Icon(
-                        Icons.access_time,
+                      const AppImageIcon(
+                        assetPath: AppAssets.actionCalendar,
                         size: 14,
-                        color: TdColors.warning,
+                        fallbackIcon: Icons.access_time,
                       ),
                       const SizedBox(width: 4),
                       Flexible(
@@ -413,7 +418,11 @@ class _ItemCard extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: TdColors.slate),
+            const AppImageIcon(
+              assetPath: AppAssets.navForward,
+              size: 20,
+              fallbackIcon: Icons.chevron_right,
+            ),
           ],
         ),
       ),
@@ -444,10 +453,12 @@ class _EduCard extends StatelessWidget {
               color: TdColors.highlight,
               shape: BoxShape.circle,
             ),
-            child: const Icon(
-              Icons.lightbulb_outline,
-              color: TdColors.warning,
-              size: 22,
+            child: const Center(
+              child: AppImageIcon(
+                assetPath: AppAssets.statusInfo,
+                size: 22,
+                fallbackIcon: Icons.lightbulb_outline,
+              ),
             ),
           ),
           const SizedBox(width: 10),

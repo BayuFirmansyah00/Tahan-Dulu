@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/date_formatter.dart';
+import '../../../../core/widgets/app_image_icon.dart';
 import '../../../../core/widgets/app_states.dart';
 import '../../../../data/models/app_notification.dart';
 import '../../../dashboard/presentation/widgets/dashboard_bottom_nav.dart';
@@ -77,13 +79,18 @@ class NotificationsScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: NotifColors.background,
       appBar: AppBar(
+        leading: const AppBackButton(),
         backgroundColor: NotifColors.background,
         title: const Text(AppStrings.notificationsTitle),
-        titleSpacing: 20,
+        titleSpacing: 0,
         centerTitle: false,
         actions: [
           PopupMenuButton<String>(
-            icon: const Icon(Icons.more_horiz),
+            icon: const AppImageIcon(
+              assetPath: AppAssets.navMore,
+              size: 24,
+              fallbackIcon: Icons.more_horiz,
+            ),
             onSelected: (value) async {
               if (value == 'read-all') {
                 await _markAll(context, ref);
@@ -383,10 +390,12 @@ class _MarkAllRow extends StatelessWidget {
                   color: NotifColors.chipInactive,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(
-                  Icons.mark_email_read_outlined,
-                  color: NotifColors.primary,
-                  size: 20,
+                child: const Center(
+                  child: AppImageIcon(
+                    assetPath: AppAssets.statusSuccess,
+                    size: 20,
+                    fallbackIcon: Icons.mark_email_read_outlined,
+                  ),
                 ),
               ),
               const SizedBox(width: 10),
@@ -399,7 +408,11 @@ class _MarkAllRow extends StatelessWidget {
                   ),
                 ),
               ),
-              const Icon(Icons.chevron_right, color: NotifColors.slate),
+              const AppImageIcon(
+                assetPath: AppAssets.navForward,
+                size: 18,
+                fallbackIcon: Icons.chevron_right,
+              ),
             ],
           ),
         ),
@@ -596,10 +609,10 @@ class _NotificationCard extends StatelessWidget {
                       ),
                       if (openable) ...[
                         const SizedBox(width: 6),
-                        const Icon(
-                          Icons.chevron_right,
+                        const AppImageIcon(
+                          assetPath: AppAssets.navForward,
                           size: 18,
-                          color: NotifColors.slate,
+                          fallbackIcon: Icons.chevron_right,
                         ),
                       ],
                     ],

@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/constants/app_assets.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/widgets/app_card.dart';
+import '../../../../core/widgets/app_icons.dart';
 import '../providers/transactions_controller.dart';
 
 /// Halaman pemilihan metode pencatatan transaksi TahanDulu:
@@ -39,11 +41,7 @@ class TransactionRecordMethodScreen extends ConsumerWidget {
       backgroundColor: AppColors.backgroundWarm,
       appBar: AppBar(
         title: const Text('Pilih Metode Catat'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          tooltip: 'Kembali',
-          onPressed: () => context.pop(),
-        ),
+        leading: AppBackButton(onPressed: () => context.pop()),
       ),
       body: SafeArea(
         child: Center(
@@ -80,6 +78,7 @@ class TransactionRecordMethodScreen extends ConsumerWidget {
                     title: 'Input Manual',
                     description:
                         'Catat pemasukan atau pengeluaran secara langsung dengan formulir lengkap.',
+                    assetPath: AppAssets.actionEdit,
                     icon: Icons.edit_note_rounded,
                     iconColor: AppColors.primary,
                     iconBackground: AppColors.primarySoft,
@@ -106,6 +105,7 @@ class TransactionRecordMethodScreen extends ConsumerWidget {
                     title: 'Scan Struk',
                     description:
                         'Pindai struk belanja untuk mengisi detail transaksi pengeluaran secara instan.',
+                    assetPath: AppAssets.setBills,
                     icon: Icons.receipt_long_outlined,
                     iconColor: AppColors.accentPurple,
                     iconBackground: AppColors.accentPurpleSoft,
@@ -125,10 +125,10 @@ class TransactionRecordMethodScreen extends ConsumerWidget {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(
-                          Icons.verified_user_outlined,
+                        const AppImageIcon(
+                          assetPath: AppAssets.setSecurity,
                           size: 22,
-                          color: AppColors.primary,
+                          fallbackIcon: Icons.verified_user_outlined,
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -157,7 +157,8 @@ class _MethodCard extends StatelessWidget {
   const _MethodCard({
     required this.title,
     required this.description,
-    required this.icon,
+    this.icon,
+    this.assetPath,
     required this.iconColor,
     required this.iconBackground,
     required this.onTap,
@@ -166,7 +167,8 @@ class _MethodCard extends StatelessWidget {
 
   final String title;
   final String description;
-  final IconData icon;
+  final IconData? icon;
+  final String? assetPath;
   final Color iconColor;
   final Color iconBackground;
   final VoidCallback onTap;
@@ -190,7 +192,16 @@ class _MethodCard extends StatelessWidget {
               color: iconBackground,
               borderRadius: BorderRadius.circular(16),
             ),
-            child: Icon(icon, color: iconColor, size: 28),
+            alignment: Alignment.center,
+            child: assetPath != null
+                ? AppImageIcon(
+                    assetPath: assetPath!,
+                    size: 28,
+                    fallbackIcon: icon ?? Icons.category_outlined,
+                  )
+                : (icon != null
+                    ? Icon(icon, color: iconColor, size: 28)
+                    : const SizedBox(width: 28, height: 28)),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -244,10 +255,10 @@ class _MethodCard extends StatelessWidget {
           const SizedBox(width: 8),
           const Padding(
             padding: EdgeInsets.only(top: 14),
-            child: Icon(
-              Icons.chevron_right_rounded,
-              color: AppColors.textDisabled,
-              size: 22,
+            child: AppImageIcon(
+              assetPath: AppAssets.navForward,
+              size: 20,
+              fallbackIcon: Icons.chevron_right_rounded,
             ),
           ),
         ],

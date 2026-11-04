@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tahan_dulu/core/constants/app_assets.dart';
 import 'package:tahan_dulu/core/constants/app_strings.dart';
+import 'package:tahan_dulu/core/widgets/app_image_icon.dart';
 import 'package:tahan_dulu/features/notifications/presentation/screens/notification_settings_screen.dart';
 import 'package:tahan_dulu/features/notifications/presentation/screens/notifications_screen.dart';
 import 'package:tahan_dulu/features/notifications/presentation/screens/saving_reminder_screen.dart';
@@ -111,12 +112,6 @@ Future<void> _tapVisible(WidgetTester tester, Finder finder) async {
   await tester.pumpAndSettle();
 }
 
-bool _isSettingsAsset(Widget w) {
-  if (w is! Image) return false;
-  final p = w.image;
-  return p is AssetImage && p.assetName.startsWith('assets/icons/');
-}
-
 Finder findAssetImage(String asset) => find.byWidgetPredicate(
   (w) =>
       w is Image &&
@@ -177,7 +172,16 @@ void main() {
         );
       }
       // 7 kartu menu (ilustrasi header kanan atas dihapus).
-      expect(find.byWidgetPredicate(_isSettingsAsset), findsNWidgets(7));
+      expect(
+        find.byWidgetPredicate(
+          (w) =>
+              w is Image &&
+              w.width == 48.0 &&
+              w.image is AssetImage &&
+              menuAssets.contains((w.image as AssetImage).assetName),
+        ),
+        findsNWidgets(7),
+      );
       expect(tester.takeException(), isNull);
     });
 
@@ -205,8 +209,8 @@ void main() {
     testWidgets('tombol kembali berfungsi', (tester) async {
       await _pumpSettings(tester);
 
-      expect(find.byIcon(Icons.arrow_back), findsOneWidget);
-      await _tapVisible(tester, find.byIcon(Icons.arrow_back));
+      expect(find.byType(AppBackButton), findsOneWidget);
+      await _tapVisible(tester, find.byType(AppBackButton));
       expect(find.text('Dummy Dashboard'), findsWidgets);
       expect(tester.takeException(), isNull);
     });
@@ -226,7 +230,7 @@ void main() {
       for (final entry in cases.entries) {
         await _tapVisible(tester, find.text(entry.key));
         expect(find.text(entry.value), findsWidgets);
-        await _tapVisible(tester, find.byIcon(Icons.arrow_back));
+        await _tapVisible(tester, find.byType(AppBackButton));
         expect(find.text(AppStrings.profileSubtitle), findsOneWidget);
       }
       expect(tester.takeException(), isNull);
@@ -267,7 +271,7 @@ void main() {
       );
       expect(findAssetImage(AppAssets.illSecurityTips), findsOneWidget);
       expect(find.text(AppStrings.securityLogout), findsOneWidget);
-      await _tapVisible(tester, find.byIcon(Icons.arrow_back));
+      await _tapVisible(tester, find.byType(AppBackButton));
       expect(find.text(AppStrings.profileSubtitle), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
@@ -292,7 +296,7 @@ void main() {
         300,
       );
       expect(findAssetImage(AppAssets.illPrivacyDataSafe), findsOneWidget);
-      await _tapVisible(tester, find.byIcon(Icons.arrow_back));
+      await _tapVisible(tester, find.byType(AppBackButton));
       expect(find.text(AppStrings.profileSubtitle), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
@@ -319,7 +323,7 @@ void main() {
         );
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull);
-        await _tapVisible(tester, find.byIcon(Icons.arrow_back));
+        await _tapVisible(tester, find.byType(AppBackButton));
       }
       expect(tester.takeException(), isNull);
     });
@@ -341,7 +345,7 @@ void main() {
       expect(findAssetImage(AppAssets.illEditProfileBg), findsOneWidget);
       expect(findAssetImage(AppAssets.setCameraBadge), findsOneWidget);
       expect(find.text(AppStrings.editProfileName), findsOneWidget);
-      await _tapVisible(tester, find.byIcon(Icons.arrow_back));
+      await _tapVisible(tester, find.byType(AppBackButton));
       expect(find.text(AppStrings.profileSubtitle), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
@@ -360,7 +364,7 @@ void main() {
         expect(findAssetImage(asset), findsOneWidget, reason: asset);
       }
       expect(find.text('Versi 1.0.0'), findsOneWidget);
-      await _tapVisible(tester, find.byIcon(Icons.arrow_back));
+      await _tapVisible(tester, find.byType(AppBackButton));
       expect(find.text(AppStrings.profileSubtitle), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
@@ -387,7 +391,7 @@ void main() {
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull);
         // Kembali via AppBar; edit profil tanpa perubahan langsung pop.
-        await _tapVisible(tester, find.byIcon(Icons.arrow_back));
+        await _tapVisible(tester, find.byType(AppBackButton));
         expect(find.text(AppStrings.profileSubtitle), findsOneWidget);
       }
       expect(tester.takeException(), isNull);
@@ -426,7 +430,7 @@ void main() {
           );
           await tester.pumpAndSettle();
           expect(tester.takeException(), isNull);
-          await _tapVisible(tester, find.byIcon(Icons.arrow_back));
+          await _tapVisible(tester, find.byType(AppBackButton));
           expect(find.text(AppStrings.profileSubtitle), findsOneWidget);
         }
         expect(tester.takeException(), isNull);

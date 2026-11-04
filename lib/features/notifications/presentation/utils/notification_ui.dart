@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/app_image_icon.dart';
 import '../../../../data/models/app_notification.dart';
 import '../../../../data/models/reminder_settings.dart';
 
@@ -74,24 +75,10 @@ class NotifCategoryIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final visual = visualForCategory(category);
-    return SizedBox(
-      width: size,
-      height: size,
-      child: Image.asset(
-        notificationCategoryAsset(category),
-        width: size,
-        height: size,
-        fit: BoxFit.contain,
-        errorBuilder: (context, error, stackTrace) => Container(
-          width: size,
-          height: size,
-          decoration: BoxDecoration(
-            color: visual.background,
-            borderRadius: BorderRadius.circular(size * 0.3),
-          ),
-          child: Icon(visual.icon, color: visual.foreground, size: size * 0.5),
-        ),
-      ),
+    return AppImageIcon(
+      assetPath: notificationCategoryAsset(category),
+      size: size,
+      fallbackIcon: visual.icon,
     );
   }
 }

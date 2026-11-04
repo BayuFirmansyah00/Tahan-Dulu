@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -358,10 +359,10 @@ class GoalNotFoundView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
-              Icons.flag_outlined,
+            const AppImageIcon(
+              assetPath: AppAssets.navTarget,
               size: 48,
-              color: AppColors.textDisabled,
+              fallbackIcon: Icons.flag_outlined,
             ),
             const SizedBox(height: 12),
             Text(
@@ -453,9 +454,10 @@ class GoalDateBox extends StatelessWidget {
         ),
         child: Row(
           children: [
-            const Icon(
-              Icons.calendar_month_outlined,
-              color: AppColors.textSecondary,
+            const AppImageIcon(
+              assetPath: AppAssets.actionCalendar,
+              size: 20,
+              fallbackIcon: Icons.calendar_month_outlined,
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -464,9 +466,10 @@ class GoalDateBox extends StatelessWidget {
                 style: Theme.of(context).textTheme.bodyLarge,
               ),
             ),
-            const Icon(
-              Icons.chevron_right,
-              color: AppColors.textSecondary,
+            const AppImageIcon(
+              assetPath: AppAssets.navForward,
+              size: 20,
+              fallbackIcon: Icons.chevron_right,
             ),
           ],
         ),

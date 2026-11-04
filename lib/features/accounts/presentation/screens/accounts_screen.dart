@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -50,18 +51,18 @@ class _AccountsScreenState extends ConsumerState<AccountsScreen> {
         title: const Text(AppStrings.accountsTitle),
         actions: [
           IconButton(
-            icon: const Icon(Icons.info_outline),
+            icon: const AppImageIcon(
+              assetPath: AppAssets.statusInfo,
+              size: 22,
+              fallbackIcon: Icons.info_outline,
+            ),
             onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text(AppStrings.recordedBalanceHint),
-              ),
+              const SnackBar(content: Text(AppStrings.recordedBalanceHint)),
             ),
           ),
         ],
       ),
-      bottomNavigationBar: DashboardBottomNav(
-        onTap: _onNav,
-      ),
+      bottomNavigationBar: DashboardBottomNav(onTap: _onNav),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -71,11 +72,12 @@ class _AccountsScreenState extends ConsumerState<AccountsScreen> {
                 total: total,
                 items: items,
                 obscured: _obscured,
-                onToggleObscure: () =>
-                    setState(() => _obscured = !_obscured),
+                onToggleObscure: () => setState(() => _obscured = !_obscured),
               ),
               loading: () => const AppLoading(),
-              error: (error, _) => AppErrorState(onRetry: () => ref.invalidate(accountsOverviewProvider)),
+              error: (error, _) => AppErrorState(
+                onRetry: () => ref.invalidate(accountsOverviewProvider),
+              ),
             ),
           ),
         ),
@@ -105,10 +107,7 @@ class _List extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            AppStrings.accountsSubtitle,
-            style: textTheme.bodyMedium,
-          ),
+          Text(AppStrings.accountsSubtitle, style: textTheme.bodyMedium),
           const SizedBox(height: 12),
           _TotalHero(
             total: total,
@@ -132,7 +131,11 @@ class _List extends StatelessWidget {
                   if (items.length >= 2) ...[
                     TextButton.icon(
                       onPressed: () => context.push(AppRoutes.accountTransfer),
-                      icon: const Icon(Icons.swap_horiz_rounded, size: 18),
+                      icon: const AppImageIcon(
+                        assetPath: AppAssets.txTransfer,
+                        size: 18,
+                        fallbackIcon: Icons.swap_horiz_rounded,
+                      ),
                       label: const Text(
                         AppStrings.transferAction,
                         overflow: TextOverflow.ellipsis,
@@ -259,9 +262,7 @@ class _AccountCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     return GestureDetector(
-      onTap: () => context.push(
-        '${AppRoutes.accounts}/${item.account.id}',
-      ),
+      onTap: () => context.push('${AppRoutes.accounts}/${item.account.id}'),
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
@@ -286,7 +287,8 @@ class _AccountCard extends StatelessWidget {
                 children: [
                   Text(item.account.name, style: textTheme.titleMedium),
                   Text(
-                    item.account.bankName ?? accountTypeLabel(item.account.type),
+                    item.account.bankName ??
+                        accountTypeLabel(item.account.type),
                     style: textTheme.bodyMedium,
                   ),
                 ],
@@ -299,9 +301,10 @@ class _AccountCard extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 4),
-            const Icon(
-              Icons.chevron_right,
-              color: AppColors.textSecondary,
+            const AppImageIcon(
+              assetPath: AppAssets.navForward,
+              size: 20,
+              fallbackIcon: Icons.chevron_right,
             ),
           ],
         ),
@@ -318,6 +321,7 @@ class _EmptyList extends StatelessWidget {
         const AppEmptyState(
           title: AppStrings.emptyAccounts,
           subtitle: AppStrings.emptyAccountsHint,
+          assetPath: AppAssets.txWallet,
           icon: Icons.account_balance_wallet_outlined,
         ),
         AppButton(
@@ -346,10 +350,12 @@ class _PromoCard extends StatelessWidget {
               color: AppColors.primarySoft,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(
-              Icons.show_chart_outlined,
-              color: AppColors.primary,
-              size: 22,
+            child: const Center(
+              child: AppImageIcon(
+                assetPath: AppAssets.dashChart,
+                size: 24,
+                fallbackIcon: Icons.show_chart_outlined,
+              ),
             ),
           ),
           const SizedBox(width: 12),
@@ -357,20 +363,15 @@ class _PromoCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  AppStrings.promoTitle,
-                  style: textTheme.titleMedium,
-                ),
-                Text(
-                  AppStrings.promoSubtitle,
-                  style: textTheme.bodyMedium,
-                ),
+                Text(AppStrings.promoTitle, style: textTheme.titleMedium),
+                Text(AppStrings.promoSubtitle, style: textTheme.bodyMedium),
               ],
             ),
           ),
-          const Icon(
-            Icons.chevron_right,
-            color: AppColors.textSecondary,
+          const AppImageIcon(
+            assetPath: AppAssets.navForward,
+            size: 20,
+            fallbackIcon: Icons.chevron_right,
           ),
         ],
       ),

@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_icons.dart';
 import '../../../../core/widgets/app_states.dart';
 import '../../../../data/providers/app_providers.dart';
 import '../providers/tahandulu_controller.dart';
@@ -194,6 +196,7 @@ class _TahanDuluWaitScreenState extends ConsumerState<TahanDuluWaitScreen> {
                 ),
                 const SizedBox(height: 8),
                 _ReflectCard(
+                  assetPath: AppAssets.txInvestment,
                   icon: Icons.eco_outlined,
                   question: AppStrings.waitReflectQ1,
                   value: _reflections['q1'],
@@ -201,6 +204,7 @@ class _TahanDuluWaitScreenState extends ConsumerState<TahanDuluWaitScreen> {
                 ),
                 const SizedBox(height: 8),
                 _ReflectCard(
+                  assetPath: AppAssets.goalHouse,
                   icon: Icons.home_outlined,
                   question: AppStrings.waitReflectQ2,
                   value: _reflections['q2'],
@@ -213,10 +217,10 @@ class _TahanDuluWaitScreenState extends ConsumerState<TahanDuluWaitScreen> {
                     children: [
                       Row(
                         children: [
-                          const Icon(
-                            Icons.bar_chart_outlined,
-                            color: TdColors.warning,
+                          const AppImageIcon(
+                            assetPath: AppAssets.dashChart,
                             size: 22,
+                            fallbackIcon: Icons.bar_chart_outlined,
                           ),
                           const SizedBox(width: 8),
                           Expanded(
@@ -257,10 +261,10 @@ class _TahanDuluWaitScreenState extends ConsumerState<TahanDuluWaitScreen> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(
-                      Icons.info_outline,
+                    const AppImageIcon(
+                      assetPath: AppAssets.statusInfo,
                       size: 16,
-                      color: TdColors.slate,
+                      fallbackIcon: Icons.info_outline,
                     ),
                     const SizedBox(width: 6),
                     Expanded(
@@ -345,7 +349,11 @@ class _CountdownCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.access_time, color: TdColors.navy),
+              const AppImageIcon(
+                assetPath: AppAssets.actionCalendar,
+                size: 20,
+                fallbackIcon: Icons.access_time,
+              ),
               const SizedBox(width: 6),
               Text(
                 AppStrings.waitCountdownTitle,
@@ -374,13 +382,15 @@ class _CountdownCard extends StatelessWidget {
 /// Kartu refleksi: ikon + pertanyaan + pil Ya/Tidak.
 class _ReflectCard extends StatelessWidget {
   const _ReflectCard({
-    required this.icon,
+    this.icon,
+    this.assetPath,
     required this.question,
     required this.value,
     required this.onPick,
   });
 
-  final IconData icon;
+  final IconData? icon;
+  final String? assetPath;
   final String question;
   final bool? value;
   final ValueChanged<bool> onPick;
@@ -425,7 +435,15 @@ class _ReflectCard extends StatelessWidget {
               color: TdColors.successBg,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: TdColors.success, size: 22),
+            child: Center(
+              child: assetPath != null
+                  ? AppImageIcon(
+                      assetPath: assetPath!,
+                      size: 22,
+                      fallbackIcon: icon ?? Icons.eco_outlined,
+                    )
+                  : Icon(icon, color: TdColors.success, size: 22),
+            ),
           ),
           const SizedBox(width: 10),
           Expanded(

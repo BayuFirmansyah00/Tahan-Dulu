@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/routing/app_routes.dart';
+import '../../../../core/widgets/app_icons.dart';
 import '../../../../data/models/purchase_consideration.dart';
 import '../../../dashboard/presentation/widgets/dashboard_bottom_nav.dart';
 import '../utils/tahandulu_ui.dart';
@@ -46,7 +47,11 @@ class TahanDuluScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: TdColors.background,
-      appBar: AppBar(title: Text(title), backgroundColor: TdColors.background),
+      appBar: AppBar(
+        leading: const AppBackButton(),
+        title: Text(title),
+        backgroundColor: TdColors.background,
+      ),
       bottomNavigationBar: DashboardBottomNav(
         onTap: (i) => tahanDuluBottomNavTap(context, i),
       ),

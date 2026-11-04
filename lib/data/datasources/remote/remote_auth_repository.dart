@@ -1,3 +1,5 @@
+import 'package:google_sign_in/google_sign_in.dart';
+
 import '../../models/user_model.dart';
 import '../../repositories/auth_repository.dart';
 import 'api_client.dart';
@@ -5,22 +7,29 @@ import 'token_storage.dart';
 
 /// Implementasi [AuthRepository] memakai API Laravel (Sanctum).
 ///
-/// Dipakai hanya saat [ApiConfig.useRemoteAuth] true; default aplikasi
-/// dan seluruh test tetap memakai [MockAuthRepository] yang offline.
-/// Batasan jujur: Google sign-in dan ubah profil belum ada endpoint-nya
-/// di backend, sehingga melempar [UnsupportedError] (UI menampilkan
-/// pesan gagal yang sudah ada, tanpa berpura-pura berhasil).
+/// Dipakai saat [ApiConfig.useRemoteAuth] bernilai true.
+/// Mendukung Login/Register Email & Password serta Google Sign-In.
 class RemoteAuthRepository implements AuthRepository {
   RemoteAuthRepository({
     required ApiClient client,
     required TokenStore tokens,
+    GoogleSignIn? googleSignIn,
   }) {
     _client = client;
     _tokens = tokens;
+    _googleSignIn = googleSignIn ??
+        GoogleSignIn(
+          serverClientId: googleServerClientId,
+          scopes: const ['email', 'profile', 'openid'],
+        );
   }
+
+  static const String googleServerClientId =
+      '83228556023-0usoeq5cnbrt569krubclavfcn0r3qfd.apps.googleusercontent.com';
 
   late final ApiClient _client;
   late final TokenStore _tokens;
+  late final GoogleSignIn _googleSignIn;
 
   static UserModel _toUser(Map<String, dynamic> json) {
     return UserModel(
@@ -88,8 +97,21 @@ class RemoteAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<UserModel> signInWithGoogle() {
-    throw UnsupportedError('Login Google belum tersedia di backend.');
+  Future<UserModel> signInWithGoogle() async {
+    final account = await _googleSignIn.signIn();
+    if (account == null) {
+      throw ApiException('Proses masuk dengan Google dibatalkan.');
+    }
+    final auth = await account.authentication;
+    final idToken = auth.idToken;
+    if (idToken == null || idToken.isEmpty) {
+      throw ApiException('Gagal mendapatkan ID Token dari Google.');
+    }
+
+    final body = await _client.post('/auth/google', {
+      'id_token': idToken,
+    });
+    return _finish(body);
   }
 
   @override
@@ -137,6 +159,11 @@ class RemoteAuthRepository implements AuthRepository {
 
   @override
   Future<void> logout() async {
+    try {
+      await _googleSignIn.signOut();
+    } catch (_) {
+      // Best-effort sign out akun Google dari perangkat lokal
+    }
     final token = await _tokens.readToken();
     if (token != null && token.isNotEmpty) {
       try {

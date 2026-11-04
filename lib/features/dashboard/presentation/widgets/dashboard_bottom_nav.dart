@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/app_icons.dart';
 
 /// Bottom navigation premium TahanDulu sesuai referensi:
 /// pill putih, Home aktif (mint + dot), struk + badge Rp, tombol Catat
@@ -56,9 +58,7 @@ class DashboardBottomNav extends StatelessWidget {
                         active: currentIndex == 0,
                         onTap: () => onTap(0),
                         child: _TabContent(
-                          icon: currentIndex == 0
-                              ? Icons.home
-                              : Icons.home_outlined,
+                          assetPath: AppAssets.navHome,
                           label: AppStrings.navHome,
                           active: currentIndex == 0,
                         ),
@@ -67,7 +67,7 @@ class DashboardBottomNav extends StatelessWidget {
                         active: currentIndex == 1,
                         onTap: () => onTap(1),
                         child: _TabContent(
-                          icon: Icons.receipt_long_outlined,
+                          assetPath: AppAssets.navTransaction,
                           label: AppStrings.navTransactions,
                           active: currentIndex == 1,
                           badge: true,
@@ -78,19 +78,16 @@ class DashboardBottomNav extends StatelessWidget {
                         active: currentIndex == 3,
                         onTap: () => onTap(3),
                         child: _TabContent(
-                          icon: Icons.track_changes_outlined,
+                          assetPath: AppAssets.navTarget,
                           label: AppStrings.navGoals,
                           active: currentIndex == 3,
-                          arrow: true,
                         ),
                       ),
                       _TabSlot(
                         active: currentIndex == 4,
                         onTap: () => onTap(4),
                         child: _TabContent(
-                          icon: currentIndex == 4
-                              ? Icons.person
-                              : Icons.person_outline,
+                          assetPath: AppAssets.navProfile,
                           label: AppStrings.navProfile,
                           active: currentIndex == 4,
                         ),
@@ -140,18 +137,16 @@ class _TabSlot extends StatelessWidget {
 /// Isi tab: ikon + label + latar mint animasi + dot indikator.
 class _TabContent extends StatelessWidget {
   const _TabContent({
-    required this.icon,
+    required this.assetPath,
     required this.label,
     required this.active,
     this.badge = false,
-    this.arrow = false,
   });
 
-  final IconData icon;
+  final String assetPath;
   final String label;
   final bool active;
   final bool badge;
-  final bool arrow;
 
   @override
   Widget build(BuildContext context) {
@@ -173,7 +168,12 @@ class _TabContent extends StatelessWidget {
               clipBehavior: Clip.none,
               alignment: Alignment.center,
               children: [
-                _AnimatedIcon(icon: icon, color: color),
+                AppImageIcon(
+                  assetPath: assetPath,
+                  size: 24,
+                  opacity: active ? 1.0 : 0.65,
+                  semanticLabel: label,
+                ),
                 if (badge)
                   Positioned(
                     right: -8,
@@ -194,16 +194,6 @@ class _TabContent extends StatelessWidget {
                           fontWeight: FontWeight.w800,
                         ),
                       ),
-                    ),
-                  ),
-                if (arrow)
-                  const Positioned(
-                    right: -4,
-                    top: -2,
-                    child: Icon(
-                      Icons.north_east,
-                      size: 11,
-                      color: AppColors.primary,
                     ),
                   ),
               ],
@@ -237,24 +227,6 @@ class _TabContent extends StatelessWidget {
   }
 }
 
-/// Ikon dengan transisi warna halus saat aktif/nonaktif.
-class _AnimatedIcon extends StatelessWidget {
-  const _AnimatedIcon({required this.icon, required this.color});
-
-  final IconData icon;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return TweenAnimationBuilder<Color?>(
-      tween: ColorTween(end: color),
-      duration: const Duration(milliseconds: 250),
-      curve: Curves.easeOutCubic,
-      builder: (context, value, _) => Icon(icon, color: value, size: 25),
-    );
-  }
-}
-
 /// Tombol Catat: lingkaran emerald terangkat + label.
 class _RecordButton extends StatelessWidget {
   const _RecordButton({required this.onTap});
@@ -264,6 +236,7 @@ class _RecordButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
+      key: const Key('record_button'),
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Column(
@@ -289,7 +262,14 @@ class _RecordButton extends StatelessWidget {
                   ),
                 ],
               ),
-              child: const Icon(Icons.add, color: Colors.white, size: 30),
+              child: const Center(
+                child: AppImageIcon(
+                  key: Key('record_button_icon'),
+                  assetPath: AppAssets.actionAddMoney,
+                  size: 32,
+                  semanticLabel: AppStrings.navRecord,
+                ),
+              ),
             ),
           ),
           const SizedBox(height: 1),

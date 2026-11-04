@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/app_image_icon.dart';
 import '../../../../core/widgets/app_states.dart';
 import '../../data/help_articles.dart';
 import '../providers/profile_providers.dart';
@@ -46,7 +47,10 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
     final reduceMotion = ref.watch(appPreferencesProvider).reduceMotion;
 
     return Scaffold(
-      appBar: AppBar(title: const Text(AppStrings.helpTitle)),
+      appBar: AppBar(
+        leading: const AppBackButton(),
+        title: const Text(AppStrings.helpTitle),
+      ),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -124,10 +128,18 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
                                 color: Color(0xFFE8EFFE),
                                 shape: BoxShape.circle,
                               ),
-                              child: Icon(
-                                category.icon,
-                                color: AppColors.secondary,
-                                size: 18,
+                              child: Center(
+                                child: category.asset != null
+                                    ? AppImageIcon(
+                                        assetPath: category.asset!,
+                                        size: 20,
+                                        fallbackIcon: category.icon,
+                                      )
+                                    : Icon(
+                                        category.icon,
+                                        color: AppColors.secondary,
+                                        size: 18,
+                                      ),
                               ),
                             ),
                             const SizedBox(width: 8),
@@ -309,9 +321,10 @@ class _ArticleTile extends StatelessWidget {
                     duration: Duration(
                       milliseconds: reduceMotion ? 0 : 200,
                     ),
-                    child: const Icon(
-                      Icons.expand_more_outlined,
-                      color: AppColors.textSecondary,
+                    child: const AppImageIcon(
+                      assetPath: AppAssets.navDown,
+                      size: 20,
+                      fallbackIcon: Icons.expand_more_outlined,
                     ),
                   ),
                 ],

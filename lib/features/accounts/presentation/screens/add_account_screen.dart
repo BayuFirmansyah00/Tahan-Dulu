@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/rupiah_input_formatter.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_image_icon.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../data/datasources/remote/api_client.dart';
 import '../../../../data/models/api_bank.dart';
@@ -193,7 +195,10 @@ class _AddAccountScreenState extends ConsumerState<AddAccountScreen> {
     final showTypeError = _attempted && _selectedInstrumentTypeId == null;
 
     return Scaffold(
-      appBar: AppBar(title: const Text(AppStrings.addAccountTitle)),
+      appBar: AppBar(
+        leading: const AppBackButton(),
+        title: const Text(AppStrings.addAccountTitle),
+      ),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -341,10 +346,12 @@ class _AddAccountScreenState extends ConsumerState<AddAccountScreen> {
                                         color: AppColors.secondarySoft,
                                         borderRadius: BorderRadius.circular(10),
                                       ),
-                                      child: const Icon(
-                                        Icons.account_balance_outlined,
-                                        color: AppColors.secondary,
-                                        size: 22,
+                                      child: const Center(
+                                        child: AppImageIcon(
+                                          assetPath: AppAssets.instBank,
+                                          size: 24,
+                                          fallbackIcon: Icons.account_balance_outlined,
+                                        ),
                                       ),
                                     ),
                                     const SizedBox(width: 12),
@@ -368,9 +375,10 @@ class _AddAccountScreenState extends ConsumerState<AddAccountScreen> {
                                         ],
                                       ),
                                     ),
-                                    const Icon(
-                                      Icons.chevron_right,
-                                      color: AppColors.textSecondary,
+                                    const AppImageIcon(
+                                      assetPath: AppAssets.navForward,
+                                      size: 20,
+                                      fallbackIcon: Icons.chevron_right,
                                     ),
                                   ],
                                 ],
@@ -462,10 +470,10 @@ class _InfoBanner extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(
-            Icons.info_outline,
+          const AppImageIcon(
+            assetPath: AppAssets.statusInfo,
             size: 18,
-            color: AppColors.secondary,
+            fallbackIcon: Icons.info_outline,
           ),
           const SizedBox(width: 8),
           Expanded(

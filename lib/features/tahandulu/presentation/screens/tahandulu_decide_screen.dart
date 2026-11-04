@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/widgets/app_icons.dart';
 import '../../../../core/widgets/app_states.dart';
 import '../../../../data/models/purchase_consideration.dart';
 import '../../../../data/providers/app_providers.dart';
@@ -177,6 +179,7 @@ class _TahanDuluDecideScreenState extends ConsumerState<TahanDuluDecideScreen> {
                 ],
                 const SizedBox(height: 16),
                 _OptionCard(
+                  assetPath: AppAssets.tdActionBuy,
                   icon: Icons.shopping_cart_outlined,
                   foreground: TdColors.navy,
                   background: TdColors.primary,
@@ -187,6 +190,7 @@ class _TahanDuluDecideScreenState extends ConsumerState<TahanDuluDecideScreen> {
                 ),
                 const SizedBox(height: 10),
                 _OptionCard(
+                  assetPath: AppAssets.tdActionWait,
                   icon: Icons.pause_circle_outline,
                   foreground: TdColors.warning,
                   background: TdColors.warningBg,
@@ -198,6 +202,7 @@ class _TahanDuluDecideScreenState extends ConsumerState<TahanDuluDecideScreen> {
                 ),
                 const SizedBox(height: 10),
                 _OptionCard(
+                  assetPath: AppAssets.tdActionWishlist,
                   icon: Icons.favorite_outline,
                   foreground: const Color(0xFF8B5CF6),
                   background: const Color(0xFFEEE9FE),
@@ -214,6 +219,7 @@ class _TahanDuluDecideScreenState extends ConsumerState<TahanDuluDecideScreen> {
                 ),
                 const SizedBox(height: 10),
                 _OptionCard(
+                  assetPath: AppAssets.actionDelete,
                   icon: Icons.close,
                   foreground: TdColors.danger,
                   background: TdColors.dangerBg,
@@ -266,10 +272,10 @@ class _FinalBanner extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(
-            Icons.check_circle_outline,
-            color: TdColors.navy,
+          const AppImageIcon(
+            assetPath: AppAssets.statusSuccess,
             size: 18,
+            fallbackIcon: Icons.check_circle_outline,
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -289,7 +295,8 @@ class _FinalBanner extends StatelessWidget {
 
 class _OptionCard extends StatelessWidget {
   const _OptionCard({
-    required this.icon,
+    this.icon,
+    this.assetPath,
     required this.foreground,
     required this.background,
     required this.title,
@@ -298,7 +305,8 @@ class _OptionCard extends StatelessWidget {
     required this.onTap,
   });
 
-  final IconData icon;
+  final IconData? icon;
+  final String? assetPath;
   final Color foreground;
   final Color background;
   final String title;
@@ -336,7 +344,15 @@ class _OptionCard extends StatelessWidget {
                   color: background,
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: Icon(icon, color: foreground, size: 22),
+                child: Center(
+                  child: assetPath != null
+                      ? AppImageIcon(
+                          assetPath: assetPath!,
+                          size: 22,
+                          fallbackIcon: icon ?? Icons.category_outlined,
+                        )
+                      : Icon(icon, color: foreground, size: 22),
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -359,7 +375,11 @@ class _OptionCard extends StatelessWidget {
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right, color: TdColors.slate),
+              const AppImageIcon(
+                assetPath: AppAssets.navForward,
+                size: 20,
+                fallbackIcon: Icons.chevron_right,
+              ),
             ],
           ),
         ),

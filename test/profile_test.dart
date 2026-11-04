@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tahan_dulu/core/constants/app_assets.dart';
 import 'package:tahan_dulu/core/constants/app_strings.dart';
+import 'package:tahan_dulu/core/widgets/app_image_icon.dart';
 import 'package:tahan_dulu/data/models/app_preferences.dart';
 import 'package:tahan_dulu/features/auth/presentation/providers/auth_controller.dart';
 import 'package:tahan_dulu/features/notifications/presentation/screens/notification_settings_screen.dart';
@@ -125,7 +126,7 @@ Future<void> _tapVisible(WidgetTester tester, Finder finder) async {
 }
 
 Future<void> _goBack(WidgetTester tester) async {
-  await tester.tap(find.byIcon(Icons.arrow_back));
+  await tester.tap(find.byType(AppBackButton));
   await tester.pumpAndSettle();
 }
 
@@ -353,7 +354,14 @@ void main() {
       await _pumpProfile(tester, initial: '/settings/edit');
 
       expect(find.text(AppStrings.editProfileEmailFrozen), findsOneWidget);
-      expect(find.byIcon(Icons.lock_outline), findsOneWidget);
+      expect(
+        find.byWidgetPredicate(
+          (w) =>
+              w is AppImageIcon &&
+              w.assetPath == AppAssets.setSecurity,
+        ),
+        findsOneWidget,
+      );
     });
 
     testWidgets('batal kembali tanpa menyimpan', (tester) async {
@@ -487,7 +495,7 @@ void main() {
       expect(find.text(AppStrings.notifFinanceSection), findsOneWidget);
       await _tapVisible(
         tester,
-        find.byIcon(Icons.notifications_outlined).first,
+        find.byTooltip(AppStrings.notificationsTitle),
       );
       expect(find.text(AppStrings.notificationsTitle), findsWidgets);
       await _goBack(tester);

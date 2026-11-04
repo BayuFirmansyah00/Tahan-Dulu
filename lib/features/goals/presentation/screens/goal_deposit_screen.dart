@@ -9,6 +9,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/rupiah_input_formatter.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_icons.dart';
 import '../../../../core/widgets/app_states.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../data/models/financial_goal.dart';
@@ -91,7 +92,10 @@ class _GoalDepositScreenState extends ConsumerState<GoalDepositScreen> {
     final goals = ref.watch(goalsListProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text(AppStrings.depositTitle)),
+      appBar: AppBar(
+        leading: const AppBackButton(),
+        title: const Text(AppStrings.depositTitle),
+      ),
       bottomNavigationBar: DashboardBottomNav(
         currentIndex: 3,
         onTap: (i) => goalsBottomNavTap(context, i),

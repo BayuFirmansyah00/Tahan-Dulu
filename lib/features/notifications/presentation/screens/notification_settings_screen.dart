@@ -7,6 +7,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
+import '../../../../core/widgets/app_image_icon.dart';
 import '../../../../core/widgets/app_states.dart';
 import '../../../../data/models/reminder_settings.dart';
 import '../../../dashboard/presentation/widgets/dashboard_bottom_nav.dart';
@@ -85,11 +86,16 @@ class NotificationSettingsScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.backgroundWarm,
       appBar: AppBar(
+        leading: const AppBackButton(),
         title: const Text(AppStrings.notifSettingsTitle),
         flexibleSpace: const AppBarMintCorner(),
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications_outlined),
+            icon: const AppImageIcon(
+              assetPath: AppAssets.setNotif,
+              size: 24,
+              fallbackIcon: Icons.notifications_outlined,
+            ),
             tooltip: AppStrings.notificationsTitle,
             onPressed: () => context.push(AppRoutes.notifications),
           ),
@@ -179,10 +185,10 @@ class _Body extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(
-                  Icons.info,
-                  color: AppColors.secondary,
+                const AppImageIcon(
+                  assetPath: AppAssets.statusInfo,
                   size: 20,
+                  fallbackIcon: Icons.info,
                 ),
                 const SizedBox(width: 8),
                 Expanded(
@@ -236,24 +242,10 @@ class _ReminderRow extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Image.asset(
-              asset,
-              width: 48,
-              height: 48,
-              fit: BoxFit.contain,
-              errorBuilder: (context, error, stackTrace) => Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: visual.background,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  visual.icon,
-                  color: visual.foreground,
-                  size: 24,
-                ),
-              ),
+            AppImageIcon(
+              assetPath: asset,
+              size: 48,
+              fallbackIcon: visual.icon,
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -281,10 +273,10 @@ class _ReminderRow extends StatelessWidget {
               activeTrackColor: AppColors.primary,
               onChanged: onToggle,
             ),
-            const Icon(
-              Icons.chevron_right,
-              color: AppColors.textSecondary,
+            const AppImageIcon(
+              assetPath: AppAssets.navForward,
               size: 20,
+              fallbackIcon: Icons.chevron_right,
             ),
           ],
         ),

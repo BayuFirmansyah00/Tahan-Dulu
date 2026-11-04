@@ -409,7 +409,7 @@ void main() {
     await _tapVisible(tester, find.byIcon(Icons.add).first);
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byIcon(Icons.arrow_back));
+    await tester.tap(find.byTooltip('Kembali'));
     await tester.pumpAndSettle();
 
     // Judul AppBar + label nav bawah memakai teks yang sama.

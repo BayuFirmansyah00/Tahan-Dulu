@@ -8,6 +8,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_icons.dart';
 import '../../../../data/datasources/remote/api_client.dart';
 import '../../../../data/models/financial_instrument.dart';
 import '../../../../data/models/transaction_model.dart';
@@ -106,7 +107,10 @@ class _TransactionReviewScreenState
     final sign = isIncome ? '+' : '-';
 
     return Scaffold(
-      appBar: AppBar(title: const Text(AppStrings.reviewTitle)),
+      appBar: AppBar(
+        leading: const AppBackButton(),
+        title: const Text(AppStrings.reviewTitle),
+      ),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(

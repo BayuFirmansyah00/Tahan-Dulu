@@ -21,6 +21,7 @@ import 'package:tahan_dulu/features/accounts/presentation/screens/add_account_sc
 import 'package:tahan_dulu/features/accounts/presentation/screens/edit_account_screen.dart';
 import 'package:tahan_dulu/features/accounts/presentation/screens/transfer_screen.dart';
 import 'package:tahan_dulu/features/dashboard/presentation/screens/dashboard_screen.dart';
+import 'package:tahan_dulu/features/goals/presentation/screens/goal_achieved_screen.dart';
 import 'package:tahan_dulu/features/goals/presentation/screens/goal_create_screen.dart';
 import 'package:tahan_dulu/features/goals/presentation/screens/goal_deposit_screen.dart';
 import 'package:tahan_dulu/features/goals/presentation/screens/goal_detail_screen.dart';
@@ -66,21 +67,6 @@ import 'package:tahan_dulu/features/onboarding/presentation/screens/salary_scree
 import 'package:tahan_dulu/features/splash/presentation/screens/splash_screen.dart';
 import 'app_routes.dart';
 
-/// ChangeNotifier tipis yang membungkus AuthState agar GoRouter dapat
-/// menggunakannya sebagai refreshListenable.
-class AuthRouteNotifier extends ChangeNotifier {
-  AuthState _authState = const AuthState.initial();
-
-  AuthState get authState => _authState;
-
-  void update(AuthState state) {
-    _authState = state;
-    notifyListeners();
-  }
-}
-
-
-
 /// Transisi antar-menu utama: fade + geser horizontal ringan.
 /// 250ms easeOutCubic, berlaku maju dan mundur (back button aman).
 CustomTransitionPage<void> tabPage(LocalKey key, Widget child) {
@@ -111,73 +97,9 @@ CustomTransitionPage<void> tabPage(LocalKey key, Widget child) {
 
 /// Router terpusat (go_router). Path dan nama route tidak berubah;
 /// hanya 4 root menu utama memakai [tabPage] agar transisi smooth.
-///
-/// [authNotifier] digunakan sebagai refreshListenable dan sumber status auth
-/// untuk redirect guard. Bila null (backward-compat), guard dinonaktifkan.
-GoRouter createAppRouter({AuthRouteNotifier? authNotifier}) {
-  // Route-route yang hanya boleh diakses pengguna yang sudah onboarding.
-  const protectedPrefixes = [
-    AppRoutes.dashboard,
-    AppRoutes.transactions,
-    AppRoutes.goals,
-    AppRoutes.tahanDulu,
-    AppRoutes.accounts,
-    AppRoutes.investments,
-    AppRoutes.recurringIncomes,
-    AppRoutes.recurringExpenses,
-    AppRoutes.reports,
-    AppRoutes.notifications,
-    AppRoutes.settings,
-  ];
-
-  bool isProtected(String location) =>
-      protectedPrefixes.any((p) => location.startsWith(p));
-
-  bool isOnboardingRoute(String location) =>
-      location.startsWith(AppRoutes.onboarding);
-
+GoRouter createAppRouter() {
   return GoRouter(
     initialLocation: AppRoutes.splash,
-    refreshListenable: authNotifier,
-    redirect: (context, state) {
-      if (authNotifier == null) return null;
-      final authState = authNotifier.authState;
-      final location = state.uri.toString();
-
-      final isAuth = authState.status == AuthStatus.authenticated;
-      final isOnboarded = authState.user?.isOnboarded ?? false;
-
-      // Sedang di splash â€” biarkan SplashScreen memutuskan navigasi sendiri.
-      if (location == AppRoutes.splash) return null;
-
-      // Belum terautentikasi: boleh akses login, register, splash saja.
-      if (!isAuth) {
-        if (isProtected(location) || isOnboardingRoute(location)) {
-          return AppRoutes.login;
-        }
-        return null;
-      }
-
-      // Sudah autentikasi + sudah onboarding:
-      // Jangan kembali ke onboarding atau auth pages.
-      if (isOnboarded) {
-        if (isOnboardingRoute(location) ||
-            location == AppRoutes.login ||
-            location == AppRoutes.register) {
-          return AppRoutes.dashboard;
-        }
-        return null;
-      }
-
-      // Sudah autentikasi tapi BELUM onboarding:
-      // Boleh akses onboarding, logout (settings/security), splash.
-      // Blokir semua fitur utama.
-      if (isProtected(location)) {
-        return AppRoutes.onboardingSalary;
-      }
-      // Tetap boleh di login/register (edge case: double-navigate).
-      return null;
-    },
     routes: [
       GoRoute(
         path: AppRoutes.splash,
@@ -193,6 +115,8 @@ GoRouter createAppRouter({AuthRouteNotifier? authNotifier}) {
       ),
       GoRoute(
         path: AppRoutes.onboarding,
+        // Halaman intro dihapus: /onboarding pas mendarat di Input Gaji.
+        // Hanya path persis yang di-redirect agar sub-route tidak terbajak.
         redirect: (context, state) =>
             state.uri.toString() == AppRoutes.onboarding
             ? AppRoutes.onboardingSalary
@@ -205,10 +129,6 @@ GoRouter createAppRouter({AuthRouteNotifier? authNotifier}) {
           GoRoute(
             path: 'instruments',
             builder: (context, state) => const InstrumentsScreen(),
-          ),
-          GoRoute(
-            path: 'budget',
-            builder: (context, state) => const BudgetScreen(),
           ),
           GoRoute(
             path: 'recurring-expenses',
@@ -229,6 +149,7 @@ GoRouter createAppRouter({AuthRouteNotifier? authNotifier}) {
         pageBuilder: (context, state) =>
             tabPage(state.pageKey, const DashboardScreen()),
       ),
+      // Rute fitur — masih placeholder, diisi UI satu per satu.
       GoRoute(
         path: AppRoutes.transactions,
         pageBuilder: (context, state) => tabPage(
@@ -238,18 +159,15 @@ GoRouter createAppRouter({AuthRouteNotifier? authNotifier}) {
         routes: [
           GoRoute(
             path: 'record-method',
-            builder: (context, state) =>
-                const TransactionRecordMethodScreen(),
+            builder: (context, state) => const TransactionRecordMethodScreen(),
           ),
           GoRoute(
             path: 'voice',
-            builder: (context, state) =>
-                const TransactionVoiceScreen(),
+            builder: (context, state) => const TransactionVoiceScreen(),
           ),
           GoRoute(
             path: 'scan',
-            builder: (context, state) =>
-                const TransactionScanScreen(),
+            builder: (context, state) => const TransactionScanScreen(),
           ),
           GoRoute(
             path: 'add',
@@ -316,6 +234,11 @@ GoRouter createAppRouter({AuthRouteNotifier? authNotifier}) {
                 builder: (context, state) =>
                     GoalSimulateScreen(goalId: state.pathParameters['id']!),
               ),
+              GoRoute(
+                path: 'achieved',
+                builder: (context, state) =>
+                    GoalAchievedScreen(goalId: state.pathParameters['id']!),
+              ),
             ],
           ),
         ],
@@ -367,84 +290,8 @@ GoRouter createAppRouter({AuthRouteNotifier? authNotifier}) {
         ],
       ),
       GoRoute(
-        path: AppRoutes.accounts,
-        builder: (context, state) => const AccountsScreen(),
-        routes: [
-          GoRoute(
-            path: 'add',
-            builder: (context, state) => const AddAccountScreen(),
-          ),
-          GoRoute(
-            path: 'transfer',
-            builder: (context, state) => TransferScreen(
-              initialSourceAccountId: state.uri.queryParameters['from'],
-            ),
-          ),
-          GoRoute(
-            path: ':id',
-            builder: (context, state) =>
-                AccountDetailScreen(accountId: state.pathParameters['id']!),
-            routes: [
-              GoRoute(
-                path: 'edit',
-                builder: (context, state) =>
-                    EditAccountScreen(accountId: state.pathParameters['id']!),
-              ),
-            ],
-          ),
-        ],
-      ),
-      GoRoute(
-        path: AppRoutes.investments,
-        pageBuilder: (context, state) =>
-            tabPage(state.pageKey, const InvestmentsScreen()),
-        routes: [
-          GoRoute(
-            path: 'add',
-            builder: (context, state) => const AddInvestmentScreen(),
-          ),
-        ],
-      ),
-      GoRoute(
-        path: AppRoutes.recurringIncomes,
-        pageBuilder: (context, state) =>
-            tabPage(state.pageKey, const RecurringIncomesScreen()),
-        routes: [
-          GoRoute(
-            path: 'add',
-            builder: (context, state) => const AddRecurringIncomeScreen(),
-          ),
-        ],
-      ),
-      GoRoute(
-        path: AppRoutes.recurringExpenses,
-        pageBuilder: (context, state) =>
-            tabPage(state.pageKey, const RecurringExpensesScreen()),
-        routes: [
-          GoRoute(
-            path: 'add',
-            builder: (context, state) => const AddRecurringExpenseScreen(),
-          ),
-        ],
-      ),
-      GoRoute(
-        path: AppRoutes.notifications,
-        builder: (context, state) => const NotificationsScreen(),
-        routes: [
-          GoRoute(
-            path: 'settings',
-            builder: (context, state) => const NotificationSettingsScreen(),
-          ),
-          GoRoute(
-            path: 'savings',
-            builder: (context, state) => const SavingReminderScreen(),
-          ),
-        ],
-      ),
-      GoRoute(
         path: AppRoutes.reports,
-        pageBuilder: (context, state) =>
-            tabPage(state.pageKey, const ReportsScreen()),
+        builder: (context, state) => const ReportsScreen(),
         routes: [
           GoRoute(
             path: 'export',
@@ -461,6 +308,42 @@ GoRouter createAppRouter({AuthRouteNotifier? authNotifier}) {
           GoRoute(
             path: 'health',
             builder: (context, state) => const ReportHealthScreen(),
+          ),
+        ],
+      ),
+      GoRoute(
+        path: AppRoutes.accounts,
+        builder: (context, state) => const AccountsScreen(),
+        routes: [
+          GoRoute(
+            path: 'add',
+            builder: (context, state) => const AddAccountScreen(),
+          ),
+          GoRoute(
+            path: ':id',
+            builder: (context, state) =>
+                AccountDetailScreen(accountId: state.pathParameters['id']!),
+            routes: [
+              GoRoute(
+                path: 'edit',
+                builder: (context, state) =>
+                    EditAccountScreen(accountId: state.pathParameters['id']!),
+              ),
+            ],
+          ),
+        ],
+      ),
+      GoRoute(
+        path: AppRoutes.notifications,
+        builder: (context, state) => const NotificationsScreen(),
+        routes: [
+          GoRoute(
+            path: 'settings',
+            builder: (context, state) => const NotificationSettingsScreen(),
+          ),
+          GoRoute(
+            path: 'savings',
+            builder: (context, state) => const SavingReminderScreen(),
           ),
         ],
       ),

@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/constants/app_assets.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_card.dart';
+import '../../../../core/widgets/app_icons.dart';
 import '../../../../data/models/financial_account.dart';
 import '../../../../data/models/financial_instrument.dart';
 import '../../../../data/models/transaction_model.dart';
@@ -291,15 +293,15 @@ class _TransactionVoiceScreenState
       backgroundColor: AppColors.backgroundWarm,
       appBar: AppBar(
         title: const Text('Input Suara'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          tooltip: 'Kembali',
-          onPressed: () => context.pop(),
-        ),
+        leading: AppBackButton(onPressed: () => context.pop()),
         actions: [
           if (_transcription.isNotEmpty || _parsedResult != null)
             IconButton(
-              icon: const Icon(Icons.refresh_rounded),
+              icon: const AppImageIcon(
+                assetPath: AppAssets.actionRefresh,
+                size: 22,
+                fallbackIcon: Icons.refresh_rounded,
+              ),
               tooltip: 'Ulangi Rekaman',
               onPressed: _resetRecording,
             ),
@@ -347,10 +349,10 @@ class _TransactionVoiceScreenState
                       ),
                       child: Row(
                         children: [
-                          const Icon(
-                            Icons.info_outline_rounded,
-                            color: AppColors.error,
+                          const AppImageIcon(
+                            assetPath: AppAssets.statusInfo,
                             size: 20,
+                            fallbackIcon: Icons.info_outline_rounded,
                           ),
                           const SizedBox(width: 10),
                           Expanded(
@@ -481,13 +483,20 @@ class _TransactionVoiceScreenState
                                 ],
                               ),
                               IconButton(
-                                icon: Icon(
-                                  _isEditingTranscription
-                                      ? Icons.check
-                                      : Icons.edit_outlined,
-                                  size: 18,
-                                  color: AppColors.secondary,
-                                ),
+                                icon: _isEditingTranscription
+                                    ? const AppImageIcon(
+                                        assetPath: AppAssets.statusSuccess,
+                                        size: 18,
+                                        fallbackIcon: Icons.check,
+                                      )
+                                    : const AppImageIcon(
+                                        assetPath: AppAssets.actionEdit,
+                                        size: 18,
+                                        fallbackIcon: Icons.edit_outlined,
+                                      ),
+                                tooltip: _isEditingTranscription
+                                    ? 'Simpan'
+                                    : 'Sunting',
                                 onPressed: () {
                                   if (_isEditingTranscription) {
                                     _processText(_textController.text);
@@ -588,6 +597,7 @@ class _TransactionVoiceScreenState
                     // Confirm Action Button
                     AppButton(
                       label: 'Lanjutkan ke Form Transaksi',
+                      assetPath: AppAssets.navForward,
                       icon: Icons.arrow_forward_rounded,
                       onPressed: _confirmAndNavigateToForm,
                     ),

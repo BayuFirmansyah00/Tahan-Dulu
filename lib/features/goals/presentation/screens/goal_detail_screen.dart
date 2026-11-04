@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -9,6 +10,7 @@ import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/utils/goal_math.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_icons.dart';
 import '../../../../core/widgets/app_states.dart';
 import '../../../../data/models/financial_goal.dart';
 import '../../../dashboard/presentation/widgets/dashboard_bottom_nav.dart';
@@ -28,10 +30,15 @@ class GoalDetailScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
+        leading: const AppBackButton(),
         title: const Text(AppStrings.goalDetailTitle),
         actions: [
           IconButton(
-            icon: const Icon(Icons.delete_outline),
+            icon: const AppImageIcon(
+              assetPath: AppAssets.actionDelete,
+              size: 22,
+              fallbackIcon: Icons.delete_outline,
+            ),
             tooltip: 'Hapus Target',
             onPressed: () async {
               final items = goals.asData?.value;
@@ -203,6 +210,7 @@ class _Body extends StatelessWidget {
           const SizedBox(height: 20),
           AppButton(
             label: AppStrings.addFundsAction,
+            assetPath: AppAssets.actionAddMoney,
             icon: Icons.add,
             onPressed: () => context.push(
               '${AppRoutes.goals}/${goal.id}/deposit',
@@ -214,6 +222,7 @@ class _Body extends StatelessWidget {
               Expanded(
                 child: AppOutlineButton(
                   label: AppStrings.historyTitle,
+                  assetPath: AppAssets.actionHistory,
                   icon: Icons.history_outlined,
                   onPressed: () => context.push(
                     '${AppRoutes.goals}/${goal.id}/history',
@@ -224,6 +233,7 @@ class _Body extends StatelessWidget {
               Expanded(
                 child: AppOutlineButton(
                   label: AppStrings.simulateTitle,
+                  assetPath: AppAssets.actionSimulation,
                   icon: Icons.query_stats_outlined,
                   onPressed: () => context.push(
                     '${AppRoutes.goals}/${goal.id}/simulate',
@@ -235,6 +245,7 @@ class _Body extends StatelessWidget {
           const SizedBox(height: 12),
           AppOutlineButton(
             label: AppStrings.editGoalAction,
+            assetPath: AppAssets.actionEdit,
             icon: Icons.edit_outlined,
             onPressed: () => context.push(
               '${AppRoutes.goals}/${goal.id}/edit',
@@ -306,9 +317,10 @@ class _ReachedBanner extends StatelessWidget {
         ),
         child: Row(
           children: [
-            const Icon(
-              Icons.emoji_events_outlined,
-              color: AppColors.primary,
+            const AppImageIcon(
+              assetPath: AppAssets.rankMedal1,
+              size: 22,
+              fallbackIcon: Icons.emoji_events_outlined,
             ),
             const SizedBox(width: 8),
             Expanded(
@@ -319,9 +331,10 @@ class _ReachedBanner extends StatelessWidget {
                     ),
               ),
             ),
-            const Icon(
-              Icons.chevron_right,
-              color: AppColors.primary,
+            const AppImageIcon(
+              assetPath: AppAssets.navForward,
+              size: 20,
+              fallbackIcon: Icons.chevron_right,
             ),
           ],
         ),

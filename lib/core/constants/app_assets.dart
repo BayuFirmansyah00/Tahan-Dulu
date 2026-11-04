@@ -44,10 +44,33 @@ abstract final class AppAssets {
 
   /// Ikon 3D dashboard (set HD transparan, assets/icons).
   /// Dipakai untuk baris transaksi, ringkasan, shortcut, saldo, target.
+  static const String navHome = '$_icons/icon_home.png';
+  static const String navTransaction = '$_icons/icon_transaction.png';
+  static const String navTarget = '$_icons/icon_goal_target.png';
+  static const String navProfile = '$_icons/icon_profile.png';
+  static const String navBack = '$_icons/icon_navigate_back.png';
+  static const String navForward = '$_icons/icon_navigate_forward.png';
+  static const String navDown = '$_icons/icon_navigate_down.png';
+  static const String navMore = '$_icons/icon_more_vertical.png';
+  static const String actionAddMoney = '$_icons/icon_add_money.png';
+  static const String actionEdit = '$_icons/icon_edit.png';
+  static const String actionDelete = '$_icons/icon_delete.png';
+  static const String actionRefresh = '$_icons/icon_refresh.png';
+  static const String actionCalendar = '$_icons/icon_calendar.png';
+  static const String actionHistory = '$_icons/icon_history.png';
+  static const String actionSimulation = '$_icons/icon_simulation.png';
+  static const String statusSuccess = '$_icons/icon_status_success.png';
+  static const String statusInfo = '$_icons/icon_status_info.png';
+  static const String statusWarning = '$_icons/icon_status_warning.png';
+  static const String statusError = '$_icons/icon_status_error.png';
+  static const String txTransfer = '$_icons/icon_transfer.png';
   static const String txArrowUp = '$_icons/icon_arrow_up.png';
   static const String txArrowDown = '$_icons/icon_arrow_down.png';
   static const String txArrowTransfer = '$_icons/icon_arrow_transfer.png';
   static const String txWallet = '$_icons/icon_wallet.png';
+  static const String instBank = '$_icons/icon_payment.png';
+  static const String instEwallet = '$_icons/icon_wallet.png';
+  static const String instCash = '$_icons/financial_wallet.png';
   static const String txFood = '$_icons/icon_food.png';
   static const String txShopping = '$_icons/icon_shopping.png';
   static const String txTransport = '$_icons/icon_transport.png';
@@ -175,6 +198,7 @@ abstract final class AppAssets {
   static const String setDeleteAccount = '$_settings/icon_delete_account.png';
   static const String setTerms = '$_settings/icon_terms.png';
   static const String setOpenSource = '$_settings/icon_open_source.png';
+  static const String setSession = '$_settings/icon_session.png';
   static const String setCameraBadge = '$_settings/camera_overlay.png';
 
   /// Ilustrasi settings transparan (latar menyatu). *_bg.png tidak dipakai
@@ -267,4 +291,12 @@ abstract final class AppAssets {
   static const String tdCatHousehold = '$_icons/icon_kategori_rumah_tangga.png';
   static const String tdCatEducation = '$_icons/icon_kategori_pendidikan.png';
   static const String tdCatOthers = '$_icons/icon_kategori_lainnya.png';
+
+  /// Ikon aksi & keputusan TahanDulu (terverifikasi ada di disk: assets/icons/).
+  static const String tdActionBuy = '$_icons/icon_shopping_cart.png';
+  static const String tdActionWait = '$_icons/icon_status_reminder.png';
+  static const String tdActionWishlist = '$_icons/icon_favorite_outline.png';
+  static const String tdPieChart = '$_icons/icon_pie_chart.png';
+  static const String tdFlag = '$_icons/icon_flag.png';
+  static const String tdSuccess = '$_icons/icon_success.png';
 }

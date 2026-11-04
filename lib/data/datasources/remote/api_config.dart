@@ -13,7 +13,7 @@ abstract final class ApiConfig {
   /// Produksi: gunakan domain production (mis. https://api.tahandulu.id/api).
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://10.0.2.2:8000/api',
+    defaultValue: 'http://192.168.1.9:8000/api',
   );
 
   /// true = repository auth memakai backend Laravel (Sanctum).

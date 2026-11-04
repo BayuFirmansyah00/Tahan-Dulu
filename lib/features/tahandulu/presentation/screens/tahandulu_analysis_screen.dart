@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_icons.dart';
 import '../../../../core/widgets/app_states.dart';
 import '../providers/tahandulu_controller.dart';
 import '../utils/tahandulu_ui.dart';
@@ -116,10 +118,10 @@ class TahanDuluAnalysisScreen extends ConsumerWidget {
                     children: [
                       Row(
                         children: [
-                          const Icon(
-                            Icons.account_balance_wallet_outlined,
-                            color: TdColors.warning,
+                          const AppImageIcon(
+                            assetPath: AppAssets.txWallet,
                             size: 22,
+                            fallbackIcon: Icons.account_balance_wallet_outlined,
                           ),
                           const SizedBox(width: 8),
                           Expanded(
@@ -220,22 +222,22 @@ class _ImpactBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Color bg;
-    final Color fg;
+    final String assetPath;
     final IconData icon;
     final String label;
     if (share < 0.3) {
       bg = TdColors.successBg;
-      fg = TdColors.success;
+      assetPath = AppAssets.statusSuccess;
       icon = Icons.check_circle_outline;
       label = 'Ringan untuk budget fleksibelmu.';
     } else if (share < 0.7) {
       bg = TdColors.warningBg;
-      fg = TdColors.warning;
+      assetPath = AppAssets.statusWarning;
       icon = Icons.warning_amber_outlined;
       label = 'Cukup besar — pikir matang sebelum lanjut.';
     } else {
       bg = TdColors.dangerBg;
-      fg = TdColors.danger;
+      assetPath = AppAssets.statusError;
       icon = Icons.error_outline;
       label = 'Berat untuk budget fleksibelmu.';
     }
@@ -249,7 +251,11 @@ class _ImpactBanner extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: fg, size: 22),
+          AppImageIcon(
+            assetPath: assetPath,
+            size: 22,
+            fallbackIcon: icon,
+          ),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
@@ -304,10 +310,10 @@ class _SafeRow extends StatelessWidget {
               Expanded(
                 child: Row(
                   children: [
-                    const Icon(
-                      Icons.payments_outlined,
+                    const AppImageIcon(
+                      assetPath: AppAssets.instBank,
                       size: 18,
-                      color: TdColors.success,
+                      fallbackIcon: Icons.payments_outlined,
                     ),
                     const SizedBox(width: 6),
                     Expanded(
@@ -342,10 +348,10 @@ class _SafeRow extends StatelessWidget {
               Expanded(
                 child: Row(
                   children: [
-                    const Icon(
-                      Icons.pie_chart_outline,
+                    const AppImageIcon(
+                      assetPath: AppAssets.tdPieChart,
                       size: 18,
-                      color: TdColors.warning,
+                      fallbackIcon: Icons.pie_chart_outline,
                     ),
                     const SizedBox(width: 6),
                     Expanded(

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/app_image_icon.dart';
 import '../providers/profile_providers.dart';
 import '../utils/profile_ui.dart';
 
@@ -17,7 +19,10 @@ class AppSettingsScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.backgroundWarm,
-      appBar: AppBar(title: const Text(AppStrings.appSettingsTitle)),
+      appBar: AppBar(
+        leading: const AppBackButton(),
+        title: const Text(AppStrings.appSettingsTitle),
+      ),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -44,6 +49,7 @@ class AppSettingsScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 8),
                   _SwitchRow(
+                    assetPath: AppAssets.setNotif,
                     icon: Icons.notifications_outlined,
                     iconForeground: AppColors.secondary,
                     iconBackground: AppColors.secondarySoft,
@@ -54,6 +60,7 @@ class AppSettingsScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 8),
                   _SwitchRow(
+                    assetPath: AppAssets.statusInfo,
                     icon: Icons.lightbulb_outline,
                     iconForeground: AppColors.primary,
                     iconBackground: AppColors.primarySoft,
@@ -76,10 +83,10 @@ class AppSettingsScreen extends ConsumerWidget {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(
-                          Icons.info,
-                          color: AppColors.secondary,
+                        const AppImageIcon(
+                          assetPath: AppAssets.statusInfo,
                           size: 20,
+                          fallbackIcon: Icons.info,
                         ),
                         const SizedBox(width: 8),
                         Expanded(
@@ -103,16 +110,18 @@ class AppSettingsScreen extends ConsumerWidget {
 
 class _SwitchRow extends StatelessWidget {
   const _SwitchRow({
-    required this.icon,
-    required this.iconForeground,
-    required this.iconBackground,
+    this.icon,
+    this.assetPath,
+    this.iconForeground = AppColors.secondary,
+    this.iconBackground = AppColors.secondarySoft,
     required this.title,
     required this.description,
     required this.value,
     required this.onChanged,
   });
 
-  final IconData icon;
+  final IconData? icon;
+  final String? assetPath;
   final Color iconForeground;
   final Color iconBackground;
   final String title;
@@ -139,11 +148,18 @@ class _SwitchRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          ProfileIconContainer(
-            icon: icon,
-            foreground: iconForeground,
-            background: iconBackground,
-          ),
+          if (assetPath != null && assetPath!.isNotEmpty)
+            AppImageIcon(
+              assetPath: assetPath!,
+              size: 40,
+              fallbackIcon: icon ?? Icons.tune_outlined,
+            )
+          else
+            ProfileIconContainer(
+              icon: icon ?? Icons.tune_outlined,
+              foreground: iconForeground,
+              background: iconBackground,
+            ),
           const SizedBox(width: 10),
           Expanded(
             child: Column(

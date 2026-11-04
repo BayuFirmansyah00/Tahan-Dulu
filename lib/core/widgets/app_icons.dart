@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+export 'app_image_icon.dart';
+
 import '../constants/app_assets.dart';
 import '../theme/app_colors.dart';
 import '../../data/models/financial_account.dart';

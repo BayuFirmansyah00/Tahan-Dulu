@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'app_image_icon.dart';
+
 /// Tombol utama TahanDulu. Gunakan untuk semua CTA primer.
 /// Warna default emerald; override opsional untuk kasus desain khusus
 /// (mis. tombol Login dark navy) — tetap backward-compatible.
@@ -10,6 +12,7 @@ class AppButton extends StatelessWidget {
     required this.onPressed,
     this.isLoading = false,
     this.icon,
+    this.assetPath,
     this.backgroundColor,
     this.foregroundColor,
   });
@@ -18,6 +21,7 @@ class AppButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final bool isLoading;
   final IconData? icon;
+  final String? assetPath;
   final Color? backgroundColor;
   final Color? foregroundColor;
 
@@ -41,7 +45,14 @@ class AppButton extends StatelessWidget {
           : Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                if (icon != null) ...[
+                if (assetPath != null) ...[
+                  AppImageIcon(
+                    assetPath: assetPath!,
+                    size: 18,
+                    fallbackIcon: icon ?? Icons.arrow_forward,
+                  ),
+                  const SizedBox(width: 8),
+                ] else if (icon != null) ...[
                   Icon(icon, size: 18),
                   const SizedBox(width: 8),
                 ],
@@ -64,12 +75,14 @@ class AppOutlineButton extends StatelessWidget {
     required this.label,
     required this.onPressed,
     this.icon,
+    this.assetPath,
     this.foregroundColor,
   });
 
   final String label;
   final VoidCallback? onPressed;
   final IconData? icon;
+  final String? assetPath;
   final Color? foregroundColor;
 
   @override
@@ -86,7 +99,14 @@ class AppOutlineButton extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          if (icon != null) ...[
+          if (assetPath != null) ...[
+            AppImageIcon(
+              assetPath: assetPath!,
+              size: 18,
+              fallbackIcon: icon ?? Icons.arrow_forward,
+            ),
+            const SizedBox(width: 8),
+          ] else if (icon != null) ...[
             Icon(icon, size: 18),
             const SizedBox(width: 8),
           ],

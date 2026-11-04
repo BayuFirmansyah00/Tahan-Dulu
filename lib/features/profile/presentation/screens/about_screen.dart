@@ -5,6 +5,7 @@ import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/app_image_icon.dart';
 import '../utils/profile_ui.dart';
 
 /// Tentang TahanDulu: branding, versi, dokumen, lisensi.
@@ -16,7 +17,10 @@ class AboutScreen extends ConsumerWidget {
     final textTheme = Theme.of(context).textTheme;
     return Scaffold(
       backgroundColor: AppColors.backgroundWarm,
-      appBar: AppBar(title: const Text(AppStrings.aboutTitle)),
+      appBar: AppBar(
+        leading: const AppBackButton(),
+        title: const Text(AppStrings.aboutTitle),
+      ),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -119,7 +123,6 @@ class AboutScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 12),
                   SettingsMenuRow(
-                    icon: Icons.description_outlined,
                     iconForeground: AppColors.secondary,
                     iconBackground: AppColors.secondarySoft,
                     asset: AppAssets.setPrivacyPolicy,
@@ -133,7 +136,6 @@ class AboutScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 8),
                   SettingsMenuRow(
-                    icon: Icons.article_outlined,
                     iconForeground: AppColors.secondary,
                     iconBackground: AppColors.secondarySoft,
                     asset: AppAssets.setTerms,
@@ -147,7 +149,6 @@ class AboutScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 8),
                   SettingsMenuRow(
-                    icon: Icons.code_outlined,
                     iconForeground: AppColors.primary,
                     iconBackground: AppColors.primarySoft,
                     asset: AppAssets.setOpenSource,

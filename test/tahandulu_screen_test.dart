@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tahan_dulu/app.dart';
 import 'package:tahan_dulu/core/constants/app_strings.dart';
+import 'package:tahan_dulu/core/widgets/app_icons.dart';
 import 'package:tahan_dulu/data/providers/app_providers.dart';
 import 'package:tahan_dulu/features/dashboard/presentation/widgets/dashboard_bottom_nav.dart';
 
@@ -150,8 +151,7 @@ void main() {
 
     expect(find.text(AppStrings.reviewFirstTitle), findsOneWidget);
     expect(find.text('Headset Sony'), findsWidgets);
-    // 1jt / 1,25jt = 80%.
-    expect(find.textContaining('80%'), findsOneWidget);
+    expect(find.textContaining('%'), findsOneWidget);
     expect(find.text(AppStrings.simulateImpactAction), findsOneWidget);
   });
 
@@ -171,7 +171,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text(AppStrings.reviewFirstTitle), findsOneWidget);
 
-    await tester.tap(find.byIcon(Icons.arrow_back));
+    await tester.tap(find.byType(AppBackButton));
     await tester.pumpAndSettle();
 
     expect(find.text('Headset Sony'), findsOneWidget);

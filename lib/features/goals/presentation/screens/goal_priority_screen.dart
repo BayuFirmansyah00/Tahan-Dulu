@@ -6,6 +6,7 @@ import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_icons.dart';
 import '../../../../core/widgets/app_states.dart';
 import '../../../../data/models/financial_goal.dart';
 import '../../../dashboard/presentation/widgets/dashboard_bottom_nav.dart';
@@ -63,7 +64,10 @@ class _GoalPriorityScreenState extends ConsumerState<GoalPriorityScreen> {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text(AppStrings.priorityTitle)),
+      appBar: AppBar(
+        leading: const AppBackButton(),
+        title: const Text(AppStrings.priorityTitle),
+      ),
       bottomNavigationBar: DashboardBottomNav(
         currentIndex: 3,
         onTap: (i) => goalsBottomNavTap(context, i),
@@ -182,18 +186,10 @@ class _GoalPriorityScreenState extends ConsumerState<GoalPriorityScreen> {
                                 crossAxisAlignment:
                                     CrossAxisAlignment.start,
                                 children: [
-                                  Container(
-                                    width: 32,
-                                    height: 32,
-                                    decoration: const BoxDecoration(
-                                      color: AppColors.surface,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(
-                                      Icons.info,
-                                      color: AppColors.secondary,
-                                      size: 20,
-                                    ),
+                                  const AppImageIcon(
+                                    assetPath: AppAssets.statusInfo,
+                                    size: 32,
+                                    fallbackIcon: Icons.info,
                                   ),
                                   const SizedBox(width: 10),
                                   Expanded(
@@ -437,27 +433,32 @@ class _RankBadgeChip extends StatelessWidget {
     final String label;
     final Color foreground;
     final Color background;
+    final String asset;
     final IconData icon;
     switch (index) {
       case 0:
         label = AppStrings.priorityFirst;
         foreground = AppColors.primary;
         background = AppColors.primarySoft;
+        asset = AppAssets.rankMedal1;
         icon = Icons.emoji_events_outlined;
       case 1:
         label = AppStrings.prioritySecond;
         foreground = AppColors.secondary;
         background = AppColors.infoSoft;
+        asset = AppAssets.rankMedal2;
         icon = Icons.star;
       case 2:
         label = AppStrings.priorityThird;
         foreground = AppColors.warning;
         background = AppColors.warningSoft;
+        asset = AppAssets.rankMedal3;
         icon = Icons.flag_outlined;
       default:
         label = AppStrings.priorityOthers;
         foreground = AppColors.accentPurple;
         background = AppColors.accentPurpleSoft;
+        asset = AppAssets.rankBadge4;
         icon = Icons.work_outline;
     }
     return Container(
@@ -469,7 +470,11 @@ class _RankBadgeChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: foreground, size: 14),
+          AppImageIcon(
+            assetPath: asset,
+            size: 14,
+            fallbackIcon: icon,
+          ),
           const SizedBox(width: 4),
           Flexible(
             child: Text(
