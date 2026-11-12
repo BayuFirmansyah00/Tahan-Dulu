@@ -15,6 +15,7 @@ import '../../../../data/models/financial_instrument.dart';
 import '../../../../data/models/transaction_model.dart';
 import '../../../../data/providers/app_providers.dart';
 import '../../../../data/providers/onboarding_providers.dart';
+import '../../data/services/speech_recognition_service.dart';
 import '../../domain/voice_transaction_parser.dart';
 import '../providers/native_input_providers.dart';
 import '../providers/transactions_controller.dart';
@@ -59,6 +60,7 @@ class _TransactionVoiceScreenState
   bool _isEditingTranscription = false;
   String? _errorMessage;
   String? _detectedLocaleId;
+  SpeechRecognitionService? _speechService;
 
   final List<String> _samplePhrases = const [
     'Makan siang dua puluh lima ribu menggunakan BCA',
@@ -74,7 +76,14 @@ class _TransactionVoiceScreenState
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _speechService ??= ref.read(speechRecognitionServiceProvider);
+  }
+
+  @override
   void dispose() {
+    _speechService?.cancelListening();
     _textController.dispose();
     super.dispose();
   }
@@ -122,14 +131,19 @@ class _TransactionVoiceScreenState
     // 1. Periksa dan minta izin mikrofon hanya saat user ingin merekam
     final hasPerm = await speechService.checkMicrophonePermission();
     if (!hasPerm) {
+      final isPermDeniedBefore =
+          await speechService.isMicrophonePermanentlyDenied();
       final granted = await speechService.requestMicrophonePermission();
       if (!granted) {
+        final isPermDeniedAfter =
+            await speechService.isMicrophonePermanentlyDenied();
+        final isPermanent = isPermDeniedBefore || isPermDeniedAfter;
         setState(() {
           _isRecording = false;
           _errorMessage =
               'Izin mikrofon diperlukan untuk mendengarkan transaksi. Aktifkan izin mikrofon di Pengaturan perangkat.';
         });
-        _showPermissionDeniedDialog();
+        _showPermissionDeniedDialog(isPermanentlyDenied: isPermanent);
         return;
       }
     }
@@ -240,19 +254,30 @@ class _TransactionVoiceScreenState
     });
   }
 
-  void _showPermissionDeniedDialog() {
+  void _showPermissionDeniedDialog({bool isPermanentlyDenied = false}) {
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Izin Mikrofon Diperlukan'),
-        content: const Text(
-          'Untuk menggunakan fitur input suara, TahanDulu memerlukan akses ke mikrofon perangkat Anda.\n\n'
-          'Silakan izinkan akses mikrofon di pengaturan sistem Anda.',
+        content: Text(
+          isPermanentlyDenied
+              ? 'Izin mikrofon telah ditolak secara permanen. Buka pengaturan aplikasi untuk mengizinkan mikrofon secara manual.'
+              : 'Untuk menggunakan fitur input suara, TahanDulu memerlukan akses ke mikrofon perangkat Anda.\n\n'
+                  'Silakan izinkan akses mikrofon di pengaturan sistem Anda.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
             child: const Text('Tutup'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              final speechService =
+                  ref.read(speechRecognitionServiceProvider);
+              await speechService.openPermissionSettings();
+            },
+            child: const Text('Buka Pengaturan'),
           ),
         ],
       ),
@@ -260,6 +285,10 @@ class _TransactionVoiceScreenState
   }
 
   void _confirmAndNavigateToForm() {
+    if (_isRecording) {
+      _speechService?.stopListening();
+      _isRecording = false;
+    }
     final result = _parsedResult;
     if (result == null) return;
 
@@ -276,7 +305,12 @@ class _TransactionVoiceScreenState
     if (result.hasAccount) {
       notifier.setAccount(result.accountId);
     }
+    if (result.hasDate) {
+      notifier.setDate(result.date!);
+    }
+    // B3-04: Judul transaksi dari deskripsi yang sudah dibersihkan
     if (result.description.isNotEmpty) {
+      notifier.setTitle(result.description);
       notifier.setNote(result.description);
     }
 

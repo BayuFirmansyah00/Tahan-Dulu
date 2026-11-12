@@ -49,6 +49,9 @@ dependencies:
   google_mlkit_text_recognition: ^0.17.1
   permission_handler: ^13.0.2
   google_sign_in: 6.2.2
+  firebase_core: ^5.1.0
+  firebase_messaging: ^17.0.1
+  flutter_local_notifications: ^23.0.1
 
 dev_dependencies:
   flutter_test:
@@ -78,6 +81,9 @@ flutter:
     - assets/illustrations/
     - assets/illustrations/settings/
     - assets/icons/
+    - assets/icons/scan_struk/
+    - assets/icons/tambah_barang/
+    - assets/icons/navbar/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

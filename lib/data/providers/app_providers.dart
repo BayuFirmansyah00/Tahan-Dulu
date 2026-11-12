@@ -27,6 +27,7 @@ import '../models/transaction_model.dart';
 import '../models/user_model.dart';
 import '../repositories/bank_repository.dart';
 import '../repositories/budget_repository.dart';
+import '../repositories/fcm_token_repository.dart';
 import '../repositories/repositories.dart';
 import 'onboarding_providers.dart';
 import '../../features/auth/presentation/providers/auth_controller.dart';
@@ -221,6 +222,16 @@ final notificationRepositoryProvider = Provider<NotificationRepository>((ref) {
       baseUrl: ApiConfig.baseUrl,
       onUnauthorized: () => _handleUnauthorized(ref),
     ),
+    tokens: TokenStorage(),
+  );
+});
+
+final fcmTokenRepositoryProvider = Provider<FcmTokenRepository>((ref) {
+  if (!ApiConfig.useRemoteApi) {
+    return MockFcmTokenRepository();
+  }
+  return RemoteFcmTokenRepository(
+    client: ApiClient(baseUrl: ApiConfig.baseUrl),
     tokens: TokenStorage(),
   );
 });

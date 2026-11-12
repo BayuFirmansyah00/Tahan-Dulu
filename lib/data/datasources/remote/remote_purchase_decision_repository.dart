@@ -97,6 +97,36 @@ class RemotePurchaseDecisionRepository implements PurchaseDecisionRepository {
   }
 
   @override
+  Future<Map<String, dynamic>> extractMetadata(String url) async {
+    final token = await _requireToken();
+    final body = await client.post(
+      '/wishlists/extract-metadata',
+      {'url': url},
+      token: token,
+    );
+    if (body['data'] is Map<String, dynamic>) {
+      return body['data'] as Map<String, dynamic>;
+    }
+    return {};
+  }
+
+  @override
+  Future<String> uploadImage(String filePath) async {
+    final token = await _requireToken();
+    final body = await client.postMultipart(
+      '/wishlists/upload-image',
+      fileField: 'image',
+      filePath: filePath,
+      token: token,
+    );
+    final data = body['data'];
+    if (data is Map<String, dynamic>) {
+      return (data['image_ref'] ?? data['url'] ?? data['path'] ?? '') as String;
+    }
+    return '';
+  }
+
+  @override
   void clear() {
     // Stateless remote repository tidak menyimpan cache in-memory yang persisten.
   }

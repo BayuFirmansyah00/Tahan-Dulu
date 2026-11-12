@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/utils/finance_math.dart';
 import '../../../../core/utils/rupiah_input_formatter.dart';
+import '../../../../core/utils/uuid_generator.dart';
 import '../../../../data/datasources/remote/api_client.dart';
 import '../../../../data/models/transaction_model.dart';
 import '../../../../data/providers/account_providers.dart';
@@ -15,6 +16,7 @@ import '../utils/transaction_categories.dart'
 /// Draf form input manual (sumber kebenaran selama mengisi & review).
 class TransactionDraft extends Equatable {
   const TransactionDraft({
+    this.title = '',
     this.type = TransactionType.expense,
     this.amount = 0,
     this.category,
@@ -22,8 +24,12 @@ class TransactionDraft extends Equatable {
     this.date,
     this.note = '',
     this.fee = 0,
+    this.idempotencyKey = '',
   });
 
+  /// Judul transaksi (misal: nama merchant dari struk atau ringkasan suara).
+  /// Bila kosong, akan fallback ke label kategori saat simpan.
+  final String title;
   final TransactionType type;
   final double amount;
   final TransactionCategory? category;
@@ -33,6 +39,9 @@ class TransactionDraft extends Equatable {
 
   /// Biaya tambahan opsional (default Rp0, tak negatif).
   final double fee;
+
+  /// Kunci idempotensi unik (UUID v4) untuk sesi draf transaksi ini.
+  final String idempotencyKey;
 
   bool get isAmountValid => amount > 0;
   bool get isCategoryValid => category != null;
@@ -58,6 +67,7 @@ class TransactionDraft extends Equatable {
       isAccountValid(accountIds);
 
   TransactionDraft copyWith({
+    String? title,
     TransactionType? type,
     double? amount,
     TransactionCategory? category,
@@ -65,8 +75,10 @@ class TransactionDraft extends Equatable {
     DateTime? date,
     String? note,
     double? fee,
+    String? idempotencyKey,
   }) {
     return TransactionDraft(
+      title: title ?? this.title,
       type: type ?? this.type,
       amount: amount ?? this.amount,
       category: category ?? this.category,
@@ -74,12 +86,13 @@ class TransactionDraft extends Equatable {
       date: date ?? this.date,
       note: note ?? this.note,
       fee: fee ?? this.fee,
+      idempotencyKey: idempotencyKey ?? this.idempotencyKey,
     );
   }
 
   @override
   List<Object?> get props =>
-      [type, amount, category, accountId, date, note, fee];
+      [title, type, amount, category, accountId, date, note, fee, idempotencyKey];
 }
 
 /// Controller form manual: validasi, review, simpan anti-ganda.
@@ -104,12 +117,18 @@ class TransactionFormController extends Notifier<TransactionDraft> {
   }
 
   @override
-  TransactionDraft build() => TransactionDraft(date: DateTime.now());
+  TransactionDraft build() => TransactionDraft(
+        date: DateTime.now(),
+        idempotencyKey: generateUuidV4(),
+      );
 
   void reset() {
     _saving = false;
     _lastSaved = null;
-    state = TransactionDraft(date: DateTime.now());
+    state = TransactionDraft(
+      date: DateTime.now(),
+      idempotencyKey: generateUuidV4(),
+    );
   }
 
   void setType(TransactionType type) {
@@ -139,6 +158,10 @@ class TransactionFormController extends Notifier<TransactionDraft> {
 
   void setDate(DateTime date) {
     state = state.copyWith(date: date);
+  }
+
+  void setTitle(String title) {
+    state = state.copyWith(title: title);
   }
 
   void setNote(String note) {
@@ -171,19 +194,33 @@ class TransactionFormController extends Notifier<TransactionDraft> {
     if (!state.isComplete(ids) || !state.isNetValid) return false;
     _saving = true;
     try {
+      final categoryName = categoryLabel(state.category!);
+      String finalTitle = state.title.trim();
+      if (finalTitle.isEmpty) {
+        finalTitle = categoryName;
+      }
+      if (finalTitle.length > 255) {
+        finalTitle = finalTitle.substring(0, 255).trim();
+      }
+
+      final key = state.idempotencyKey.isNotEmpty
+          ? state.idempotencyKey
+          : generateUuidV4();
+
       final saved = await ref
           .read(transactionRepositoryProvider)
           .addTransaction(
             AppTransaction(
               id: 'trx-${DateTime.now().millisecondsSinceEpoch}',
-              title: categoryLabel(state.category!),
+              title: finalTitle,
               amount: state.netAmount,
               type: state.type,
               date: state.date!,
-              category: categoryLabel(state.category!),
+              category: categoryName,
               accountId: state.accountId,
               note: state.note.trim().isEmpty ? null : state.note.trim(),
               fee: state.fee,
+              idempotencyKey: key,
             ),
           );
       _lastSaved = saved;

@@ -11,6 +11,7 @@ class ParsedVoiceTransaction {
     this.category,
     this.accountId,
     this.accountName,
+    this.date,
   });
 
   final String rawText;
@@ -20,10 +21,12 @@ class ParsedVoiceTransaction {
   final TransactionCategory? category;
   final String? accountId;
   final String? accountName;
+  final DateTime? date;
 
   bool get hasAmount => amount > 0;
   bool get hasCategory => category != null;
   bool get hasAccount => accountId != null;
+  bool get hasDate => date != null;
 }
 
 /// Parser semantik untuk mengubah ucapan bahasa Indonesia menjadi
@@ -36,12 +39,18 @@ class ParsedVoiceTransaction {
 /// -> Category: food
 /// -> Account: BCA
 class VoiceTransactionParser {
-  const VoiceTransactionParser();
+  const VoiceTransactionParser({this.clock});
+
+  /// Injeksi referensi waktu untuk pengujian deterministik
+  final DateTime Function()? clock;
+
+  DateTime get _now => clock?.call() ?? DateTime.now();
 
   /// Parse teks masukan suara menjadi objek [ParsedVoiceTransaction].
   ParsedVoiceTransaction parse(
     String input, {
     List<FinancialAccount> userAccounts = const [],
+    DateTime? referenceDate,
   }) {
     final cleanInput = input.trim();
     if (cleanInput.isEmpty) {
@@ -54,23 +63,35 @@ class VoiceTransactionParser {
     }
 
     final lower = cleanInput.toLowerCase();
+    final now = referenceDate ?? _now;
 
-    // 1. Deteksi Jenis Transaksi (Income vs Expense)
+    // 1. Deteksi Tanggal (Relatif atau Eksplisit)
+    final dateMatch = _detectDate(lower, now);
+
+    // Bersihkan teks tanggal dari pendeteksian nominal agar angka pada tanggal (misal "tanggal 5")
+    // tidak keliru dianggap sebagai bagian dari nominal transaksi.
+    var textForAmount = lower;
+    if (dateMatch != null && dateMatch.matchedText.isNotEmpty) {
+      textForAmount = textForAmount.replaceAll(dateMatch.matchedText.toLowerCase(), ' ');
+    }
+
+    // 2. Deteksi Jenis Transaksi (Income vs Expense)
     final type = _detectType(lower);
 
-    // 2. Deteksi Nominal
-    final amount = _detectAmount(lower);
+    // 3. Deteksi Nominal
+    final amount = _detectAmount(textForAmount);
 
-    // 3. Deteksi Akun Pengguna
+    // 4. Deteksi Akun Pengguna
     final matchedAccount = _detectAccount(lower, userAccounts);
 
-    // 4. Deteksi Kategori
+    // 5. Deteksi Kategori
     final category = _detectCategory(lower, type);
 
-    // 5. Ekstraksi Deskripsi Bersih
+    // 6. Ekstraksi Deskripsi Bersih (bersihkan akun, angka, dan frasa tanggal)
     final description = _extractDescription(
       cleanInput,
       matchedAccount: matchedAccount,
+      datePhrase: dateMatch?.matchedText,
     );
 
     return ParsedVoiceTransaction(
@@ -81,6 +102,7 @@ class VoiceTransactionParser {
       category: category,
       accountId: matchedAccount?.id,
       accountName: matchedAccount?.name,
+      date: dateMatch?.date,
     );
   }
 
@@ -92,6 +114,10 @@ class VoiceTransactionParser {
       'terima uang',
       'terima transfer',
       'transfer masuk',
+      'dapat transfer',
+      'dapat kiriman',
+      'ditransfer',
+      'transferan',
       'pemasukan',
       'dapat uang',
       'bonus',
@@ -151,23 +177,19 @@ class VoiceTransactionParser {
   }
 
   double _parseIndonesianWords(String text) {
-    // Map angka satuan & belasan
-    const wordNumbers = {
-      'satu': 1,
-      'se': 1,
-      'dua': 2,
-      'tiga': 3,
-      'empat': 4,
-      'lima': 5,
-      'enam': 6,
-      'tujuh': 7,
-      'delapan': 8,
-      'sembilan': 9,
-      'sepuluh': 10,
-      'sebelas': 11,
-      'seratus': 100,
-      'seribu': 1000,
-      'sejuta': 1000000,
+    const units = {
+      'satu': 1.0,
+      'se': 1.0,
+      'dua': 2.0,
+      'tiga': 3.0,
+      'empat': 4.0,
+      'lima': 5.0,
+      'enam': 6.0,
+      'tujuh': 7.0,
+      'delapan': 8.0,
+      'sembilan': 9.0,
+      'sepuluh': 10.0,
+      'sebelas': 11.0,
     };
 
     final tokens = text
@@ -177,52 +199,93 @@ class VoiceTransactionParser {
         .toList();
 
     double total = 0;
-    double current = 0;
+    double currentGroup = 0;
+    double currentUnit = 0;
     bool foundNumber = false;
 
     for (int i = 0; i < tokens.length; i++) {
       final token = tokens[i];
 
-      if (token == 'setengah' &&
-          i + 1 < tokens.length &&
-          tokens[i + 1] == 'juta') {
-        current += 0.5;
+      if (token == 'seratus') {
+        currentGroup += 100;
+        currentUnit = 0;
         foundNumber = true;
         continue;
       }
 
-      if (wordNumbers.containsKey(token)) {
-        current += wordNumbers[token]!;
+      if (token == 'seribu') {
+        currentGroup += currentUnit;
+        currentUnit = 0;
+        if (currentGroup == 0) {
+          total += 1000;
+        } else {
+          total += currentGroup * 1000;
+          currentGroup = 0;
+        }
+        foundNumber = true;
+        continue;
+      }
+
+      if (token == 'sejuta') {
+        currentGroup += currentUnit;
+        currentUnit = 0;
+        total += (currentGroup == 0 ? 1 : currentGroup) * 1000000;
+        currentGroup = 0;
+        foundNumber = true;
+        continue;
+      }
+
+      if (token == 'setengah') {
+        if (i + 1 < tokens.length && tokens[i + 1] == 'juta') {
+          currentUnit += 0.5;
+          foundNumber = true;
+          continue;
+        }
+      }
+
+      if (units.containsKey(token)) {
+        currentUnit += units[token]!;
         foundNumber = true;
       } else if (token == 'belas') {
-        current += 10;
+        final val = (currentUnit == 0 ? 10.0 : currentUnit + 10.0);
+        currentGroup += val;
+        currentUnit = 0;
         foundNumber = true;
       } else if (token == 'puluh') {
-        current = (current == 0 ? 1 : current) * 10;
+        final val = (currentUnit == 0 ? 1.0 : currentUnit) * 10;
+        currentGroup += val;
+        currentUnit = 0;
         foundNumber = true;
       } else if (token == 'ratus') {
-        current = (current == 0 ? 1 : current) * 100;
+        final val = (currentUnit == 0 ? 1.0 : currentUnit) * 100;
+        currentGroup += val;
+        currentUnit = 0;
         foundNumber = true;
       } else if (token == 'ribu') {
-        current = (current == 0 ? 1 : current) * 1000;
-        total += current;
-        current = 0;
+        currentGroup += currentUnit;
+        currentUnit = 0;
+        final multiplier = (currentGroup == 0 ? 1.0 : currentGroup);
+        total += multiplier * 1000;
+        currentGroup = 0;
         foundNumber = true;
       } else if (token == 'juta') {
-        current = (current == 0 ? 1 : current) * 1000000;
-        total += current;
-        current = 0;
+        currentGroup += currentUnit;
+        currentUnit = 0;
+        final multiplier = (currentGroup == 0 ? 1.0 : currentGroup);
+        total += multiplier * 1000000;
+        currentGroup = 0;
         foundNumber = true;
       } else {
         final parsed = double.tryParse(token);
         if (parsed != null) {
-          current += parsed;
+          currentUnit += parsed;
           foundNumber = true;
         }
       }
     }
 
-    total += current;
+    currentGroup += currentUnit;
+    total += currentGroup;
     return foundNumber ? total : 0;
   }
 
@@ -374,11 +437,120 @@ class VoiceTransactionParser {
     return null;
   }
 
-  String _extractDescription(String raw, {FinancialAccount? matchedAccount}) {
+  _VoiceDateMatch? _detectDate(String lower, DateTime now) {
+    final today = DateTime(now.year, now.month, now.day);
+
+    // 1. Tanggal Relatif (prioritas multi-kata terlebih dahulu)
+    if (lower.contains('kemarin dulu') || lower.contains('kemarin lusa')) {
+      final match = RegExp(r'\b(kemarin dulu|kemarin lusa)\b').firstMatch(lower);
+      return _VoiceDateMatch(
+        date: today.subtract(const Duration(days: 2)),
+        matchedText: match?.group(0) ?? 'kemarin lusa',
+      );
+    }
+    if (lower.contains('kemarin')) {
+      final match = RegExp(r'\bkemarin\b').firstMatch(lower);
+      return _VoiceDateMatch(
+        date: today.subtract(const Duration(days: 1)),
+        matchedText: match?.group(0) ?? 'kemarin',
+      );
+    }
+    if (lower.contains('hari ini')) {
+      final match = RegExp(r'\bhari ini\b').firstMatch(lower);
+      return _VoiceDateMatch(
+        date: today,
+        matchedText: match?.group(0) ?? 'hari ini',
+      );
+    }
+    final tadiMatch = RegExp(r'\b(tadi pagi|tadi siang|tadi sore|tadi malam|tadi)\b').firstMatch(lower);
+    if (tadiMatch != null) {
+      return _VoiceDateMatch(
+        date: today,
+        matchedText: tadiMatch.group(0)!,
+      );
+    }
+    if (lower.contains('lusa')) {
+      final match = RegExp(r'\blusa\b').firstMatch(lower);
+      return _VoiceDateMatch(
+        date: today.add(const Duration(days: 2)),
+        matchedText: match?.group(0) ?? 'lusa',
+      );
+    }
+    if (lower.contains('besok')) {
+      final match = RegExp(r'\bbesok\b').firstMatch(lower);
+      return _VoiceDateMatch(
+        date: today.add(const Duration(days: 1)),
+        matchedText: match?.group(0) ?? 'besok',
+      );
+    }
+
+    // 2. Tanggal Eksplisit Kalender: "tanggal 5 november", "5 nov 2026", "tgl 12 oktober"
+    const monthMap = <String, int>{
+      'januari': 1, 'jan': 1,
+      'februari': 2, 'feb': 2,
+      'maret': 3, 'mar': 3,
+      'april': 4, 'apr': 4,
+      'mei': 5, 'may': 5,
+      'juni': 6, 'jun': 6,
+      'juli': 7, 'jul': 7,
+      'agustus': 8, 'agt': 8, 'ags': 8, 'aug': 8,
+      'september': 9, 'sep': 9, 'sept': 9,
+      'oktober': 10, 'okt': 10, 'oct': 10,
+      'november': 11, 'nov': 11,
+      'desember': 12, 'des': 12, 'dec': 12,
+    };
+
+    final explicitPattern = RegExp(
+      r'\b(?:tanggal|tgl)?\s*(\d{1,2})\s+([a-zA-Z]{3,10})(?:\s+(20\d{2}|\d{2}))?\b',
+      caseSensitive: false,
+    );
+    final match = explicitPattern.firstMatch(lower);
+    if (match != null) {
+      final day = int.tryParse(match.group(1) ?? '');
+      final monthName = match.group(2)?.toLowerCase() ?? '';
+      var year = int.tryParse(match.group(3) ?? '');
+      if (year != null && year < 100) year += 2000;
+      year ??= now.year;
+
+      final month = monthMap[monthName];
+      if (day != null && month != null && day >= 1 && day <= 31) {
+        try {
+          final dt = DateTime(year, month, day);
+          if (dt.year == year && dt.month == month && dt.day == day) {
+            return _VoiceDateMatch(
+              date: dt,
+              matchedText: match.group(0)!,
+            );
+          }
+        } catch (_) {}
+      }
+    }
+
+    return null;
+  }
+
+  String _extractDescription(
+    String raw, {
+    FinancialAccount? matchedAccount,
+    String? datePhrase,
+  }) {
     String desc = raw;
 
     // Bersihkan tanda baca di akhir
     desc = desc.replaceAll(RegExp(r'[.!?,]+$'), '').trim();
+
+    // Hapus frasa tanggal yang terdeteksi
+    if (datePhrase != null && datePhrase.isNotEmpty) {
+      desc = desc.replaceAll(
+        RegExp('\\b${RegExp.escape(datePhrase)}\\b', caseSensitive: false),
+        '',
+      );
+    }
+    // Bersihkan juga kata penunjuk tanggal umum jika masih tersisa di awal kalimat
+    desc = desc.replaceAll(
+      RegExp(r'^(kemarin dulu|kemarin lusa|kemarin|hari ini|tadi pagi|tadi siang|tadi sore|tadi malam|tadi|besok|lusa)\b\s*', caseSensitive: false),
+      '',
+    );
 
     // Hapus bagian akun jika disebutkan
     if (matchedAccount != null) {
@@ -431,4 +603,10 @@ class VoiceTransactionParser {
     // Kapitalisasi huruf pertama
     return desc[0].toUpperCase() + desc.substring(1);
   }
+}
+
+class _VoiceDateMatch {
+  const _VoiceDateMatch({required this.date, required this.matchedText});
+  final DateTime date;
+  final String matchedText;
 }

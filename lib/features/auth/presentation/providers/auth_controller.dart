@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/services/fcm_service.dart';
 import '../../../../data/datasources/remote/api_client.dart';
 import '../../../../data/datasources/remote/api_config.dart';
 import '../../../../data/datasources/remote/remote_auth_repository.dart';
@@ -9,7 +10,6 @@ import '../../../../data/datasources/remote/token_storage.dart';
 import '../../../../data/models/user_model.dart';
 import '../../../../data/providers/account_providers.dart';
 import '../../../../data/providers/app_providers.dart';
-import '../../../../data/providers/dashboard_providers.dart';
 import '../../../../data/providers/onboarding_providers.dart';
 import '../../../../data/providers/reports_providers.dart';
 import '../../../../data/repositories/auth_repository.dart';
@@ -19,7 +19,7 @@ import '../../../onboarding/presentation/providers/instruments_controller.dart';
 import '../../../onboarding/presentation/providers/onboarding_status_provider.dart';
 import '../../../onboarding/presentation/providers/salary_controller.dart';
 import '../../../goals/presentation/providers/goals_controller.dart';
-import '../../../profile/presentation/providers/profile_providers.dart';
+import '../../../notifications/presentation/providers/notifications_providers.dart';
 
 /// Provider repository auth.
 ///
@@ -251,11 +251,14 @@ class AuthController extends Notifier<AuthState> {
       ref.read(purchaseDecisionRepositoryProvider).clear();
     } catch (_) {}
 
-    // 4. Invalidate semua data providers yang mengikat data user
+    // 4. Invalidate semua data providers yang mengikat data user.
+    // Catatan: profileUserProvider, dashboardDataProvider, dan
+    // onboardingStatusProvider sudah me-watch authControllerProvider (langsung
+    // atau transitif) sehingga ikut rebuild saat state auth berubah; memanggil
+    // ref.invalidate() langsung memicu CircularDependencyError di Riverpod.
     ref.invalidate(onboardingRepositoryProvider);
     ref.invalidate(userProvider);
     ref.invalidate(summaryProvider);
-    ref.invalidate(profileUserProvider);
     ref.invalidate(accountsProvider);
     ref.invalidate(accountsOverviewProvider);
     ref.invalidate(recentTransactionsProvider);
@@ -269,10 +272,15 @@ class AuthController extends Notifier<AuthState> {
     ref.invalidate(transactionRepositoryProvider);
     ref.invalidate(goalRepositoryProvider);
     ref.invalidate(purchaseDecisionRepositoryProvider);
-    ref.invalidate(dashboardDataProvider);
     ref.invalidate(considerationsProvider);
+    ref.invalidate(notificationRepositoryProvider);
     ref.invalidate(notificationsProvider);
-    ref.invalidate(onboardingStatusProvider);
+    ref.invalidate(notificationsListProvider);
+    ref.invalidate(unreadCountProvider);
+    ref.invalidate(reminderPreferencesProvider);
+    ref.invalidate(savingReminderProvider);
+    ref.invalidate(savingReminderControllerProvider);
+    ref.invalidate(notificationFilterProvider);
     ref.invalidate(monthlyReportProvider);
     ref.invalidate(financialPlanProvider);
     ref.invalidate(onboardingPopupShownNotifierProvider);
@@ -280,6 +288,12 @@ class AuthController extends Notifier<AuthState> {
 
   /// Keluar sesi dan bersihkan seluruh data pengguna agar akun baru tidak mewarisi data lama.
   Future<void> logout() async {
+    try {
+      await FcmService.instance.unregisterBeforeLogout(
+        ref.read(fcmTokenRepositoryProvider),
+      );
+    } catch (_) {}
+
     try {
       await ref.read(authRepositoryProvider).logout();
     } catch (_) {

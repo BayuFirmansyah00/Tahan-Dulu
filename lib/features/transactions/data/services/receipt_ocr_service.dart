@@ -11,6 +11,13 @@ abstract class ReceiptOcrService {
   Future<String?> pickImageFromCamera();
   Future<String?> pickImageFromGallery();
   Future<String> recognizeText(String imagePath);
+
+  /// Hapus satu berkas sementara jika berkas tersebut dicatat sebagai gambar kamera sementara.
+  Future<void> deleteTempImage(String? imagePath);
+
+  /// Hapus seluruh berkas gambar kamera sementara yang tercatat dalam sesi ini.
+  Future<void> cleanupAllTempImages();
+
   void dispose();
 }
 
@@ -21,6 +28,7 @@ class NativeReceiptOcrService implements ReceiptOcrService {
       : _picker = imagePicker ?? ImagePicker();
 
   final ImagePicker _picker;
+  final Set<String> _tempCameraFiles = <String>{};
   TextRecognizer? _activeRecognizer;
 
   @override
@@ -32,6 +40,9 @@ class NativeReceiptOcrService implements ReceiptOcrService {
         maxHeight: 2048,
         imageQuality: 90,
       );
+      if (photo != null && photo.path.isNotEmpty) {
+        _tempCameraFiles.add(photo.path);
+      }
       return photo?.path;
     } catch (e) {
       debugPrint('[NativeReceiptOcrService] pickImageFromCamera error: $e');
@@ -48,6 +59,8 @@ class NativeReceiptOcrService implements ReceiptOcrService {
         maxHeight: 2048,
         imageQuality: 90,
       );
+      // PENTING: Foto dari galeri asli pengguna TIDAK dimasukkan ke _tempCameraFiles
+      // agar tidak pernah terhapus oleh mekanisme cleanup berkas sementara.
       return image?.path;
     } catch (e) {
       debugPrint('[NativeReceiptOcrService] pickImageFromGallery error: $e');
@@ -82,11 +95,38 @@ class NativeReceiptOcrService implements ReceiptOcrService {
   }
 
   @override
+  Future<void> deleteTempImage(String? imagePath) async {
+    if (imagePath == null || imagePath.isEmpty) return;
+    // Hanya hapus jika terdaftar sebagai berkas kamera sementara aplikasi (B3-05)
+    if (!_tempCameraFiles.contains(imagePath)) return;
+
+    try {
+      final file = File(imagePath);
+      if (await file.exists()) {
+        await file.delete();
+      }
+    } catch (e) {
+      debugPrint('[NativeReceiptOcrService] Gagal menghapus berkas sementara: $e');
+    } finally {
+      _tempCameraFiles.remove(imagePath);
+    }
+  }
+
+  @override
+  Future<void> cleanupAllTempImages() async {
+    final paths = _tempCameraFiles.toList();
+    for (final path in paths) {
+      await deleteTempImage(path);
+    }
+  }
+
+  @override
   void dispose() {
     try {
       _activeRecognizer?.close();
       _activeRecognizer = null;
     } catch (_) {}
+    cleanupAllTempImages();
   }
 }
 

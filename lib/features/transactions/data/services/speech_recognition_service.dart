@@ -12,6 +12,8 @@ abstract class SpeechRecognitionService {
 
   Future<bool> checkMicrophonePermission();
   Future<bool> requestMicrophonePermission();
+  Future<bool> isMicrophonePermanentlyDenied();
+  Future<bool> openPermissionSettings();
 
   Future<bool> initialize({
     void Function(String status)? onStatus,
@@ -65,6 +67,27 @@ class NativeSpeechRecognitionService implements SpeechRecognitionService {
       return false;
     } catch (e) {
       debugPrint('[NativeSpeechRecognitionService] requestPermission error: $e');
+      return false;
+    }
+  }
+
+  @override
+  Future<bool> isMicrophonePermanentlyDenied() async {
+    try {
+      final status = await Permission.microphone.status;
+      return status.isPermanentlyDenied;
+    } catch (e) {
+      debugPrint('[NativeSpeechRecognitionService] isPermanentlyDenied error: $e');
+      return false;
+    }
+  }
+
+  @override
+  Future<bool> openPermissionSettings() async {
+    try {
+      return await openAppSettings();
+    } catch (e) {
+      debugPrint('[NativeSpeechRecognitionService] openPermissionSettings error: $e');
       return false;
     }
   }

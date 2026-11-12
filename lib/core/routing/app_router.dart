@@ -67,6 +67,19 @@ import 'package:tahan_dulu/features/onboarding/presentation/screens/salary_scree
 import 'package:tahan_dulu/features/splash/presentation/screens/splash_screen.dart';
 import 'app_routes.dart';
 
+/// ChangeNotifier tipis yang membungkus AuthState agar GoRouter dapat
+/// menggunakannya sebagai refreshListenable.
+class AuthRouteNotifier extends ChangeNotifier {
+  AuthState _authState = const AuthState.initial();
+
+  AuthState get authState => _authState;
+
+  void update(AuthState state) {
+    _authState = state;
+    notifyListeners();
+  }
+}
+
 /// Transisi antar-menu utama: fade + geser horizontal ringan.
 /// 250ms easeOutCubic, berlaku maju dan mundur (back button aman).
 CustomTransitionPage<void> tabPage(LocalKey key, Widget child) {
@@ -97,9 +110,70 @@ CustomTransitionPage<void> tabPage(LocalKey key, Widget child) {
 
 /// Router terpusat (go_router). Path dan nama route tidak berubah;
 /// hanya 4 root menu utama memakai [tabPage] agar transisi smooth.
-GoRouter createAppRouter() {
+GoRouter createAppRouter({AuthRouteNotifier? authNotifier}) {
+  // Route-route yang hanya boleh diakses pengguna yang sudah onboarding.
+  const protectedPrefixes = [
+    AppRoutes.dashboard,
+    AppRoutes.transactions,
+    AppRoutes.goals,
+    AppRoutes.tahanDulu,
+    AppRoutes.accounts,
+    AppRoutes.investments,
+    AppRoutes.recurringIncomes,
+    AppRoutes.recurringExpenses,
+    AppRoutes.reports,
+    AppRoutes.notifications,
+    AppRoutes.settings,
+  ];
+
+  bool isProtected(String location) =>
+      protectedPrefixes.any((p) => location.startsWith(p));
+
+  bool isOnboardingRoute(String location) =>
+      location.startsWith(AppRoutes.onboarding);
+
   return GoRouter(
     initialLocation: AppRoutes.splash,
+    refreshListenable: authNotifier,
+    redirect: (context, state) {
+      if (authNotifier == null) return null;
+      final authState = authNotifier.authState;
+      final location = state.uri.toString();
+
+      final isAuth = authState.status == AuthStatus.authenticated;
+      final isOnboarded = authState.user?.isOnboarded ?? false;
+
+      // Sedang di splash — biarkan SplashScreen memutuskan navigasi sendiri.
+      if (location == AppRoutes.splash) return null;
+
+      // Belum terautentikasi: boleh akses login, register, splash saja.
+      if (!isAuth) {
+        if (isProtected(location) || isOnboardingRoute(location)) {
+          return AppRoutes.login;
+        }
+        return null;
+      }
+
+      // Sudah autentikasi + sudah onboarding:
+      // Jangan kembali ke onboarding atau auth pages.
+      if (isOnboarded) {
+        if (isOnboardingRoute(location) ||
+            location == AppRoutes.login ||
+            location == AppRoutes.register) {
+          return AppRoutes.dashboard;
+        }
+        return null;
+      }
+
+      // Sudah autentikasi tapi BELUM onboarding:
+      // Boleh akses onboarding, logout (settings/security), splash.
+      // Blokir semua fitur utama.
+      if (isProtected(location)) {
+        return AppRoutes.onboardingSalary;
+      }
+      // Tetap boleh di login/register (edge case: double-navigate).
+      return null;
+    },
     routes: [
       GoRoute(
         path: AppRoutes.splash,

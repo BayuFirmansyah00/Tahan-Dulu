@@ -160,9 +160,11 @@ class _TransactionReviewScreenState
                         ],
                         _Row(
                           label: AppStrings.reviewName,
-                          value: draft.category == null
-                              ? '-'
-                              : categoryLabel(draft.category!),
+                          value: draft.title.trim().isNotEmpty
+                              ? draft.title.trim()
+                              : (draft.category == null
+                                  ? '-'
+                                  : categoryLabel(draft.category!)),
                         ),
                         _Row(
                           label: AppStrings.reviewCategory,

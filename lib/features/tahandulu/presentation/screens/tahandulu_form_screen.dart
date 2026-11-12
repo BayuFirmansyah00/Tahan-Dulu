@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
@@ -54,6 +55,119 @@ class _TahanDuluFormScreenState extends ConsumerState<TahanDuluFormScreen> {
     super.dispose();
   }
 
+  Future<void> _pickPhoto(ImageSource source) async {
+    try {
+      final picker = ImagePicker();
+      final picked = await picker.pickImage(
+        source: source,
+        maxWidth: 1200,
+        maxHeight: 1200,
+        imageQuality: 85,
+      );
+      if (picked != null) {
+        ref.read(tahanDuluControllerProvider.notifier).setImageRef(picked.path);
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Gagal memilih foto.')),
+        );
+      }
+    }
+  }
+
+  void _showPhotoOptions() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE2E8F0),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Foto Produk',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Color(0xFF102A43),
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 20),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF6FF),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.camera_alt_outlined, color: Color(0xFF2563EB)),
+                ),
+                title: const Text('Ambil Foto Baru (Kamera)', style: TextStyle(fontWeight: FontWeight.w600)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _pickPhoto(ImageSource.camera);
+                },
+              ),
+              const SizedBox(height: 8),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF3E8FF),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.photo_library_outlined, color: Color(0xFF9333EA)),
+                ),
+                title: const Text('Pilih dari Galeri', style: TextStyle(fontWeight: FontWeight.w600)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _pickPhoto(ImageSource.gallery);
+                },
+              ),
+              if (ref.read(tahanDuluControllerProvider).imageRef != null) ...[
+                const SizedBox(height: 8),
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFEE2E2),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                  ),
+                  title: const Text('Hapus Foto', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.redAccent)),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    ref.read(tahanDuluControllerProvider.notifier).setImageRef(null);
+                  },
+                ),
+              ],
+              const SizedBox(height: 6),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<void> _analyze() async {
     final notifier = ref.read(tahanDuluControllerProvider.notifier);
     notifier.setName(_nameController.text);
@@ -103,6 +217,92 @@ class _TahanDuluFormScreenState extends ConsumerState<TahanDuluFormScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Preview Foto Produk (jika ada foto dari Link atau Kamera/Galeri)
+            if (draft.imageRef != null && draft.imageRef!.isNotEmpty) ...[
+              Stack(
+                children: [
+                  Container(
+                    height: 160,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: TdColors.border),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: ProductImage(
+                        imageRef: draft.imageRef,
+                        category: draft.category,
+                        height: 160,
+                        borderRadius: 16,
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: 10,
+                    right: 10,
+                    child: Row(
+                      children: [
+                        Material(
+                          color: Colors.white.withValues(alpha: 0.9),
+                          shape: const CircleBorder(),
+                          child: IconButton(
+                            tooltip: 'Ganti Foto',
+                            icon: const Icon(Icons.edit_outlined, size: 20, color: Color(0xFF102A43)),
+                            onPressed: _showPhotoOptions,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Material(
+                          color: Colors.white.withValues(alpha: 0.9),
+                          shape: const CircleBorder(),
+                          child: IconButton(
+                            tooltip: 'Hapus Foto',
+                            icon: const Icon(Icons.close_rounded, size: 20, color: Colors.redAccent),
+                            onPressed: () {
+                              ref.read(tahanDuluControllerProvider.notifier).setImageRef(null);
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+            ] else ...[
+              GestureDetector(
+                onTap: _showPhotoOptions,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.add_a_photo_outlined, size: 20, color: Color(0xFF2563EB)),
+                      SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          'Tambah Foto Produk (Opsional)',
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Color(0xFF2563EB),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+
             AppTextField(
               controller: _nameController,
               label: AppStrings.productNameLabel,

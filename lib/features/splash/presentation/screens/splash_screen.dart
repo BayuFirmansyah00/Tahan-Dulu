@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
+import '../../../../core/services/fcm_service.dart';
 import '../../../../core/widgets/app_logo.dart';
 import '../../../auth/presentation/providers/auth_controller.dart';
 
@@ -42,6 +43,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     final user = ref.read(authControllerProvider).user;
     final isOnboarded = user?.isOnboarded ?? false;
     context.go(isOnboarded ? AppRoutes.dashboard : AppRoutes.onboardingSalary);
+    if (isOnboarded) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        FcmService.instance.drainPendingDeepLink();
+      });
+    }
   }
 
   @override

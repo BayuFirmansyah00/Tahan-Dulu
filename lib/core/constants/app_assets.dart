@@ -163,6 +163,43 @@ abstract final class AppAssets {
   /// Ilustrasi empty state transaksi (Tahap 40, transparan).
   static const String transactionEmptyCheck =
       '$_icons/transaction_empty_check.png';
+
+  /// Ikon 3D Halaman Pilih Metode Catat Transaksi
+  static const String txHero = '$_icons/transaction_hero.png';
+  static const String txMethodManual = '$_icons/input_manual.png';
+  static const String txMethodVoice = '$_icons/input_suara.png';
+  static const String txMethodScan = '$_icons/scan_struk.png';
+  static const String txSecurity = '$_icons/keamanan.png';
+
+  /// Ikon & ilustrasi 3D Scan Struk
+  static const String scanReceiptHero = '$_icons/scan_struk/scan_receipt_3d.png';
+  static const String scanCamera3d = '$_icons/scan_struk/camera_3d.png';
+  static const String scanGallery3d = '$_icons/scan_struk/gallery_3d.png';
+  static const String scanStepCamera = '$_icons/scan_struk/step_camera.png';
+  static const String scanStepRead = '$_icons/scan_struk/step_read.png';
+  static const String scanStepReview = '$_icons/scan_struk/step_review.png';
+  static const String scanShieldCheck = '$_icons/scan_struk/shield_check.png';
+  static const String scanInfoOutline = '$_icons/scan_struk/info_outline.png';
+
+  /// Ikon & ilustrasi 3D Halaman Tambah Barang
+  static const String tambahBarangHero =
+      '$_icons/tambah_barang/illustrasi_tambah_barang.png';
+  static const String tambahBarangManual =
+      '$_icons/tambah_barang/input_manual_3d.png';
+  static const String tambahBarangLink =
+      '$_icons/tambah_barang/link_produk_3d.png';
+  static const String tambahBarangFoto =
+      '$_icons/tambah_barang/upload_foto_3d.png';
+  static const String tambahBarangInfo =
+      '$_icons/tambah_barang/info_pengingat_3d.png';
+
+  /// Ikon 3D Navbar V2 (assets/icons/navbar/)
+  static const String _navbar = '$_icons/navbar';
+  static const String nav3dHome = '$_navbar/beranda.png';
+  static const String nav3dTransaction = '$_navbar/transaksi.png';
+  static const String nav3dRecord = '$_navbar/catat.png';
+  static const String nav3dGoal = '$_navbar/tujuan.png';
+  static const String nav3dProfile = '$_navbar/profil.png';
   static const String setProfile = '$_settings/icon_profile.png';
   static const String setApp = '$_settings/icon_app_settings.png';
   static const String setNotif = '$_settings/icon_notifications.png';

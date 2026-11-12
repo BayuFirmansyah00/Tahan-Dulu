@@ -7,13 +7,13 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_radius.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_icons.dart';
 import '../../../../data/models/transaction_model.dart';
+import '../../data/services/receipt_ocr_service.dart';
 import '../../domain/receipt_parser.dart';
 import '../providers/native_input_providers.dart';
 import '../providers/transactions_controller.dart';
@@ -31,22 +31,8 @@ import '../providers/transactions_controller.dart';
 class TransactionScanScreen extends ConsumerStatefulWidget {
   const TransactionScanScreen({super.key});
 
-  @override
-  ConsumerState<TransactionScanScreen> createState() =>
-      _TransactionScanScreenState();
-}
-
-class _TransactionScanScreenState extends ConsumerState<TransactionScanScreen> {
-  final _parser = const ReceiptParser();
-  late final TextEditingController _receiptTextController;
-
-  String? _imagePath;
-  bool _isProcessingOcr = false;
-  String? _errorMessage;
-  ParsedReceipt? _parsedReceipt;
-  bool _isEditingText = false;
-
-  static const String _sampleIndomaret = '''INDOMARET POINT
+  /// Sampel struk untuk pengujian parser OCR (dipertahankan untuk test suite)
+  static const String sampleIndomaret = '''INDOMARET POINT
 JL. SUDIRMAN NO. 45 JAKARTA
 TGL: 02/11/2026 14:30
 -----------------------------
@@ -61,7 +47,7 @@ TUNAI               50.000
 KEMBALIAN           25.000
 TERIMA KASIH''';
 
-  static const String _sampleSuperindo = '''SUPERINDO SUPERMARKET
+  static const String sampleSuperindo = '''SUPERINDO SUPERMARKET
 TANGGAL: 2026-10-30
 -----------------------------
 APEL FUJI 1KG       35.000
@@ -73,14 +59,34 @@ GRAND TOTAL         65.000
 BCA DEBIT           65.000''';
 
   @override
+  ConsumerState<TransactionScanScreen> createState() =>
+      _TransactionScanScreenState();
+}
+
+class _TransactionScanScreenState extends ConsumerState<TransactionScanScreen> {
+  final _parser = const ReceiptParser();
+  late final TextEditingController _receiptTextController;
+  ReceiptOcrService? _ocrService;
+
+  String? _imagePath;
+  bool _isProcessingOcr = false;
+  String? _errorMessage;
+  ParsedReceipt? _parsedReceipt;
+  bool _isEditingText = false;
+
+  @override
   void initState() {
     super.initState();
     _receiptTextController = TextEditingController();
+    _ocrService = ref.read(receiptOcrServiceProvider);
   }
 
   @override
   void dispose() {
     _receiptTextController.dispose();
+    if (_imagePath != null) {
+      _ocrService?.deleteTempImage(_imagePath);
+    }
     super.dispose();
   }
 
@@ -127,6 +133,11 @@ BCA DEBIT           65.000''';
   }
 
   Future<void> _processImageFile(String path) async {
+    final oldPath = _imagePath;
+    if (oldPath != null && oldPath != path) {
+      ref.read(receiptOcrServiceProvider).deleteTempImage(oldPath);
+    }
+
     setState(() {
       _imagePath = path;
       _isProcessingOcr = true;
@@ -164,7 +175,8 @@ BCA DEBIT           65.000''';
     }
   }
 
-  void _loadSampleReceipt(String sample) {
+  /// Programmatic helper untuk pengujian
+  void loadSampleReceipt(String sample) {
     setState(() {
       _imagePath = null;
       _errorMessage = null;
@@ -197,11 +209,13 @@ BCA DEBIT           65.000''';
       notifier.setDate(receipt.date!);
     }
 
-    // Susun catatan dari merchant dan rincian item belanja yang terbaca
-    final noteParts = <String>[];
-    if (receipt.hasMerchant) {
-      noteParts.add(receipt.merchantName!);
+    // B3-04: Judul transaksi menggunakan nama merchant jika terdeteksi
+    if (receipt.hasMerchant && receipt.merchantName!.trim().isNotEmpty) {
+      notifier.setTitle(receipt.merchantName!.trim());
     }
+
+    // Susun catatan dari rincian item belanja yang terbaca (tanpa menduplikasi merchant)
+    final noteParts = <String>[];
     if (receipt.items.isNotEmpty) {
       final itemSummary = receipt.items.map((i) => i.name).take(3).join(', ');
       noteParts.add('Item: $itemSummary');
@@ -219,64 +233,61 @@ BCA DEBIT           65.000''';
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundWarm,
+      backgroundColor: const Color(0xFFF7F9FC),
       appBar: AppBar(
-        title: const Text('Scan Struk'),
+        backgroundColor: const Color(0xFFF7F9FC),
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: true,
         leading: AppBackButton(onPressed: () => context.pop()),
+        title: const Text(
+          'Scan Struk',
+          style: TextStyle(
+            color: Color(0xFF102A43),
+            fontSize: 17.5,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.pagePadding,
-                vertical: 20,
-              ),
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(
-                    'Pindai Struk Belanja',
-                    style: textTheme.headlineSmall?.copyWith(
-                      color: AppColors.textPrimary,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Ambil foto struk belanja atau pilih dari galeri untuk mengekstrak nominal, toko, dan tanggal secara otomatis.',
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textSecondary,
-                      height: 1.4,
-                    ),
-                  ),
+                  // --- Hero Section ---
+                  const _ScanHeroSection(),
                   const SizedBox(height: 20),
 
                   // Error Banner bila OCR / picker gagal
                   if (_errorMessage != null) ...[
                     Container(
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
                       decoration: BoxDecoration(
-                        color: AppColors.error.withValues(alpha: 0.1),
-                        borderRadius: AppRadius.card,
-                        border: Border.all(
-                          color: AppColors.error.withValues(alpha: 0.3),
-                        ),
+                        color: const Color(0xFFFEE2E2),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFFECACA)),
                       ),
                       child: Row(
                         children: [
-                          const AppImageIcon(
-                            assetPath: AppAssets.statusError,
+                          const Icon(
+                            Icons.error_outline_rounded,
                             size: 20,
-                            fallbackIcon: Icons.error_outline_rounded,
+                            color: Color(0xFFDC2626),
                           ),
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
                               _errorMessage!,
-                              style: textTheme.bodySmall?.copyWith(
-                                color: AppColors.error,
+                              style: const TextStyle(
+                                color: Color(0xFFDC2626),
+                                fontSize: 12,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -287,62 +298,83 @@ BCA DEBIT           65.000''';
                     const SizedBox(height: 16),
                   ],
 
-                  // Pilihan Kamera atau Galeri
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _ScanOptionCard(
-                          icon: Icons.camera_alt_rounded,
-                          title: 'Kamera',
-                          subtitle: 'Ambil foto fisik',
-                          color: AppColors.primary,
-                          onTap: _isProcessingOcr ? null : _captureFromCamera,
-                        ),
+                  // Loading indicator saat memproses OCR
+                  if (_isProcessingOcr) ...[
+                    Container(
+                      padding: const EdgeInsets.all(18),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: const Color(0xFFE8EDF3)),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _ScanOptionCard(
-                          icon: Icons.photo_library_rounded,
-                          title: 'Galeri',
-                          subtitle: 'Pilih dari berkas',
-                          color: AppColors.secondary,
-                          onTap: _isProcessingOcr ? null : _pickFromGallery,
-                        ),
+                      child: Row(
+                        children: [
+                          const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              color: Color(0xFF10B981),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Membaca Teks Struk...',
+                                  style: TextStyle(
+                                    color: Color(0xFF102A43),
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                SizedBox(height: 2),
+                                Text(
+                                  'Menjalankan Google ML Kit OCR on-device',
+                                  style: TextStyle(
+                                    color: Color(0xFF718096),
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
 
                   // Image Preview jika ada gambar yang dipilih
                   if (_imagePath != null) ...[
-                    AppCard(
-                      padding: const EdgeInsets.all(12),
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: const Color(0xFFE8EDF3)),
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Expanded(
-                                child: Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.image_outlined,
-                                      size: 18,
-                                      color: AppColors.secondary,
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Flexible(
-                                      child: Text(
-                                        'Foto Struk Terpilih',
-                                        style: textTheme.labelLarge?.copyWith(
-                                          color: AppColors.textPrimary,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ],
+                              const Icon(
+                                Icons.image_outlined,
+                                size: 18,
+                                color: Color(0xFF3B82F6),
+                              ),
+                              const SizedBox(width: 6),
+                              const Expanded(
+                                child: Text(
+                                  'Foto Struk Terpilih',
+                                  style: TextStyle(
+                                    color: Color(0xFF102A43),
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 13.5,
+                                  ),
                                 ),
                               ),
                               TextButton(
@@ -361,7 +393,7 @@ BCA DEBIT           65.000''';
                           ),
                           const SizedBox(height: 8),
                           ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(12),
                             child: SizedBox(
                               height: 180,
                               width: double.infinity,
@@ -371,7 +403,7 @@ BCA DEBIT           65.000''';
                                       fit: BoxFit.cover,
                                     )
                                   : Container(
-                                      color: AppColors.backgroundWarm,
+                                      color: const Color(0xFFF7F9FC),
                                       alignment: Alignment.center,
                                       padding: const EdgeInsets.all(12),
                                       child: Row(
@@ -380,15 +412,15 @@ BCA DEBIT           65.000''';
                                         children: [
                                           const Icon(
                                             Icons.image,
-                                            color: AppColors.textSecondary,
+                                            color: Color(0xFF718096),
                                           ),
                                           const SizedBox(width: 8),
                                           Flexible(
                                             child: Text(
-                                              'Berkas terpilih: ${_imagePath!.split(Platform.pathSeparator).last}',
-                                              style:
-                                                  textTheme.bodySmall?.copyWith(
-                                                color: AppColors.textSecondary,
+                                              'Berkas: ${_imagePath!.split(Platform.pathSeparator).last}',
+                                              style: const TextStyle(
+                                                color: Color(0xFF718096),
+                                                fontSize: 12,
                                               ),
                                               overflow: TextOverflow.ellipsis,
                                             ),
@@ -404,110 +436,58 @@ BCA DEBIT           65.000''';
                     const SizedBox(height: 16),
                   ],
 
-                  // Loading indicator saat memproses OCR
-                  if (_isProcessingOcr) ...[
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: AppColors.surface,
-                        borderRadius: AppRadius.card,
-                        border: Border.all(color: AppColors.border),
-                      ),
-                      child: Row(
-                        children: [
-                          const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(strokeWidth: 2.5),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Membaca Teks Struk...',
-                                  style: textTheme.titleSmall?.copyWith(
-                                    color: AppColors.textPrimary,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  'Menjalankan Google ML Kit OCR on-device',
-                                  style: textTheme.bodySmall?.copyWith(
-                                    color: AppColors.textSecondary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                  ],
-
-                  // Atau uji dengan contoh teks struk
-                  AppCard(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.text_snippet_outlined,
-                              size: 18,
-                              color: AppColors.secondary,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Uji Contoh Teks Struk',
-                              style: textTheme.titleSmall?.copyWith(
-                                color: AppColors.textPrimary,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Pilih contoh struk belanja di bawah ini untuk menguji keakuratan parser tanpa kamera:',
-                          style: textTheme.bodySmall?.copyWith(
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: [
-                            OutlinedButton.icon(
-                              icon: const AppImageIcon(
-                                assetPath: AppAssets.setBills,
-                                size: 16,
-                                fallbackIcon: Icons.receipt,
-                              ),
-                              label: const Text('Contoh Indomaret'),
-                              onPressed: () =>
-                                  _loadSampleReceipt(_sampleIndomaret),
-                            ),
-                            OutlinedButton.icon(
-                              icon: const AppImageIcon(
-                                assetPath: AppAssets.setBag,
-                                size: 16,
-                                fallbackIcon: Icons.shopping_bag_outlined,
-                              ),
-                              label: const Text('Contoh Superindo'),
-                              onPressed: () =>
-                                  _loadSampleReceipt(_sampleSuperindo),
-                            ),
-                          ],
-                        ),
-                      ],
+                  // --- Section: Pilihan Sumber Struk ---
+                  const Text(
+                    'Pilih sumber struk',
+                    style: TextStyle(
+                      color: Color(0xFF102A43),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
                     ),
                   ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      // Card Kamera
+                      Expanded(
+                        child: _ActionCard(
+                          title: 'Kamera',
+                          subtitle: 'Ambil foto struk',
+                          assetPath: AppAssets.scanCamera3d,
+                          accentColor: const Color(0xFF10B981),
+                          bgColor: const Color(0xFFEAF8F1),
+                          borderColor: const Color(0xFFDCFCE7),
+                          onTap: _isProcessingOcr ? null : _captureFromCamera,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      // Card Galeri
+                      Expanded(
+                        child: _ActionCard(
+                          title: 'Galeri',
+                          subtitle: 'Pilih dari galeri',
+                          assetPath: AppAssets.scanGallery3d,
+                          accentColor: const Color(0xFF3B82F6),
+                          bgColor: const Color(0xFFEDF4FF),
+                          borderColor: const Color(0xFFDBEAFE),
+                          onTap: _isProcessingOcr ? null : _pickFromGallery,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+
+                  // --- Section: Cara Kerja ---
+                  const Text(
+                    'Cara Kerja',
+                    style: TextStyle(
+                      color: Color(0xFF102A43),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  const _HowItWorksCard(),
                   const SizedBox(height: 16),
 
                   // Area Teks OCR (Dapat disunting jika ada kata yang salah terdeteksi)
@@ -529,21 +509,14 @@ BCA DEBIT           65.000''';
                               ),
                               IconButton(
                                 icon: _isEditingText
-                                    ? const AppImageIcon(
-                                        assetPath: AppAssets.statusSuccess,
-                                        size: 18,
-                                        fallbackIcon: Icons.check,
-                                      )
-                                    : const AppImageIcon(
-                                        assetPath: AppAssets.actionEdit,
-                                        size: 18,
-                                        fallbackIcon: Icons.edit_outlined,
-                                      ),
+                                    ? const Icon(Icons.check, size: 20)
+                                    : const Icon(Icons.edit_outlined, size: 20),
                                 tooltip: _isEditingText ? 'Simpan' : 'Sunting',
                                 onPressed: () {
                                   if (_isEditingText) {
                                     _extractReceipt(
-                                        _receiptTextController.text);
+                                      _receiptTextController.text,
+                                    );
                                     setState(() {
                                       _isEditingText = false;
                                     });
@@ -566,7 +539,8 @@ BCA DEBIT           65.000''';
                                 fontSize: 12,
                               ),
                               decoration: const InputDecoration(
-                                hintText: 'Tempel atau ubah teks struk di sini...',
+                                hintText:
+                                    'Tempel atau ubah teks struk di sini...',
                                 border: OutlineInputBorder(),
                               ),
                             )
@@ -575,9 +549,11 @@ BCA DEBIT           65.000''';
                               width: double.infinity,
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: AppColors.backgroundWarm,
+                                color: const Color(0xFFF7F9FC),
                                 borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: AppColors.border),
+                                border: Border.all(
+                                  color: const Color(0xFFE8EDF3),
+                                ),
                               ),
                               child: Text(
                                 _receiptTextController.text,
@@ -620,7 +596,8 @@ BCA DEBIT           65.000''';
                             label: 'Tanggal Transaksi',
                             value: _parsedReceipt!.date != null
                                 ? DateFormatter.dayMonthYear(
-                                    _parsedReceipt!.date!)
+                                    _parsedReceipt!.date!,
+                                  )
                                 : 'Hari ini (dapat diubah di form)',
                           ),
                           if (_parsedReceipt!.subtotal != null) ...[
@@ -628,7 +605,8 @@ BCA DEBIT           65.000''';
                             _ReceiptRow(
                               label: 'Subtotal Terbaca',
                               value: CurrencyFormatter.format(
-                                  _parsedReceipt!.subtotal!),
+                                _parsedReceipt!.subtotal!,
+                              ),
                             ),
                           ],
                           const Divider(height: 16),
@@ -636,7 +614,8 @@ BCA DEBIT           65.000''';
                             label: 'Total Akhir Pembayaran',
                             value: _parsedReceipt!.total > 0
                                 ? CurrencyFormatter.format(
-                                    _parsedReceipt!.total)
+                                    _parsedReceipt!.total,
+                                  )
                                 : 'Belum terbaca (isi manual)',
                             isHighlight: true,
                             highlightColor: AppColors.primary,
@@ -653,7 +632,8 @@ BCA DEBIT           65.000''';
                             const SizedBox(height: 6),
                             ..._parsedReceipt!.items.map(
                               (item) => Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 2),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 2),
                                 child: Row(
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceBetween,
@@ -682,7 +662,7 @@ BCA DEBIT           65.000''';
                         ],
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
 
                     // Confirm Action Button
                     AppButton(
@@ -694,21 +674,8 @@ BCA DEBIT           65.000''';
                     const SizedBox(height: 12),
                   ],
 
-                  // Catatan Keamanan Transaksi
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppColors.infoSoft,
-                      borderRadius: AppRadius.card,
-                    ),
-                    child: Text(
-                      'Catatan: Pemrosesan gambar struk dilakukan secara lokal di perangkat Anda (on-device ML Kit). Data struk dimasukkan ke form untuk diverifikasi akun dan kategorinya sebelum disimpan ke sistem.',
-                      style: textTheme.bodySmall?.copyWith(
-                        color: AppColors.secondary,
-                        fontSize: 11,
-                      ),
-                    ),
-                  ),
+                  // --- Section: Informasi Privasi ---
+                  const _PrivacyInfoCard(),
                 ],
               ),
             ),
@@ -719,67 +686,299 @@ BCA DEBIT           65.000''';
   }
 }
 
-class _ScanOptionCard extends StatelessWidget {
-  const _ScanOptionCard({
-    required this.icon,
+/// Hero section yang compact dan modern dengan ilustrasi 3D scan struk di sisi kanan.
+class _ScanHeroSection extends StatelessWidget {
+  const _ScanHeroSection();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE8EDF3)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF102A43).withValues(alpha: 0.03),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const Expanded(
+            flex: 3,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Catat dari struk,',
+                  style: TextStyle(
+                    color: Color(0xFF102A43),
+                    fontWeight: FontWeight.w800,
+                    fontSize: 18,
+                    height: 1.2,
+                  ),
+                ),
+                Text(
+                  'lebih praktis.',
+                  style: TextStyle(
+                    color: Color(0xFF10B981),
+                    fontWeight: FontWeight.w800,
+                    fontSize: 18,
+                    height: 1.2,
+                  ),
+                ),
+                SizedBox(height: 6),
+                Text(
+                  'Foto struk belanja dan biarkan aplikasi membaca transaksimu secara otomatis.',
+                  style: TextStyle(
+                    color: Color(0xFF718096),
+                    fontSize: 12,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            flex: 2,
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Image.asset(
+                AppAssets.scanReceiptHero,
+                fit: BoxFit.contain,
+                height: 110,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Kartu aksi sumber struk (Kamera & Galeri) dengan ikon 3D dan panah kecil.
+class _ActionCard extends StatelessWidget {
+  const _ActionCard({
     required this.title,
     required this.subtitle,
-    required this.color,
+    required this.assetPath,
+    required this.accentColor,
+    required this.bgColor,
+    required this.borderColor,
     required this.onTap,
   });
 
-  final IconData icon;
   final String title;
   final String subtitle;
-  final Color color;
+  final String assetPath;
+  final Color accentColor;
+  final Color bgColor;
+  final Color borderColor;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
     return Material(
-      color: Colors.transparent,
+      color: bgColor,
+      borderRadius: BorderRadius.circular(20),
       child: InkWell(
         onTap: onTap,
-        borderRadius: AppRadius.card,
+        borderRadius: BorderRadius.circular(20),
+        splashColor: accentColor.withValues(alpha: 0.15),
+        highlightColor: accentColor.withValues(alpha: 0.08),
         child: Container(
-          padding: const EdgeInsets.all(16),
+          constraints: const BoxConstraints(minHeight: 160, maxHeight: 185),
+          padding: const EdgeInsets.fromLTRB(14, 16, 14, 14),
           decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: AppRadius.card,
-            border: Border.all(color: AppColors.border),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: borderColor, width: 1.2),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF102A43).withValues(alpha: 0.03),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
           ),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, color: color, size: 24),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                title,
-                style: textTheme.titleSmall?.copyWith(
-                  color: AppColors.textPrimary,
-                  fontWeight: FontWeight.w700,
+              Center(
+                child: Image.asset(
+                  assetPath,
+                  width: 74,
+                  height: 74,
+                  fit: BoxFit.contain,
                 ),
               ),
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                style: textTheme.bodySmall?.copyWith(
-                  color: AppColors.textSecondary,
-                  fontSize: 11,
-                ),
+              const Spacer(),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: const TextStyle(
+                            color: Color(0xFF102A43),
+                            fontWeight: FontWeight.w700,
+                            fontSize: 16,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          subtitle,
+                          style: const TextStyle(
+                            color: Color(0xFF718096),
+                            fontSize: 11.5,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    width: 26,
+                    height: 26,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: borderColor),
+                    ),
+                    child: Icon(
+                      Icons.arrow_forward_rounded,
+                      size: 15,
+                      color: accentColor,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Kartu section Cara Kerja menampilkan 3 langkah secara horizontal simetris.
+class _HowItWorksCard extends StatelessWidget {
+  const _HowItWorksCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE8EDF3)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF102A43).withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _buildStep(
+            asset: AppAssets.scanStepCamera,
+            label: 'Ambil foto',
+          ),
+          const Icon(
+            Icons.arrow_forward_ios_rounded,
+            size: 13,
+            color: Color(0xFFCBD5E1),
+          ),
+          _buildStep(
+            asset: AppAssets.scanStepRead,
+            label: 'Baca data',
+          ),
+          const Icon(
+            Icons.arrow_forward_ios_rounded,
+            size: 13,
+            color: Color(0xFFCBD5E1),
+          ),
+          _buildStep(
+            asset: AppAssets.scanStepReview,
+            label: 'Periksa hasil',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStep({required String asset, required String label}) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Image.asset(
+          asset,
+          width: 38,
+          height: 38,
+          fit: BoxFit.contain,
+        ),
+        const SizedBox(height: 6),
+        Text(
+          label,
+          style: const TextStyle(
+            color: Color(0xFF102A43),
+            fontSize: 11.5,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Informasi privasi kompak di bagian bawah.
+class _PrivacyInfoCard extends StatelessWidget {
+  const _PrivacyInfoCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEAF8F1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFDCFCE7), width: 1.0),
+      ),
+      child: Row(
+        children: [
+          Image.asset(
+            AppAssets.scanShieldCheck,
+            width: 30,
+            height: 30,
+            fit: BoxFit.contain,
+          ),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Text(
+              'Struk diproses di perangkat. Hasil dapat diperiksa sebelum disimpan.',
+              style: TextStyle(
+                color: Color(0xFF166534),
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                height: 1.35,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

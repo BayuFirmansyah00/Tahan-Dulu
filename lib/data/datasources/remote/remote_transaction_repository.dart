@@ -8,10 +8,11 @@ import 'token_storage.dart';
 /// (`/api/transactions`).
 class RemoteTransactionRepository implements TransactionRepository {
   RemoteTransactionRepository({
-    required this._client,
-    required this._tokens,
+    required ApiClient client,
+    required TokenStore tokens,
     this.onUnauthorized,
-  });
+  })  : _client = client,
+        _tokens = tokens;
 
   final ApiClient _client;
   final TokenStore _tokens;
@@ -70,7 +71,11 @@ class RemoteTransactionRepository implements TransactionRepository {
         'category': transaction.category ?? '',
         'amount': transaction.amount.round(),
         'instrument_id': int.tryParse(transaction.accountId ?? ''),
+        'date': transaction.date.toIso8601String(),
         'information': transaction.note,
+        if (transaction.idempotencyKey != null &&
+            transaction.idempotencyKey!.isNotEmpty)
+          'idempotency_key': transaction.idempotencyKey,
       },
       token: token,
     );
@@ -119,6 +124,7 @@ class RemoteTransactionRepository implements TransactionRepository {
         'category': transaction.category ?? '',
         'amount': transaction.amount.round(),
         'instrument_id': int.tryParse(transaction.accountId ?? ''),
+        'date': transaction.date.toIso8601String(),
         'information': transaction.note,
       },
       token: token,

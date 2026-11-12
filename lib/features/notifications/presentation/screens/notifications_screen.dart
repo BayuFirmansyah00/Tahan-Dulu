@@ -5,10 +5,12 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
+import '../../../../core/routing/notification_deep_link.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/widgets/app_image_icon.dart';
 import '../../../../core/widgets/app_states.dart';
 import '../../../../data/models/app_notification.dart';
+import '../../../../data/providers/app_providers.dart';
 import '../../../dashboard/presentation/widgets/dashboard_bottom_nav.dart';
 import '../providers/notifications_providers.dart';
 import '../utils/notification_ui.dart';
@@ -63,8 +65,12 @@ class NotificationsScreen extends ConsumerWidget {
     if (!context.mounted) return;
     final route = item.targetRoute;
     if (route != null && route.isNotEmpty) {
+      final safeRoute = NotificationDeepLink.resolve(
+        route: route,
+        type: item.category.name,
+      );
       try {
-        context.push(route);
+        context.push(safeRoute);
       } catch (_) {
         // Fallback navigasi aman bila target route tidak terdaftar di router
       }
@@ -128,18 +134,29 @@ class NotificationsScreen extends ConsumerWidget {
                 ),
                 _MarkAllRow(onTap: () => _markAll(context, ref)),
                 Expanded(
-                  child: SingleChildScrollView(
-                    child: list.when(
-                      data: (items) => items.isEmpty
-                          ? _EmptyFor(filter: filter)
-                          : _GroupedList(
-                              items: items,
-                              onTap: (item) => _openItem(context, ref, item),
-                            ),
-                      loading: () => const AppLoading(),
-                      error: (error, _) => AppErrorState(
-                        onRetry: () =>
-                            ref.invalidate(notificationsListProvider),
+                  child: RefreshIndicator(
+                    onRefresh: () async {
+                      ref.invalidate(notificationsListProvider);
+                      ref.invalidate(unreadCountProvider);
+                      ref.invalidate(notificationsProvider);
+                      try {
+                        await ref.read(notificationsListProvider.future);
+                      } catch (_) {}
+                    },
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: list.when(
+                        data: (items) => items.isEmpty
+                            ? _EmptyFor(filter: filter)
+                            : _GroupedList(
+                                items: items,
+                                onTap: (item) => _openItem(context, ref, item),
+                              ),
+                        loading: () => const AppLoading(),
+                        error: (error, _) => AppErrorState(
+                          onRetry: () =>
+                              ref.invalidate(notificationsListProvider),
+                        ),
                       ),
                     ),
                   ),

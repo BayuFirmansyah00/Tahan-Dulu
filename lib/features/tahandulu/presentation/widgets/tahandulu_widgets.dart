@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/widgets/app_icons.dart';
+import '../../../../data/datasources/remote/api_config.dart';
 import '../../../../data/models/purchase_consideration.dart';
 import '../../../dashboard/presentation/widgets/dashboard_bottom_nav.dart';
 import '../utils/tahandulu_ui.dart';
@@ -222,6 +223,26 @@ class ProductImage extends StatelessWidget {
         borderRadius: BorderRadius.circular(borderRadius),
         child: Image.network(
           ref,
+          height: height,
+          width: width ?? double.infinity,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) =>
+              _categoryFallback(context),
+        ),
+      );
+    }
+    if (ref.startsWith('wishlists/') ||
+        ref.startsWith('storage/') ||
+        ref.startsWith('/storage/')) {
+      final baseHost = ApiConfig.baseUrl.replaceAll('/api', '');
+      final cleanPath = ref.startsWith('/') ? ref : '/$ref';
+      final storageUrl = cleanPath.startsWith('/storage')
+          ? '$baseHost$cleanPath'
+          : '$baseHost/storage/$ref';
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(borderRadius),
+        child: Image.network(
+          storageUrl,
           height: height,
           width: width ?? double.infinity,
           fit: BoxFit.cover,

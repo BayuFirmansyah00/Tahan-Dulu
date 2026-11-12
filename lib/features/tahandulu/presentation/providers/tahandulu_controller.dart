@@ -1,3 +1,5 @@
+import 'dart:io' as io;
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -44,6 +46,7 @@ class ConsiderationDraft extends Equatable {
     String? productUrl,
     String? note,
     String? imageRef,
+    bool clearImageRef = false,
   }) {
     return ConsiderationDraft(
       id: id ?? this.id,
@@ -52,7 +55,7 @@ class ConsiderationDraft extends Equatable {
       category: category ?? this.category,
       productUrl: productUrl ?? this.productUrl,
       note: note ?? this.note,
-      imageRef: imageRef ?? this.imageRef,
+      imageRef: clearImageRef ? null : (imageRef ?? this.imageRef),
     );
   }
 
@@ -129,6 +132,28 @@ class TahanDuluController extends Notifier<ConsiderationDraft> {
       state = state.copyWith(category: v);
   void setUrl(String v) => state = state.copyWith(productUrl: v);
   void setNote(String v) => state = state.copyWith(note: v);
+  void setImageRef(String? v) => state = v == null
+      ? state.copyWith(clearImageRef: true)
+      : state.copyWith(imageRef: v);
+
+  /// Mengisi data draf produk secara selektif (misal dari hasil ekstraksi link atau foto).
+  void prefillDraft({
+    String? itemName,
+    double? price,
+    ProductCategory? category,
+    String? productUrl,
+    String? note,
+    String? imageRef,
+  }) {
+    state = state.copyWith(
+      itemName: itemName ?? state.itemName,
+      price: price ?? state.price,
+      category: category ?? state.category,
+      productUrl: productUrl ?? state.productUrl,
+      note: note ?? state.note,
+      imageRef: imageRef ?? state.imageRef,
+    );
+  }
 
   Future<PurchaseConsideration?> _persist() async {
     final repo = ref.read(purchaseDecisionRepositoryProvider);
@@ -172,6 +197,25 @@ class TahanDuluController extends Notifier<ConsiderationDraft> {
     if (_saving || !state.isComplete) return null;
     _saving = true;
     try {
+      // Jika imageRef adalah file lokal (dari kamera/galeri), unggah permanen ke backend storage
+      if (state.imageRef != null && state.imageRef!.isNotEmpty) {
+        final refStr = state.imageRef!;
+        if (!refStr.startsWith('http://') &&
+            !refStr.startsWith('https://') &&
+            !refStr.startsWith('wishlists/')) {
+          final file = io.File(refStr);
+          if (file.existsSync()) {
+            final uploaded = await ref
+                .read(purchaseDecisionRepositoryProvider)
+                .uploadImage(refStr);
+            if (uploaded.isEmpty) {
+              return null; // Gagal unggah foto, batalkan simpan agar draf parsial tidak terbuat
+            }
+            state = state.copyWith(imageRef: uploaded);
+          }
+        }
+      }
+
       final saved = await _persist();
       if (saved != null) state = state.copyWith(id: saved.id);
       _refreshAll();

@@ -425,6 +425,7 @@ class _GroupedList extends ConsumerWidget {
     }
 
     return ListView(
+      key: const PageStorageKey('transactions_list_view'),
       padding: const EdgeInsets.only(bottom: 16),
       children: children,
     );

@@ -9,11 +9,11 @@
 /// --dart-define=USE_REMOTE_API=false untuk development tanpa backend.
 abstract final class ApiConfig {
   /// Contoh emulator Android: http://10.0.2.2:8000/api (host loopback).
-  /// Contoh perangkat fisik: http://192.168.1.10:8000/api (IP LAN PC).
+  /// Contoh perangkat fisik: http://192.168.1.9:8000/api (IP LAN PC Laptop).
   /// Produksi: gunakan domain production (mis. https://api.tahandulu.id/api).
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://192.168.1.9:8000/api',
+    defaultValue: 'http://10.0.2.2:8000/api',
   );
 
   /// true = repository auth memakai backend Laravel (Sanctum).

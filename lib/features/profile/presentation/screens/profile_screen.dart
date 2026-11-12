@@ -108,6 +108,7 @@ class _Body extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     return SingleChildScrollView(
+      key: const PageStorageKey('profile_scroll_view'),
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

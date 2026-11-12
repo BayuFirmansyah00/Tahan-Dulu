@@ -147,6 +147,7 @@ class _Body extends StatelessWidget {
         child: RefreshIndicator(
           onRefresh: onRefresh,
           child: SingleChildScrollView(
+            key: const PageStorageKey('dashboard_scroll_view'),
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
             child: Column(

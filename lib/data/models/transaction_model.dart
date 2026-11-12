@@ -33,6 +33,7 @@ class AppTransaction extends Equatable {
     this.accountId,
     this.note,
     this.fee = 0,
+    this.idempotencyKey,
   });
 
   final String id;
@@ -50,7 +51,10 @@ class AppTransaction extends Equatable {
   /// Sudah tercakup di [amount]; hanya untuk rincian, bukan agregat.
   final double fee;
 
+  /// Kunci idempotensi opsional (UUID v4) untuk mencegah transaksi duplikat saat retry/timeout.
+  final String? idempotencyKey;
+
   @override
   List<Object?> get props =>
-      [id, title, amount, type, date, category, accountId, note, fee];
+      [id, title, amount, type, date, category, accountId, note, fee, idempotencyKey];
 }

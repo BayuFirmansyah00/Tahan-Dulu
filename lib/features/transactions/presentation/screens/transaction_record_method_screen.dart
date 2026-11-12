@@ -5,18 +5,16 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_radius.dart';
-import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_icons.dart';
 import '../providers/transactions_controller.dart';
 
 /// Halaman pemilihan metode pencatatan transaksi TahanDulu:
-/// 1. Input Manual
-/// 2. Input Suara
-/// 3. Scan Struk
+/// 1. Input Manual (Aksen Biru Pastel)
+/// 2. Input Suara (Aksen Ungu Pastel)
+/// 3. Scan Struk (Aksen Oranye Pastel)
 ///
-/// Seluruh metode merupakan gerbang masuk yang terintegrasi dengan
-/// sistem transaksi TahanDulu dan backend Laravel.
+/// Tampilan modern, minimalis, clean, dan premium dengan ilustrasi
+/// dan ikon 3D transparan sesuai identitas fintech TAHAN DULU.
 class TransactionRecordMethodScreen extends ConsumerWidget {
   const TransactionRecordMethodScreen({super.key});
 
@@ -25,11 +23,13 @@ class TransactionRecordMethodScreen extends ConsumerWidget {
     context.push(AppRoutes.transactionAdd);
   }
 
-  void _onVoiceSelected(BuildContext context) {
+  void _onVoiceSelected(BuildContext context, WidgetRef ref) {
+    ref.read(transactionFormProvider.notifier).reset();
     context.push(AppRoutes.transactionVoice);
   }
 
-  void _onScanSelected(BuildContext context) {
+  void _onScanSelected(BuildContext context, WidgetRef ref) {
+    ref.read(transactionFormProvider.notifier).reset();
     context.push(AppRoutes.transactionScan);
   }
 
@@ -38,111 +38,70 @@ class TransactionRecordMethodScreen extends ConsumerWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundWarm,
+      backgroundColor: const Color(0xFFF7F9FC),
       appBar: AppBar(
-        title: const Text('Pilih Metode Catat'),
+        backgroundColor: const Color(0xFFF7F9FC),
+        elevation: 0,
+        scrolledUnderElevation: 0,
         leading: AppBackButton(onPressed: () => context.pop()),
+        title: Text(
+          'Pilih Metode Catat',
+          style: textTheme.titleMedium?.copyWith(
+            color: const Color(0xFF102A43),
+            fontWeight: FontWeight.w700,
+            fontSize: 17,
+          ),
+        ),
       ),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.pagePadding,
-                vertical: 24,
-              ),
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(
-                    'Bagaimana kamu ingin mencatat transaksi?',
-                    style: textTheme.headlineSmall?.copyWith(
-                      color: AppColors.textPrimary,
-                      fontWeight: FontWeight.w700,
-                      height: 1.25,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Pilih salah satu metode di bawah ini untuk mencatat keuanganmu secara cepat, akurat, dan terkontrol.',
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textSecondary,
-                      height: 1.4,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
+                  // --- Hero Section ---
+                  _HeroSection(textTheme: textTheme),
+                  const SizedBox(height: 18),
 
+                  // --- Pilihan Metode ---
                   // 1. Input Manual
                   _MethodCard(
                     title: 'Input Manual',
-                    description:
-                        'Catat pemasukan atau pengeluaran secara langsung dengan formulir lengkap.',
-                    assetPath: AppAssets.actionEdit,
-                    icon: Icons.edit_note_rounded,
-                    iconColor: AppColors.primary,
-                    iconBackground: AppColors.primarySoft,
-                    badgeText: 'Standar',
+                    subtitle: 'Catat transaksi secara langsung',
+                    assetPath: AppAssets.txMethodManual,
+                    accentColor: const Color(0xFF3B82F6),
+                    iconBgColor: const Color(0xFFEFF6FF),
                     onTap: () => _onManualSelected(context, ref),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
 
                   // 2. Input Suara
                   _MethodCard(
                     title: 'Input Suara',
-                    description:
-                        'Sebutkan transaksi dan biarkan aplikasi membantu mengisi detailnya secara otomatis.',
-                    icon: Icons.mic_none_rounded,
-                    iconColor: AppColors.secondary,
-                    iconBackground: AppColors.secondarySoft,
-                    badgeText: 'Cepat',
-                    onTap: () => _onVoiceSelected(context),
+                    subtitle: 'Cukup ucapkan transaksimu',
+                    assetPath: AppAssets.txMethodVoice,
+                    accentColor: const Color(0xFF8B5CF6),
+                    iconBgColor: const Color(0xFFF5F3FF),
+                    onTap: () => _onVoiceSelected(context, ref),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
 
                   // 3. Scan Struk
                   _MethodCard(
                     title: 'Scan Struk',
-                    description:
-                        'Pindai struk belanja untuk mengisi detail transaksi pengeluaran secara instan.',
-                    assetPath: AppAssets.setBills,
-                    icon: Icons.receipt_long_outlined,
-                    iconColor: AppColors.accentPurple,
-                    iconBackground: AppColors.accentPurpleSoft,
-                    badgeText: 'Otomatis',
-                    onTap: () => _onScanSelected(context),
+                    subtitle: 'Pindai struk secara otomatis',
+                    assetPath: AppAssets.txMethodScan,
+                    accentColor: const Color(0xFFF59E0B),
+                    iconBgColor: const Color(0xFFFFFBEB),
+                    onTap: () => _onScanSelected(context, ref),
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 18),
 
-                  // Info Box
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: AppRadius.card,
-                      border: Border.all(color: AppColors.border),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const AppImageIcon(
-                          assetPath: AppAssets.setSecurity,
-                          size: 22,
-                          fallbackIcon: Icons.verified_user_outlined,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            'Semua metode akan memuat data ke formulir transaksi agar kamu dapat memeriksa dan mengoreksi seluruh detail sebelum disimpan.',
-                            style: textTheme.bodySmall?.copyWith(
-                              color: AppColors.textSecondary,
-                              height: 1.4,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  // --- Info Box Keamanan ---
+                  _InfoBox(textTheme: textTheme),
                 ],
               ),
             ),
@@ -153,112 +112,77 @@ class TransactionRecordMethodScreen extends ConsumerWidget {
   }
 }
 
-class _MethodCard extends StatelessWidget {
-  const _MethodCard({
-    required this.title,
-    required this.description,
-    this.icon,
-    this.assetPath,
-    required this.iconColor,
-    required this.iconBackground,
-    required this.onTap,
-    this.badgeText,
-  });
+/// Hero banner yang compact dan responsif dengan ilustrasi di sisi kanan.
+class _HeroSection extends StatelessWidget {
+  const _HeroSection({required this.textTheme});
 
-  final String title;
-  final String description;
-  final IconData? icon;
-  final String? assetPath;
-  final Color iconColor;
-  final Color iconBackground;
-  final VoidCallback onTap;
-  final String? badgeText;
+  final TextTheme textTheme;
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return AppCard(
-      padding: const EdgeInsets.all(18),
-      large: true,
-      onTap: onTap,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              color: iconBackground,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            alignment: Alignment.center,
-            child: assetPath != null
-                ? AppImageIcon(
-                    assetPath: assetPath!,
-                    size: 28,
-                    fallbackIcon: icon ?? Icons.category_outlined,
-                  )
-                : (icon != null
-                    ? Icon(icon, color: iconColor, size: 28)
-                    : const SizedBox(width: 28, height: 28)),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE8EDF3)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF102A43).withValues(alpha: 0.03),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
           ),
-          const SizedBox(width: 16),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
           Expanded(
+            flex: 3,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        title,
-                        style: textTheme.titleMedium?.copyWith(
-                          color: AppColors.textPrimary,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                    if (badgeText != null)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.inputFill,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: AppColors.border),
-                        ),
-                        child: Text(
-                          badgeText!,
-                          style: textTheme.labelSmall?.copyWith(
-                            color: AppColors.textSecondary,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                  ],
+                Text(
+                  'Catat Transaksi',
+                  style: textTheme.titleLarge?.copyWith(
+                    color: const Color(0xFF102A43),
+                    fontWeight: FontWeight.w800,
+                    fontSize: 18,
+                    height: 1.2,
+                  ),
+                ),
+                Text(
+                  'Lebih Mudah',
+                  style: textTheme.titleLarge?.copyWith(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 18,
+                    height: 1.2,
+                  ),
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  description,
+                  'Pilih cara mencatat yang paling nyaman buatmu.',
                   style: textTheme.bodySmall?.copyWith(
-                    color: AppColors.textSecondary,
-                    height: 1.4,
+                    color: const Color(0xFF718096),
+                    fontSize: 12,
+                    height: 1.35,
                   ),
                 ),
               ],
             ),
           ),
           const SizedBox(width: 8),
-          const Padding(
-            padding: EdgeInsets.only(top: 14),
-            child: AppImageIcon(
-              assetPath: AppAssets.navForward,
-              size: 20,
-              fallbackIcon: Icons.chevron_right_rounded,
+          Expanded(
+            flex: 2,
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Image.asset(
+                AppAssets.txHero,
+                fit: BoxFit.contain,
+                height: 105,
+              ),
             ),
           ),
         ],
@@ -267,3 +191,156 @@ class _MethodCard extends StatelessWidget {
   }
 }
 
+/// Kartu pilihan metode dengan visual 3D, background pastel lembut, dan border halus.
+class _MethodCard extends StatelessWidget {
+  const _MethodCard({
+    required this.title,
+    required this.subtitle,
+    required this.assetPath,
+    required this.accentColor,
+    required this.iconBgColor,
+    required this.onTap,
+  });
+
+  final String title;
+  final String subtitle;
+  final String assetPath;
+  final Color accentColor;
+  final Color iconBgColor;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        splashColor: accentColor.withValues(alpha: 0.12),
+        highlightColor: accentColor.withValues(alpha: 0.06),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFE8EDF3), width: 1.1),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF102A43).withValues(alpha: 0.03),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 66,
+                height: 66,
+                padding: const EdgeInsets.all(5),
+                decoration: BoxDecoration(
+                  color: iconBgColor,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                alignment: Alignment.center,
+                child: Image.asset(
+                  assetPath,
+                  width: 56,
+                  height: 56,
+                  fit: BoxFit.contain,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      title,
+                      style: textTheme.titleMedium?.copyWith(
+                        color: const Color(0xFF102A43),
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15.5,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: textTheme.bodySmall?.copyWith(
+                        color: const Color(0xFF718096),
+                        fontSize: 12.5,
+                        height: 1.3,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                width: 30,
+                height: 30,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF7F9FC),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: const Color(0xFFE8EDF3),
+                    width: 0.8,
+                  ),
+                ),
+                child: const Icon(
+                  Icons.chevron_right_rounded,
+                  color: Color(0xFF94A3B8),
+                  size: 19,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Kotak informasi kompak dengan ikon keamanan di bagian bawah.
+class _InfoBox extends StatelessWidget {
+  const _InfoBox({required this.textTheme});
+
+  final TextTheme textTheme;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0FDF4),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFDCFCE7), width: 1.0),
+      ),
+      child: Row(
+        children: [
+          Image.asset(
+            AppAssets.txSecurity,
+            width: 26,
+            height: 26,
+            fit: BoxFit.contain,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Semua transaksi bisa diperiksa dan diedit sebelum disimpan.',
+              style: textTheme.bodySmall?.copyWith(
+                color: const Color(0xFF166534),
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                height: 1.35,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

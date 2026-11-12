@@ -121,17 +121,18 @@ void main() {
     expect(find.text('https://tokopedia.com/x'), findsOneWidget);
   });
 
-  testWidgets('Photo method honestly unavailable', (
+  testWidgets('Photo method opens source selection bottom sheet', (
     WidgetTester tester,
   ) async {
     await _pumpToTahanDulu(tester);
     await _tapVisible(tester, find.text(AppStrings.addItemAction));
     await tester.pumpAndSettle();
 
-    expect(find.text(AppStrings.comingSoonBadge), findsOneWidget);
     await _tapVisible(tester, find.text(AppStrings.methodPhoto));
-    await tester.pump();
-    expect(find.text(AppStrings.photoComingSoon), findsOneWidget);
+    await tester.pumpAndSettle();
+    expect(find.text('Pilih Sumber Foto'), findsOneWidget);
+    expect(find.text('Ambil Foto (Kamera)'), findsOneWidget);
+    expect(find.text('Pilih dari Galeri'), findsOneWidget);
   });
 
   testWidgets('Full flow to analysis shows real budget numbers', (

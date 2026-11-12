@@ -151,6 +151,12 @@ abstract class PurchaseDecisionRepository {
 
   Future<void> deleteConsideration(String id);
 
+  /// Ekstrak metadata produk dari URL (nama, harga, gambar)
+  Future<Map<String, dynamic>> extractMetadata(String url);
+
+  /// Unggah berkas gambar produk ke backend storage
+  Future<String> uploadImage(String filePath);
+
   /// Bersihkan data / cache consideration
   void clear();
 }
@@ -550,6 +556,22 @@ class MockPurchaseDecisionRepository
   Future<void> deleteConsideration(String id) {
     _items.removeWhere((e) => e.id == id);
     return mockDelay(null);
+  }
+
+  @override
+  Future<Map<String, dynamic>> extractMetadata(String url) {
+    return mockDelay({
+      'title': 'Mock Produk Link',
+      'price': 250000.0,
+      'image_url': 'https://images.unsplash.com/photo-1542291026-7eec264c27ff',
+      'original_url': url,
+      'extracted': true,
+    });
+  }
+
+  @override
+  Future<String> uploadImage(String filePath) {
+    return mockDelay('wishlists/mock/uploaded_photo.jpg');
   }
 
   @override

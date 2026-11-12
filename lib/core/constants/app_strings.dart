@@ -558,7 +558,7 @@ abstract final class AppStrings {
   static const String productCatHousehold = 'Rumah tangga';
   static const String productCatEducation = 'Pendidikan';
   static const String productCatOthers = 'Lainnya';
-  static const String navHome = 'Home';
+  static const String navHome = 'Beranda';
   static const String navTransactions = 'Transaksi';
   static const String navRecord = 'Catat';
   static const String navGoals = 'Tujuan';
