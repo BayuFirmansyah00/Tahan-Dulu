@@ -33,11 +33,15 @@ class PeriodSelector extends StatelessWidget {
             color: AppColors.textPrimary,
             onPressed: onPrevious,
           ),
-          Text(
-            DateFormatter.monthYear(month),
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+          Flexible(
+            child: Text(
+              DateFormatter.monthYear(month),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
           ),
           IconButton(
             icon: const Icon(Icons.chevron_right),

@@ -45,11 +45,18 @@ class IncomeExpenseBars extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 4),
-            Container(
-              height: (height * ratio).clamp(4.0, height),
-              decoration: BoxDecoration(
-                color: color,
-                borderRadius: BorderRadius.circular(8),
+            Expanded(
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: FractionallySizedBox(
+                  heightFactor: ratio.clamp(0.04, 1.0),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: color,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 6),
