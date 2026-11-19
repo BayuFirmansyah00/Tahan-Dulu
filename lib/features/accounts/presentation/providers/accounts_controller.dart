@@ -6,6 +6,7 @@ import '../../../../data/models/financial_account.dart';
 import '../../../../data/providers/account_providers.dart';
 import '../../../../data/providers/app_providers.dart';
 import '../../../../data/providers/dashboard_providers.dart';
+import '../../../../data/providers/reports_providers.dart';
 
 /// Controller fitur Akun: tambah, ubah, hapus via AccountRepository.
 /// Kebijakan hapus: akun yang dirujuk transaksi DITOLAK agar riwayat
@@ -20,6 +21,8 @@ class AccountsController {
     _ref.invalidate(accountsOverviewProvider);
     _ref.invalidate(dashboardDataProvider);
     _ref.invalidate(transactionsProvider);
+    _ref.invalidate(monthlyReportProvider);
+    _ref.invalidate(apiFinancialReportProvider);
   }
 
   /// Validasi form transfer. Null bila valid.
@@ -94,6 +97,9 @@ class AccountsController {
     String? bankSlug,
     String? bankName,
     String? bankLogoUrl,
+    double monthlyAdminFee = 0,
+    int? adminFeeDay,
+    bool adminFeeEnabled = false,
   }) async {
     if (validateName(name) != null) return false;
     if (validateInitialBalance(initialBalance) != null) return false;
@@ -119,6 +125,9 @@ class AccountsController {
               bankSlug: isBankCategory ? bankSlug : null,
               bankName: isBankCategory ? bankName : null,
               bankLogoUrl: isBankCategory ? bankLogoUrl : null,
+              monthlyAdminFee: isBankCategory && adminFeeEnabled ? monthlyAdminFee : 0,
+              adminFeeDay: isBankCategory && adminFeeEnabled ? adminFeeDay : null,
+              adminFeeEnabled: isBankCategory ? adminFeeEnabled : false,
             ),
           );
       await _refresh();
@@ -143,6 +152,9 @@ class AccountsController {
     String? bankSlug,
     String? bankName,
     String? bankLogoUrl,
+    double monthlyAdminFee = 0,
+    int? adminFeeDay,
+    bool adminFeeEnabled = false,
   }) async {
     if (validateName(name) != null) return false;
     if (validateInitialBalance(initialBalance) != null) return false;
@@ -168,6 +180,9 @@ class AccountsController {
               bankSlug: isBankCategory ? bankSlug : null,
               bankName: isBankCategory ? bankName : null,
               bankLogoUrl: isBankCategory ? bankLogoUrl : null,
+              monthlyAdminFee: isBankCategory && adminFeeEnabled ? monthlyAdminFee : 0,
+              adminFeeDay: isBankCategory && adminFeeEnabled ? adminFeeDay : null,
+              adminFeeEnabled: isBankCategory ? adminFeeEnabled : false,
             ),
           );
       await _refresh();

@@ -1,10 +1,32 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../datasources/remote/api_config.dart';
+import '../models/api_financial_report.dart';
 import '../../data/models/financial_goal.dart';
 import '../../data/models/goal_deposit.dart';
 import '../../data/models/monthly_report.dart';
 import '../../data/models/transaction_model.dart';
 import '../../data/providers/app_providers.dart';
+
+/// Provider data laporan keuangan langsung dari backend Laravel `GET /api/reports/financial`.
+final apiFinancialReportProvider =
+    FutureProvider.family<ApiFinancialReport, DateTime>((ref, month) async {
+  final repo = ref.watch(reportRepositoryProvider);
+  final now = DateTime.now();
+  final isCurrentMonth = month.year == now.year && month.month == now.month;
+  final lastDay = DateTime(month.year, month.month + 1, 0).day;
+
+  final startDate =
+      '${month.year}-${month.month.toString().padLeft(2, '0')}-01';
+  final endDate =
+      '${month.year}-${month.month.toString().padLeft(2, '0')}-${lastDay.toString().padLeft(2, '0')}';
+
+  return await repo.getFinancialReport(
+    period: isCurrentMonth ? 'this_month' : 'custom',
+    startDate: isCurrentMonth ? null : startDate,
+    endDate: isCurrentMonth ? null : endDate,
+  );
+});
 
 /// Bulan aktif laporan (hari pertama bulan). Navigasi +/- sebulan
 /// menangani pergantian tahun via normalisasi DateTime.
@@ -43,16 +65,23 @@ double _monthSum(
         .where((d) => _inMonth(d.date, month))
         .fold<double>(0, (sum, d) => sum + d.amount);
 
-/// Agregat laporan satu bulan dari sumber yang sama dengan fitur lain.
+/// Agregat laporan satu bulan.
 ///
-/// Kontrak reaktivitas (terdokumentasi eksplisit): provider ini membaca
-/// repository secara langsung agar satu bulan selalu dihitung dari
-/// snapshot konsisten. Titik mutasi (simpan transaksi, goal, setoran)
-/// WAJIB me-invalidate [monthlyReportProvider] setelah berhasil —
-/// lihat pemanggilannya di controller terkait. Tanpa itu, bulan yang
-/// sedang dibuka tidak diperbarui.
+/// Jika [ApiConfig.useRemoteApi] aktif, data diambil langsung dari endpoint
+/// Laravel `GET /api/reports/financial` dan dikonversi ke [MonthlyReport].
+/// Jika offline atau mode mock, fallback ke kalkulasi transaksi lokal.
 final monthlyReportProvider =
     FutureProvider.family<MonthlyReport, DateTime>((ref, month) async {
+  if (ApiConfig.useRemoteApi) {
+    try {
+      final apiReport =
+          await ref.watch(apiFinancialReportProvider(month).future);
+      return apiReport.toMonthlyReport(month);
+    } catch (_) {
+      // Fallback ke kalkulasi transaksi lokal bila koneksi API belum siap
+    }
+  }
+
   final transactions =
       await ref.watch(transactionRepositoryProvider).getRecentTransactions();
   final goalRepo = ref.watch(goalRepositoryProvider);

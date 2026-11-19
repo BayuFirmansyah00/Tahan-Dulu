@@ -29,6 +29,8 @@ AccountType _toAccountType(InstrumentType type) {
       return AccountType.digitalBank;
     case InstrumentType.ewallet:
       return AccountType.ewallet;
+    case InstrumentType.cash:
+      return AccountType.legacyCash;
   }
 }
 
@@ -90,7 +92,7 @@ class _TransactionVoiceScreenState
 
   List<FinancialAccount> _getUserAccounts() {
     final accountsAsync = ref.read(accountsProvider);
-    return accountsAsync.maybeWhen(
+    final raw = accountsAsync.maybeWhen(
       data: (items) => items,
       orElse: () {
         final data =
@@ -106,6 +108,8 @@ class _TransactionVoiceScreenState
             .toList();
       },
     );
+    // Hanya akun aktif non-cash yang dapat dipilih untuk transaksi baru
+    return raw.where((a) => a.type != AccountType.legacyCash).toList();
   }
 
   void _processText(String text, {bool updateEditing = true}) {

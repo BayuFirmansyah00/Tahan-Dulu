@@ -8,6 +8,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_states.dart';
+import '../../../../data/providers/app_providers.dart';
 import '../../../goals/presentation/providers/goals_controller.dart';
 import '../../../../data/providers/reports_providers.dart';
 import '../../export/report_export.dart';
@@ -49,6 +50,7 @@ class ReportExportScreen extends ConsumerStatefulWidget {
 
 class _ReportExportScreenState extends ConsumerState<ReportExportScreen> {
   bool _exporting = false;
+  bool _exportingExcel = false;
 
   Future<Uint8List> _buildBytes(
     ReportExportData payload,
@@ -59,7 +61,7 @@ class _ReportExportScreenState extends ConsumerState<ReportExportScreen> {
   }
 
   Future<void> _export(ReportExportData payload, Uint8List? logo) async {
-    if (_exporting) return;
+    if (_exporting || _exportingExcel) return;
     setState(() => _exporting = true);
     try {
       final bytes = await _buildBytes(payload, logo);
@@ -77,6 +79,51 @@ class _ReportExportScreenState extends ConsumerState<ReportExportScreen> {
       );
     } finally {
       if (mounted) setState(() => _exporting = false);
+    }
+  }
+
+  Future<void> _exportExcel(DateTime month) async {
+    if (_exporting || _exportingExcel) return;
+    setState(() => _exportingExcel = true);
+    try {
+      final repo = ref.read(reportRepositoryProvider);
+      final now = DateTime.now();
+      final isCurrent = month.year == now.year && month.month == now.month;
+      final lastDay = DateTime(month.year, month.month + 1, 0).day;
+      final startDate =
+          '${month.year}-${month.month.toString().padLeft(2, '0')}-01';
+      final endDate =
+          '${month.year}-${month.month.toString().padLeft(2, '0')}-${lastDay.toString().padLeft(2, '0')}';
+      final bytes = await repo.exportFinancialReport(
+        period: isCurrent ? 'this_month' : 'custom',
+        startDate: isCurrent ? null : startDate,
+        endDate: isCurrent ? null : endDate,
+      );
+      final filename =
+          'Laporan_Keuangan_${month.year}_${month.month.toString().padLeft(2, '0')}.xlsx';
+      final result = await exportReportExcel(
+        bytes: Uint8List.fromList(bytes),
+        filename: filename,
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            result.ok
+                ? 'Laporan Excel (.xlsx) berhasil diunduh'
+                : 'Gagal mengunduh laporan Excel',
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal mengekspor Excel: $e'),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _exportingExcel = false);
     }
   }
 
@@ -114,22 +161,41 @@ class _ReportExportScreenState extends ConsumerState<ReportExportScreen> {
                             ),
                           )
                         : _NoPreview(
-                            onExport: () =>
-                                _export(payload, logo.value),
-                            exporting: _exporting,
+                            onExportPdf: () => _export(payload, logo.value),
+                            onExportExcel: () => _exportExcel(month),
+                            exportingPdf: _exporting,
+                            exportingExcel: _exportingExcel,
                           ),
                   ),
                   if (canPreview)
                     Padding(
-                      padding:
-                          const EdgeInsets.fromLTRB(20, 8, 20, 16),
-                      child: AppButton(
-                        label: AppStrings.exportPdf,
-                        icon: Icons.download_outlined,
-                        isLoading: _exporting,
-                        onPressed: _exporting
-                            ? null
-                            : () => _export(payload, logo.value),
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: AppButton(
+                              label: AppStrings.exportPdf,
+                              icon: Icons.picture_as_pdf_outlined,
+                              isLoading: _exporting,
+                              onPressed: (_exporting || _exportingExcel)
+                                  ? null
+                                  : () => _export(payload, logo.value),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: AppButton(
+                              label: 'Unduh Excel',
+                              icon: Icons.table_chart_outlined,
+                              backgroundColor: AppColors.primarySoft,
+                              foregroundColor: AppColors.primaryDark,
+                              isLoading: _exportingExcel,
+                              onPressed: (_exporting || _exportingExcel)
+                                  ? null
+                                  : () => _exportExcel(month),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                 ],
@@ -149,10 +215,17 @@ class _ReportExportScreenState extends ConsumerState<ReportExportScreen> {
 /// Fallback bila perangkat tak bisa me-raster pratinjau.
 /// Ekspor via share sheet tetap berfungsi (canShare independen).
 class _NoPreview extends StatelessWidget {
-  const _NoPreview({required this.onExport, required this.exporting});
+  const _NoPreview({
+    required this.onExportPdf,
+    required this.onExportExcel,
+    required this.exportingPdf,
+    required this.exportingExcel,
+  });
 
-  final VoidCallback onExport;
-  final bool exporting;
+  final VoidCallback onExportPdf;
+  final VoidCallback onExportExcel;
+  final bool exportingPdf;
+  final bool exportingExcel;
 
   @override
   Widget build(BuildContext context) {
@@ -164,7 +237,7 @@ class _NoPreview extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(
-              Icons.picture_as_pdf_outlined,
+              Icons.assessment_outlined,
               size: 64,
               color: AppColors.textSecondary,
             ),
@@ -179,12 +252,29 @@ class _NoPreview extends StatelessWidget {
               textAlign: TextAlign.center,
               style: textTheme.bodyMedium,
             ),
-            const SizedBox(height: 16),
-            AppButton(
-              label: AppStrings.exportPdf,
-              icon: Icons.download_outlined,
-              isLoading: exporting,
-              onPressed: exporting ? null : onExport,
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: AppButton(
+                    label: AppStrings.exportPdf,
+                    icon: Icons.picture_as_pdf_outlined,
+                    isLoading: exportingPdf,
+                    onPressed: (exportingPdf || exportingExcel) ? null : onExportPdf,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: AppButton(
+                    label: 'Unduh Excel',
+                    icon: Icons.table_chart_outlined,
+                    backgroundColor: AppColors.primarySoft,
+                    foregroundColor: AppColors.primaryDark,
+                    isLoading: exportingExcel,
+                    onPressed: (exportingPdf || exportingExcel) ? null : onExportExcel,
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -192,3 +282,4 @@ class _NoPreview extends StatelessWidget {
     );
   }
 }
+

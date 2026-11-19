@@ -2,10 +2,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tahan_dulu/data/models/recurring_expense.dart';
 import 'package:tahan_dulu/data/providers/onboarding_providers.dart';
+import 'package:tahan_dulu/data/repositories/onboarding_repository.dart';
 import 'package:tahan_dulu/features/onboarding/presentation/providers/expenses_controller.dart';
 
 ProviderContainer _container() {
-  final container = ProviderContainer();
+  final container = ProviderContainer(
+    overrides: [
+      onboardingRepositoryProvider.overrideWithValue(InMemoryOnboardingRepository()),
+    ],
+  );
   addTearDown(container.dispose);
   return container;
 }

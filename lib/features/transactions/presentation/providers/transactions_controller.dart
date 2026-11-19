@@ -231,6 +231,7 @@ class TransactionFormController extends Notifier<TransactionDraft> {
       ref.invalidate(accountsOverviewProvider);
       ref.invalidate(currentBudgetProvider);
       ref.invalidate(monthlyReportProvider);
+      ref.invalidate(apiFinancialReportProvider);
       return true;
     } on ApiException {
       // Error validasi dari backend (422) akan ditangani oleh UI melalui

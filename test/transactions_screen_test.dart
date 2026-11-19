@@ -53,7 +53,7 @@ class _EmptyTransactionRepo implements TransactionRepository {
 }
 
 /// Onboarding tanpa instrumen untuk state akun-tidak-tersedia.
-class _NoAccountOnboardingRepo implements OnboardingRepository {
+class _NoAccountOnboardingRepo extends InMemoryOnboardingRepository {
   OnboardingData? _data = const OnboardingData(
     monthlyIncome: 5000000,
     salaryDay: 25,

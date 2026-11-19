@@ -68,11 +68,8 @@ class SalaryController extends Notifier<SalaryState> {
 
   /// Simpan setup gaji. Berhasil -> true (UI bernavigasi ke No.4).
   ///
-  /// Selain menyimpan ke repository onboarding (dipakai langkah berikutnya),
-  /// juga memersistensikan `monthly_income` + `salary_day` ke profil akun di
-  /// backend lewat [AuthController.updateFinancialInfo] (PUT /user). Ini
-  /// membuat penanda "onboarding selesai" (yang dibaca dari profil) benar-benar
-  /// terisi, sehingga popup ajakan tidak muncul lagi untuk akun ini.
+  /// Menyimpan via repository onboarding (PUT /user ke backend).
+  /// Sinkronisasi ke AuthController dilakukan secara lokal tanpa mengirim HTTP request duplikat.
   Future<bool> save() async {
     if (!state.canContinue) return false;
     state = state.copyWith(isSaving: true);
@@ -82,12 +79,16 @@ class SalaryController extends Notifier<SalaryState> {
             salaryDay: state.salaryDay,
           );
 
-      // Persist ke profil akun (sumber kebenaran status onboarding).
-      // Best-effort: kegagalan persist tidak membatalkan langkah onboarding.
-      await ref.read(authControllerProvider.notifier).updateFinancialInfo(
-            monthlyIncome: state.monthlyIncome.round(),
-            salaryDay: state.salaryDay,
-          );
+      // Sinkronkan state user di AuthController secara lokal tanpa duplikasi request HTTP PUT /user
+      final currentUser = ref.read(authControllerProvider).user;
+      if (currentUser != null) {
+        ref.read(authControllerProvider.notifier).syncLocalUser(
+              currentUser.copyWith(
+                monthlyIncome: () => state.monthlyIncome.round(),
+                salaryDay: () => state.salaryDay,
+              ),
+            );
+      }
 
       state = state.copyWith(isSaving: false);
       return true;
@@ -95,6 +96,29 @@ class SalaryController extends Notifier<SalaryState> {
       state = state.copyWith(isSaving: false);
       return false;
     }
+  }
+
+  /// Pulihkan data gaji yang sudah tersimpan sebelumnya dari backend/profil.
+  Future<void> loadExisting() async {
+    final user = ref.read(authControllerProvider).user;
+    if (user != null && (user.monthlyIncome ?? 0) > 0) {
+      state = state.copyWith(
+        monthlyIncome: user.monthlyIncome!.toDouble(),
+        salaryDay: (user.salaryDay != null && user.salaryDay! >= 1 && user.salaryDay! <= 31)
+            ? user.salaryDay!
+            : state.salaryDay,
+      );
+    }
+    try {
+      final remote =
+          await ref.read(onboardingRepositoryProvider).fetchExistingSalary();
+      if (remote.income > 0) {
+        state = state.copyWith(
+          monthlyIncome: remote.income,
+          salaryDay: remote.salaryDay,
+        );
+      }
+    } catch (_) {}
   }
 
   /// Reset state (digunakan saat logout / ganti akun).

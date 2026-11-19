@@ -14,6 +14,8 @@ String accountTypeLabel(AccountType type) {
       return AppStrings.typeDigitalBank;
     case AccountType.ewallet:
       return AppStrings.typeEWallet;
+    case AccountType.legacyCash:
+      return 'Uang Tunai (Akun Lama)';
   }
 }
 
@@ -43,6 +45,13 @@ String accountTypeLabel(AccountType type) {
         assetPath: AppAssets.instEwallet,
         foreground: AppColors.secondary,
         background: AppColors.secondarySoft,
+      );
+    case AccountType.legacyCash:
+      return (
+        icon: Icons.payments_outlined,
+        assetPath: AppAssets.instCash,
+        foreground: const Color(0xFF10B981),
+        background: const Color(0xFFD1FAE5),
       );
   }
 }

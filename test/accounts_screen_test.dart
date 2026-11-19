@@ -12,7 +12,7 @@ import 'package:tahan_dulu/data/repositories/onboarding_repository.dart';
 import 'package:tahan_dulu/features/accounts/presentation/screens/accounts_screen.dart';
 
 /// Onboarding kosong untuk empty state akun.
-class _EmptyOnboardingRepo implements OnboardingRepository {
+class _EmptyOnboardingRepo extends InMemoryOnboardingRepository {
   OnboardingData? _data = const OnboardingData(
     monthlyIncome: 0,
     salaryDay: 1,

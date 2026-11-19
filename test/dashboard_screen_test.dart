@@ -63,8 +63,8 @@ void main() {
     await _pumpToDashboard(tester);
 
     expect(find.text(AppStrings.safeTodayTitle), findsOneWidget);
-    // 1.250.000 / hari-di-bulan-ini, floor per seribu.
-    expect(find.text('Rp40.000'), findsOneWidget);
+    // Batas belanja harian dari data aktual rencana keuangan
+    expect(find.text('Rp35.000'), findsOneWidget);
     expect(find.textContaining('Sisa budget bulan ini'), findsOneWidget);
   });
 

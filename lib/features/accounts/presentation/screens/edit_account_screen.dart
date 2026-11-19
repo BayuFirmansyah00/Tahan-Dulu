@@ -18,6 +18,7 @@ import '../../../../data/providers/account_providers.dart';
 import '../../../dashboard/presentation/widgets/dashboard_bottom_nav.dart';
 import '../providers/accounts_controller.dart';
 import '../utils/account_ui.dart';
+import '../widgets/admin_fee_form_section.dart';
 import '../widgets/bank_logo_badge.dart';
 import '../widgets/bank_picker_sheet.dart';
 
@@ -37,6 +38,9 @@ class _EditAccountScreenState extends ConsumerState<EditAccountScreen> {
   final _nameController = TextEditingController();
   final _institutionController = TextEditingController();
   final _balanceController = TextEditingController();
+  final _feeController = TextEditingController();
+  int _feeDay = 15;
+  bool _feeEnabled = false;
   AccountType? _type;
   ApiBank? _selectedBank;
   bool _initialized = false;
@@ -51,6 +55,7 @@ class _EditAccountScreenState extends ConsumerState<EditAccountScreen> {
     _nameController.dispose();
     _institutionController.dispose();
     _balanceController.dispose();
+    _feeController.dispose();
     super.dispose();
   }
 
@@ -60,18 +65,24 @@ class _EditAccountScreenState extends ConsumerState<EditAccountScreen> {
     _balanceController.text =
         RupiahInputFormatter.format(account.balance);
     _type = account.type;
-    final isBank = account.type == AccountType.bank ||
-        account.type == AccountType.digitalBank;
-    if (isBank &&
-        (account.bankName != null ||
-            account.bankSlug != null ||
-            account.bankId != null)) {
+    _feeEnabled = account.adminFeeEnabled;
+    _feeDay = account.adminFeeDay ?? 15;
+    _feeController.text = account.monthlyAdminFee > 0
+        ? RupiahInputFormatter.format(account.monthlyAdminFee)
+        : '';
+    if (account.bankName != null ||
+        account.bankSlug != null ||
+        account.bankId != null) {
       _selectedBank = ApiBank(
         id: account.bankId ?? 0,
         slug: account.bankSlug ?? '',
         name: account.bankName ?? account.name,
         aliases: const [],
-        category: 'bank-logo',
+        category: account.type == AccountType.ewallet
+            ? 'ewallet'
+            : (account.type == AccountType.digitalBank
+                ? 'digitalBank'
+                : 'bank'),
         logoUrl: account.bankLogoUrl,
         isActive: true,
       );
@@ -82,10 +93,29 @@ class _EditAccountScreenState extends ConsumerState<EditAccountScreen> {
   }
 
   Future<void> _pickBank() async {
+    final catFilter = _type == AccountType.bank
+        ? 'bank'
+        : _type == AccountType.digitalBank
+            ? 'digitalBank'
+            : 'ewallet';
+    final title = _type == AccountType.bank
+        ? 'Pilih Bank'
+        : _type == AccountType.digitalBank
+            ? 'Pilih Bank Digital'
+            : 'Pilih E-Wallet';
+    final subtitle = _type == AccountType.bank
+        ? 'BCA, Mandiri, BRI, BNI, BSI, CIMB Niaga, dll.'
+        : _type == AccountType.digitalBank
+            ? 'Bank Jago, Jenius, SeaBank, Blu, Neobank, dll.'
+            : 'GoPay, OVO, DANA, ShopeePay, LinkAja, AstraPay, dll.';
+
     final bank = await BankPickerSheet.show(
       context,
       selectedBankId: _selectedBank?.id,
       selectedBankSlug: _selectedBank?.slug,
+      categoryFilter: catFilter,
+      title: title,
+      subtitle: subtitle,
     );
     if (bank != null && mounted) {
       setState(() {
@@ -123,12 +153,18 @@ class _EditAccountScreenState extends ConsumerState<EditAccountScreen> {
       });
       return;
     }
+    final isBankOrDigital =
+        _type == AccountType.bank || _type == AccountType.digitalBank;
+    final feeAmount = (isBankOrDigital && _feeEnabled)
+        ? RupiahInputFormatter.parse(_feeController.text)
+        : 0.0;
+    final feeDay = (isBankOrDigital && _feeEnabled) ? _feeDay : 15;
+    final feeEnabled = isBankOrDigital && _feeEnabled && feeAmount > 0;
+
     setState(() {
       _saving = true;
       _fieldErrors = null;
     });
-    final isBankCategory =
-        _type == AccountType.bank || _type == AccountType.digitalBank;
     try {
       final ok =
           await ref.read(accountsControllerProvider).updateAccount(
@@ -137,10 +173,13 @@ class _EditAccountScreenState extends ConsumerState<EditAccountScreen> {
                 type: _type!,
                 initialBalance: balance,
                 institutionName: _institutionController.text,
-                bankId: isBankCategory ? _selectedBank?.id : null,
-                bankSlug: isBankCategory ? _selectedBank?.slug : null,
-                bankName: isBankCategory ? _selectedBank?.name : null,
-                bankLogoUrl: isBankCategory ? _selectedBank?.logoUrl : null,
+                bankId: _selectedBank?.id,
+                bankSlug: _selectedBank?.slug,
+                bankName: _selectedBank?.name,
+                bankLogoUrl: _selectedBank?.logoUrl,
+                monthlyAdminFee: feeAmount,
+                adminFeeDay: feeEnabled ? feeDay : null,
+                adminFeeEnabled: feeEnabled,
               );
       if (!mounted) return;
       if (ok) {
@@ -239,11 +278,25 @@ class _EditAccountScreenState extends ConsumerState<EditAccountScreen> {
                   nameController: _nameController,
                   institutionController: _institutionController,
                   balanceController: _balanceController,
+                  feeController: _feeController,
+                  feeDay: _feeDay,
+                  feeEnabled: _feeEnabled,
+                  onFeeEnabledChanged: (val) =>
+                      setState(() => _feeEnabled = val),
+                  onFeeDayChanged: (day) => setState(() => _feeDay = day),
                   fieldErrors: _fieldErrors,
                   onType: (t) => setState(() {
                     _type = t;
-                    if (t == AccountType.ewallet) {
-                      _selectedBank = null;
+                    if (_selectedBank != null) {
+                      final cat = _selectedBank!.category;
+                      final isMatch = (t == AccountType.bank &&
+                              (cat == 'bank' || cat == 'bank-logo')) ||
+                          (t == AccountType.digitalBank &&
+                              cat == 'digitalBank') ||
+                          (t == AccountType.ewallet && cat == 'ewallet');
+                      if (!isMatch) {
+                        _selectedBank = null;
+                      }
                     }
                   }),
                   onPickBank: _pickBank,
@@ -280,6 +333,11 @@ class _Form extends StatelessWidget {
     required this.nameController,
     required this.institutionController,
     required this.balanceController,
+    required this.feeController,
+    required this.feeDay,
+    required this.feeEnabled,
+    required this.onFeeEnabledChanged,
+    required this.onFeeDayChanged,
     this.fieldErrors,
     required this.onType,
     required this.onPickBank,
@@ -295,6 +353,11 @@ class _Form extends StatelessWidget {
   final TextEditingController nameController;
   final TextEditingController institutionController;
   final TextEditingController balanceController;
+  final TextEditingController feeController;
+  final int feeDay;
+  final bool feeEnabled;
+  final ValueChanged<bool> onFeeEnabledChanged;
+  final ValueChanged<int> onFeeDayChanged;
   final Map<String, List<String>>? fieldErrors;
   final ValueChanged<AccountType> onType;
   final VoidCallback onPickBank;
@@ -353,111 +416,124 @@ class _Form extends StatelessWidget {
                     if (t != null) onType(t);
                   },
                 ),
-                if (type == AccountType.bank ||
-                    type == AccountType.digitalBank) ...[
-                  const SizedBox(height: 12),
-                  Text(
-                    'Katalog Bank',
-                    style: textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 8),
-                  InkWell(
-                    onTap: onPickBank,
-                    borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppColors.surface,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: selectedBank != null
-                              ? AppColors.primary
-                              : AppColors.border,
-                          width: selectedBank != null ? 1.5 : 1.0,
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          if (selectedBank != null) ...[
-                            BankLogoBadge(
-                              bankName: selectedBank!.name,
-                              bankSlug: selectedBank!.slug,
-                              bankLogoUrl: selectedBank!.logoUrl,
-                              size: 40,
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    selectedBank!.name,
-                                    style: textTheme.bodyLarge?.copyWith(
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  Text(
-                                    selectedBank!.aliases.isNotEmpty
-                                        ? selectedBank!.aliases.join(' • ')
-                                        : selectedBank!.slug.toUpperCase(),
-                                    style: textTheme.bodySmall?.copyWith(
-                                      color: AppColors.textSecondary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.close, size: 20),
-                              onPressed: onClearBank,
-                            ),
-                          ] else ...[
-                            Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                color: AppColors.secondarySoft,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: const Center(
-                                child: AppImageIcon(
-                                  assetPath: AppAssets.instBank,
-                                  size: 24,
-                                  fallbackIcon: Icons.account_balance_outlined,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Hubungkan Bank (Opsional)',
-                                    style: textTheme.bodyLarge?.copyWith(
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  Text(
-                                    'Pilih dari 160+ bank resmi Indonesia',
-                                    style: textTheme.bodySmall?.copyWith(
-                                      color: AppColors.textSecondary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const AppImageIcon(
-                              assetPath: AppAssets.navForward,
-                              size: 20,
-                              fallbackIcon: Icons.chevron_right,
-                            ),
-                          ],
-                        ],
+                const SizedBox(height: 12),
+                Text(
+                  type == AccountType.digitalBank
+                      ? 'Katalog Bank Digital'
+                      : (type == AccountType.ewallet
+                          ? 'Katalog E-Wallet'
+                          : 'Katalog Bank'),
+                  style: textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                InkWell(
+                  onTap: onPickBank,
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: selectedBank != null
+                            ? AppColors.primary
+                            : AppColors.border,
+                        width: selectedBank != null ? 1.5 : 1.0,
                       ),
                     ),
+                    child: Row(
+                      children: [
+                        if (selectedBank != null) ...[
+                          BankLogoBadge(
+                            bankName: selectedBank!.name,
+                            bankSlug: selectedBank!.slug,
+                            bankLogoUrl: selectedBank!.logoUrl,
+                            size: 40,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  selectedBank!.name,
+                                  style: textTheme.bodyLarge?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                Text(
+                                  selectedBank!.aliases.isNotEmpty
+                                      ? selectedBank!.aliases.join(' • ')
+                                      : selectedBank!.slug.toUpperCase(),
+                                  style: textTheme.bodySmall?.copyWith(
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.close, size: 20),
+                            onPressed: onClearBank,
+                          ),
+                        ] else ...[
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: AppColors.secondarySoft,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Center(
+                              child: Icon(
+                                type == AccountType.ewallet
+                                    ? Icons.account_balance_wallet_outlined
+                                    : (type == AccountType.digitalBank
+                                        ? Icons.smartphone_outlined
+                                        : Icons.account_balance_outlined),
+                                color: AppColors.primary,
+                                size: 22,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  type == AccountType.digitalBank
+                                      ? 'Pilih dari Katalog Bank Digital'
+                                      : (type == AccountType.ewallet
+                                          ? 'Pilih dari Katalog E-Wallet'
+                                          : 'Pilih dari Katalog Bank'),
+                                  style: textTheme.bodyLarge?.copyWith(
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                Text(
+                                  type == AccountType.ewallet
+                                      ? '17 e-wallet resmi berizin Bank Indonesia'
+                                      : (type == AccountType.digitalBank
+                                          ? '16 bank digital terverifikasi OJK'
+                                          : '140+ bank resmi Indonesia'),
+                                  style: textTheme.bodySmall?.copyWith(
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const AppImageIcon(
+                            assetPath: AppAssets.navForward,
+                            size: 20,
+                            fallbackIcon: Icons.chevron_right,
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
-                ],
+                ),
                 const SizedBox(height: 12),
                 AppTextField(
                   controller: institutionController,
@@ -480,6 +556,18 @@ class _Form extends StatelessWidget {
                 if (fieldErrors?['balance'] != null) ...[
                   const SizedBox(height: 6),
                   _FieldError(text: fieldErrors!['balance']!.first),
+                ],
+                if (type == AccountType.bank ||
+                    type == AccountType.digitalBank) ...[
+                  const SizedBox(height: 16),
+                  AdminFeeFormSection(
+                    enabled: feeEnabled,
+                    onEnabledChanged: onFeeEnabledChanged,
+                    feeController: feeController,
+                    feeDay: feeDay,
+                    onDayChanged: onFeeDayChanged,
+                    fieldError: fieldErrors?['monthly_admin_fee']?.first,
+                  ),
                 ],
               ],
             ),

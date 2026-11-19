@@ -32,24 +32,25 @@ Future<void> _tapVisible(WidgetTester tester, Finder finder) async {
 
 void main() {
   group('Tahap 16: tepat tiga jenis akun', () {
-    test('enum hanya Bank, Bank Digital, E-Wallet', () {
-      expect(AccountType.values.length, 3);
+    test('enum mencakup Bank, Bank Digital, E-Wallet dan legacyCash', () {
+      expect(AccountType.values.length, 4);
       expect(
         AccountType.values,
         containsAll(
-            [AccountType.bank, AccountType.digitalBank, AccountType.ewallet]),
+            [AccountType.bank, AccountType.digitalBank, AccountType.ewallet, AccountType.legacyCash]),
       );
-      expect(InstrumentType.values.length, 3);
+      expect(InstrumentType.values.length, 4);
       expect(
         InstrumentType.values,
         containsAll([
           InstrumentType.bank,
           InstrumentType.digitalBank,
           InstrumentType.ewallet,
+          InstrumentType.cash,
         ]),
       );
       for (final t in [...AccountType.values, ...InstrumentType.values]) {
-        expect(t.name, isNot(anyOf('cash', 'investment', 'lainnya')));
+        expect(t.name, isNot(anyOf('investment', 'lainnya')));
       }
     });
 

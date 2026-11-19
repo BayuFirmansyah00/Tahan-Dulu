@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import '../../models/user_model.dart';
@@ -17,7 +19,8 @@ class RemoteAuthRepository implements AuthRepository {
   }) {
     _client = client;
     _tokens = tokens;
-    _googleSignIn = googleSignIn ??
+    _googleSignIn =
+        googleSignIn ??
         GoogleSignIn(
           serverClientId: googleServerClientId,
           scopes: const ['email', 'profile', 'openid'],
@@ -25,7 +28,7 @@ class RemoteAuthRepository implements AuthRepository {
   }
 
   static const String googleServerClientId =
-      '83228556023-0usoeq5cnbrt569krubclavfcn0r3qfd.apps.googleusercontent.com';
+      '265153911016-mjbv7q01pino3q27n2t22v3q99vec9df.apps.googleusercontent.com';
 
   late final ApiClient _client;
   late final TokenStore _tokens;
@@ -38,13 +41,13 @@ class RemoteAuthRepository implements AuthRepository {
       email: json['email'] as String?,
       monthlyIncome: json['monthly_income'] != null
           ? (json['monthly_income'] is int
-              ? json['monthly_income'] as int
-              : int.tryParse('${json['monthly_income']}'))
+                ? json['monthly_income'] as int
+                : int.tryParse('${json['monthly_income']}'))
           : null,
       salaryDay: json['salary_day'] != null
           ? (json['salary_day'] is int
-              ? json['salary_day'] as int
-              : int.tryParse('${json['salary_day']}'))
+                ? json['salary_day'] as int
+                : int.tryParse('${json['salary_day']}'))
           : null,
       isOnboarded: json['is_onboarded'] as bool? ?? false,
     );
@@ -56,6 +59,11 @@ class RemoteAuthRepository implements AuthRepository {
       throw ApiException('Respons login tidak lengkap.');
     }
     return data;
+  }
+
+  static String? _googleApiStatusCode(String? message) {
+    if (message == null) return null;
+    return RegExp(r'ApiException:\s*(-?\d+)').firstMatch(message)?.group(1);
   }
 
   Future<UserModel> _finish(Map<String, dynamic> body) async {
@@ -98,20 +106,102 @@ class RemoteAuthRepository implements AuthRepository {
 
   @override
   Future<UserModel> signInWithGoogle() async {
-    final account = await _googleSignIn.signIn();
-    if (account == null) {
-      throw ApiException('Proses masuk dengan Google dibatalkan.');
-    }
-    final auth = await account.authentication;
-    final idToken = auth.idToken;
-    if (idToken == null || idToken.isEmpty) {
-      throw ApiException('Gagal mendapatkan ID Token dari Google.');
-    }
+    try {
+      final account = await _googleSignIn.signIn();
+      if (account == null) {
+        if (kDebugMode) {
+          debugPrint('[GoogleAuth] exception_code=sign_in_canceled');
+        }
+        throw ApiException('Proses masuk dengan Google dibatalkan.');
+      }
 
-    final body = await _client.post('/auth/google', {
-      'id_token': idToken,
+      final auth = await account.authentication;
+      final idToken = auth.idToken;
+      final hasIdToken = idToken != null && idToken.isNotEmpty;
+      if (kDebugMode) {
+        debugPrint('[GoogleAuth] id_token_present=$hasIdToken');
+      }
+      if (idToken == null || idToken.isEmpty) {
+        throw ApiException('Gagal mendapatkan ID Token dari Google.');
+      }
+
+      late final Map<String, dynamic> body;
+      try {
+        body = await _client.post('/auth/google', {'id_token': idToken});
+      } on ApiException catch (e) {
+        if (kDebugMode) {
+          debugPrint(
+            '[GoogleAuth] laravel_http_status=${e.statusCode ?? 'unavailable'}',
+          );
+        }
+        rethrow;
+      }
+
+      return _finish(body);
+    } on PlatformException catch (e) {
+      if (kDebugMode) {
+        final nativeStatus = _googleApiStatusCode(e.message) ?? 'unavailable';
+        debugPrint(
+          '[GoogleAuth] exception_code=${e.code} native_status=$nativeStatus',
+        );
+      }
+
+      if (e.code == GoogleSignIn.kSignInCanceledError) {
+        throw ApiException('Proses masuk dengan Google dibatalkan.');
+      }
+      if (e.code == GoogleSignIn.kNetworkError) {
+        throw ApiException('Tidak dapat terhubung ke layanan Google.');
+      }
+
+      throw ApiException('Google Sign-In gagal (kode: ${e.code}).');
+    }
+  }
+
+  @override
+  Future<PasswordResetRequestInfo> requestPasswordReset({
+    required String email,
+  }) async {
+    final body = await _client.post('/auth/forgot-password', {
+      'email': email.trim(),
     });
-    return _finish(body);
+    final data = _data(body);
+    return PasswordResetRequestInfo(
+      expiresInSeconds: data['expires_in'] is int
+          ? data['expires_in'] as int
+          : int.tryParse('${data['expires_in']}') ?? 300,
+      resendAfterSeconds: data['resend_after'] is int
+          ? data['resend_after'] as int
+          : int.tryParse('${data['resend_after']}') ?? 60,
+    );
+  }
+
+  @override
+  Future<String> verifyPasswordResetOtp({
+    required String email,
+    required String otp,
+  }) async {
+    final body = await _client.post('/auth/verify-reset-otp', {
+      'email': email.trim(),
+      'otp': otp,
+    });
+    final resetToken = _data(body)['reset_token'];
+    if (resetToken is! String || resetToken.isEmpty) {
+      throw ApiException('Sesi reset tidak diterima dari server.');
+    }
+    return resetToken;
+  }
+
+  @override
+  Future<void> resetPassword({
+    required String resetToken,
+    required String password,
+    required String passwordConfirmation,
+  }) async {
+    await _client.post('/auth/reset-password', {
+      'reset_token': resetToken,
+      'password': password,
+      'password_confirmation': passwordConfirmation,
+    });
   }
 
   @override
@@ -127,8 +217,10 @@ class RemoteAuthRepository implements AuthRepository {
   }) async {
     final token = await _tokens.readToken();
     if (token == null || token.isEmpty) {
-      throw ApiException('Token tidak tersedia. Silakan login ulang.',
-          statusCode: 401);
+      throw ApiException(
+        'Token tidak tersedia. Silakan login ulang.',
+        statusCode: 401,
+      );
     }
     final payload = <String, dynamic>{};
     if (monthlyIncome != null) payload['monthly_income'] = monthlyIncome;
@@ -164,14 +256,35 @@ class RemoteAuthRepository implements AuthRepository {
     } catch (_) {
       // Best-effort sign out akun Google dari perangkat lokal
     }
-    final token = await _tokens.readToken();
-    if (token != null && token.isNotEmpty) {
-      try {
+    try {
+      final token = await _tokens.readToken();
+      if (token != null && token.isNotEmpty) {
         await _client.post('/logout', {}, token: token);
-      } on ApiException {
-        // Token server tetap dihapus lokal di bawah (best-effort).
       }
+    } catch (_) {
+      // Logout lokal tetap dilanjutkan walau request pencabutan gagal.
+    } finally {
+      await _tokens.clearToken();
     }
+  }
+
+  @override
+  Future<void> deleteAccount({String? password, String? googleIdToken}) async {
+    final token = await _tokens.readToken();
+    if (token == null || token.isEmpty) {
+      throw ApiException(
+        'Token tidak tersedia. Silakan login ulang.',
+        statusCode: 401,
+      );
+    }
+    final payload = <String, dynamic>{};
+    if (password != null && password.isNotEmpty) {
+      payload['password'] = password;
+    }
+    if (googleIdToken != null && googleIdToken.isNotEmpty) {
+      payload['google_id_token'] = googleIdToken;
+    }
+    await _client.post('/delete-account', payload, token: token);
     await _tokens.clearToken();
   }
 }

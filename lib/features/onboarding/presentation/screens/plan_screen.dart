@@ -13,6 +13,9 @@ import '../../../../data/providers/app_providers.dart';
 import '../../../../data/providers/dashboard_providers.dart';
 import '../../../../data/providers/onboarding_providers.dart';
 import '../../../auth/presentation/providers/auth_controller.dart';
+import '../../../onboarding/presentation/providers/budget_controller.dart';
+import '../../../onboarding/presentation/providers/expenses_controller.dart';
+import '../../../onboarding/presentation/providers/goal_controller.dart';
 import '../../../onboarding/presentation/providers/salary_controller.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../providers/onboarding_status_provider.dart';
@@ -30,6 +33,26 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
   bool _completing = false;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _hydratePlanData();
+      }
+    });
+  }
+
+  Future<void> _hydratePlanData() async {
+    final repo = ref.read(onboardingRepositoryProvider);
+    await repo.hydrateAll();
+    if (!mounted) return;
+    await ref.read(budgetControllerProvider.notifier).loadExisting();
+    await ref.read(salaryControllerProvider.notifier).loadExisting();
+    await ref.read(expensesControllerProvider.notifier).loadExisting();
+    await ref.read(goalControllerProvider.notifier).loadExisting();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final plan = ref.watch(financialPlanProvider);
     final textTheme = Theme.of(context).textTheme;
@@ -40,33 +63,42 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
         icon: Icons.home_outlined,
         foreground: AppColors.error,
         background: const Color(0xFFFEE2E2),
-        label: AppStrings.catNeeds,
-        value: plan.needs,
-      ),
-      (
-        asset: AppAssets.obEmergency,
-        icon: Icons.savings_outlined,
-        foreground: AppColors.warning,
-        background: const Color(0xFFFEF3C7),
-        label: AppStrings.saving,
-        value: plan.saving,
-      ),
-      (
-        asset: AppAssets.obInvestment,
-        icon: Icons.show_chart_outlined,
-        foreground: AppColors.secondary,
-        background: AppColors.secondarySoft,
-        label: AppStrings.investment,
-        value: plan.investment,
+        label: '${AppStrings.catNeeds} (${plan.kebutuhanPokokPercent.toStringAsFixed(0)}%)',
+        value: plan.kebutuhanPokok,
       ),
       (
         asset: AppAssets.obAllocFlexible,
         icon: Icons.account_balance_wallet_outlined,
         foreground: AppColors.textPrimary,
         background: AppColors.surfaceVariant,
-        label: AppStrings.flexibleExpense,
-        value: plan.flexible,
+        label: '${AppStrings.flexibleExpense} (${plan.pengeluaranBebasPercent.toStringAsFixed(0)}%)',
+        value: plan.pengeluaranBebas,
       ),
+      (
+        asset: AppAssets.obInvestment,
+        icon: Icons.show_chart_outlined,
+        foreground: AppColors.secondary,
+        background: AppColors.secondarySoft,
+        label: '${AppStrings.investmentSaving} (${plan.investasiTabunganPercent.toStringAsFixed(0)}%)',
+        value: plan.investasiTabungan,
+      ),
+      (
+        asset: AppAssets.obEmergency,
+        icon: Icons.savings_outlined,
+        foreground: AppColors.warning,
+        background: const Color(0xFFFEF3C7),
+        label: '${AppStrings.emergencyFund} (${plan.danaDaruratPercent.toStringAsFixed(0)}%)',
+        value: plan.danaDarurat,
+      ),
+      if (plan.unallocated > 0)
+        (
+          asset: AppAssets.obAllocFlexible,
+          icon: Icons.pie_chart_outline,
+          foreground: AppColors.textSecondary,
+          background: AppColors.surfaceVariant,
+          label: '${AppStrings.unallocatedBudget} (${plan.unallocatedPercent.toStringAsFixed(0)}%)',
+          value: plan.unallocated,
+        ),
     ];
 
     return Scaffold(
@@ -139,6 +171,8 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
                         const SizedBox(height: 12),
                         _GoalCard(plan: plan),
                         const SizedBox(height: 12),
+                        _RecurringCommitmentCard(plan: plan),
+                        const SizedBox(height: 12),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -173,15 +207,25 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
                             setState(() => _completing = true);
                             try {
                               final salary = ref.read(salaryControllerProvider);
-                              await ref
+                              final saved = await ref
                                   .read(authControllerProvider.notifier)
                                   .updateFinancialInfo(
-                                monthlyIncome: salary.monthlyIncome > 0
-                                    ? salary.monthlyIncome.toInt()
-                                    : null,
-                                salaryDay: salary.salaryDay,
-                                isOnboarded: true,
-                              );
+                                    monthlyIncome: salary.monthlyIncome > 0
+                                        ? salary.monthlyIncome.toInt()
+                                        : null,
+                                    salaryDay: salary.salaryDay,
+                                    isOnboarded: true,
+                                  );
+                              if (!saved) {
+                                if (mounted) {
+                                  messenger.showSnackBar(
+                                    const SnackBar(
+                                      content: Text(AppStrings.saveFailed),
+                                    ),
+                                  );
+                                }
+                                return;
+                              }
                               ref.invalidate(dashboardDataProvider);
                               ref.invalidate(accountsProvider);
                               ref.invalidate(profileUserProvider);
@@ -192,7 +236,8 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
                               if (!mounted) return;
                               messenger.showSnackBar(
                                 const SnackBar(
-                                    content: Text(AppStrings.saveFailed)),
+                                  content: Text(AppStrings.saveFailed),
+                                ),
                               );
                             } finally {
                               if (mounted) setState(() => _completing = false);
@@ -247,14 +292,10 @@ class _AllocationRow extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 12),
-        Expanded(
-          child: Text(label, style: textTheme.bodyLarge),
-        ),
+        Expanded(child: Text(label, style: textTheme.bodyLarge)),
         Text(
           CurrencyFormatter.formatCompact(value),
-          style: textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w700,
-          ),
+          style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
         ),
       ],
     );
@@ -269,11 +310,13 @@ class _SafeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final isDeficit = plan.safePerDay < 0;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.primary,
+        color: isDeficit ? AppColors.error : AppColors.primary,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
@@ -285,8 +328,8 @@ class _SafeCard extends StatelessWidget {
               color: Colors.white.withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
-            child: const Icon(
-              Icons.verified_outlined,
+            child: Icon(
+              isDeficit ? Icons.warning_amber_rounded : Icons.verified_outlined,
               color: Colors.white,
               size: 24,
             ),
@@ -296,21 +339,50 @@ class _SafeCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  AppStrings.safeToday,
-                  style: textTheme.labelSmall?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.85),
-                  ),
+                Row(
+                  children: [
+                    Text(
+                      AppStrings.safeToday,
+                      style: textTheme.labelSmall?.copyWith(
+                        color: Colors.white.withValues(alpha: 0.85),
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                    if (isDeficit) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          AppStrings.todayDeficitBadge,
+                          style: textTheme.labelSmall?.copyWith(
+                            color: AppColors.error,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
+                const SizedBox(height: 2),
                 Text(
                   CurrencyFormatter.formatCompact(plan.safePerDay),
                   style: textTheme.headlineMedium?.copyWith(
                     color: Colors.white,
                     fontSize: 22,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
                 Text(
-                  AppStrings.safeTodayDesc,
+                  '${AppStrings.safeTodayDesc} (${plan.daysRemaining} hari tersisa)',
                   style: textTheme.bodyMedium?.copyWith(
                     color: Colors.white.withValues(alpha: 0.85),
                   ),
@@ -332,6 +404,56 @@ class _GoalCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final hasGoal = plan.goalTargetAmount > 0;
+
+    if (!hasGoal) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: AppColors.surfaceVariant,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.flag_outlined,
+                color: AppColors.textSecondary,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(AppStrings.goalsSection, style: textTheme.labelSmall),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Belum diatur (dapat dibuat kapan saja di Dashboard)',
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final displayAmount = plan.goalMonthlyContribution > 0
+        ? plan.goalMonthlyContribution
+        : plan.investasiTabungan;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -359,12 +481,9 @@ class _GoalCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Text('Target ${plan.goalName}', style: textTheme.labelSmall),
                 Text(
-                  'Target ${plan.goalName}',
-                  style: textTheme.labelSmall,
-                ),
-                Text(
-                  '${CurrencyFormatter.formatCompact(plan.investment)} '
+                  '${CurrencyFormatter.formatCompact(displayAmount)} '
                   '${AppStrings.perMonth}',
                   style: textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
@@ -373,9 +492,86 @@ class _GoalCard extends StatelessWidget {
               ],
             ),
           ),
-          const Icon(
-            Icons.chevron_right,
-            color: AppColors.textSecondary,
+          const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+        ],
+      ),
+    );
+  }
+}
+
+class _RecurringCommitmentCard extends StatelessWidget {
+  const _RecurringCommitmentCard({required this.plan});
+
+  final FinancialPlan plan;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final hasExpenses = plan.recurringExpensesTotal > 0;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: hasExpenses
+            ? AppColors.surfaceVariant.withValues(alpha: 0.5)
+            : AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: hasExpenses ? AppColors.surface : AppColors.surfaceVariant,
+              borderRadius: BorderRadius.circular(12),
+              border: hasExpenses ? Border.all(color: AppColors.border) : null,
+            ),
+            child: Icon(
+              hasExpenses ? Icons.repeat_rounded : Icons.receipt_long_outlined,
+              color: hasExpenses ? AppColors.textPrimary : AppColors.textSecondary,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  AppStrings.recurringCommitmentLabel,
+                  style: textTheme.labelSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                if (hasExpenses) ...[
+                  Text(
+                    '${CurrencyFormatter.formatCompact(plan.recurringExpensesTotal)} '
+                    '${AppStrings.perMonth}',
+                    style: textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    AppStrings.recurringCommitmentDesc,
+                    style: textTheme.bodySmall?.copyWith(
+                      color: AppColors.textSecondary,
+                      fontSize: 11,
+                    ),
+                  ),
+                ] else ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    'Belum ada pengeluaran rutin (diatur nanti)',
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
         ],
       ),

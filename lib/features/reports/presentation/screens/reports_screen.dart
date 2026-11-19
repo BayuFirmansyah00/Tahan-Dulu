@@ -65,7 +65,7 @@ class ReportsScreen extends ConsumerWidget {
   }
 }
 
-class _Body extends StatelessWidget {
+class _Body extends ConsumerWidget {
   const _Body({
     required this.month,
     required this.report,
@@ -79,7 +79,10 @@ class _Body extends StatelessWidget {
   final VoidCallback onNext;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final apiReport = ref.watch(apiFinancialReportProvider(month)).asData?.value;
+    final savedAmount = apiReport?.summary.savedImpulseAmount ?? 0.0;
+    final savedCount = apiReport?.summary.savedImpulseCount ?? 0;
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
       child: Column(
@@ -144,6 +147,13 @@ class _Body extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           _RemainingCard(net: report.net),
+          if (savedAmount > 0) ...[
+            const SizedBox(height: 10),
+            _SavedImpulseCard(
+              amount: savedAmount,
+              count: savedCount,
+            ),
+          ],
           const SizedBox(height: 16),
           const ReportSectionTitle(AppStrings.reportsVsTitle),
           const SizedBox(height: 8),
@@ -161,18 +171,22 @@ class _Body extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           InsightCard(
-            icon: Icons.bar_chart_outlined,
+            icon: Icons.spa_outlined,
             iconColor: AppColors.primary,
             iconBackground: AppColors.primarySoft,
-            title: AppStrings.reportsMonthSummary,
-            body: report.expense <= report.income
-                ? AppStrings.reportsWithinBudget
-                : AppStrings.reportsOverBudget,
+            title: apiReport != null && apiReport.summary.healthScore > 0
+                ? 'Skor Kesehatan: ${apiReport.summary.healthScore}/100'
+                : AppStrings.reportsMonthSummary,
+            body: apiReport != null && apiReport.summary.healthScore > 0
+                ? apiReport.summary.healthLabel
+                : (report.expense <= report.income
+                    ? AppStrings.reportsWithinBudget
+                    : AppStrings.reportsOverBudget),
             trailing: const Icon(
               Icons.chevron_right,
               color: AppColors.textSecondary,
             ),
-            onTap: () => context.push(AppRoutes.reportsExpenses),
+            onTap: () => context.push(AppRoutes.reportsHealth),
           ),
           const SizedBox(height: 12),
           AppButton(
@@ -372,6 +386,76 @@ class _RemainingCard extends StatelessWidget {
               fontWeight: FontWeight.w800,
               fontSize: 22,
               color: AppColors.primary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SavedImpulseCard extends StatelessWidget {
+  const _SavedImpulseCard({
+    required this.amount,
+    required this.count,
+  });
+
+  final double amount;
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.primarySoft.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: const BoxDecoration(
+              color: AppColors.primarySoft,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.shield_outlined,
+              color: AppColors.primary,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Dana Terselamatkan (Tahan Dulu)',
+                  style: textTheme.bodySmall?.copyWith(
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  '$count godaan impulsif ditahan (estimasi hemat)',
+                  style: textTheme.labelSmall?.copyWith(
+                    color: AppColors.primaryDark,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            CurrencyFormatter.format(amount),
+            style: textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+              fontSize: 15,
+              color: AppColors.primaryDark,
             ),
           ),
         ],

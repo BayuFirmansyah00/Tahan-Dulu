@@ -188,6 +188,15 @@ class _Body extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           SettingsMenuRow(
+            iconForeground: AppColors.primary,
+            iconBackground: AppColors.primarySoft,
+            asset: AppAssets.ntfBudget,
+            title: 'Pengaturan Keuangan',
+            description: 'Ubah penghasilan, tanggal gajian, dan siklus budget',
+            onTap: () => context.push(AppRoutes.financialSettings),
+          ),
+          const SizedBox(height: 8),
+          SettingsMenuRow(
             iconForeground: AppColors.secondary,
             iconBackground: AppColors.secondarySoft,
             asset: AppAssets.setProfile,

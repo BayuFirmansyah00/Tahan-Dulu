@@ -1,11 +1,10 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/constants/app_strings.dart';
 import '../../../../data/providers/app_providers.dart';
 import '../../../../data/providers/dashboard_providers.dart';
 import '../../../auth/presentation/providers/auth_controller.dart';
-import '../../../profile/presentation/providers/profile_providers.dart';
-import 'onboarding_status_provider.dart';
 import 'salary_controller.dart';
 
 class BudgetState extends Equatable {
@@ -45,8 +44,7 @@ class BudgetState extends Equatable {
       (monthlyIncome * pengeluaranBebas / 100).floor();
   int get amountInvestasiTabungan =>
       (monthlyIncome * investasiTabungan / 100).floor();
-  int get amountDanaDarurat =>
-      (monthlyIncome * danaDarurat / 100).floor();
+  int get amountDanaDarurat => (monthlyIncome * danaDarurat / 100).floor();
 
   int get totalAllocatedAmount =>
       amountKebutuhanPokok +
@@ -81,14 +79,14 @@ class BudgetState extends Equatable {
 
   @override
   List<Object?> get props => [
-        monthlyIncome,
-        kebutuhanPokok,
-        pengeluaranBebas,
-        investasiTabungan,
-        danaDarurat,
-        isSaving,
-        errorMessage,
-      ];
+    monthlyIncome,
+    kebutuhanPokok,
+    pengeluaranBebas,
+    investasiTabungan,
+    danaDarurat,
+    isSaving,
+    errorMessage,
+  ];
 }
 
 class BudgetController extends Notifier<BudgetState> {
@@ -135,6 +133,41 @@ class BudgetController extends Notifier<BudgetState> {
     );
   }
 
+  /// Muat ulang alokasi yang sudah tersimpan agar pengguna dapat melanjutkan
+  /// onboarding setelah aplikasi dibuka kembali.
+  Future<void> loadExisting() async {
+    try {
+      final budget = await ref
+          .read(budgetRepositoryProvider)
+          .getCurrentBudget();
+      if (budget == null || state.isSaving) return;
+
+      double percentage(String category, double fallback) =>
+          budget.allocations
+              .where((allocation) => allocation.category == category)
+              .firstOrNull
+              ?.percentage ??
+          fallback;
+
+      state = state.copyWith(
+        monthlyIncome: budget.monthlyIncome,
+        kebutuhanPokok: percentage('kebutuhan_pokok', state.kebutuhanPokok),
+        pengeluaranBebas: percentage(
+          'pengeluaran_bebas',
+          state.pengeluaranBebas,
+        ),
+        investasiTabungan: percentage(
+          'investasi_tabungan',
+          state.investasiTabungan,
+        ),
+        danaDarurat: percentage('dana_darurat', state.danaDarurat),
+        errorMessage: () => null,
+      );
+    } catch (_) {
+      // Tetap gunakan nilai lokal/default jika anggaran belum dapat dimuat.
+    }
+  }
+
   Future<bool> saveBudget() async {
     if (!state.isValid) return false;
     state = state.copyWith(isSaving: true, errorMessage: () => null);
@@ -143,34 +176,29 @@ class BudgetController extends Notifier<BudgetState> {
       final allocations = [
         {'category': 'kebutuhan_pokok', 'percentage': state.kebutuhanPokok},
         {'category': 'pengeluaran_bebas', 'percentage': state.pengeluaranBebas},
-        {'category': 'investasi_tabungan', 'percentage': state.investasiTabungan},
+        {
+          'category': 'investasi_tabungan',
+          'percentage': state.investasiTabungan,
+        },
         {'category': 'dana_darurat', 'percentage': state.danaDarurat},
       ];
 
       // 1. Simpan konfigurasi anggaran ke backend Laravel
-      await ref.read(budgetRepositoryProvider).storeBudget(
+      await ref
+          .read(budgetRepositoryProvider)
+          .storeBudget(
             monthlyIncome: state.monthlyIncome,
             allocations: allocations,
           );
 
-      // 2. Tandai status onboarding selesai pada user
-      final salary = ref.read(salaryControllerProvider);
-      await ref.read(authControllerProvider.notifier).updateFinancialInfo(
-            monthlyIncome: state.monthlyIncome,
-            salaryDay: salary.salaryDay,
-            isOnboarded: true,
-          );
-
-      // 3. Invalidate seluruh provider dashboard & data
+      // Anggaran adalah tahap onboarding; penyelesaian ditandai pada tahap
+      // Ringkasan setelah pengeluaran dan target tersimpan.
       ref.invalidate(currentBudgetProvider);
       ref.invalidate(dashboardDataProvider);
-      ref.invalidate(accountsProvider);
-      ref.invalidate(profileUserProvider);
-      ref.invalidate(onboardingStatusProvider);
 
       return true;
-    } catch (e) {
-      state = state.copyWith(errorMessage: () => e.toString());
+    } catch (_) {
+      state = state.copyWith(errorMessage: () => AppStrings.saveFailed);
       return false;
     } finally {
       state = state.copyWith(isSaving: false);
@@ -179,6 +207,4 @@ class BudgetController extends Notifier<BudgetState> {
 }
 
 final budgetControllerProvider =
-    NotifierProvider<BudgetController, BudgetState>(
-  BudgetController.new,
-);
+    NotifierProvider<BudgetController, BudgetState>(BudgetController.new);

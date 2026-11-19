@@ -126,11 +126,13 @@ class AppBackButton extends StatelessWidget {
     super.key,
     this.onPressed,
     this.size = 24.0,
+    this.color,
     this.tooltip = 'Kembali',
   });
 
   final VoidCallback? onPressed;
   final double size;
+  final Color? color;
   final String tooltip;
 
   @override
@@ -139,7 +141,9 @@ class AppBackButton extends StatelessWidget {
       icon: AppImageIcon(
         assetPath: AppAssets.navBack,
         size: size,
+        color: color,
         semanticLabel: tooltip,
+        fallbackIcon: Icons.arrow_back_rounded,
       ),
       tooltip: tooltip,
       onPressed: onPressed ?? () => Navigator.maybePop(context),

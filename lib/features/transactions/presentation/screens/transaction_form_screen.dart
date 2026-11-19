@@ -28,6 +28,8 @@ AccountType _toAccountType(InstrumentType type) {
       return AccountType.digitalBank;
     case InstrumentType.ewallet:
       return AccountType.ewallet;
+    case InstrumentType.cash:
+      return AccountType.legacyCash;
   }
 }
 
@@ -39,6 +41,8 @@ String _accountTypeLabel(AccountType type) {
       return AppStrings.typeDigitalBank;
     case AccountType.ewallet:
       return AppStrings.typeEWallet;
+    case AccountType.legacyCash:
+      return 'Uang Tunai (Legacy)';
   }
 }
 
@@ -119,9 +123,12 @@ class _TransactionFormScreenState
   }
 
   void _review(Set<String> accountIds, bool hasAccounts) {
+    if (!hasAccounts) {
+      context.push(AppRoutes.accounts);
+      return;
+    }
     final draft = ref.read(transactionFormProvider);
-    if (!hasAccounts ||
-        !draft.isComplete(accountIds) ||
+    if (!draft.isComplete(accountIds) ||
         !draft.isNetValid) {
       setState(() => _attempted = true);
       return;
@@ -135,7 +142,7 @@ class _TransactionFormScreenState
     final notifier = ref.read(transactionFormProvider.notifier);
     final textTheme = Theme.of(context).textTheme;
     final accountsAsync = ref.watch(accountsProvider);
-    final accounts = accountsAsync.maybeWhen(
+    final rawAccounts = accountsAsync.maybeWhen(
       data: (items) => items,
       orElse: () {
         final data =
@@ -151,6 +158,9 @@ class _TransactionFormScreenState
             .toList();
       },
     );
+    // Kategori Uang Tunai (Cash) tidak lagi tersedia untuk memilih akun transaksi baru
+    final accounts =
+        rawAccounts.where((a) => a.type != AccountType.legacyCash).toList();
     final ids = {for (final e in accounts) e.id};
     final showAmountError = _attempted && !draft.isAmountValid;
     final showAccountError =
@@ -328,11 +338,16 @@ class _TransactionFormScreenState
                 ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
-                  child: AppButton(
-                    label: AppStrings.reviewAction,
-                    onPressed: () =>
-                        _review(ids, accounts.isNotEmpty),
-                  ),
+                  child: accounts.isEmpty
+                      ? AppButton(
+                          label: 'Tambah Akun Terlebih Dahulu',
+                          onPressed: () => context.push(AppRoutes.accounts),
+                        )
+                      : AppButton(
+                          label: AppStrings.reviewAction,
+                          onPressed: () =>
+                              _review(ids, accounts.isNotEmpty),
+                        ),
                 ),
               ],
             ),
@@ -526,6 +541,14 @@ class _NoAccountBanner extends StatelessWidget {
           Text(
             AppStrings.noAccountHint,
             style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: AppOutlineButton(
+              label: 'Tambah Akun Keuangan',
+              onPressed: () => context.push(AppRoutes.accounts),
+            ),
           ),
         ],
       ),

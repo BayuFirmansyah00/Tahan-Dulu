@@ -7,6 +7,7 @@ import '../datasources/remote/remote_account_repository.dart';
 import '../datasources/remote/remote_bank_repository.dart';
 import '../datasources/remote/remote_budget_repository.dart';
 import '../datasources/remote/remote_dashboard_repository.dart';
+import '../datasources/remote/remote_financial_settings_repository.dart';
 import '../datasources/remote/remote_goal_repository.dart';
 import '../datasources/remote/remote_investment_repository.dart';
 import '../datasources/remote/remote_instrument_type_repository.dart';
@@ -14,13 +15,16 @@ import '../datasources/remote/remote_recurring_repository.dart';
 import '../datasources/remote/remote_purchase_decision_repository.dart';
 import '../datasources/remote/remote_transaction_repository.dart';
 import '../datasources/remote/remote_notification_repository.dart';
+import '../datasources/remote/remote_report_repository.dart';
 import '../datasources/remote/token_storage.dart';
 import '../models/api_bank.dart';
 import '../models/api_financial_instrument.dart';
 import '../models/api_monthly_budget.dart';
+import '../models/api_recurring_transaction.dart';
 import '../models/app_notification.dart';
 import '../models/financial_account.dart';
 import '../models/financial_goal.dart';
+import '../models/financial_settings.dart';
 import '../models/financial_summary.dart';
 import '../models/purchase_consideration.dart';
 import '../models/transaction_model.dart';
@@ -28,6 +32,8 @@ import '../models/user_model.dart';
 import '../repositories/bank_repository.dart';
 import '../repositories/budget_repository.dart';
 import '../repositories/fcm_token_repository.dart';
+import '../repositories/financial_settings_repository.dart';
+import '../repositories/report_repository.dart';
 import '../repositories/repositories.dart';
 import 'onboarding_providers.dart';
 import '../../features/auth/presentation/providers/auth_controller.dart';
@@ -132,6 +138,39 @@ final budgetRepositoryProvider = Provider<BudgetRepository>((ref) {
 
 final currentBudgetProvider = FutureProvider<ApiMonthlyBudget?>((ref) async {
   return ref.watch(budgetRepositoryProvider).getCurrentBudget();
+});
+
+final financialSettingsRepositoryProvider =
+    Provider<FinancialSettingsRepository>((ref) {
+  if (!ApiConfig.useRemoteApi) {
+    return MockFinancialSettingsRepository();
+  }
+  return RemoteFinancialSettingsRepository(
+    client: ApiClient(
+      baseUrl: ApiConfig.baseUrl,
+      onUnauthorized: () => _handleUnauthorized(ref),
+    ),
+    tokens: TokenStorage(),
+  );
+});
+
+final financialSettingsProvider =
+    FutureProvider<FinancialSettings>((ref) async {
+  return ref.watch(financialSettingsRepositoryProvider).getSettings();
+});
+
+final reportRepositoryProvider = Provider<ReportRepository>((ref) {
+  if (!ApiConfig.useRemoteApi) {
+    return MockReportRepository();
+  }
+  return RemoteReportRepository(
+    client: ApiClient(
+      baseUrl: ApiConfig.baseUrl,
+      onUnauthorized: () => _handleUnauthorized(ref),
+    ),
+    tokens: TokenStorage(),
+    onUnauthorized: () => _handleUnauthorized(ref),
+  );
 });
 
 final transactionRepositoryProvider = Provider<TransactionRepository>((ref) {
@@ -269,6 +308,11 @@ final transactionsProvider = FutureProvider<List<AppTransaction>>((ref) async {
 
 final goalsProvider = FutureProvider<List<FinancialGoal>>((ref) {
   return ref.watch(goalRepositoryProvider).getGoals();
+});
+
+final recurringExpensesProvider =
+    FutureProvider<List<ApiRecurringTransaction>>((ref) {
+  return ref.watch(recurringRepositoryProvider).getRecurringExpenses();
 });
 
 final considerationsProvider = FutureProvider<List<PurchaseConsideration>>((

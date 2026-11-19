@@ -2,12 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:tahan_dulu/data/models/transaction_model.dart';
+import 'package:tahan_dulu/core/utils/validators.dart';
+import 'package:tahan_dulu/features/auth/presentation/models/password_reset_flow.dart';
+import 'package:tahan_dulu/features/auth/presentation/screens/forgot_password_screen.dart';
 import 'package:tahan_dulu/features/auth/presentation/screens/login_screen.dart';
 import 'package:tahan_dulu/features/auth/presentation/screens/register_screen.dart';
+import 'package:tahan_dulu/features/auth/presentation/screens/reset_password_screen.dart';
+import 'package:tahan_dulu/features/auth/presentation/screens/verify_reset_otp_screen.dart';
 import 'package:tahan_dulu/features/auth/presentation/providers/auth_controller.dart';
 import 'package:tahan_dulu/features/profile/presentation/screens/about_screen.dart';
 import 'package:tahan_dulu/features/profile/presentation/screens/app_settings_screen.dart';
 import 'package:tahan_dulu/features/profile/presentation/screens/edit_profile_screen.dart';
+import 'package:tahan_dulu/features/profile/presentation/screens/financial_settings_screen.dart';
 import 'package:tahan_dulu/features/profile/presentation/screens/help_screen.dart';
 import 'package:tahan_dulu/features/profile/presentation/screens/privacy_screen.dart';
 import 'package:tahan_dulu/features/profile/presentation/screens/profile_screen.dart';
@@ -47,12 +53,6 @@ import 'package:tahan_dulu/features/transactions/presentation/screens/transactio
 import 'package:tahan_dulu/features/transactions/presentation/screens/transaction_success_screen.dart';
 import 'package:tahan_dulu/features/transactions/presentation/screens/transaction_voice_screen.dart';
 import 'package:tahan_dulu/features/transactions/presentation/screens/transactions_screen.dart';
-import 'package:tahan_dulu/features/investment/presentation/screens/add_investment_screen.dart';
-import 'package:tahan_dulu/features/investment/presentation/screens/investments_screen.dart';
-import 'package:tahan_dulu/features/recurring/presentation/screens/add_recurring_expense_screen.dart';
-import 'package:tahan_dulu/features/recurring/presentation/screens/add_recurring_income_screen.dart';
-import 'package:tahan_dulu/features/recurring/presentation/screens/recurring_expenses_screen.dart';
-import 'package:tahan_dulu/features/recurring/presentation/screens/recurring_incomes_screen.dart';
 import 'package:tahan_dulu/features/onboarding/presentation/screens/expenses_screen.dart';
 import 'package:tahan_dulu/features/onboarding/presentation/screens/goals_screen.dart';
 import 'package:tahan_dulu/features/onboarding/presentation/screens/plan_screen.dart';
@@ -105,6 +105,36 @@ CustomTransitionPage<void> tabPage(LocalKey key, Widget child) {
         ),
       );
     },
+  );
+}
+
+bool hasValidPasswordResetOtpArgs(Object? args) {
+  if (args is! PasswordResetOtpArgs) {
+    return false;
+  }
+
+  return Validators.email(
+        args.email.trim(),
+        requiredMessage: 'Email wajib diisi.',
+        invalidMessage: 'Format email tidak valid.',
+      ) ==
+      null;
+}
+
+Widget buildVerifyResetOtpRoute(BuildContext context, GoRouterState state) {
+  final args = state.extra;
+  if (!hasValidPasswordResetOtpArgs(args)) {
+    return const ForgotPasswordScreen();
+  }
+
+  final otpArgs = args! as PasswordResetOtpArgs;
+
+  return VerifyResetOtpScreen(
+    args: PasswordResetOtpArgs(
+      email: otpArgs.email.trim(),
+      expiresInSeconds: otpArgs.expiresInSeconds,
+      resendAfterSeconds: otpArgs.resendAfterSeconds,
+    ),
   );
 }
 
@@ -188,6 +218,27 @@ GoRouter createAppRouter({AuthRouteNotifier? authNotifier}) {
         builder: (context, state) => const RegisterScreen(),
       ),
       GoRoute(
+        path: AppRoutes.forgotPassword,
+        builder: (context, state) => const ForgotPasswordScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.verifyResetOtp,
+        redirect: (context, state) => hasValidPasswordResetOtpArgs(state.extra)
+            ? null
+            : AppRoutes.forgotPassword,
+        builder: buildVerifyResetOtpRoute,
+      ),
+      GoRoute(
+        path: AppRoutes.resetPassword,
+        builder: (context, state) {
+          final args = state.extra;
+          if (args is! PasswordResetTokenArgs || args.resetToken.isEmpty) {
+            return const ForgotPasswordScreen();
+          }
+          return ResetPasswordScreen(args: args);
+        },
+      ),
+      GoRoute(
         path: AppRoutes.onboarding,
         // Halaman intro dihapus: /onboarding pas mendarat di Input Gaji.
         // Hanya path persis yang di-redirect agar sub-route tidak terbajak.
@@ -203,6 +254,10 @@ GoRouter createAppRouter({AuthRouteNotifier? authNotifier}) {
           GoRoute(
             path: 'instruments',
             builder: (context, state) => const InstrumentsScreen(),
+          ),
+          GoRoute(
+            path: 'budget',
+            builder: (context, state) => const BudgetScreen(),
           ),
           GoRoute(
             path: 'recurring-expenses',
@@ -390,6 +445,12 @@ GoRouter createAppRouter({AuthRouteNotifier? authNotifier}) {
         builder: (context, state) => const AccountsScreen(),
         routes: [
           GoRoute(
+            path: 'transfer',
+            builder: (context, state) => TransferScreen(
+              initialSourceAccountId: state.extra as String?,
+            ),
+          ),
+          GoRoute(
             path: 'add',
             builder: (context, state) => const AddAccountScreen(),
           ),
@@ -426,6 +487,10 @@ GoRouter createAppRouter({AuthRouteNotifier? authNotifier}) {
         pageBuilder: (context, state) =>
             tabPage(state.pageKey, const ProfileScreen()),
         routes: [
+          GoRoute(
+            path: 'financial',
+            builder: (context, state) => const FinancialSettingsScreen(),
+          ),
           GoRoute(
             path: 'edit',
             builder: (context, state) => const EditProfileScreen(),

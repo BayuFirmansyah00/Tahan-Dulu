@@ -11,14 +11,18 @@ import '../../../../core/utils/rupiah_input_formatter.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../data/datasources/remote/api_client.dart';
+import '../../../../data/models/api_bank.dart';
 import '../../../../data/models/api_financial_instrument.dart';
 import '../../../../data/models/financial_instrument.dart';
 import '../../../../data/providers/app_providers.dart';
+import '../../../accounts/presentation/widgets/admin_fee_form_section.dart';
+import '../../../accounts/presentation/widgets/bank_logo_badge.dart';
+import '../../../accounts/presentation/widgets/bank_picker_sheet.dart';
 import '../providers/instruments_controller.dart';
 
 /// Visual per tipe instrumen: aset 3D lokal + fallback outline + tint.
 /// Bank: kartu bank generik (tanpa logo resmi). Bank Digital: panah
-/// transfer. E-Wallet: dompet. Semua terverifikasi visual di disk.
+/// transfer. E-Wallet: dompet. Uang Tunai: kas fisik.
 ({String asset, IconData icon, Color foreground, Color background})
     _visualOf(
   InstrumentType type,
@@ -45,6 +49,13 @@ import '../providers/instruments_controller.dart';
         foreground: const Color(0xFF8B5CF6),
         background: const Color(0xFFEEE9FE),
       );
+    case InstrumentType.cash:
+      return (
+        asset: AppAssets.instCash,
+        icon: Icons.payments_outlined,
+        foreground: const Color(0xFF10B981),
+        background: const Color(0xFFD1FAE5),
+      );
   }
 }
 
@@ -56,11 +67,13 @@ String _typeLabel(InstrumentType type) {
       return AppStrings.typeDigitalBank;
     case InstrumentType.ewallet:
       return AppStrings.typeEWallet;
+    case InstrumentType.cash:
+      return AppStrings.typeCash;
   }
 }
 
-/// No.4 — Pilih Instrumen Keuangan: daftar, pilih, tambah, detail fee.
-/// Sukses simpan -> No.5 (/onboarding/recurring-expenses).
+/// Tahap 2 — Pilih instrumen keuangan: daftar, pilih, tambah, detail fee.
+/// Sukses simpan -> tahap 3 (/onboarding/budget).
 class InstrumentsScreen extends ConsumerStatefulWidget {
   const InstrumentsScreen({super.key});
 
@@ -86,10 +99,16 @@ class _InstrumentsScreenState extends ConsumerState<InstrumentsScreen> {
     }
   }
 
+  void _skip() {
+    context.push(AppRoutes.onboardingBudget);
+  }
+
   Future<void> _addInstrument() async {
-    final instrument = await showDialog<FinancialInstrument>(
+    final instrument = await showModalBottomSheet<FinancialInstrument>(
       context: context,
-      builder: (context) => const _AddInstrumentDialog(),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const _AddInstrumentSheet(),
     );
     if (instrument != null && mounted) {
       try {
@@ -188,15 +207,6 @@ class _InstrumentsScreenState extends ConsumerState<InstrumentsScreen> {
                             ),
                           ),
                         ),
-                        if (state.selected.isEmpty) ...[
-                          const SizedBox(height: 4),
-                          Text(
-                            AppStrings.noInstrumentError,
-                            style: textTheme.bodyMedium?.copyWith(
-                              color: Theme.of(context).colorScheme.error,
-                            ),
-                          ),
-                        ],
                         if (focused != null) ...[
                           const SizedBox(height: 12),
                           _InstrumentDetail(key: ValueKey(focused.id)),
@@ -207,10 +217,28 @@ class _InstrumentsScreenState extends ConsumerState<InstrumentsScreen> {
                 ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
-                  child: AppButton(
-                    label: AppStrings.continueButton,
-                    isLoading: state.isSaving,
-                    onPressed: state.canContinue ? _continue : null,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (state.selected.isNotEmpty) ...[
+                        AppButton(
+                          label: AppStrings.continueButton,
+                          isLoading: state.isSaving,
+                          onPressed: state.canContinue ? _continue : null,
+                        ),
+                        const SizedBox(height: 12),
+                        AppOutlineButton(
+                          label: AppStrings.setupLater,
+                          onPressed: state.isSaving ? null : _skip,
+                        ),
+                      ] else ...[
+                        AppButton(
+                          label: AppStrings.setupLater,
+                          onPressed: state.isSaving ? null : _skip,
+                        ),
+                      ],
+                    ],
                   ),
                 ),
               ],
@@ -285,6 +313,21 @@ class _InstrumentCard extends StatelessWidget {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
+                  if (instrument.type == InstrumentType.bank ||
+                      instrument.type == InstrumentType.digitalBank) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      instrument.adminFeeEnabled && instrument.monthlyAdminFee > 0
+                          ? 'Biaya admin: ${CurrencyFormatter.formatCompact(instrument.monthlyAdminFee)}/bln (tgl ${instrument.adminFeeDay})'
+                          : 'Bebas biaya admin',
+                      style: textTheme.bodySmall?.copyWith(
+                        color: instrument.adminFeeEnabled && instrument.monthlyAdminFee > 0
+                            ? AppColors.primary
+                            : AppColors.textSecondary,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -347,6 +390,10 @@ class _InstrumentDetailState extends ConsumerState<_InstrumentDetail> {
     final textTheme = Theme.of(context).textTheme;
     final notifier = ref.read(instrumentsControllerProvider.notifier);
 
+    final isBankOrDigital = focused.type == InstrumentType.bank ||
+        focused.type == InstrumentType.digitalBank;
+    if (!isBankOrDigital) return const SizedBox.shrink();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -355,139 +402,186 @@ class _InstrumentDetailState extends ConsumerState<_InstrumentDetail> {
           style: textTheme.titleMedium,
         ),
         const SizedBox(height: 12),
-        AppTextField(
-          controller: _feeController,
-          label: AppStrings.adminFee,
-          hint: '0',
-          prefixText: 'Rp ',
-          keyboardType: TextInputType.number,
-          inputFormatters: [RupiahInputFormatter()],
-          onChanged: (v) => notifier.updateAdminFee(
-            focused.id,
-            RupiahInputFormatter.parse(v),
-          ),
-        ),
-        const SizedBox(height: 12),
-        Text(AppStrings.feeDay, style: textTheme.labelLarge),
-        const SizedBox(height: 8),
-        _FeeDayDropdown(
-          value: focused.adminFeeDay,
-          onChanged: (day) => notifier.updateAdminFeeDay(focused.id, day),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Icon(
-              Icons.info_outline,
-              size: 16,
-              color: AppColors.textSecondary,
-            ),
-            const SizedBox(width: 6),
-            Expanded(
-              child: Text(
-                AppStrings.feeHelper,
-                style: textTheme.bodyMedium,
-              ),
-            ),
-          ],
+        AdminFeeFormSection(
+          enabled: focused.adminFeeEnabled,
+          onEnabledChanged: (val) {
+            notifier.updateAdminFeeEnabled(focused.id, val);
+          },
+          feeController: _feeController,
+          feeDay: focused.adminFeeDay,
+          onDayChanged: (day) => notifier.updateAdminFeeDay(focused.id, day),
         ),
       ],
     );
   }
 }
 
-/// Dropdown tanggal 1–31 dengan suffix "setiap bulan".
-class _FeeDayDropdown extends StatelessWidget {
-  const _FeeDayDropdown({required this.value, required this.onChanged});
-
-  final int value;
-  final ValueChanged<int> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return DropdownButtonFormField<int>(
-      initialValue: value,
-      items: [
-        for (var day = 1; day <= 31; day++)
-          DropdownMenuItem(value: day, child: Text('$day')),
-      ],
-      selectedItemBuilder: (context) => [
-        for (var day = 1; day <= 31; day++)
-          Text('$day ${AppStrings.feeDaySuffix}'),
-      ],
-      onChanged: (day) {
-        if (day != null) onChanged(day);
-      },
-    );
-  }
-}
-
-InstrumentType _mapStringToInstrumentType(String? type) {
-  switch (type?.toLowerCase()) {
-    case 'bank':
-      return InstrumentType.bank;
-    case 'digitalbank':
-    case 'digital bank':
-      return InstrumentType.digitalBank;
-    case 'ewallet':
-    case 'e-wallet':
-    case 'e wallet':
-      return InstrumentType.ewallet;
-    default:
-      return InstrumentType.bank;
-  }
-}
-
-/// Dialog tambah instrumen: pilih dari dropdown data master admin + saldo awal.
-class _AddInstrumentDialog extends ConsumerStatefulWidget {
-  const _AddInstrumentDialog();
+/// Modal bottom sheet untuk menambah instrumen keuangan onboarding.
+/// Alur modern 2 tahap:
+/// 1. Pilih kategori: Bank, Bank Digital, E-Wallet, Uang Tunai.
+/// 2. Lengkapi detail: pilih provider resmi (untuk Bank/E-Wallet) dan saldo awal.
+class _AddInstrumentSheet extends ConsumerStatefulWidget {
+  const _AddInstrumentSheet();
 
   @override
-  ConsumerState<_AddInstrumentDialog> createState() => _AddInstrumentDialogState();
+  ConsumerState<_AddInstrumentSheet> createState() => _AddInstrumentSheetState();
 }
 
-class _AddInstrumentDialogState extends ConsumerState<_AddInstrumentDialog> {
-  int? _selectedTypeId;
+class _AddInstrumentSheetState extends ConsumerState<_AddInstrumentSheet> {
+  InstrumentType? _selectedCategory;
+  ApiBank? _selectedBank;
+  final _nameController = TextEditingController();
   final _balanceController = TextEditingController();
   final _feeController = TextEditingController();
   int _feeDay = 15;
+  bool _feeEnabled = false;
   bool _attempted = false;
   bool _saving = false;
 
   @override
   void dispose() {
+    _nameController.dispose();
     _balanceController.dispose();
     _feeController.dispose();
     super.dispose();
   }
 
-  void _save(List<ApiInstrumentType> types) {
+  Future<void> _selectCategory(InstrumentType category) async {
+    final categoryFilter = category == InstrumentType.bank
+        ? 'bank'
+        : category == InstrumentType.digitalBank
+            ? 'digitalBank'
+            : 'ewallet';
+
+    final title = category == InstrumentType.bank
+        ? 'Pilih Bank'
+        : category == InstrumentType.digitalBank
+            ? 'Pilih Bank Digital'
+            : 'Pilih E-Wallet';
+
+    final subtitle = category == InstrumentType.bank
+        ? 'BCA, Mandiri, BRI, BNI, BSI, CIMB Niaga, dll.'
+        : category == InstrumentType.digitalBank
+            ? 'Bank Jago, Jenius, SeaBank, Blu, Neobank, dll.'
+            : 'GoPay, OVO, DANA, ShopeePay, LinkAja, AstraPay, dll.';
+
+    final bank = await BankPickerSheet.show(
+      context,
+      categoryFilter: categoryFilter,
+      title: title,
+      subtitle: subtitle,
+    );
+
+    if (bank != null && mounted) {
+      setState(() {
+        _selectedCategory = category;
+        _selectedBank = bank;
+        _nameController.text = bank.name;
+        _balanceController.clear();
+      });
+    }
+  }
+
+  Future<void> _changeProvider() async {
+    if (_selectedCategory == null) return;
+
+    final categoryFilter = _selectedCategory == InstrumentType.bank
+        ? 'bank'
+        : _selectedCategory == InstrumentType.digitalBank
+            ? 'digitalBank'
+            : 'ewallet';
+
+    final title = _selectedCategory == InstrumentType.bank
+        ? 'Pilih Bank'
+        : _selectedCategory == InstrumentType.digitalBank
+            ? 'Pilih Bank Digital'
+            : 'Pilih E-Wallet';
+
+    final subtitle = _selectedCategory == InstrumentType.bank
+        ? 'BCA, Mandiri, BRI, BNI, BSI, CIMB Niaga, dll.'
+        : _selectedCategory == InstrumentType.digitalBank
+            ? 'Bank Jago, Jenius, SeaBank, Blu, Neobank, dll.'
+            : 'GoPay, OVO, DANA, ShopeePay, LinkAja, AstraPay, dll.';
+
+    final bank = await BankPickerSheet.show(
+      context,
+      selectedBankId: _selectedBank?.id,
+      selectedBankSlug: _selectedBank?.slug,
+      categoryFilter: categoryFilter,
+      title: title,
+      subtitle: subtitle,
+    );
+
+    if (bank != null && mounted) {
+      setState(() {
+        _selectedBank = bank;
+        _nameController.text = bank.name;
+      });
+    }
+  }
+
+  int _resolveTypeId(InstrumentType category, List<ApiInstrumentType>? types) {
+    if (types != null && types.isNotEmpty) {
+      for (final t in types) {
+        final slug = t.type.toLowerCase().replaceAll(RegExp(r'[\s\-_]'), '');
+        if (category == InstrumentType.bank && (slug == 'bank' || slug == 'bankkonvensional')) return t.id;
+        if (category == InstrumentType.digitalBank && (slug == 'digitalbank' || slug == 'bankdigital')) return t.id;
+        if (category == InstrumentType.ewallet && (slug == 'ewallet' || slug == 'dompetdigital')) return t.id;
+        if (category == InstrumentType.cash && (slug == 'cash' || slug == 'uangtunai' || slug == 'tunai')) return t.id;
+      }
+    }
+    switch (category) {
+      case InstrumentType.bank:
+        return 1;
+      case InstrumentType.digitalBank:
+        return 2;
+      case InstrumentType.ewallet:
+        return 3;
+      case InstrumentType.cash:
+        return 4;
+    }
+  }
+
+  void _save(List<ApiInstrumentType>? types) {
     if (_saving) return;
+    setState(() => _attempted = true);
+
+    if (_selectedCategory == null) return;
+    final isCash = _selectedCategory == InstrumentType.cash;
+    if (!isCash && _selectedBank == null) return;
+
     final balance = RupiahInputFormatter.parse(_balanceController.text);
-    setState(() {
-      _attempted = true;
-    });
+    if (balance <= 0) return;
 
-    if (_selectedTypeId == null || balance <= 0) return;
+    final name = _nameController.text.trim().isNotEmpty
+        ? _nameController.text.trim()
+        : (isCash ? AppStrings.cashDefaultName : (_selectedBank?.name ?? 'Instrumen'));
 
-    final selectedType = types.firstWhere((t) => t.id == _selectedTypeId);
-    final mappedType = _mapStringToInstrumentType(selectedType.type);
-    final isBank = mappedType == InstrumentType.bank;
+    final isBankOrDigital = _selectedCategory == InstrumentType.bank ||
+        _selectedCategory == InstrumentType.digitalBank;
+    final typeId = _resolveTypeId(_selectedCategory!, types);
+
+    final feeAmount = (isBankOrDigital && _feeEnabled)
+        ? RupiahInputFormatter.parse(_feeController.text)
+        : 0.0;
+    final feeDay = (isBankOrDigital && _feeEnabled) ? _feeDay : 15;
+    final feeEnabled = isBankOrDigital && _feeEnabled && feeAmount > 0;
 
     setState(() => _saving = true);
 
     Navigator.of(context).pop(
       FinancialInstrument(
         id: 'inst-${DateTime.now().millisecondsSinceEpoch}',
-        name: selectedType.name,
-        type: mappedType,
-        typeId: selectedType.id,
+        name: name,
+        type: _selectedCategory!,
+        typeId: typeId,
+        bankId: _selectedBank != null && _selectedBank!.id > 0 ? _selectedBank!.id : null,
+        bankSlug: _selectedBank?.slug,
         initialBalance: balance,
-        institutionName: selectedType.name,
-        monthlyAdminFee:
-            isBank ? RupiahInputFormatter.parse(_feeController.text) : 0,
-        adminFeeDay: _feeDay,
+        institutionName: isCash ? AppStrings.typeCash : (_selectedBank?.name ?? name),
+        monthlyAdminFee: feeAmount,
+        adminFeeDay: feeDay,
+        adminFeeEnabled: feeEnabled,
         isSelected: true,
       ),
     );
@@ -497,152 +591,381 @@ class _AddInstrumentDialogState extends ConsumerState<_AddInstrumentDialog> {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final typesAsync = ref.watch(instrumentTypesProvider);
+    final types = typesAsync.asData?.value;
 
-    return AlertDialog(
-      title: const Text(AppStrings.addInstrumentTitle),
-      content: SingleChildScrollView(
-        child: typesAsync.when(
-          loading: () => const SizedBox(
-            height: 100,
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  CircularProgressIndicator(strokeWidth: 2.5),
-                  SizedBox(height: 12),
-                  Text('Memuat instrumen master...'),
-                ],
-              ),
-            ),
-          ),
-          error: (err, _) => Column(
+    final mediaQuery = MediaQuery.of(context);
+    final bottomInset = mediaQuery.viewInsets.bottom;
+
+    return Material(
+      color: AppColors.surface,
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      clipBehavior: Clip.antiAlias,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: mediaQuery.size.height * 0.9,
+        ),
+        child: Padding(
+          padding: EdgeInsets.only(bottom: bottomInset),
+          child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                'Gagal memuat tipe instrumen: $err',
-                style: textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.error,
+              // Drag Handle
+              Container(
+                margin: const EdgeInsets.only(top: 12, bottom: 8),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.border,
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              const SizedBox(height: 8),
-              TextButton(
-                onPressed: () => ref.invalidate(instrumentTypesProvider),
-                child: const Text('Coba Lagi'),
+
+              // Header
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                child: Row(
+                  children: [
+                    if (_selectedCategory != null)
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back),
+                        onPressed: () => setState(() {
+                          _selectedCategory = null;
+                          _selectedBank = null;
+                          _attempted = false;
+                        }),
+                      )
+                    else
+                      const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _selectedCategory == null
+                                ? AppStrings.selectCategory
+                                : (_selectedCategory == InstrumentType.cash
+                                    ? AppStrings.typeCash
+                                    : _typeLabel(_selectedCategory!)),
+                            style: textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            _selectedCategory == null
+                                ? 'Pilih jenis instrumen keuangan kamu'
+                                : 'Lengkapi detail saldo dan informasi rekening',
+                            style: textTheme.bodySmall?.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ],
+                ),
+              ),
+
+              const Divider(height: 1, color: AppColors.divider),
+
+              // Konten: Langkah 1 (Kategori) atau Langkah 2 (Detail)
+              Flexible(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                  child: _selectedCategory == null
+                      ? _buildCategorySelection(context)
+                      : _buildDetailForm(context, types),
+                ),
               ),
             ],
           ),
-          data: (types) {
-            if (types.isEmpty) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                child: Text(
-                  AppStrings.instrumentTypeEmpty,
-                  style: textTheme.bodyMedium,
-                ),
-              );
-            }
-
-            final showTypeError = _attempted && _selectedTypeId == null;
-            final balance = RupiahInputFormatter.parse(_balanceController.text);
-            final showBalanceError = _attempted && balance <= 0;
-
-            final selectedType = _selectedTypeId != null
-                ? types.where((t) => t.id == _selectedTypeId).firstOrNull
-                : null;
-            final isBank = selectedType != null &&
-                _mapStringToInstrumentType(selectedType.type) ==
-                    InstrumentType.bank;
-
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(AppStrings.instrumentType, style: textTheme.labelLarge),
-                const SizedBox(height: 8),
-                DropdownButtonFormField<int>(
-                  initialValue: _selectedTypeId,
-                  hint: const Text('Pilih instrumen...'),
-                  items: types
-                      .map((t) => DropdownMenuItem<int>(
-                            value: t.id,
-                            child: Text(t.name),
-                          ))
-                      .toList(),
-                  onChanged: (val) {
-                    setState(() => _selectedTypeId = val);
-                  },
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 12),
-                  ),
-                ),
-                if (showTypeError) ...[
-                  const SizedBox(height: 6),
-                  _DialogError(text: AppStrings.instrumentTypeRequired),
-                ],
-                const SizedBox(height: 16),
-                AppTextField(
-                  controller: _balanceController,
-                  label: AppStrings.initialBalance,
-                  hint: '0',
-                  prefixText: 'Rp ',
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [RupiahInputFormatter()],
-                ),
-                if (showBalanceError) ...[
-                  const SizedBox(height: 6),
-                  _DialogError(text: AppStrings.balanceRequired),
-                ],
-                if (isBank) ...[
-                  const SizedBox(height: 12),
-                  AppTextField(
-                    controller: _feeController,
-                    label: AppStrings.adminFee,
-                    hint: '0',
-                    prefixText: 'Rp ',
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [RupiahInputFormatter()],
-                  ),
-                  const SizedBox(height: 12),
-                  Text(AppStrings.feeDay, style: textTheme.labelLarge),
-                  const SizedBox(height: 8),
-                  _FeeDayDropdown(
-                    value: _feeDay,
-                    onChanged: (day) => setState(() => _feeDay = day),
-                  ),
-                ],
-              ],
-            );
-          },
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text(AppStrings.cancel),
+    );
+  }
+
+  Widget _buildCategorySelection(BuildContext context) {
+    return Column(
+      children: [
+        _CategoryOptionTile(
+          title: AppStrings.typeBank,
+          subtitle: 'BCA, Mandiri, BRI, BNI, BSI, CIMB Niaga, dll.',
+          visual: _visualOf(InstrumentType.bank),
+          onTap: () => _selectCategory(InstrumentType.bank),
         ),
-        typesAsync.maybeWhen(
-          data: (types) => TextButton(
-            onPressed:
-                (_saving || types.isEmpty) ? null : () => _save(types),
-            child: _saving
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Text(AppStrings.save),
+        const SizedBox(height: 12),
+        _CategoryOptionTile(
+          title: AppStrings.typeDigitalBank,
+          subtitle: 'Bank Jago, Jenius, SeaBank, Blu, Neobank, dll.',
+          visual: _visualOf(InstrumentType.digitalBank),
+          onTap: () => _selectCategory(InstrumentType.digitalBank),
+        ),
+        const SizedBox(height: 12),
+        _CategoryOptionTile(
+          title: AppStrings.typeEWallet,
+          subtitle: 'GoPay, OVO, DANA, ShopeePay, LinkAja, AstraPay, dll.',
+          visual: _visualOf(InstrumentType.ewallet),
+          onTap: () => _selectCategory(InstrumentType.ewallet),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDetailForm(BuildContext context, List<ApiInstrumentType>? types) {
+    final textTheme = Theme.of(context).textTheme;
+    final isCash = _selectedCategory == InstrumentType.cash;
+
+    final balance = RupiahInputFormatter.parse(_balanceController.text);
+    final showBalanceError = _attempted && balance <= 0;
+    final showProviderError = _attempted && !isCash && _selectedBank == null;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (isCash) ...[
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFD1FAE5),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.payments_outlined,
+                  color: Color(0xFF10B981),
+                  size: 24,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Uang tunai dicatat sebagai kas fisik tanpa biaya admin bulanan.',
+                    style: textTheme.bodySmall?.copyWith(
+                      color: const Color(0xFF065F46),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-          orElse: () => const SizedBox.shrink(),
+          const SizedBox(height: 16),
+          AppTextField(
+            controller: _nameController,
+            label: 'Nama Dompet / Kas',
+            hint: AppStrings.cashDefaultName,
+          ),
+        ] else ...[
+          Text(AppStrings.selectProvider, style: textTheme.labelLarge),
+          const SizedBox(height: 8),
+          if (_selectedBank == null)
+            InkWell(
+              onTap: _changeProvider,
+              borderRadius: BorderRadius.circular(14),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                decoration: BoxDecoration(
+                  color: AppColors.inputFill,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: showProviderError
+                        ? Theme.of(context).colorScheme.error
+                        : AppColors.border,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.search, color: AppColors.textSecondary),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        AppStrings.searchProviderHint,
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: AppColors.textDisabled,
+                        ),
+                      ),
+                    ),
+                    const Icon(
+                      Icons.arrow_forward_ios,
+                      size: 14,
+                      color: AppColors.textSecondary,
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppColors.border),
+              ),
+              child: Row(
+                children: [
+                  BankLogoBadge(
+                    bankName: _selectedBank!.name,
+                    bankSlug: _selectedBank!.slug,
+                    bankLogoUrl: _selectedBank!.logoUrl,
+                    size: 40,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _selectedBank!.name,
+                          style: textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        if (_selectedBank!.aliases.isNotEmpty)
+                          Text(
+                            _selectedBank!.aliases.join(' • '),
+                            style: textTheme.bodySmall?.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: _changeProvider,
+                    child: const Text('Ganti'),
+                  ),
+                ],
+              ),
+            ),
+          if (showProviderError) ...[
+            const SizedBox(height: 6),
+            const _DialogError(text: AppStrings.instrumentTypeRequired),
+          ],
+        ],
+
+        const SizedBox(height: 16),
+        AppTextField(
+          controller: _balanceController,
+          label: AppStrings.initialBalance,
+          hint: '0',
+          prefixText: 'Rp ',
+          keyboardType: TextInputType.number,
+          inputFormatters: [RupiahInputFormatter()],
+        ),
+        if (showBalanceError) ...[
+          const SizedBox(height: 6),
+          const _DialogError(text: AppStrings.balanceRequired),
+        ],
+
+        if (_selectedCategory == InstrumentType.bank ||
+            _selectedCategory == InstrumentType.digitalBank) ...[
+          const SizedBox(height: 16),
+          AdminFeeFormSection(
+            enabled: _feeEnabled,
+            onEnabledChanged: (val) => setState(() => _feeEnabled = val),
+            feeController: _feeController,
+            feeDay: _feeDay,
+            onDayChanged: (day) => setState(() => _feeDay = day),
+          ),
+        ],
+
+        const SizedBox(height: 24),
+        AppButton(
+          label: AppStrings.save,
+          isLoading: _saving,
+          onPressed: _saving ? null : () => _save(types),
         ),
       ],
     );
   }
 }
 
+class _CategoryOptionTile extends StatelessWidget {
+  const _CategoryOptionTile({
+    required this.title,
+    required this.subtitle,
+    required this.visual,
+    required this.onTap,
+  });
+
+  final String title;
+  final String subtitle;
+  final ({String asset, IconData icon, Color foreground, Color background}) visual;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: visual.background,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Image.asset(
+                visual.asset,
+                width: 48,
+                height: 48,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) => Icon(
+                  visual.icon,
+                  color: visual.foreground,
+                  size: 24,
+                ),
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    subtitle,
+                    style: textTheme.bodySmall?.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
+              Icons.chevron_right,
+              color: AppColors.textSecondary,
+              size: 20,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 class _DialogError extends StatelessWidget {
   const _DialogError({required this.text});

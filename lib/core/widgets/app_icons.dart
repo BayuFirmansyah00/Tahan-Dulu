@@ -103,6 +103,8 @@ String accountIconForType(AccountType type) {
       return AppAssets.txArrowTransfer;
     case AccountType.ewallet:
       return AppAssets.txWallet;
+    case AccountType.legacyCash:
+      return AppAssets.instCash;
   }
 }
 
@@ -259,7 +261,9 @@ class AccountProviderIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final effectiveBankName = bankName ??
-        ((type == AccountType.bank || type == AccountType.digitalBank)
+        ((type == AccountType.bank ||
+                type == AccountType.digitalBank ||
+                type == AccountType.ewallet)
             ? institutionName
             : null);
 

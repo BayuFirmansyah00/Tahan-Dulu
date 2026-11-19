@@ -8,6 +8,7 @@ import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/app_icons.dart';
 import '../../../../core/widgets/app_states.dart';
+import '../../../../data/models/financial_account.dart';
 import '../../../../data/models/purchase_consideration.dart';
 import '../../../../data/providers/app_providers.dart';
 import '../providers/tahandulu_controller.dart';
@@ -84,29 +85,390 @@ class _TahanDuluDecideScreenState extends ConsumerState<TahanDuluDecideScreen> {
   }
 
   Future<void> _confirmBuy(PurchaseConsideration item) async {
-    final confirmed = await showDialog<bool>(
+    final accounts = await ref
+        .read(accountsProvider.future)
+        .catchError((_) => <FinancialAccount>[]);
+    if (!mounted) return;
+    final activeAccounts = accounts
+        .where((a) => a.type != AccountType.legacyCash)
+        .toList();
+
+    await showModalBottomSheet<void>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text(AppStrings.confirmBuyTitle),
-        content: const Text(AppStrings.confirmBuyBody),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text(AppStrings.cancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text(AppStrings.decideBuy),
-          ),
-        ],
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
+      builder: (bottomSheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: TdColors.border,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Konfirmasi Pembelian',
+                  style: Theme.of(bottomSheetContext)
+                      .textTheme
+                      .titleLarge
+                      ?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: TdColors.navy,
+                      ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Pilih bagaimana Anda ingin mencatat pembelian “${item.itemName}” (${CurrencyFormatter.formatCompact(item.price)}).',
+                  style: Theme.of(bottomSheetContext)
+                      .textTheme
+                      .bodyMedium
+                      ?.copyWith(
+                        color: TdColors.slate,
+                      ),
+                ),
+                const SizedBox(height: 16),
+                InkWell(
+                  onTap: () {
+                    Navigator.of(bottomSheetContext).pop();
+                    _showAccountSelectionSheet(item, activeAccounts);
+                  },
+                  borderRadius: BorderRadius.circular(16),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: TdColors.primary.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: TdColors.primary),
+                    ),
+                    child: Row(
+                      children: [
+                        const AppImageIcon(
+                          assetPath: AppAssets.tdActionBuy,
+                          size: 28,
+                          fallbackIcon: Icons.payments_outlined,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Catat Pembelian & Potong Saldo',
+                                style: Theme.of(bottomSheetContext)
+                                    .textTheme
+                                    .titleSmall
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.w700,
+                                      color: TdColors.navy,
+                                    ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Catat transaksi pengeluaran dan potong saldo rekening yang dipilih.',
+                                style: Theme.of(bottomSheetContext)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(
+                                      color: TdColors.slate,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Icon(
+                          Icons.arrow_forward_ios,
+                          size: 14,
+                          color: TdColors.navy,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                InkWell(
+                  onTap: () async {
+                    Navigator.of(bottomSheetContext).pop();
+                    final notifier =
+                        ref.read(tahanDuluControllerProvider.notifier);
+                    await _act(
+                      item,
+                      () => notifier.setStatus(
+                        item.id,
+                        ConsiderationStatus.bought,
+                      ),
+                      '${AppRoutes.tahanDulu}/${item.id}/success',
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(16),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: TdColors.border),
+                    ),
+                    child: Row(
+                      children: [
+                        const AppImageIcon(
+                          assetPath: AppAssets.statusSuccess,
+                          size: 28,
+                          fallbackIcon: Icons.check_circle_outline,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Tandai Dibeli Saja (Tanpa Transaksi)',
+                                style: Theme.of(bottomSheetContext)
+                                    .textTheme
+                                    .titleSmall
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.w700,
+                                      color: TdColors.navy,
+                                    ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Hanya memperbarui status wishlist tanpa membuat transaksi atau mengubah saldo.',
+                                style: Theme.of(bottomSheetContext)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(
+                                      color: TdColors.slate,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Icon(
+                          Icons.arrow_forward_ios,
+                          size: 14,
+                          color: TdColors.slate,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
+        );
+      },
     );
-    if (confirmed != true || !mounted) return;
-    final notifier = ref.read(tahanDuluControllerProvider.notifier);
-    await _act(
-      item,
-      () => notifier.setStatus(item.id, ConsiderationStatus.bought),
-      '${AppRoutes.tahanDulu}/${item.id}/success',
+  }
+
+  Future<void> _showAccountSelectionSheet(
+    PurchaseConsideration item,
+    List<FinancialAccount> accounts,
+  ) async {
+    if (accounts.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Belum ada akun rekening aktif. Silakan tambahkan rekening terlebih dahulu.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: TdColors.border,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Pilih Rekening Pembayaran',
+                  style: Theme.of(sheetContext).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: TdColors.navy,
+                      ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Saldo akan dipotong sejumlah ${CurrencyFormatter.formatCompact(item.price)}',
+                  style: Theme.of(sheetContext).textTheme.bodyMedium?.copyWith(
+                        color: TdColors.slate,
+                      ),
+                ),
+                const SizedBox(height: 16),
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: MediaQuery.of(sheetContext).size.height * 0.45,
+                  ),
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: accounts.length,
+                    separatorBuilder: (context, index) => const SizedBox(height: 8),
+                    itemBuilder: (context, index) {
+                      final acc = accounts[index];
+                      final accId = int.tryParse(acc.id) ?? 0;
+                      final isSufficient = acc.balance >= item.price;
+
+                      return InkWell(
+                        onTap: () async {
+                          if (!isSufficient) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  'Saldo pada ${acc.name} (${CurrencyFormatter.formatCompact(acc.balance)}) tidak mencukupi untuk membayar ${CurrencyFormatter.formatCompact(item.price)}.',
+                                ),
+                                backgroundColor: TdColors.danger,
+                              ),
+                            );
+                            return;
+                          }
+                          Navigator.of(sheetContext).pop();
+                          final notifier =
+                              ref.read(tahanDuluControllerProvider.notifier);
+                          await _act(
+                            item,
+                            () => notifier.recordPurchase(
+                              item.id,
+                              accountId: accId,
+                              information:
+                                  'Pembelian Tahan Dulu: ${item.itemName}',
+                            ),
+                            '${AppRoutes.tahanDulu}/${item.id}/success',
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(14),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: isSufficient
+                                  ? TdColors.border
+                                  : TdColors.danger.withValues(alpha: 0.3),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              const AppImageIcon(
+                                assetPath: AppAssets.instBank,
+                                size: 24,
+                                fallbackIcon: Icons.account_balance,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      acc.name,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleSmall
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w700,
+                                            color: TdColors.navy,
+                                          ),
+                                    ),
+                                    Row(
+                                      children: [
+                                        Text(
+                                          'Saldo: ${CurrencyFormatter.formatCompact(acc.balance)}',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodySmall
+                                              ?.copyWith(
+                                                color: isSufficient
+                                                    ? TdColors.slate
+                                                    : TdColors.danger,
+                                                fontWeight: isSufficient
+                                                    ? FontWeight.normal
+                                                    : FontWeight.w600,
+                                              ),
+                                        ),
+                                        if (!isSufficient) ...[
+                                          const SizedBox(width: 6),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 6,
+                                              vertical: 1,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: TdColors.dangerBg,
+                                              borderRadius:
+                                                  BorderRadius.circular(4),
+                                            ),
+                                            child: Text(
+                                              'Saldo Kurang',
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .labelSmall
+                                                  ?.copyWith(
+                                                    color: TdColors.danger,
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                            ),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const Icon(
+                                Icons.chevron_right,
+                                color: TdColors.slate,
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 

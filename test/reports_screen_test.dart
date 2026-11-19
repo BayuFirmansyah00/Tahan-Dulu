@@ -27,7 +27,11 @@ Future<void> _pumpToReports(WidgetTester tester) async {
     await _tapVisible(tester, find.text(AppStrings.onboardingPopupLater));
     await tester.pumpAndSettle();
   }
-  await _tapVisible(tester, find.text(AppStrings.dashboardSeeReport));
+  if (find.text(AppStrings.shortcutReport).evaluate().isNotEmpty) {
+    await _tapVisible(tester, find.text(AppStrings.shortcutReport));
+  } else {
+    await _tapVisible(tester, find.text(AppStrings.dashboardSeeReport));
+  }
   await tester.pumpAndSettle();
   expect(find.text(AppStrings.reportsTitle), findsOneWidget);
 }

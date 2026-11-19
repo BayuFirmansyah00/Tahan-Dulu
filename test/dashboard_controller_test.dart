@@ -11,7 +11,7 @@ import 'package:tahan_dulu/data/providers/onboarding_providers.dart';
 import 'package:tahan_dulu/data/repositories/onboarding_repository.dart';
 
 /// Onboarding kosong: agregat harus tetap valid (nol + fallback).
-class _EmptyOnboardingRepo implements OnboardingRepository {
+class _EmptyOnboardingRepo extends InMemoryOnboardingRepository {
   OnboardingData? _data = const OnboardingData(
     monthlyIncome: 0,
     salaryDay: 1,

@@ -11,6 +11,7 @@ import '../../../../core/utils/rupiah_input_formatter.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_icons.dart';
 import '../../../../data/datasources/remote/api_client.dart';
+import '../../../../data/models/financial_account.dart';
 import '../../../../data/providers/account_providers.dart';
 import '../providers/accounts_controller.dart';
 
@@ -188,7 +189,11 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
             ),
           ),
         ),
-        data: (accounts) {
+        data: (allAccounts) {
+          // Akun Uang Tunai legacy tidak dapat digunakan untuk transfer dana
+          final accounts = allAccounts
+              .where((a) => a.account.type != AccountType.legacyCash)
+              .toList();
           if (accounts.length < 2) {
             return Center(
               child: ConstrainedBox(

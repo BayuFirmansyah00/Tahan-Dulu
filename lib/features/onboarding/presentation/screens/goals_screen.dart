@@ -19,7 +19,7 @@ String _categoryLabel(GoalCategory category) => goalCategoryLabel(category);
 
 String _formatMonth(DateTime date) => DateFormatter.monthYear(date);
 
-/// No.7 — Target Keuangan: kategori, nama, nominal, waktu, estimasi.
+/// Tahap 5 — Target Keuangan: kategori, nama, nominal, waktu, estimasi.
 /// Selesai -> Dashboard (No.8, placeholder tahap ini).
 class GoalsScreen extends ConsumerStatefulWidget {
   const GoalsScreen({super.key});
@@ -37,12 +37,17 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
   void initState() {
     super.initState();
     final state = ref.read(goalControllerProvider);
-    _nameController = TextEditingController(text: state.name);
+    _nameController = TextEditingController(text: state.customName);
     _amountController = TextEditingController(
       text: state.targetAmount > 0
           ? RupiahInputFormatter.format(state.targetAmount)
           : '',
     );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref.read(goalControllerProvider.notifier).loadExisting();
+      }
+    });
   }
 
   @override
@@ -76,8 +81,24 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
     if (ok && mounted) context.go(AppRoutes.onboardingPlan);
   }
 
+  void _skip() {
+    if (mounted) context.go(AppRoutes.onboardingPlan);
+  }
+
   @override
   Widget build(BuildContext context) {
+    ref.listen<GoalState>(goalControllerProvider, (prev, next) {
+      if (next.isOthers && _nameController.text != next.customName) {
+        _nameController.text = next.customName;
+      }
+      if (prev?.targetAmount != next.targetAmount && next.targetAmount > 0) {
+        final formatted = RupiahInputFormatter.format(next.targetAmount);
+        if (_amountController.text != formatted) {
+          _amountController.text = formatted;
+        }
+      }
+    });
+
     final state = ref.watch(goalControllerProvider);
     final notifier = ref.read(goalControllerProvider.notifier);
     final textTheme = Theme.of(context).textTheme;
@@ -101,7 +122,7 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
                         Row(
                           children: [
                             Text(
-                              AppStrings.onboardingStep4,
+                              AppStrings.onboardingStep5,
                               style: textTheme.labelSmall,
                             ),
                             const SizedBox(width: 12),
@@ -152,24 +173,26 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
                               ),
                           ],
                         ),
-                        const SizedBox(height: 16),
-                        AppTextField(
-                          controller: _nameController,
-                          label: AppStrings.goalName,
-                          hint: AppStrings.goalNameHint,
-                          onChanged: (v) {
-                            notifier.setName(v);
-                            _markTouched();
-                          },
-                        ),
-                        if (showNameError) ...[
-                          const SizedBox(height: 6),
-                          Text(
-                            AppStrings.goalNameRequired,
-                            style: textTheme.bodyMedium?.copyWith(
-                              color: Theme.of(context).colorScheme.error,
-                            ),
+                        if (state.isOthers) ...[
+                          const SizedBox(height: 16),
+                          AppTextField(
+                            controller: _nameController,
+                            label: AppStrings.goalName,
+                            hint: 'Contoh: Membeli Kamera',
+                            onChanged: (v) {
+                              notifier.setName(v);
+                              _markTouched();
+                            },
                           ),
+                          if (showNameError) ...[
+                            const SizedBox(height: 6),
+                            Text(
+                              AppStrings.goalNameRequired,
+                              style: textTheme.bodyMedium?.copyWith(
+                                color: Theme.of(context).colorScheme.error,
+                              ),
+                            ),
+                          ],
                         ],
                         const SizedBox(height: 12),
                         AppTextField(
@@ -196,8 +219,7 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
                           ),
                         ],
                         const SizedBox(height: 12),
-                        Text(AppStrings.goalDate,
-                            style: textTheme.labelLarge),
+                        Text(AppStrings.goalDate, style: textTheme.labelLarge),
                         const SizedBox(height: 8),
                         GestureDetector(
                           onTap: () => _pickDate(state.targetDate),
@@ -246,12 +268,26 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
                 ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
-                  child: AppButton(
-                    label: AppStrings.doneButton,
-                    isLoading: state.isSaving,
-                    onPressed:
-                        state.canContinue ? _finish : null,
-                  ),
+                  child: state.targetAmount > 0
+                      ? Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            AppButton(
+                              label: AppStrings.doneButton,
+                              isLoading: state.isSaving,
+                              onPressed: state.canContinue ? _finish : null,
+                            ),
+                            const SizedBox(height: 12),
+                            AppOutlineButton(
+                              label: AppStrings.setupLater,
+                              onPressed: state.isSaving ? null : _skip,
+                            ),
+                          ],
+                        )
+                      : AppButton(
+                          label: AppStrings.setupLater,
+                          onPressed: _skip,
+                        ),
                 ),
               ],
             ),
@@ -302,9 +338,7 @@ class _SummaryCard extends StatelessWidget {
               const SizedBox(width: 8),
               Flexible(
                 child: Text(
-                  '${CurrencyFormatter.formatCompact(
-                    state.monthlyContribution,
-                  )} ${AppStrings.perMonth}',
+                  '${CurrencyFormatter.formatCompact(state.monthlyContribution)} ${AppStrings.perMonth}',
                   textAlign: TextAlign.end,
                   overflow: TextOverflow.ellipsis,
                   style: textTheme.titleMedium?.copyWith(
@@ -365,8 +399,8 @@ class _GoalChip extends StatelessWidget {
             Text(
               label,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: selected ? Colors.white : AppColors.textPrimary,
-                  ),
+                color: selected ? Colors.white : AppColors.textPrimary,
+              ),
             ),
           ],
         ),

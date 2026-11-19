@@ -107,6 +107,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   ref.invalidate(transactionsProvider);
                   ref.invalidate(recentTransactionsProvider);
                   ref.invalidate(currentBudgetProvider);
+                  ref.invalidate(goalsProvider);
+                  ref.invalidate(recurringExpensesProvider);
                 },
               ),
               const OnboardingInvitationPopup(),
@@ -155,6 +157,10 @@ class _Body extends StatelessWidget {
               children: [
               _Header(data: data),
               const SizedBox(height: 12),
+              if (data.isBridgeMode) ...[
+                _BridgeModeBanner(data: data),
+                const SizedBox(height: 12),
+              ],
               GestureDetector(
                 onTap: () => context.push(AppRoutes.reports),
                 child: _HeroCard(data: data),
@@ -428,10 +434,32 @@ class _HeroCard extends StatelessWidget {
                                 style: textTheme.labelSmall?.copyWith(
                                   color:
                                       Colors.white.withValues(alpha: 0.9),
+                                  fontWeight: FontWeight.w700,
                                   letterSpacing: 0.4,
                                 ),
                               ),
                             ),
+                            if (!data.hasActiveBudget) ...[
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.25),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  'Estimasi',
+                                  style: textTheme.labelSmall?.copyWith(
+                                    color: Colors.white,
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                         const SizedBox(height: 6),
@@ -444,7 +472,9 @@ class _HeroCard extends StatelessWidget {
                             ),
                             maxLines: 1,
                             style: textTheme.displayLarge?.copyWith(
-                              color: data.isTodayOverspent || data.safeDaily < 0
+                              color: data.isDeficit ||
+                                      data.isTodayOverspent ||
+                                      data.safeDaily < 0
                                   ? const Color(0xFFFFD2D2)
                                   : Colors.white,
                               fontSize: 36,
@@ -452,7 +482,9 @@ class _HeroCard extends StatelessWidget {
                             ),
                           ),
                         ),
-                        if (data.isTodayOverspent || data.safeDaily < 0) ...[
+                        if (data.isDeficit ||
+                            data.isTodayOverspent ||
+                            data.safeDaily < 0) ...[
                           const SizedBox(height: 4),
                           Container(
                             padding: const EdgeInsets.symmetric(
@@ -464,7 +496,9 @@ class _HeroCard extends StatelessWidget {
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
-                              AppStrings.todayOverspentBadge,
+                              data.safeDaily < 0
+                                  ? AppStrings.todayDeficitBadge
+                                  : AppStrings.todayOverspentBadge,
                               style: textTheme.labelSmall?.copyWith(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w700,
@@ -473,62 +507,62 @@ class _HeroCard extends StatelessWidget {
                             ),
                           ),
                         ],
-                        if (data.safeDailyAverage > 0) ...[
-                          const SizedBox(height: 4),
-                          Text(
-                            '${AppStrings.dailyAverageLimitPrefix} ${CurrencyFormatter.formatCompact(data.safeDailyAverage)}${AppStrings.perDaySuffix}',
-                            style: textTheme.labelSmall?.copyWith(
-                              color: Colors.white.withValues(alpha: 0.9),
-                              fontWeight: FontWeight.w500,
-                              fontSize: 11,
-                            ),
-                          ),
-                        ],
-                        const SizedBox(height: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 5,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.18),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Flexible(
-                                child: Text(
-                                  '${AppStrings.remainingBudgetLabel} '
-                                  '${CurrencyFormatter.formatCompact(data.remainingFlexible)}',
-                                  overflow: TextOverflow.ellipsis,
-                                  style: textTheme.labelMedium?.copyWith(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 2),
-                              const Icon(
-                                Icons.chevron_right,
-                                color: Colors.white,
-                                size: 18,
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 6),
                         Text(
                           AppStrings.safeEstimateHint,
                           style: textTheme.labelSmall?.copyWith(
-                            color: Colors.white.withValues(alpha: 0.75),
-                            fontSize: 10,
+                            color: Colors.white.withValues(alpha: 0.85),
+                            fontSize: 11,
                           ),
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 4,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 5,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.18),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                '${AppStrings.remainingBudgetLabel} '
+                                '${CurrencyFormatter.formatCompact(data.remainingFlexible)} >',
+                                style: textTheme.labelMedium?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                            if (data.daysRemaining > 0)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 5,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  '${data.daysRemaining} hari lagi',
+                                  style: textTheme.labelSmall?.copyWith(
+                                    color: Colors.white.withValues(alpha: 0.9),
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(width: 100),
+                  const SizedBox(width: 12),
                   const Icon(
                     Icons.chevron_right,
                     color: Colors.white,
@@ -539,6 +573,85 @@ class _HeroCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _BridgeModeBanner extends StatelessWidget {
+  const _BridgeModeBanner({required this.data});
+
+  final DashboardData data;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.secondarySoft.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.secondary.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: const BoxDecoration(
+              color: AppColors.surface,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.timelapse_rounded,
+              color: AppColors.secondary,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.secondary,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        'Masa Penyesuaian Anggaran',
+                        style: textTheme.labelSmall?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Batas Transisi: ${CurrencyFormatter.formatCompact(data.periodBudgetCeiling ?? 0)}',
+                  style: textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Batas anggaran disesuaikan khusus untuk masa transisi hingga siklus baru dimulai.',
+                  style: textTheme.bodySmall?.copyWith(
+                    color: AppColors.textSecondary,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -558,6 +671,71 @@ class _BalanceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+
+    if (!data.hasAccounts) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: AppColors.surfaceVariant,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Icon(
+                Icons.account_balance_wallet_outlined,
+                color: AppColors.textSecondary,
+                size: 22,
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Belum ada akun keuangan',
+                    style: textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Tambahkan rekening atau e-wallet untuk mulai mencatat saldo',
+                    style: textTheme.bodySmall?.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppColors.primarySoft,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                'Tambah',
+                style: textTheme.labelSmall?.copyWith(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
@@ -565,76 +743,138 @@ class _BalanceCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AppColors.border),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Container(
-            width: 48,
-            height: 48,
-            alignment: Alignment.center,
-            child: Image.asset(
-              AppAssets.dashWallet,
-              width: 48,
-              height: 48,
-              fit: BoxFit.contain,
-              errorBuilder: (context, error, stackTrace) => Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: AppColors.secondarySoft,
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: const Icon(
-                  Icons.account_balance_wallet_outlined,
-                  color: AppColors.secondary,
-                  size: 22,
+          Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                alignment: Alignment.center,
+                child: Image.asset(
+                  AppAssets.dashWallet,
+                  width: 48,
+                  height: 48,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: AppColors.secondarySoft,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Icon(
+                      Icons.account_balance_wallet_outlined,
+                      color: AppColors.secondary,
+                      size: 22,
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  AppStrings.totalBalanceTitle,
-                  style: textTheme.labelMedium?.copyWith(
-                    color: AppColors.textSecondary,
-                    letterSpacing: 0.3,
-                  ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      AppStrings.totalBalanceTitle,
+                      style: textTheme.labelMedium?.copyWith(
+                        color: AppColors.textSecondary,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      obscured
+                          ? 'Rp••••••'
+                          : CurrencyFormatter.formatCompact(data.totalBalance),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    Text(
+                      AppStrings.balanceRecordedHint,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: textTheme.bodySmall?.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  obscured
-                      ? 'Rp••••••'
-                      : CurrencyFormatter.formatCompact(data.totalBalance),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
+              ),
+              IconButton(
+                icon: Icon(
+                  obscured ? Icons.visibility_off_outlined : Icons.visibility_outlined,
                 ),
-                Text(
-                  AppStrings.balanceRecordedHint,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: textTheme.bodySmall?.copyWith(
-                    color: AppColors.textSecondary,
+                tooltip: obscured
+                    ? AppStrings.showBalance
+                    : AppStrings.hideBalance,
+                color: AppColors.textSecondary,
+                onPressed: onToggleObscure,
+              ),
+            ],
+          ),
+          if (data.hasCashLegacy) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.backgroundWarm,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.border),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.primarySoft,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          'Siap Pakai: ${obscured ? 'Rp•••' : CurrencyFormatter.formatCompact(data.spendableBalance)}',
+                          style: textTheme.labelSmall?.copyWith(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF3CD),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          'Tunai Lama: ${obscured ? 'Rp•••' : CurrencyFormatter.formatCompact(data.cashLegacyBalance)}',
+                          style: textTheme.labelSmall?.copyWith(
+                            color: const Color(0xFF856404),
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
+                  const SizedBox(height: 4),
+                  Text(
+                    'Akun tunai lama dipertahankan. Rekonsiliasi ke rekening agar saldo tunai siap ditransaksikan.',
+                    style: textTheme.bodySmall?.copyWith(
+                      color: AppColors.textSecondary,
+                      fontSize: 10,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          IconButton(
-            icon: Icon(
-              obscured ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-            ),
-            tooltip: obscured
-                ? AppStrings.showBalance
-                : AppStrings.hideBalance,
-            color: AppColors.textSecondary,
-            onPressed: onToggleObscure,
-          ),
+          ],
         ],
       ),
     );

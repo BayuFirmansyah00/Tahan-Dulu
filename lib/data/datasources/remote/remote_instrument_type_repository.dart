@@ -28,14 +28,27 @@ class RemoteInstrumentTypeRepository implements InstrumentTypeRepository {
     return token;
   }
 
+  static const List<ApiInstrumentType> defaultTypes = [
+    ApiInstrumentType(id: 1, name: 'Bank', type: 'bank'),
+    ApiInstrumentType(id: 2, name: 'Bank Digital', type: 'digitalBank'),
+    ApiInstrumentType(id: 3, name: 'E-Wallet', type: 'ewallet'),
+    ApiInstrumentType(id: 4, name: 'Uang Tunai', type: 'cash'),
+  ];
+
   @override
   Future<List<ApiInstrumentType>> getInstrumentTypes() async {
-    final token = await _requireToken();
-    final body = await _client.get('/instrument-types', token: token);
-    final data = body['data'] as List? ?? const [];
-    return data
-        .cast<Map<String, dynamic>>()
-        .map((e) => ApiInstrumentType.fromJson(e))
-        .toList();
+    try {
+      final token = await _requireToken();
+      final body = await _client.get('/instrument-types', token: token);
+      final data = body['data'] as List? ?? const [];
+      final list = data
+          .cast<Map<String, dynamic>>()
+          .map((e) => ApiInstrumentType.fromJson(e))
+          .toList();
+      if (list.isNotEmpty) return list;
+      return defaultTypes;
+    } catch (_) {
+      return defaultTypes;
+    }
   }
 }

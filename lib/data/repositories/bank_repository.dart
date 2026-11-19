@@ -1,3 +1,4 @@
+import '../datasources/mock/mock_bank_catalog.dart';
 import '../models/api_bank.dart';
 
 /// Repository untuk data katalog bank (dari API Laravel / idn-finlogos).
@@ -6,68 +7,24 @@ abstract class BankRepository {
   Future<ApiBank> getBank(String idOrSlug);
 }
 
-/// Mock bank repository untuk pengujian offline.
+/// Mock bank repository untuk pengujian offline dan fallback offline mandiri.
+/// Menyediakan katalog lengkap 166 penyedia (143 Bank, 18 Bank Digital, 5 E-Wallet).
 class MockBankRepository implements BankRepository {
-  static const List<ApiBank> _sampleBanks = [
-    ApiBank(
-      id: 1,
-      slug: 'bca',
-      name: 'Bank Central Asia',
-      aliases: ['BCA', '014'],
-      category: 'bank-logo',
-      logoUrl: 'https://cdn.jsdelivr.net/npm/idn-finlogos@2/dist/icons/bca.svg',
-      isActive: true,
-    ),
-    ApiBank(
-      id: 2,
-      slug: 'mandiri',
-      name: 'Bank Mandiri',
-      aliases: ['Mandiri', '008', 'BMRI'],
-      category: 'bank-logo',
-      logoUrl: 'https://cdn.jsdelivr.net/npm/idn-finlogos@2/dist/icons/mandiri.svg',
-      isActive: true,
-    ),
-    ApiBank(
-      id: 3,
-      slug: 'bri',
-      name: 'Bank Rakyat Indonesia',
-      aliases: ['BRI', '002', 'BBRI'],
-      category: 'bank-logo',
-      logoUrl: 'https://cdn.jsdelivr.net/npm/idn-finlogos@2/dist/icons/bri.svg',
-      isActive: true,
-    ),
-    ApiBank(
-      id: 4,
-      slug: 'bni',
-      name: 'Bank Negara Indonesia',
-      aliases: ['BNI', '009', 'BBNI'],
-      category: 'bank-logo',
-      logoUrl: 'https://cdn.jsdelivr.net/npm/idn-finlogos@2/dist/icons/bni.svg',
-      isActive: true,
-    ),
-    ApiBank(
-      id: 5,
-      slug: 'jago',
-      name: 'Bank Jago',
-      aliases: ['Jago', '542', 'ARTO'],
-      category: 'bank-logo',
-      logoUrl: 'https://cdn.jsdelivr.net/npm/idn-finlogos@2/dist/icons/jago.svg',
-      isActive: true,
-    ),
-    ApiBank(
-      id: 6,
-      slug: 'seabank',
-      name: 'SeaBank Indonesia',
-      aliases: ['SeaBank', '535', 'Shopee'],
-      category: 'bank-logo',
-      logoUrl: 'https://cdn.jsdelivr.net/npm/idn-finlogos@2/dist/icons/seabank.svg',
-      isActive: true,
-    ),
-  ];
+  static final List<ApiBank> _sampleBanks = kMasterBankCatalog;
 
   @override
   Future<List<ApiBank>> getBanks({String? search, String? category}) async {
     var list = _sampleBanks.where((b) => b.isActive).toList();
+    if (category != null && category.trim().isNotEmpty) {
+      final cleanCat = category.trim().toLowerCase();
+      list = list.where((b) {
+        if (cleanCat == 'bank') {
+          return b.category.toLowerCase() == 'bank' ||
+              b.category.toLowerCase() == 'bank-logo';
+        }
+        return b.category.toLowerCase() == cleanCat;
+      }).toList();
+    }
     if (search != null && search.trim().isNotEmpty) {
       list = list.where((b) => b.matchesSearch(search)).toList();
     }
@@ -82,4 +39,3 @@ class MockBankRepository implements BankRepository {
     );
   }
 }
-

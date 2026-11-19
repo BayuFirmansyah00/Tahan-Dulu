@@ -15,10 +15,7 @@ import '../../../../data/models/recurring_expense.dart';
 import '../providers/expenses_controller.dart';
 
 /// Visual per kategori: aset 3D lokal + fallback outline + tint.
-/// needs: rumah. transport: mobil. bills: kwitansi. shopping: tas.
-/// others: tanpa aset cocok -> outline generik yang konsisten.
-({String? asset, IconData icon, Color foreground, Color background})
-    _visualOf(
+({String? asset, IconData icon, Color foreground, Color background}) _visualOf(
   ExpenseCategory category,
 ) {
   switch (category) {
@@ -75,28 +72,61 @@ String _categoryLabel(ExpenseCategory category) {
   }
 }
 
-/// No.5 — Pengeluaran Rutin: daftar, tambah, ubah, hapus, ringkasan.
-/// Sukses simpan -> No.7 (/onboarding/goals, placeholder tahap ini).
-class ExpensesScreen extends ConsumerWidget {
+String _placeholderForCategory(ExpenseCategory category) {
+  switch (category) {
+    case ExpenseCategory.needs:
+      return 'Belanja bulanan';
+    case ExpenseCategory.transport:
+      return 'Bensin motor';
+    case ExpenseCategory.bills:
+      return 'Listrik rumah';
+    case ExpenseCategory.shopping:
+      return 'Kebutuhan pribadi';
+    case ExpenseCategory.others:
+      return 'Nama pengeluaran';
+  }
+}
+
+/// Tahap 4 — Pengeluaran rutin (Opsional):
+/// Pengguna dapat mencatat tagihan/kebutuhan bulanan, atau memilih "Atur Nanti".
+/// Sukses simpan / Atur Nanti -> tahap 5 (/onboarding/goals).
+class ExpensesScreen extends ConsumerStatefulWidget {
   const ExpensesScreen({super.key});
 
-  Future<void> _continue(BuildContext context, WidgetRef ref) async {
+  @override
+  ConsumerState<ExpensesScreen> createState() => _ExpensesScreenState();
+}
+
+class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref.read(expensesControllerProvider.notifier).loadExisting();
+      }
+    });
+  }
+
+  Future<void> _continue() async {
     final ok = await ref.read(expensesControllerProvider.notifier).save();
-    if (ok && context.mounted) {
+    if (ok && mounted) {
       context.push(AppRoutes.onboardingGoals);
     }
   }
 
-  Future<void> _openDialog(
-    BuildContext context,
-    WidgetRef ref, [
-    RecurringExpense? expense,
-  ]) async {
-    final result = await showDialog<_ExpenseDialogResult>(
+  void _skip() {
+    context.push(AppRoutes.onboardingGoals);
+  }
+
+  Future<void> _openSheet([RecurringExpense? expense]) async {
+    final result = await showModalBottomSheet<_ExpenseSheetResult>(
       context: context,
-      builder: (context) => _ExpenseDialog(expense: expense),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _ExpenseBottomSheet(expense: expense),
     );
-    if (result == null) return;
+    if (result == null || !mounted) return;
     final notifier = ref.read(expensesControllerProvider.notifier);
     if (result.deleted && result.expense != null) {
       notifier.removeExpense(result.expense!.id);
@@ -109,8 +139,34 @@ class ExpensesScreen extends ConsumerWidget {
     }
   }
 
+  Future<void> _deleteExpense(RecurringExpense expense) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text(AppStrings.deleteExpenseTitle),
+        content: Text('Hapus pengeluaran "${expense.name}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text(AppStrings.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: const Text(AppStrings.deleteExpenseConfirm),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && mounted) {
+      ref.read(expensesControllerProvider.notifier).removeExpense(expense.id);
+    }
+  }
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final state = ref.watch(expensesControllerProvider);
     final textTheme = Theme.of(context).textTheme;
 
@@ -128,10 +184,11 @@ class ExpensesScreen extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Progress bar (4 dari 5 = 80%)
                         Row(
                           children: [
                             Text(
-                              AppStrings.onboardingStep3,
+                              AppStrings.onboardingStep4,
                               style: textTheme.labelSmall,
                             ),
                             const SizedBox(width: 12),
@@ -139,7 +196,7 @@ class ExpensesScreen extends ConsumerWidget {
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(8),
                                 child: const LinearProgressIndicator(
-                                  value: 0.75,
+                                  value: 0.8,
                                   minHeight: 8,
                                   backgroundColor: AppColors.primarySoft,
                                   valueColor: AlwaysStoppedAnimation<Color>(
@@ -158,53 +215,140 @@ class ExpensesScreen extends ConsumerWidget {
                         const SizedBox(height: 8),
                         Text(
                           AppStrings.expensesSubtitle,
-                          style: textTheme.bodyMedium,
-                        ),
-                        const SizedBox(height: 20),
-                        for (final expense in state.expenses) ...[
-                          _ExpenseCard(
-                            expense: expense,
-                            onTap: () =>
-                                _openDialog(context, ref, expense),
+                          style: textTheme.bodyMedium?.copyWith(
+                            color: AppColors.textSecondary,
                           ),
-                          const SizedBox(height: 12),
-                        ],
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: TextButton.icon(
-                            onPressed: () => _openDialog(context, ref),
+                        ),
+                        const SizedBox(height: 24),
+
+                        // Tampilan Berdasarkan Keberadaan Data
+                        if (state.expenses.isEmpty) ...[
+                          // Empty State Modern Minimalis (Tanpa Error Merah)
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 32,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.surface,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: AppColors.border),
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Container(
+                                  width: 64,
+                                  height: 64,
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.primarySoft,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.receipt_long_outlined,
+                                    size: 32,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  AppStrings.emptyExpensesTitle,
+                                  style: textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  AppStrings.emptyExpensesSubtitle,
+                                  textAlign: TextAlign.center,
+                                  style: textTheme.bodyMedium?.copyWith(
+                                    color: AppColors.textSecondary,
+                                    height: 1.4,
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+                                OutlinedButton.icon(
+                                  onPressed: () => _openSheet(),
+                                  icon: const Icon(Icons.add, size: 20),
+                                  label: const Text(AppStrings.addExpenseAction),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: AppColors.primary,
+                                    side: const BorderSide(color: AppColors.primary),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 24,
+                                      vertical: 12,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ] else ...[
+                          // Total Card Informatif
+                          _TotalCard(total: state.total),
+                          const SizedBox(height: 20),
+
+                          // Daftar Pengeluaran Rutin
+                          for (final expense in state.expenses) ...[
+                            _ExpenseCard(
+                              expense: expense,
+                              onTap: () => _openSheet(expense),
+                              onDelete: () => _deleteExpense(expense),
+                            ),
+                            const SizedBox(height: 12),
+                          ],
+                          const SizedBox(height: 8),
+
+                          // Tombol Tambah Pengeluaran Lain
+                          OutlinedButton.icon(
+                            onPressed: () => _openSheet(),
                             icon: const Icon(Icons.add, size: 18),
-                            label: const Text(AppStrings.addExpense),
-                            style: TextButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 4,
-                                vertical: 8,
+                            label: const Text(AppStrings.addAnotherExpenseAction),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppColors.primary,
+                              side: const BorderSide(color: AppColors.primary),
+                              minimumSize: const Size(double.infinity, 48),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
                               ),
                             ),
                           ),
-                        ),
-                        if (state.expenses.isEmpty) ...[
-                          const SizedBox(height: 4),
-                          Text(
-                            AppStrings.noExpenseError,
-                            style: textTheme.bodyMedium?.copyWith(
-                              color: Theme.of(context).colorScheme.error,
-                            ),
-                          ),
                         ],
-                        const SizedBox(height: 12),
-                        _TotalCard(total: state.total),
                       ],
                     ),
                   ),
                 ),
+
+                // Tombol Navigasi Bawah (Responsif & SafeArea)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
-                  child: AppButton(
-                    label: AppStrings.continueButton,
-                    isLoading: state.isSaving,
-                    onPressed:
-                        state.canContinue ? () => _continue(context, ref) : null,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (state.expenses.isNotEmpty) ...[
+                        AppButton(
+                          label: AppStrings.continueButton,
+                          isLoading: state.isSaving,
+                          onPressed: _continue,
+                        ),
+                        const SizedBox(height: 12),
+                        AppOutlineButton(
+                          label: AppStrings.setupLater,
+                          onPressed: state.isSaving ? null : _skip,
+                        ),
+                      ] else ...[
+                        AppButton(
+                          label: AppStrings.setupLater,
+                          onPressed: state.isSaving ? null : _skip,
+                        ),
+                      ],
+                    ],
                   ),
                 ),
               ],
@@ -216,12 +360,17 @@ class ExpensesScreen extends ConsumerWidget {
   }
 }
 
-/// Card pengeluaran: icon kategori, nama, nominal, chevron edit.
+/// Card pengeluaran: icon kategori, nama, nominal, dan aksi edit/hapus.
 class _ExpenseCard extends StatelessWidget {
-  const _ExpenseCard({required this.expense, required this.onTap});
+  const _ExpenseCard({
+    required this.expense,
+    required this.onTap,
+    required this.onDelete,
+  });
 
   final RecurringExpense expense;
   final VoidCallback onTap;
+  final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -229,54 +378,92 @@ class _ExpenseCard extends StatelessWidget {
     final visual = _visualOf(expense.category);
     final asset = visual.asset;
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Row(
-          children: [
-            if (asset != null)
-              Image.asset(
-                asset,
-                width: 48,
-                height: 48,
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) =>
-                    _FallbackTile(visual: visual),
-              )
-            else
-              _FallbackTile(visual: visual),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(expense.name, style: textTheme.titleMedium),
-                  const SizedBox(height: 2),
-                  Text(
-                    _categoryLabel(expense.category),
-                    style: textTheme.labelSmall,
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                if (asset != null)
+                  Image.asset(
+                    asset,
+                    width: 44,
+                    height: 44,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) =>
+                        _FallbackTile(visual: visual),
+                  )
+                else
+                  _FallbackTile(visual: visual),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        expense.name,
+                        style: textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: visual.background,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              _categoryLabel(expense.category),
+                              style: textTheme.labelSmall?.copyWith(
+                                color: visual.foreground,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '${CurrencyFormatter.formatCompact(expense.monthlyAmount)} ${AppStrings.perMonth}',
+                            style: textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    CurrencyFormatter.formatCompact(expense.monthlyAmount),
-                    style: textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.edit_outlined, size: 20),
+                  color: AppColors.textSecondary,
+                  tooltip: AppStrings.editExpenseTitle,
+                  onPressed: onTap,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline, size: 20),
+                  color: Theme.of(context).colorScheme.error,
+                  tooltip: AppStrings.deleteExpense,
+                  onPressed: onDelete,
+                ),
+              ],
             ),
-            const Icon(
-              Icons.chevron_right,
-              color: AppColors.textSecondary,
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -287,23 +474,19 @@ class _ExpenseCard extends StatelessWidget {
 class _FallbackTile extends StatelessWidget {
   const _FallbackTile({required this.visual});
 
-  final ({
-    String? asset,
-    IconData icon,
-    Color foreground,
-    Color background,
-  }) visual;
+  final ({String? asset, IconData icon, Color foreground, Color background})
+  visual;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 48,
-      height: 48,
+      width: 44,
+      height: 44,
       decoration: BoxDecoration(
         color: visual.background,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
       ),
-      child: Icon(visual.icon, color: visual.foreground, size: 24),
+      child: Icon(visual.icon, color: visual.foreground, size: 22),
     );
   }
 }
@@ -327,7 +510,9 @@ class _TotalCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   AppStrings.expenseTotal,
-                  style: textTheme.bodyMedium,
+                  style: textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
@@ -358,7 +543,9 @@ class _TotalCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   AppStrings.expenseSummaryInfo,
-                  style: textTheme.bodyMedium,
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
                 ),
               ),
             ],
@@ -369,24 +556,24 @@ class _TotalCard extends StatelessWidget {
   }
 }
 
-class _ExpenseDialogResult {
-  const _ExpenseDialogResult({required this.deleted, this.expense});
+class _ExpenseSheetResult {
+  const _ExpenseSheetResult({required this.deleted, this.expense});
 
   final bool deleted;
   final RecurringExpense? expense;
 }
 
-/// Dialog tambah/ubah: kategori, nama, nominal + Simpan/Hapus.
-class _ExpenseDialog extends StatefulWidget {
-  const _ExpenseDialog({this.expense});
+/// Modal bottom sheet modern untuk menambah / mengedit pengeluaran rutin.
+class _ExpenseBottomSheet extends StatefulWidget {
+  const _ExpenseBottomSheet({this.expense});
 
   final RecurringExpense? expense;
 
   @override
-  State<_ExpenseDialog> createState() => _ExpenseDialogState();
+  State<_ExpenseBottomSheet> createState() => _ExpenseBottomSheetState();
 }
 
-class _ExpenseDialogState extends State<_ExpenseDialog> {
+class _ExpenseBottomSheetState extends State<_ExpenseBottomSheet> {
   late ExpenseCategory _category;
   late final TextEditingController _nameController;
   late final TextEditingController _amountController;
@@ -415,23 +602,29 @@ class _ExpenseDialogState extends State<_ExpenseDialog> {
     super.dispose();
   }
 
+  void _onCategoryChanged(ExpenseCategory cat) {
+    setState(() {
+      _category = cat;
+    });
+  }
+
   void _save() {
     final name = _nameController.text.trim();
     final amount = RupiahInputFormatter.parse(_amountController.text);
+
     setState(() {
       _nameError = name.isEmpty ? AppStrings.expenseNameRequired : null;
-      _amountError =
-          amount <= 0 ? AppStrings.expenseAmountRequired : null;
+      _amountError = amount <= 0 ? AppStrings.expenseAmountRequired : null;
     });
+
     if (_nameError != null || _amountError != null) return;
 
     final existing = widget.expense;
     Navigator.of(context).pop(
-      _ExpenseDialogResult(
+      _ExpenseSheetResult(
         deleted: false,
         expense: RecurringExpense(
-          id: existing?.id ??
-              'exp-${DateTime.now().millisecondsSinceEpoch}',
+          id: existing?.id ?? 'exp-${DateTime.now().millisecondsSinceEpoch}',
           name: name,
           category: _category,
           monthlyAmount: amount,
@@ -447,18 +640,16 @@ class _ExpenseDialogState extends State<_ExpenseDialog> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text(AppStrings.deleteExpenseTitle),
-        content: Text(
-          '“${expense.name}” akan dihapus dari daftar.',
-        ),
+        content: Text('Hapus pengeluaran "${expense.name}"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
             child: const Text(AppStrings.cancel),
           ),
-          TextButton(
+          FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(
-              foregroundColor: Theme.of(context).colorScheme.error,
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
             ),
             child: const Text(AppStrings.deleteExpenseConfirm),
           ),
@@ -467,7 +658,7 @@ class _ExpenseDialogState extends State<_ExpenseDialog> {
     );
     if (confirmed == true && mounted) {
       Navigator.of(context).pop(
-        _ExpenseDialogResult(deleted: true, expense: expense),
+        _ExpenseSheetResult(deleted: true, expense: expense),
       );
     }
   }
@@ -475,124 +666,186 @@ class _ExpenseDialogState extends State<_ExpenseDialog> {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    return AlertDialog(
-      title: Text(
-        isEdit ? AppStrings.editExpenseTitle : AppStrings.addExpenseTitle,
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final isNameFilled = _nameController.text.trim().isNotEmpty;
+    final amount = RupiahInputFormatter.parse(_amountController.text);
+    final isValid = isNameFilled && amount > 0;
+
+    return Container(
+      decoration: const BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(AppStrings.expenseCategory, style: textTheme.labelLarge),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
+      child: SafeArea(
+        child: Padding(
+          padding: EdgeInsets.only(bottom: bottomInset),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                for (final category in ExpenseCategory.values)
-                  _CategoryChip(
-                    label: _categoryLabel(category),
-                    selected: _category == category,
-                    onTap: () => setState(() => _category = category),
+                // Drag handle
+                Center(
+                  child: Container(
+                    margin: const EdgeInsets.only(top: 12, bottom: 8),
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppColors.border,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
+                ),
+
+                // Header
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 12, 16, 8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              isEdit
+                                  ? AppStrings.editExpenseSheetTitle
+                                  : AppStrings.addExpenseSheetTitle,
+                              style: textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              AppStrings.expenseSheetSubtitle,
+                              style: textTheme.bodyMedium?.copyWith(
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (isEdit)
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline),
+                          color: Theme.of(context).colorScheme.error,
+                          tooltip: AppStrings.deleteExpense,
+                          onPressed: _delete,
+                        ),
+                    ],
+                  ),
+                ),
+                const Divider(),
+
+                // Form Body
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Pilihan Kategori
+                      Text(
+                        AppStrings.expenseCategory,
+                        style: textTheme.labelLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          for (final cat in ExpenseCategory.values)
+                            ChoiceChip(
+                              label: Text(_categoryLabel(cat)),
+                              avatar: Icon(
+                                _visualOf(cat).icon,
+                                size: 16,
+                                color: _category == cat
+                                    ? Colors.white
+                                    : AppColors.textSecondary,
+                              ),
+                              selected: _category == cat,
+                              onSelected: (_) => _onCategoryChanged(cat),
+                              selectedColor: AppColors.primary,
+                              labelStyle: TextStyle(
+                                color: _category == cat
+                                    ? Colors.white
+                                    : AppColors.textPrimary,
+                                fontWeight: _category == cat
+                                    ? FontWeight.w600
+                                    : FontWeight.normal,
+                              ),
+                              backgroundColor: AppColors.surfaceVariant,
+                              side: BorderSide(
+                                color: _category == cat
+                                    ? AppColors.primary
+                                    : AppColors.border,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Nama Pengeluaran
+                      AppTextField(
+                        controller: _nameController,
+                        label: AppStrings.expenseName,
+                        hint: _placeholderForCategory(_category),
+                        validator: (_) => _nameError,
+                        onChanged: (_) => setState(() {}),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Nominal Bulanan
+                      AppTextField(
+                        controller: _amountController,
+                        label: AppStrings.expenseAmountLabel,
+                        hint: '0',
+                        prefixText: 'Rp ',
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [RupiahInputFormatter()],
+                        validator: (_) => _amountError,
+                        onChanged: (_) => setState(() {}),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Tombol Aksi
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () => Navigator.of(context).pop(),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: const Text(AppStrings.cancel),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            flex: 2,
+                            child: AppButton(
+                              label: AppStrings.saveExpenseAction,
+                              onPressed: isValid ? _save : null,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
-            const SizedBox(height: 12),
-            AppTextField(
-              controller: _nameController,
-              label: AppStrings.expenseName,
-              hint: AppStrings.expenseNameHint,
-            ),
-            if (_nameError != null) ...[
-              const SizedBox(height: 6),
-              _DialogError(text: _nameError!),
-            ],
-            const SizedBox(height: 12),
-            AppTextField(
-              controller: _amountController,
-              label: AppStrings.expenseAmount,
-              hint: '0',
-              prefixText: 'Rp ',
-              keyboardType: TextInputType.number,
-              inputFormatters: [RupiahInputFormatter()],
-            ),
-            if (_amountError != null) ...[
-              const SizedBox(height: 6),
-              _DialogError(text: _amountError!),
-            ],
-          ],
+          ),
         ),
       ),
-      actions: [
-        if (isEdit)
-          TextButton(
-            onPressed: _delete,
-            style: TextButton.styleFrom(
-              foregroundColor: Theme.of(context).colorScheme.error,
-            ),
-            child: const Text(AppStrings.deleteExpense),
-          ),
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text(AppStrings.cancel),
-        ),
-        TextButton(
-          onPressed: _save,
-          child: const Text(AppStrings.save),
-        ),
-      ],
-    );
-  }
-}
-
-class _CategoryChip extends StatelessWidget {
-  const _CategoryChip({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: selected ? AppColors.primary : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: selected ? AppColors.primary : AppColors.border,
-          ),
-        ),
-        child: Text(
-          label,
-          style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                color: selected ? Colors.white : AppColors.textPrimary,
-              ),
-        ),
-      ),
-    );
-  }
-}
-
-class _DialogError extends StatelessWidget {
-  const _DialogError({required this.text});
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: Theme.of(context).colorScheme.error,
-          ),
     );
   }
 }

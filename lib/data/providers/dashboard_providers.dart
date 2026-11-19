@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/utils/finance_math.dart';
 import '../datasources/remote/api_config.dart';
 import '../models/dashboard_data.dart';
+import '../models/financial_account.dart';
 import '../models/financial_goal.dart';
 import '../models/purchase_consideration.dart';
 import '../models/transaction_model.dart';
@@ -105,80 +106,185 @@ final dashboardDataProvider = FutureProvider<DashboardData>((ref) async {
     );
   }
 
-   final expensesTotal =
-      totalExpensesOf(expenses.map((e) => e.monthlyAmount));
-  final goalContribution = goal == null || goal.deadline == null
+  // Pembedaan Saldo Siap Transaksi (hanya Bank, Bank Digital, E-Wallet) vs Uang Tunai (Cash legacy)
+  final spendableAccounts =
+      accounts.where((a) => a.type != AccountType.legacyCash).toList();
+  final cashAccounts =
+      accounts.where((a) => a.type == AccountType.legacyCash).toList();
+  final double spendableBalance =
+      spendableAccounts.fold(0.0, (sum, a) => sum + a.balance);
+  final double cashLegacyBalance =
+      cashAccounts.fold(0.0, (sum, a) => sum + a.balance);
+  final bool hasCashLegacy = cashLegacyBalance > 0 || cashAccounts.isNotEmpty;
+  final int spendableAccountsCount = spendableAccounts.length;
+
+  double calculateExpensesTotal() {
+    if (ApiConfig.useRemoteApi) {
+      try {
+        final apiExpenses = ref.watch(recurringExpensesProvider).asData?.value;
+        if (apiExpenses != null && apiExpenses.isNotEmpty) {
+          return apiExpenses
+              .where((e) => e.type.toLowerCase() == 'expense' && e.isActive)
+              .fold<double>(0.0, (sum, e) => sum + e.amount);
+        }
+      } catch (_) {}
+    }
+    return totalExpensesOf(expenses.map((e) => e.monthlyAmount));
+  }
+
+  final expensesTotal = calculateExpensesTotal();
+
+  final effectiveGoal = (goal?.deadline != null)
+      ? goal
+      : (repoGoals.isNotEmpty ? repoGoals.first : goal);
+  final goalContribution = effectiveGoal == null || effectiveGoal.deadline == null
       ? 0.0
-      : (goal.targetAmount - goal.currentAmount) /
-          monthsUntil(goal.deadline!);
+      : (effectiveGoal.targetAmount - effectiveGoal.currentAmount) /
+          monthsUntil(effectiveGoal.deadline!);
   final remaining = remainingFlexible(
     income: income,
     expenses: expensesTotal,
     goalContribution: goalContribution,
   );
 
-  // Model Gabungan Uang Aman Hari Ini:
-  // 1. Sisa jatah hari ini (nilai utama dashboard)
-  // 2. Batas rata-rata harian terbaru (informasi pendukung)
+  // Model Batas Belanja Harian:
+  // Kategori belanja mencakup Kebutuhan Pokok + Pengeluaran Bebas.
+  // Investasi, tabungan, dana darurat, dan transfer internal BUKAN pengeluaran belanja harian.
   double safeDaily;
   double safeDailyAverage = 0;
   double todayAllowance = 0;
   double todaySpent = 0;
   bool isTodayOverspent = false;
+  bool isDeficit = false;
+  bool hasActiveBudget = false;
+  bool isBridgeMode = false;
+  int daysRemaining = 1;
+  DateTime? periodEnd;
+  double? periodBudgetCeiling;
+  double spendableAllocation = 0;
+  double effectiveRemainingFlexible = remaining;
 
   bool inCurrentDay(DateTime date) =>
       date.year == now.year && date.month == now.month && date.day == now.day;
 
-  bool isPokokCategory(String category) {
+  bool isSpendableCategory(String? category) {
+    if (category == null) return true;
     final cat = category.toLowerCase().trim();
-    return const [
-      'food', 'makanan', 'makanan & minuman',
-      'transport', 'transportasi',
-      'bills', 'tagihan', 'utilitas',
-      'education', 'pendidikan',
-      'kebutuhan_pokok', 'kebutuhan pokok',
-    ].contains(cat);
+    if (isTransferCategory(cat)) return false;
+    if (const [
+      'investasi',
+      'investment',
+      'investasi_tabungan',
+      'investasi & tabungan',
+      'tabungan',
+      'dana_darurat',
+      'dana darurat',
+      'darurat',
+    ].contains(cat)) {
+      return false;
+    }
+    return true;
   }
 
   if (ApiConfig.useRemoteApi) {
     try {
       final budget = await ref.watch(currentBudgetProvider.future);
       if (budget != null) {
+        hasActiveBudget = true;
         safeDaily = budget.effectiveTodayRemaining.toDouble();
         safeDailyAverage = budget.safeDailySpending.toDouble();
         todayAllowance = budget.effectiveTodayAllowance.toDouble();
         todaySpent = budget.effectiveTodaySpent.toDouble();
         isTodayOverspent = budget.isTodayOverspent || safeDaily < 0;
+        isDeficit = budget.isDeficit || safeDaily < 0;
+        final pokAmount = (budget.kebutuhanPokok?.amount ?? 0).toDouble();
+        final bebAmount = (budget.pengeluaranBebas?.amount ?? 0).toDouble();
+        spendableAllocation = pokAmount + bebAmount;
+        final pokRem = (budget.kebutuhanPokok?.remaining ?? 0).toDouble();
+        final bebRem = (budget.pengeluaranBebas?.remaining ?? 0).toDouble();
+        effectiveRemainingFlexible = pokRem + bebRem;
+        isBridgeMode = budget.isTransition;
+        daysRemaining = budget.daysRemaining;
+        periodEnd = budget.periodEnd;
+        if (isBridgeMode) {
+          periodBudgetCeiling = budget.monthlyIncome.toDouble();
+        }
       } else {
-        safeDailyAverage = safeDailySpending(remaining: remaining);
-        final todayPokokSpent = transactions
-            .where((t) => inCurrentDay(t.date) && t.type == TransactionType.expense && (t.category == null || isPokokCategory(t.category!)))
+        hasActiveBudget = false;
+        final salaryDay = authUser?.salaryDay ?? onboarding?.salaryDay ?? 25;
+        final daysRem = budgetPeriodDaysRemaining(salaryDay, now: now);
+        daysRemaining = daysRem;
+        periodEnd = budgetPeriodEnd(salaryDay, now: now);
+        spendableAllocation = income * 0.55;
+        final todaySpendableSpent = transactions
+            .where((t) =>
+                inCurrentDay(t.date) &&
+                t.type == TransactionType.expense &&
+                isSpendableCategory(t.category))
             .fold(0.0, (sum, t) => sum + t.amount);
-        todayAllowance = safeDailyAverage;
-        todaySpent = todayPokokSpent;
-        safeDaily = todayAllowance - todaySpent;
+        final baseline = dailySpendingBaseline(
+          spendableAllocation: spendableAllocation,
+          spentBeforeToday: 0,
+          daysRemaining: daysRem,
+        );
+        todayAllowance = baseline.toDouble();
+        todaySpent = todaySpendableSpent;
+        safeDaily = dailySpendingRemaining(
+          baselineToday: todayAllowance,
+          spentToday: todaySpent,
+        );
+        safeDailyAverage = baseline.toDouble();
         isTodayOverspent = safeDaily < 0;
+        isDeficit = safeDaily < 0;
+        effectiveRemainingFlexible =
+            spendableAllocation - todaySpendableSpent;
       }
     } catch (_) {
-      safeDailyAverage = safeDailySpending(remaining: remaining);
-      final todayPokokSpent = transactions
-          .where((t) => inCurrentDay(t.date) && t.type == TransactionType.expense && (t.category == null || isPokokCategory(t.category!)))
+      hasActiveBudget = false;
+      final salaryDay = authUser?.salaryDay ?? onboarding?.salaryDay ?? 25;
+      final daysRem = budgetPeriodDaysRemaining(salaryDay, now: now);
+      daysRemaining = daysRem;
+      periodEnd = budgetPeriodEnd(salaryDay, now: now);
+      spendableAllocation = income * 0.55;
+      final todaySpendableSpent = transactions
+          .where((t) =>
+              inCurrentDay(t.date) &&
+              t.type == TransactionType.expense &&
+              isSpendableCategory(t.category))
           .fold(0.0, (sum, t) => sum + t.amount);
-      todayAllowance = safeDailyAverage;
-      todaySpent = todayPokokSpent;
-      safeDaily = todayAllowance - todaySpent;
+      final baseline = dailySpendingBaseline(
+        spendableAllocation: spendableAllocation,
+        spentBeforeToday: 0,
+        daysRemaining: daysRem,
+      );
+      todayAllowance = baseline.toDouble();
+      todaySpent = todaySpendableSpent;
+      safeDaily = dailySpendingRemaining(
+        baselineToday: todayAllowance,
+        spentToday: todaySpent,
+      );
+      safeDailyAverage = baseline.toDouble();
       isTodayOverspent = safeDaily < 0;
+      isDeficit = safeDaily < 0;
+      effectiveRemainingFlexible = spendableAllocation - todaySpendableSpent;
     }
   } else {
-    // Mode Mock: hitung jatah awal dan kurangi pengeluaran kebutuhan pokok hari ini
+    hasActiveBudget = false;
+    // Mode Mock: hitung jatah awal dan kurangi pengeluaran belanja hari ini
     safeDailyAverage = safeDailySpending(remaining: remaining);
     final todayPokokSpent = transactions
-        .where((t) => inCurrentDay(t.date) && t.type == TransactionType.expense && (t.category == null || isPokokCategory(t.category!)))
+        .where((t) =>
+            inCurrentDay(t.date) &&
+            t.type == TransactionType.expense &&
+            isSpendableCategory(t.category))
         .fold(0.0, (sum, t) => sum + t.amount);
     todayAllowance = safeDailyAverage;
     todaySpent = todayPokokSpent;
     safeDaily = todayAllowance - todaySpent;
     isTodayOverspent = safeDaily < 0;
+    isDeficit = safeDaily < 0;
+    spendableAllocation = remaining;
+    effectiveRemainingFlexible = remaining;
   }
 
   // Maksimal 2 goals dari backend.
@@ -197,19 +303,31 @@ final dashboardDataProvider = FutureProvider<DashboardData>((ref) async {
     monthlyIncome: income,
     expensesTotal: expensesTotal,
     goalContribution: goalContribution,
-    remainingFlexible: remaining,
+    remainingFlexible: effectiveRemainingFlexible,
     safeDaily: safeDaily,
     safeDailyAverage: safeDailyAverage,
     todayRemaining: safeDaily,
     todayAllowance: todayAllowance,
     todaySpent: todaySpent,
     isTodayOverspent: isTodayOverspent,
+    hasActiveBudget: hasActiveBudget,
+    spendableAllocation: spendableAllocation,
+    isDeficit: isDeficit,
     totalBalance: totalBalance,
+    spendableBalance: spendableBalance,
+    cashLegacyBalance: cashLegacyBalance,
+    hasCashLegacy: hasCashLegacy,
+    isBridgeMode: isBridgeMode,
+    daysRemaining: daysRemaining,
+    periodEnd: periodEnd,
+    periodBudgetCeiling: periodBudgetCeiling,
+    spendableAccountsCount: spendableAccountsCount,
     actualMonthExpense: actualMonthExpense,
     actualMonthIncome: actualMonthIncome,
     goals: goals,
     pendingCount: pending,
     hasUnread: notifications.any((n) => !n.isRead),
+    accountsCount: accounts.length,
   );
 });
 

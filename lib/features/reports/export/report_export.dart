@@ -54,3 +54,26 @@ Future<ReportExportResult> _tryPrint(
     return ReportExportResult(ok: false, message: '$reason; print: $e');
   }
 }
+
+/// Bagikan laporan dalam format Excel (.xlsx).
+/// Menggunakan sheet berbagi sistem (Printing.sharePdf).
+Future<ReportExportResult> exportReportExcel({
+  required Uint8List bytes,
+  required String filename,
+  Future<bool> Function(Uint8List bytes, String filename)? shareWith,
+}) async {
+  if (bytes.isEmpty) {
+    return const ReportExportResult(ok: false, message: 'empty');
+  }
+  try {
+    final share = shareWith ??
+        ((b, name) => Printing.sharePdf(bytes: b, filename: name));
+    if (await share(bytes, filename)) {
+      return const ReportExportResult(ok: true);
+    }
+    return const ReportExportResult(ok: false, message: 'share unavailable');
+  } catch (e) {
+    return ReportExportResult(ok: false, message: 'share: $e');
+  }
+}
+

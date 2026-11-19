@@ -1,6 +1,16 @@
 import '../datasources/mock/mock_data.dart';
 import '../models/user_model.dart';
 
+class PasswordResetRequestInfo {
+  const PasswordResetRequestInfo({
+    required this.expiresInSeconds,
+    required this.resendAfterSeconds,
+  });
+
+  final int expiresInSeconds;
+  final int resendAfterSeconds;
+}
+
 // ---------------------------------------------------------------------------
 // Auth repository. UI hanya bergantung pada interface ini.
 // Mock di bawah nanti diganti Laravel API tanpa mengubah UI.
@@ -20,13 +30,25 @@ abstract class AuthRepository {
 
   Future<UserModel> signInWithGoogle();
 
+  Future<PasswordResetRequestInfo> requestPasswordReset({
+    required String email,
+  });
+
+  Future<String> verifyPasswordResetOtp({
+    required String email,
+    required String otp,
+  });
+
+  Future<void> resetPassword({
+    required String resetToken,
+    required String password,
+    required String passwordConfirmation,
+  });
+
   /// Perbarui profil sesi (nama + bio). Email tidak dapat diubah.
   /// Mock: tersimpan in-memory selama sesi, hilang saat aplikasi dimulai
   /// ulang. Tidak menyentuh data keuangan.
-  Future<UserModel> updateProfile({
-    required String name,
-    String? bio,
-  });
+  Future<UserModel> updateProfile({required String name, String? bio});
 
   /// Perbarui informasi keuangan pengguna (monthly_income + salary_day + is_onboarded)
   /// secara permanen di backend.
@@ -38,11 +60,21 @@ abstract class AuthRepository {
 
   /// Keluar sesi. Mock: hanya mereset status sesi, data keuangan tetap ada.
   Future<void> logout();
+
+  /// Hapus akun secara permanen.
+  /// Akun email/password: verifikasi kata sandi.
+  /// Akun Google-only: verifikasi autentikasi ulang via Google ID Token.
+  Future<void> deleteAccount({String? password, String? googleIdToken});
 }
 
 /// Mock authentication — simulasi login/register tanpa backend.
 class MockAuthRepository implements AuthRepository {
   UserModel _current = MockData.user;
+
+  @override
+  Future<void> deleteAccount({String? password, String? googleIdToken}) async {
+    _current = MockData.user;
+  }
 
   @override
   Future<UserModel> loginWithEmail({
@@ -75,10 +107,31 @@ class MockAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<UserModel> updateProfile({
-    required String name,
-    String? bio,
+  Future<PasswordResetRequestInfo> requestPasswordReset({
+    required String email,
   }) {
+    throw UnsupportedError('Reset password membutuhkan backend Laravel.');
+  }
+
+  @override
+  Future<String> verifyPasswordResetOtp({
+    required String email,
+    required String otp,
+  }) {
+    throw UnsupportedError('Verifikasi OTP membutuhkan backend Laravel.');
+  }
+
+  @override
+  Future<void> resetPassword({
+    required String resetToken,
+    required String password,
+    required String passwordConfirmation,
+  }) {
+    throw UnsupportedError('Reset password membutuhkan backend Laravel.');
+  }
+
+  @override
+  Future<UserModel> updateProfile({required String name, String? bio}) {
     final trimmed = name.trim();
     if (trimmed.isEmpty) throw ArgumentError('Nama wajib diisi.');
     _current = _current.copyWith(

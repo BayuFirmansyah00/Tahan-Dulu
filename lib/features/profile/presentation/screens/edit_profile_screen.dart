@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/routing/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_button.dart';
@@ -26,8 +27,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   late final TextEditingController _nameController;
   late final TextEditingController _emailController;
   late final TextEditingController _bioController;
-  late final TextEditingController _monthlyIncomeController;
-  late final TextEditingController _salaryDayController;
   bool _saving = false;
   bool _bound = false;
 
@@ -37,8 +36,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _nameController = TextEditingController();
     _emailController = TextEditingController();
     _bioController = TextEditingController();
-    _monthlyIncomeController = TextEditingController();
-    _salaryDayController = TextEditingController();
   }
 
   @override
@@ -46,8 +43,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _nameController.dispose();
     _emailController.dispose();
     _bioController.dispose();
-    _monthlyIncomeController.dispose();
-    _salaryDayController.dispose();
     super.dispose();
   }
 
@@ -61,12 +56,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       _nameController.text = user.name;
       _emailController.text = user.email ?? '';
       _bioController.text = user.bio ?? '';
-        _monthlyIncomeController.text = user.monthlyIncome != null
-            ? user.monthlyIncome!.toString()
-            : '';
-        _salaryDayController.text = user.salaryDay != null
-            ? user.salaryDay!.toString()
-            : '';
     });
   }
 
@@ -91,27 +80,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         ),
       );
       if (ok) context.pop();
-    } finally {
-      if (mounted) setState(() => _saving = false);
-    }
-  }
-
-  Future<void> _saveFinancialInfo() async {
-    setState(() => _saving = true);
-    try {
-      final ok = await ref
-          .read(editProfileControllerProvider.notifier)
-          .saveFinancialInfo();
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            ok
-                ? AppStrings.editProfileFinancialSaved
-                : AppStrings.editProfileFinancialFailed,
-          ),
-        ),
-      );
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -311,35 +279,62 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 14),
-                      AppTextField(
-                        controller: _monthlyIncomeController,
-                        label: AppStrings.editProfileMonthlyIncome,
-                        hint: AppStrings.editProfileMonthlyIncomeHint,
-                        keyboardType: TextInputType.number,
-                        onChanged: (v) {
-                          final parsed = int.tryParse(v);
-                          ref
-                              .read(editProfileControllerProvider.notifier)
-                              .setMonthlyIncome(parsed);
-                          setState(() {});
-                        },
-                      ),
-                      const SizedBox(height: 14),
-                      AppTextField(
-                        controller: _salaryDayController,
-                        label: AppStrings.editProfileSalaryDay,
-                        hint: AppStrings.editProfileSalaryDayHint,
-                        keyboardType: TextInputType.number,
-                        onChanged: (v) {
-                          final parsed = int.tryParse(v);
-                          ref
-                              .read(editProfileControllerProvider.notifier)
-                              .setSalaryDay(parsed);
-                          setState(() {});
-                        },
-                      ),
                       const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: AppColors.primarySoft,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: AppColors.primary.withValues(alpha: 0.2),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.account_balance_wallet_outlined,
+                                  color: AppColors.primary,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Gaji & Siklus Anggaran',
+                                  style: textTheme.titleSmall?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.primaryDark,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              'Kelola perubahan penghasilan dan tanggal gajian agar siklus budget dan batas belanja harian tetap konsisten.',
+                              style: textTheme.bodySmall?.copyWith(
+                                color: AppColors.textPrimary,
+                                fontSize: 12,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            OutlinedButton.icon(
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: AppColors.primaryDark,
+                                side: const BorderSide(color: AppColors.primary),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                              icon: const Icon(Icons.tune_outlined, size: 16),
+                              label: const Text('Buka Pengaturan Keuangan'),
+                              onPressed: () =>
+                                  context.push(AppRoutes.financialSettings),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
                       AppButton(
                         label: AppStrings.editProfileSave,
                         isLoading: _saving,
@@ -349,12 +344,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       AppOutlineButton(
                         label: AppStrings.editProfileCancel,
                         onPressed: _saving ? null : () => context.pop(),
-                      ),
-                      const SizedBox(height: 12),
-                      AppButton(
-                        label: AppStrings.editProfileSaveFinancial,
-                        isLoading: _saving,
-                        onPressed: _saving ? null : _saveFinancialInfo,
                       ),
                     ],
                   ),

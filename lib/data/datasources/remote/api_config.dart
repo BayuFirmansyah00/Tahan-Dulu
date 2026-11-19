@@ -1,16 +1,14 @@
 /// Konfigurasi koneksi API backend Laravel.
 ///
-/// Base URL dan mode remote diisi via `--dart-define` agar dapat di-override
-/// saat build produksi atau pengujian:
-///   flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000/api
+/// Base URL dan mode remote diatur via `--dart-define` agar fleksibel untuk
+/// berbagai environment:
+/// - Android Emulator: `http://10.0.2.2:8000/api` (default)
+/// - Perangkat Fisik (LAN Wi-Fi): `flutter run --dart-define=API_BASE_URL=http://<IP_LAPTOP>:8000/api`
+/// - Production: `flutter build apk --dart-define=API_BASE_URL=https://tahandulu.kreasikan.site/api`
 ///
-/// Defaultnya menggunakan backend Laravel agar aplikasi dapat dijalankan
-/// secara normal dengan data asli. Aktifkan mock lokal via
-/// --dart-define=USE_REMOTE_API=false untuk development tanpa backend.
+/// Nonaktifkan remote via `--dart-define=USE_REMOTE_API=false` untuk pengujian mock.
 abstract final class ApiConfig {
-  /// Contoh emulator Android: http://10.0.2.2:8000/api (host loopback).
-  /// Contoh perangkat fisik: http://192.168.1.9:8000/api (IP LAN PC Laptop).
-  /// Produksi: gunakan domain production (mis. https://api.tahandulu.id/api).
+  /// Base URL backend. Default menunjuk ke loopback Android emulator standard.
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
     defaultValue: 'http://10.0.2.2:8000/api',

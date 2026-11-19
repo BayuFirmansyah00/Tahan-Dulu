@@ -4,9 +4,13 @@ abstract final class AppAssets {
   static const String _illustrations = 'assets/illustrations';
   static const String _icons = 'assets/icons';
   static const String _branding = 'assets/branding';
+  static const String _animations = 'assets/animations';
 
   /// Logo TahanDulu — dipakai di Splash, Login, Register.
   static const String logo = '$_branding/tahan_dulu_logo.png';
+
+  /// Animasi Lottie splash screen resmi TahanDulu (512x512, 2.5s, 30fps).
+  static const String splashAnimation = '$_animations/tahan_dulu_splash.json';
 
   // TODO: ganti ke '$_illustrations/login_illustration.png' saat file
   // tersedia. Sementara memakai income_setup.png yang artwork-nya sama

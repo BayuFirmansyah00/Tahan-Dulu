@@ -1,10 +1,10 @@
 import 'package:equatable/equatable.dart';
 
-/// Jenis akun keuangan. v1: tanpa transfer antar rekening kompleks.
+/// Jenis akun keuangan.
 ///
-/// Tepat tiga jenis (Tahap 16): Bank, Bank Digital, E-Wallet.
-/// Kategori target Investasi tidak terpengaruh (tujuan, bukan akun).
-enum AccountType { bank, digitalBank, ewallet }
+/// Tiga jenis aktif: Bank, Bank Digital, E-Wallet.
+/// legacyCash dipertahankan semata untuk kompatibilitas membaca akun historis pengguna lama.
+enum AccountType { bank, digitalBank, ewallet, legacyCash }
 
 /// Akun keuangan (BCA, Bank Jago, DANA).
 class FinancialAccount extends Equatable {
@@ -19,6 +19,9 @@ class FinancialAccount extends Equatable {
     this.bankSlug,
     this.bankName,
     this.bankLogoUrl,
+    this.monthlyAdminFee = 0,
+    this.adminFeeDay,
+    this.adminFeeEnabled = false,
   });
 
   final String id;
@@ -46,6 +49,47 @@ class FinancialAccount extends Equatable {
   /// URL logo bank dari CDN idn-finlogos.
   final String? bankLogoUrl;
 
+  /// Biaya administrasi bulanan (Rp). Contoh: 15000.
+  final double monthlyAdminFee;
+
+  /// Tanggal jadwal pemotongan (1–31). Contoh: 5.
+  final int? adminFeeDay;
+
+  /// Status apakah akun ini memiliki biaya administrasi bulanan.
+  final bool adminFeeEnabled;
+
+  /// Penanda apakah akun ini merupakan akun Uang Tunai (Cash legacy).
+  bool get isLegacyCash => type == AccountType.legacyCash;
+
+  /// Penanda apakah akun ini dapat digunakan untuk transaksi baru (Bank, Digital Bank, E-Wallet).
+  bool get isSpendable => type != AccountType.legacyCash;
+
+  /// Hitung estimasi tanggal jadwal pemotongan berikutnya.
+  /// Menerapkan aturan penyesuaian: jika tanggal tidak ada di bulan tersebut (cth. 31 di Februari),
+  /// otomatis menggunakan hari terakhir bulan tersebut.
+  DateTime? getNextAdminFeeDate([DateTime? fromDate]) {
+    if (!adminFeeEnabled || adminFeeDay == null) return null;
+    final day = adminFeeDay!;
+    if (day < 1 || day > 31) return null;
+
+    final base = fromDate ?? DateTime.now();
+    // 1. Coba bulan berjalan
+    final daysInCurrentMonth = DateTime(base.year, base.month + 1, 0).day;
+    final effectiveDayCurrent = day > daysInCurrentMonth ? daysInCurrentMonth : day;
+    final candidateCurrent = DateTime(base.year, base.month, effectiveDayCurrent);
+
+    final todayStart = DateTime(base.year, base.month, base.day);
+    if (!candidateCurrent.isBefore(todayStart)) {
+      return candidateCurrent;
+    }
+
+    // 2. Bulan berikutnya
+    final nextMonthDate = DateTime(base.year, base.month + 1, 1);
+    final daysInNextMonth = DateTime(nextMonthDate.year, nextMonthDate.month + 1, 0).day;
+    final effectiveDayNext = day > daysInNextMonth ? daysInNextMonth : day;
+    return DateTime(nextMonthDate.year, nextMonthDate.month, effectiveDayNext);
+  }
+
   FinancialAccount copyWith({
     String? id,
     String? name,
@@ -57,6 +101,9 @@ class FinancialAccount extends Equatable {
     String? bankSlug,
     String? bankName,
     String? bankLogoUrl,
+    double? monthlyAdminFee,
+    int? adminFeeDay,
+    bool? adminFeeEnabled,
   }) {
     return FinancialAccount(
       id: id ?? this.id,
@@ -69,6 +116,9 @@ class FinancialAccount extends Equatable {
       bankSlug: bankSlug ?? this.bankSlug,
       bankName: bankName ?? this.bankName,
       bankLogoUrl: bankLogoUrl ?? this.bankLogoUrl,
+      monthlyAdminFee: monthlyAdminFee ?? this.monthlyAdminFee,
+      adminFeeDay: adminFeeDay ?? this.adminFeeDay,
+      adminFeeEnabled: adminFeeEnabled ?? this.adminFeeEnabled,
     );
   }
 
@@ -84,5 +134,8 @@ class FinancialAccount extends Equatable {
         bankSlug,
         bankName,
         bankLogoUrl,
+        monthlyAdminFee,
+        adminFeeDay,
+        adminFeeEnabled,
       ];
 }

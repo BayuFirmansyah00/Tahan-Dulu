@@ -58,6 +58,39 @@ class _FakePurchaseDecisionRepository implements PurchaseDecisionRepository {
   }
 
   @override
+  Future<Map<String, dynamic>> getPurchaseAnalysis(String id) async {
+    return {
+      'flexible_budget': 1500000.0,
+      'remaining_pengeluaran_bebas': 1500000.0,
+      'safe_daily_spending': 50000.0,
+      'today_remaining': 50000.0,
+      'has_accounts': true,
+      'accounts_count': 1,
+      'total_liquid_balance': 3000000.0,
+      'budget_sufficient': true,
+      'balance_sufficient': true,
+      'is_bridge_mode': false,
+      'recommendation': 'ready',
+      'recommendation_title': 'Kondisi Finansial Mendukung',
+      'recommendation_reason': 'Budget dan saldo mencukupi.',
+    };
+  }
+
+  @override
+  Future<Map<String, dynamic>> recordPurchase(
+    String id, {
+    required int accountId,
+    String? information,
+    String? idempotencyKey,
+  }) async {
+    final idx = _items.indexWhere((e) => e.id == id);
+    if (idx != -1) {
+      _items[idx] = _items[idx].copyWith(status: ConsiderationStatus.bought);
+    }
+    return {'success': true};
+  }
+
+  @override
   void clear() {
     _items.clear();
   }

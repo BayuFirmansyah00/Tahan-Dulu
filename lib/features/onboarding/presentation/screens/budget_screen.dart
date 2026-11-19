@@ -12,11 +12,27 @@ import '../providers/budget_controller.dart';
 /// Halaman 3 Onboarding — Atur Anggaran Bulanan (50/5/30/15).
 /// Menetapkan alokasi anggaran awal pengguna tanpa membuat transaksi atau
 /// mengubah saldo rekening.
-class BudgetScreen extends ConsumerWidget {
+class BudgetScreen extends ConsumerStatefulWidget {
   const BudgetScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<BudgetScreen> createState() => _BudgetScreenState();
+}
+
+class _BudgetScreenState extends ConsumerState<BudgetScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref.read(budgetControllerProvider.notifier).loadExisting();
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ref = this.ref;
     final state = ref.watch(budgetControllerProvider);
     final controller = ref.read(budgetControllerProvider.notifier);
     final textTheme = Theme.of(context).textTheme;
@@ -40,11 +56,11 @@ class BudgetScreen extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Progress bar 3 dari 3
+                        // Tahap 3 dari 5: anggaran bulanan.
                         Row(
                           children: [
                             Text(
-                              '3 dari 3',
+                              AppStrings.onboardingStep3,
                               style: textTheme.labelSmall?.copyWith(
                                 color: AppColors.textSecondary,
                                 fontWeight: FontWeight.w600,
@@ -55,7 +71,7 @@ class BudgetScreen extends ConsumerWidget {
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(8),
                                 child: const LinearProgressIndicator(
-                                  value: 1.0,
+                                  value: 0.6,
                                   minHeight: 8,
                                   backgroundColor: AppColors.primarySoft,
                                   valueColor: AlwaysStoppedAnimation<Color>(
@@ -178,10 +194,9 @@ class BudgetScreen extends ConsumerWidget {
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
                             color: state.isExceeding100
-                                ? Theme.of(context)
-                                    .colorScheme
-                                    .error
-                                    .withValues(alpha: 0.08)
+                                ? Theme.of(
+                                    context,
+                                  ).colorScheme.error.withValues(alpha: 0.08)
                                 : AppColors.surface,
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
@@ -210,8 +225,8 @@ class BudgetScreen extends ConsumerWidget {
                                       color: state.isExceeding100
                                           ? Theme.of(context).colorScheme.error
                                           : (state.totalPercentage == 100.0
-                                              ? AppColors.primary
-                                              : AppColors.textPrimary),
+                                                ? AppColors.primary
+                                                : AppColors.textPrimary),
                                     ),
                                   ),
                                 ],
@@ -272,17 +287,18 @@ class BudgetScreen extends ConsumerWidget {
                                     Icon(
                                       Icons.error_outline,
                                       size: 16,
-                                      color:
-                                          Theme.of(context).colorScheme.error,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.error,
                                     ),
                                     const SizedBox(width: 6),
                                     Expanded(
                                       child: Text(
                                         'Total alokasi melebihi 100%. Kurangi persentase kategori lain.',
                                         style: textTheme.bodySmall?.copyWith(
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .error,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.error,
                                           fontWeight: FontWeight.w500,
                                         ),
                                       ),
@@ -312,24 +328,29 @@ class BudgetScreen extends ConsumerWidget {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
                   child: AppButton(
-                    label: 'Selesaikan & Masuk Dashboard',
+                    label: AppStrings.continueButton,
                     isLoading: state.isSaving,
                     onPressed: state.isValid && !state.isSaving
                         ? () async {
-                            final router = GoRouter.of(context);
                             final messenger = ScaffoldMessenger.of(context);
                             final ok = await controller.saveBudget();
                             if (ok) {
-                              router.go(AppRoutes.dashboard);
+                              if (context.mounted) {
+                                context.push(AppRoutes.onboardingExpenses);
+                              }
                             } else {
-                              messenger.showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    state.errorMessage ??
-                                        AppStrings.saveFailed,
+                              if (context.mounted) {
+                                messenger.showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      ref
+                                              .read(budgetControllerProvider)
+                                              .errorMessage ??
+                                          AppStrings.saveFailed,
+                                    ),
                                   ),
-                                ),
-                              );
+                                );
+                              }
                             }
                           }
                         : null,
@@ -412,7 +433,10 @@ class _CategoryAllocationCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: accentColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),

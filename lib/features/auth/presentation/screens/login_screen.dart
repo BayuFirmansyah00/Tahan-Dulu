@@ -42,7 +42,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       // Cek status onboarding: pengguna yang belum selesai diarahkan ke onboarding,
       // pengguna yang sudah selesai langsung masuk Dashboard.
       final isOnboarded = next.user?.isOnboarded ?? false;
-      context.go(isOnboarded ? AppRoutes.dashboard : AppRoutes.onboardingSalary);
+      context.go(
+        isOnboarded ? AppRoutes.dashboard : AppRoutes.onboardingSalary,
+      );
     }
   }
 
@@ -147,6 +149,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               const SizedBox(height: 6),
               _FieldError(text: authState.fieldErrors!['password']!.first),
             ],
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: authState.isLoading
+                    ? null
+                    : () => context.push(AppRoutes.forgotPassword),
+                child: const Text('Lupa Password?'),
+              ),
+            ),
             const SizedBox(height: 20),
             AppButton(
               label: AppStrings.loginWithEmail,
@@ -246,8 +257,8 @@ class _FieldError extends StatelessWidget {
     return Text(
       text,
       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: Theme.of(context).colorScheme.error,
-          ),
+        color: Theme.of(context).colorScheme.error,
+      ),
     );
   }
 }

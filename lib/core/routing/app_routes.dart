@@ -5,6 +5,9 @@ abstract final class AppRoutes {
   static const String splash = '/';
   static const String login = '/login';
   static const String register = '/register';
+  static const String forgotPassword = '/forgot-password';
+  static const String verifyResetOtp = '/forgot-password/verify';
+  static const String resetPassword = '/forgot-password/reset';
   static const String onboarding = '/onboarding';
   static const String onboardingSalary = '/onboarding/salary';
   static const String onboardingInstruments = '/onboarding/instruments';
@@ -51,6 +54,7 @@ abstract final class AppRoutes {
   static const String notificationSettings = '/notifications/settings';
   static const String notificationSavings = '/notifications/savings';
   static const String settings = '/settings';
+  static const String financialSettings = '/settings/financial';
   static const String profileEdit = '/settings/edit';
   static const String profileApp = '/settings/app';
   static const String profileSecurity = '/settings/security';

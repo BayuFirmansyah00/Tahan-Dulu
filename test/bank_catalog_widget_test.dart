@@ -344,10 +344,10 @@ void main() {
 
       // Katalog Bank should be visible
       expect(find.text('Katalog Bank'), findsOneWidget);
-      expect(find.text('Hubungkan Bank (Opsional)'), findsOneWidget);
+      expect(find.text('Pilih dari Katalog Bank'), findsOneWidget);
 
       // Tap to pick bank
-      await tester.tap(find.text('Hubungkan Bank (Opsional)'));
+      await tester.tap(find.text('Pilih dari Katalog Bank'));
       await tester.pumpAndSettle();
 
       // Select BCA
@@ -373,8 +373,8 @@ void main() {
       await tester.tap(find.text('E-Wallet').last);
       await tester.pumpAndSettle();
 
-      // Katalog Bank should be hidden
-      expect(find.text('Katalog Bank'), findsNothing);
+      // Katalog E-Wallet should now be visible
+      expect(find.text('Katalog E-Wallet'), findsOneWidget);
     });
   });
 
@@ -431,8 +431,8 @@ void main() {
       await tester.tap(find.text('E-Wallet').last);
       await tester.pumpAndSettle();
 
-      // Katalog Bank is hidden
-      expect(find.text('Katalog Bank'), findsNothing);
+      // Katalog E-Wallet is shown
+      expect(find.text('Katalog E-Wallet'), findsOneWidget);
     });
   });
 }

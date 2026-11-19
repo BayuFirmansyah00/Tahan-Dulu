@@ -5,7 +5,8 @@ library;
 /// Jumlah bulan kalender dari [now] menuju [date], minimal 1.
 int monthsUntil(DateTime date, {DateTime? now}) {
   final current = now ?? DateTime.now();
-  final months = (date.year - current.year) * 12 +
+  final months =
+      (date.year - current.year) * 12 +
       (date.month - current.month) +
       (date.day >= current.day ? 0 : -1);
   return months < 1 ? 1 : months;
@@ -53,8 +54,7 @@ double accountBalanceOf({
   required double initial,
   required double income,
   required double expense,
-}) =>
-    initial + income - expense;
+}) => initial + income - expense;
 
 /// Uang keluar transaksi pengeluaran = nominal + biaya (R7).
 /// Contoh: 100.000 + 2.500 = 102.500.
@@ -71,10 +71,9 @@ double netTransactionAmount({
   required bool isExpense,
   required double amount,
   required double fee,
-}) =>
-    isExpense
-        ? expenseOutflow(amount: amount, fee: fee)
-        : incomeInflow(amount: amount, fee: fee);
+}) => isExpense
+    ? expenseOutflow(amount: amount, fee: fee)
+    : incomeInflow(amount: amount, fee: fee);
 
 /// Estimasi mundur target (hari) bila membeli seharga [price] dengan
 /// kontribusi bulanan [monthlyContribution]. Null bila tak terhitung.
@@ -89,10 +88,7 @@ int? targetDelayDays({
 
 /// Persentase harga terhadap anggaran fleksibel (0..1+, bukan persen).
 /// Null bila anggaran tidak tersedia. Bukan nasihat finansial.
-double? purchaseBudgetShare({
-  required double price,
-  required double flexible,
-}) {
+double? purchaseBudgetShare({required double price, required double flexible}) {
   if (price < 0 || flexible <= 0) return null;
   return price / flexible;
 }
@@ -119,8 +115,75 @@ double remainingFlexible({
   required double income,
   required double expenses,
   required double goalContribution,
-}) =>
-    income - expenses - goalContribution;
+}) => income - expenses - goalContribution;
+
+/// Menghitung tanggal akhir periode anggaran berdasarkan tanggal gajian.
+/// Selaras 1:1 dengan MonthlyBudget::calculatePeriod di Laravel.
+DateTime budgetPeriodEnd(int salaryDay, {DateTime? now}) {
+  final current = now ?? DateTime.now();
+  final today = DateTime(current.year, current.month, current.day);
+  final clampedDay = salaryDay.clamp(1, 31);
+
+  final daysInThisMonth = DateTime(today.year, today.month + 1, 0).day;
+  final effectiveDayThisMonth = clampedDay > daysInThisMonth
+      ? daysInThisMonth
+      : clampedDay;
+
+  if (today.day >= effectiveDayThisMonth) {
+    final nextMonthYear = today.month == 12 ? today.year + 1 : today.year;
+    final nextMonth = today.month == 12 ? 1 : today.month + 1;
+    final daysInNextMonth = DateTime(nextMonthYear, nextMonth + 1, 0).day;
+    final effectiveDayNextMonth = clampedDay > daysInNextMonth
+        ? daysInNextMonth
+        : clampedDay;
+    return DateTime(
+      nextMonthYear,
+      nextMonth,
+      effectiveDayNextMonth,
+    ).subtract(const Duration(days: 1));
+  } else {
+    return DateTime(
+      today.year,
+      today.month,
+      effectiveDayThisMonth,
+    ).subtract(const Duration(days: 1));
+  }
+}
+
+/// Menghitung rentang tanggal periode anggaran berdasarkan tanggal gajian
+/// dan mengembalikan jumlah hari tersisa hingga akhir periode (inklusif hari ini).
+/// Selaras 1:1 dengan MonthlyBudget::calculatePeriod di Laravel.
+int budgetPeriodDaysRemaining(int salaryDay, {DateTime? now}) {
+  final current = now ?? DateTime.now();
+  final today = DateTime(current.year, current.month, current.day);
+  final periodEndDay = budgetPeriodEnd(salaryDay, now: today);
+
+  if (today.isAfter(periodEndDay)) {
+    return 1;
+  }
+  return periodEndDay.difference(today).inDays + 1;
+}
+
+/// Batas belanja awal hari ini (baseline sebelum transaksi hari ini):
+/// floor((spendableAllocation - spentBeforeToday) / daysRemaining)
+int dailySpendingBaseline({
+  required double spendableAllocation,
+  required double spentBeforeToday,
+  required int daysRemaining,
+}) {
+  final safeDays = daysRemaining < 1 ? 1 : daysRemaining;
+  final remainingSpendable = spendableAllocation - spentBeforeToday;
+  return (remainingSpendable / safeDays).floor();
+}
+
+/// Sisa batas belanja hari ini setelah dikurangi belanja hari ini:
+/// baselineToday - spentToday
+double dailySpendingRemaining({
+  required double baselineToday,
+  required double spentToday,
+}) {
+  return baselineToday - spentToday;
+}
 
 /// Aman harian = sisa fleksibel / hari dalam bulan ini,
 /// dibulatkan ke bawah per Rp1.000 (konservatif).

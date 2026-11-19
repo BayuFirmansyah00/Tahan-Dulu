@@ -66,6 +66,11 @@ class BankLogoBadge extends StatelessWidget {
     }
     if (name == null || name.trim().isEmpty) return null;
     final lower = name.trim().toLowerCase();
+    if (lower.contains('gopay') || lower.contains('go-pay')) return 'gopay';
+    if (lower.contains('ovo')) return 'ovo';
+    if (lower.contains('dana')) return 'dana';
+    if (lower.contains('shopeepay') || lower.contains('shopee pay')) return 'shopeepay';
+    if (lower.contains('linkaja') || lower.contains('link aja')) return 'linkaja';
     if (lower.contains('bca digital') || lower.contains('blu')) return 'blu-bca';
     if (lower.contains('bca syariah')) return 'bca-syariah';
     if (lower.contains('bca')) return 'bca';
@@ -111,6 +116,49 @@ class BankLogoBadge extends StatelessWidget {
     if (slug != null && slug.isNotEmpty) {
       final s = slug.toLowerCase().trim();
       switch (s) {
+        case 'gopay':
+          return 'GPAY';
+        case 'ovo':
+          return 'OVO';
+        case 'dana':
+          return 'DANA';
+        case 'shopeepay':
+        case 'shopee-pay':
+          return 'SPAY';
+        case 'linkaja':
+          return 'LINK';
+        case 'astra-pay':
+        case 'astrapay':
+          return 'ASTRA';
+        case 'i-saku':
+        case 'isaku':
+          return 'ISAKU';
+        case 'doku':
+          return 'DOKU';
+        case 'kaspro':
+          return 'KASPRO';
+        case 'jakone-pay':
+        case 'jakone':
+          return 'JAKONE';
+        case 'motion-pay':
+        case 'motionpay':
+          return 'MOTION';
+        case 'netzme':
+          return 'NETZ';
+        case 'paydia':
+          return 'PAYDIA';
+        case 'pospay':
+          return 'POS';
+        case 'speedcash':
+          return 'SPEED';
+        case 'truemoney':
+          return 'TRUE';
+        case 'yukk':
+          return 'YUKK';
+        case 'krom':
+          return 'KROM';
+        case 'digibank':
+          return 'DBS';
         case 'bca':
         case 'bca-syariah':
           return 'BCA';

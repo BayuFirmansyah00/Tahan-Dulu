@@ -186,14 +186,14 @@ void main() {
     test('MockBankRepository provides search & fallback', () async {
       final mockRepo = MockBankRepository();
       final all = await mockRepo.getBanks();
-      expect(all.length, 6);
+      expect(all.length, greaterThanOrEqualTo(170));
 
       final filtered = await mockRepo.getBanks(search: 'jago');
       expect(filtered.length, 1);
       expect(filtered.first.slug, 'jago');
 
       final bca = await mockRepo.getBank('bca');
-      expect(bca.name, 'Bank Central Asia');
+      expect(bca.name, 'BCA');
     });
   });
 

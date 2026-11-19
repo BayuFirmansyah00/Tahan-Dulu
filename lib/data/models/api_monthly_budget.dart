@@ -73,6 +73,7 @@ class ApiMonthlyBudget extends Equatable {
     this.todayAllowance,
     this.todaySpent,
     this.isTodayOverspent = false,
+    this.isTransition = false,
   });
 
   final int id;
@@ -99,6 +100,7 @@ class ApiMonthlyBudget extends Equatable {
 
   /// Menandakan apakah pengeluaran hari ini telah melebihi jatah hari ini.
   final bool isTodayOverspent;
+  final bool isTransition;
 
   /// Getter dengan fallback aman ke [safeDailySpending] bila belum ada field baru
   int get effectiveTodayRemaining => todayRemaining ?? safeDailySpending;
@@ -150,6 +152,7 @@ class ApiMonthlyBudget extends Equatable {
       todayAllowance: todayAllow,
       todaySpent: todaySpent,
       isTodayOverspent: isOverspent,
+      isTransition: json['is_transition'] == true,
     );
   }
 
@@ -170,5 +173,6 @@ class ApiMonthlyBudget extends Equatable {
         todayAllowance,
         todaySpent,
         isTodayOverspent,
+        isTransition,
       ];
 }

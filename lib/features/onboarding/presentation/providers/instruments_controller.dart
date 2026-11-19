@@ -3,14 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../data/models/financial_instrument.dart';
 import '../../../../data/providers/onboarding_providers.dart';
-import '../../../../data/datasources/remote/remote_onboarding_repository.dart';
 
 /// State No.4: daftar instrumen + pilihan sebagai source of truth.
 class InstrumentsState extends Equatable {
-  const InstrumentsState({
-    required this.instruments,
-    this.isSaving = false,
-  });
+  const InstrumentsState({required this.instruments, this.isSaving = false});
 
   final List<FinancialInstrument> instruments;
   final bool isSaving;
@@ -48,8 +44,7 @@ class InstrumentsState extends Equatable {
 class InstrumentsController extends Notifier<InstrumentsState> {
   @override
   InstrumentsState build() {
-    final saved =
-        ref.read(onboardingRepositoryProvider).getOnboardingData();
+    final saved = ref.read(onboardingRepositoryProvider).getOnboardingData();
     return InstrumentsState(
       instruments: List.of(saved?.financialInstruments ?? const []),
     );
@@ -68,7 +63,13 @@ class InstrumentsController extends Notifier<InstrumentsState> {
     state = state.copyWith(
       instruments: [
         for (final e in state.instruments)
-          if (e.id == id) e.copyWith(monthlyAdminFee: fee) else e,
+          if (e.id == id)
+            e.copyWith(
+              monthlyAdminFee: fee,
+              adminFeeEnabled: fee > 0 ? true : e.adminFeeEnabled,
+            )
+          else
+            e,
       ],
     );
   }
@@ -82,14 +83,30 @@ class InstrumentsController extends Notifier<InstrumentsState> {
     );
   }
 
+  void updateAdminFeeEnabled(String id, bool enabled) {
+    state = state.copyWith(
+      instruments: [
+        for (final e in state.instruments)
+          if (e.id == id)
+            e.copyWith(
+              adminFeeEnabled: enabled,
+              monthlyAdminFee: enabled ? e.monthlyAdminFee : 0,
+            )
+          else
+            e,
+      ],
+    );
+  }
+
   /// Tambah instrumen — langsung disimpan ke backend via repository.
   /// Instrumen hanya masuk ke state setelah backend mengembalikan ID asli.
   /// Tidak ada instrumen palsu atau saldo fiktif.
   Future<void> addInstrument(FinancialInstrument instrument) async {
     state = state.copyWith(isSaving: true);
     try {
-      final saved =
-          await ref.read(onboardingRepositoryProvider).addInstrument(instrument);
+      final saved = await ref
+          .read(onboardingRepositoryProvider)
+          .addInstrument(instrument);
       state = state.copyWith(
         instruments: [...state.instruments, saved],
         isSaving: false,
@@ -102,12 +119,12 @@ class InstrumentsController extends Notifier<InstrumentsState> {
 
   Future<void> loadExisting() async {
     final repo = ref.read(onboardingRepositoryProvider);
-    if (repo is RemoteOnboardingRepository) {
+    try {
       final items = await repo.fetchExistingInstruments();
       if (items.isNotEmpty && state.instruments.isEmpty) {
         state = state.copyWith(instruments: items);
       }
-    }
+    } catch (_) {}
   }
 
   /// Reset state onboarding (digunakan saat logout / ganti akun).
@@ -115,19 +132,23 @@ class InstrumentsController extends Notifier<InstrumentsState> {
     state = InstrumentsState(instruments: const []);
   }
 
-  /// Simpan — navigasi saja karena instrumen sudah tersimpan satu per satu
-  /// via [addInstrument]. Hanya validasi bahwa minimal satu instrumen dipilih.
+  /// Simpan instrumen yang dipilih ke repository dan backend.
   Future<bool> save() async {
     if (!state.canContinue) return false;
     state = state.copyWith(isSaving: true);
-    // Tunggu satu frame agar UI terupdate loading state.
-    await Future.delayed(Duration.zero);
-    state = state.copyWith(isSaving: false);
-    return true;
+    try {
+      await ref
+          .read(onboardingRepositoryProvider)
+          .saveInstruments(state.instruments);
+      return true;
+    } catch (_) {
+      state = state.copyWith(isSaving: false);
+      return false;
+    }
   }
 }
 
 final instrumentsControllerProvider =
     NotifierProvider<InstrumentsController, InstrumentsState>(
-  InstrumentsController.new,
-);
+      InstrumentsController.new,
+    );

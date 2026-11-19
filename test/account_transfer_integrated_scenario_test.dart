@@ -76,6 +76,23 @@ class ScenarioAccountRepository implements AccountRepository {
       institutionName: toAcc.institutionName,
     );
   }
+
+  @override
+  Future<void> reconcileLegacyCash({
+    required String fromId,
+    required String toId,
+    required double amount,
+    String? notes,
+    String? idempotencyKey,
+  }) async {
+    await transfer(
+      fromId: fromId,
+      toId: toId,
+      amount: amount,
+      notes: notes,
+      idempotencyKey: idempotencyKey,
+    );
+  }
 }
 
 class ScenarioTransactionRepository implements TransactionRepository {
@@ -162,6 +179,7 @@ void main() {
         purchaseDecisionRepositoryProvider.overrideWithValue(MockPurchaseDecisionRepository()),
         onboardingRepositoryProvider.overrideWithValue(InMemoryOnboardingRepository()),
         currentBudgetProvider.overrideWith((ref) async => null),
+        recurringExpensesProvider.overrideWith((ref) async => []),
       ],
     );
     addTearDown(container.dispose);
@@ -260,7 +278,7 @@ void main() {
 
     // Langkah 5: Periksa Dashboard Data
     final dashboard = await container.read(dashboardDataProvider.future);
-    expect(dashboard.totalBalance, 1450000, reason: 'Total saldo dashboard harus Rp1.450.000');
+    expect(dashboard.spendableBalance, 1450000, reason: 'Saldo siap transaksi dashboard harus Rp1.450.000');
     expect(dashboard.actualMonthIncome, 100000, reason: 'Pemasukan bulanan dashboard HANYA pemasukan eksternal Rp100.000');
     expect(dashboard.actualMonthExpense, 150000, reason: 'Pengeluaran bulanan dashboard HANYA pengeluaran eksternal Rp150.000');
 

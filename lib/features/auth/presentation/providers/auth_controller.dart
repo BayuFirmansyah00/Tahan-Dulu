@@ -231,6 +231,16 @@ class AuthController extends Notifier<AuthState> {
     }
   }
 
+  /// Sinkronkan state pengguna lokal (mis. setelah update via endpoint lain)
+  /// tanpa membuat network request duplikat.
+  void syncLocalUser(UserModel user) {
+    state = AuthState._(
+      status: state.status,
+      user: user,
+      loginMethod: state.loginMethod,
+    );
+  }
+
   /// Membersihkan seluruh data sesi pengguna sebelumnya dari memory, cache repository,
   /// dan provider Riverpod agar tidak terjadi kebocoran data antar-akun.
   void _resetUserData() {
@@ -282,6 +292,8 @@ class AuthController extends Notifier<AuthState> {
     ref.invalidate(savingReminderControllerProvider);
     ref.invalidate(notificationFilterProvider);
     ref.invalidate(monthlyReportProvider);
+    ref.invalidate(apiFinancialReportProvider);
+    ref.invalidate(reportRepositoryProvider);
     ref.invalidate(financialPlanProvider);
     ref.invalidate(onboardingPopupShownNotifierProvider);
   }

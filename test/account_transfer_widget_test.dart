@@ -84,6 +84,23 @@ class FakeAccountRepository implements AccountRepository {
       bankLogoUrl: toAcc.bankLogoUrl,
     );
   }
+
+  @override
+  Future<void> reconcileLegacyCash({
+    required String fromId,
+    required String toId,
+    required double amount,
+    String? notes,
+    String? idempotencyKey,
+  }) async {
+    await transfer(
+      fromId: fromId,
+      toId: toId,
+      amount: amount,
+      notes: notes,
+      idempotencyKey: idempotencyKey,
+    );
+  }
 }
 
 void main() {

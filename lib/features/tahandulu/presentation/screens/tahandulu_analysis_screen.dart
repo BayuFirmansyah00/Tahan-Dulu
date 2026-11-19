@@ -54,6 +54,43 @@ class TahanDuluAnalysisScreen extends ConsumerWidget {
                   style: textTheme.bodyMedium?.copyWith(color: TdColors.slate),
                 ),
                 const SizedBox(height: 12),
+                if (a.isBridgeMode) ...[
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEFF6FF),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFFBFDBFE)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.info_outline,
+                          size: 20,
+                          color: Color(0xFF1D4ED8),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            a.bridgeModeNotice ??
+                                'Periode Transisi (Bridge Mode) aktif dengan plafon anggaran transisi.',
+                            style: textTheme.bodySmall?.copyWith(
+                              color: const Color(0xFF1E40AF),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+                _RecommendationBanner(analysis: a),
+                const SizedBox(height: 12),
                 TdCard(
                   child: Row(
                     children: [
@@ -118,32 +155,88 @@ class TahanDuluAnalysisScreen extends ConsumerWidget {
                     children: [
                       Row(
                         children: [
-                          const AppImageIcon(
-                            assetPath: AppAssets.txWallet,
-                            size: 22,
-                            fallbackIcon: Icons.account_balance_wallet_outlined,
-                          ),
-                          const SizedBox(width: 8),
                           Expanded(
-                            child: Text(
-                              AppStrings.flexibleBudgetLabel,
-                              style: textTheme.bodyMedium?.copyWith(
-                                color: TdColors.slate,
-                              ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    const AppImageIcon(
+                                      assetPath: AppAssets.txWallet,
+                                      size: 18,
+                                      fallbackIcon:
+                                          Icons.account_balance_wallet_outlined,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Expanded(
+                                      child: Text(
+                                        AppStrings.flexibleBudgetLabel,
+                                        style: textTheme.bodySmall?.copyWith(
+                                          color: TdColors.slate,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  CurrencyFormatter.formatCompact(a.flexible),
+                                  style: textTheme.titleLarge?.copyWith(
+                                    color: TdColors.navy,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            width: 1,
+                            height: 38,
+                            color: TdColors.border,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    const AppImageIcon(
+                                      assetPath: AppAssets.instBank,
+                                      size: 18,
+                                      fallbackIcon: Icons.account_balance_outlined,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Expanded(
+                                      child: Text(
+                                        a.hasCashLegacy ? 'Saldo Siap Pakai' : 'Total Saldo Rekening',
+                                        style: textTheme.bodySmall?.copyWith(
+                                          color: TdColors.slate,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  a.hasAccounts
+                                      ? CurrencyFormatter.formatCompact(
+                                          a.hasCashLegacy ? a.spendableBalance : a.totalLiquidBalance,
+                                        )
+                                      : 'Belum Ada',
+                                  style: textTheme.titleLarge?.copyWith(
+                                    color: a.hasAccounts
+                                        ? TdColors.navy
+                                        : TdColors.slate,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        CurrencyFormatter.formatCompact(a.flexible),
-                        style: textTheme.headlineMedium?.copyWith(
-                          fontSize: 24,
-                          color: TdColors.navy,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 12),
                       if (percent != null) ...[
                         Text(
                           '${AppStrings.usesBudgetPrefix} $percent% '
@@ -162,14 +255,85 @@ class TahanDuluAnalysisScreen extends ConsumerWidget {
                             color: TdColors.slate,
                           ),
                         ),
+                      if (a.monthlyAdminFees > 0 || a.recurringExpenses > 0) ...[
+                        const SizedBox(height: 12),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.7),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: TdColors.border),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.event_note_outlined,
+                                size: 16,
+                                color: TdColors.slate,
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  'Kewajiban terjadwal: '
+                                  '${a.monthlyAdminFees > 0 ? "Admin (${CurrencyFormatter.formatCompact(a.monthlyAdminFees)}) " : ""}'
+                                  '${a.recurringExpenses > 0 ? "Rutin (${CurrencyFormatter.formatCompact(a.recurringExpenses)}) " : ""}'
+                                  'tercatat terpisah & tidak memotong saldo langsung.',
+                                  style: textTheme.labelSmall?.copyWith(
+                                    color: TdColors.slate,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                      if (a.hasCashLegacy &&
+                          a.cashLegacyBalance > 0 &&
+                          !a.balanceSufficient &&
+                          a.totalLiquidBalance >= a.item.price) ...[
+                        const SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFF3CD),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: const Color(0xFFFFEEBA)),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Icon(
+                                Icons.warning_amber_rounded,
+                                size: 16,
+                                color: Color(0xFF856404),
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  'Saldo mencukupi di total aset, namun ${CurrencyFormatter.formatCompact(a.cashLegacyBalance)} berada di akun Uang Tunai lama. Rekonsiliasi ke rekening bank/e-wallet untuk siap transaksi.',
+                                  style: textTheme.labelSmall?.copyWith(
+                                    color: const Color(0xFF856404),
+                                    fontSize: 11,
+                                    height: 1.3,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
                 const SizedBox(height: 12),
-                if (percent != null) ...[
-                  _ImpactBanner(share: a.share!),
-                  const SizedBox(height: 12),
-                ],
                 _SafeRow(safeDaily: a.safeDaily, remaining: a.flexible),
               ],
             ),
@@ -179,6 +343,89 @@ class TahanDuluAnalysisScreen extends ConsumerWidget {
         error: (error, _) => AppErrorState(
           onRetry: () => ref.invalidate(purchaseAnalysisProvider(itemId)),
         ),
+      ),
+    );
+  }
+}
+
+/// Banner rekomendasi keputusan pembelian terpadu (Fase 4C).
+class _RecommendationBanner extends StatelessWidget {
+  const _RecommendationBanner({required this.analysis});
+
+  final PurchaseAnalysis analysis;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color bg;
+    final Color border;
+    final Color textColor;
+    final String assetPath;
+    final IconData icon;
+
+    if (analysis.isReady) {
+      bg = TdColors.successBg;
+      border = TdColors.success.withValues(alpha: 0.35);
+      textColor = const Color(0xFF166534);
+      assetPath = AppAssets.statusSuccess;
+      icon = Icons.check_circle_outline;
+    } else if (analysis.isPostpone) {
+      bg = TdColors.dangerBg;
+      border = TdColors.danger.withValues(alpha: 0.35);
+      textColor = const Color(0xFF991B1B);
+      assetPath = AppAssets.statusError;
+      icon = Icons.error_outline;
+    } else {
+      bg = TdColors.warningBg;
+      border = TdColors.warning.withValues(alpha: 0.35);
+      textColor = const Color(0xFF854D0E);
+      assetPath = AppAssets.statusWarning;
+      icon = Icons.warning_amber_outlined;
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: border),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AppImageIcon(
+            assetPath: assetPath,
+            size: 24,
+            fallbackIcon: icon,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  analysis.recommendationTitle,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        color: textColor,
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  analysis.recommendationReason.isNotEmpty
+                      ? analysis.recommendationReason
+                      : (analysis.isReady
+                          ? 'Budget dan saldo mencukupi untuk pembelian ini.'
+                          : 'Pertimbangkan kembali sebelum memutuskan membeli.'),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: TdColors.navy,
+                        height: 1.3,
+                      ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -208,76 +455,6 @@ class _BurdenBar extends StatelessWidget {
         minHeight: 8,
         backgroundColor: const Color(0xFFF3EDDA),
         valueColor: AlwaysStoppedAnimation<Color>(color),
-      ),
-    );
-  }
-}
-
-/// Banner status dampak dengan hierarki jelas.
-class _ImpactBanner extends StatelessWidget {
-  const _ImpactBanner({required this.share});
-
-  final double share;
-
-  @override
-  Widget build(BuildContext context) {
-    final Color bg;
-    final String assetPath;
-    final IconData icon;
-    final String label;
-    if (share < 0.3) {
-      bg = TdColors.successBg;
-      assetPath = AppAssets.statusSuccess;
-      icon = Icons.check_circle_outline;
-      label = 'Ringan untuk budget fleksibelmu.';
-    } else if (share < 0.7) {
-      bg = TdColors.warningBg;
-      assetPath = AppAssets.statusWarning;
-      icon = Icons.warning_amber_outlined;
-      label = 'Cukup besar — pikir matang sebelum lanjut.';
-    } else {
-      bg = TdColors.dangerBg;
-      assetPath = AppAssets.statusError;
-      icon = Icons.error_outline;
-      label = 'Berat untuk budget fleksibelmu.';
-    }
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          AppImageIcon(
-            assetPath: assetPath,
-            size: 22,
-            fallbackIcon: icon,
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: TdColors.navy,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                Text(
-                  AppStrings.safeEstimateDisclaimer,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodySmall?.copyWith(color: TdColors.slate),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }

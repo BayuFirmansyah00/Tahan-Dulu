@@ -186,10 +186,10 @@ void main() {
   });
 
   test('model has no transfer to miscalculate', () {
-    // Tahap 16: tepat tiga jenis akun (Bank, Bank Digital, E-Wallet).
-    expect(AccountType.values.length, 3);
+    // 3 jenis aktif (Bank, Bank Digital, E-Wallet) + 1 jenis kompatibilitas legacyCash.
+    expect(AccountType.values.length, 4);
     expect(AccountType.values,
-        containsAll([AccountType.bank, AccountType.digitalBank, AccountType.ewallet]));
+        containsAll([AccountType.bank, AccountType.digitalBank, AccountType.ewallet, AccountType.legacyCash]));
     expect(TransactionType.values.length, 2);
   });
 }

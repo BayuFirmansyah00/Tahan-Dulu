@@ -40,6 +40,15 @@ abstract class AccountRepository {
     String? notes,
     String? idempotencyKey,
   });
+
+  /// Rekonsiliasi setoran tunai dari akun Uang Tunai (Cash legacy) ke rekening Bank/E-Wallet.
+  Future<void> reconcileLegacyCash({
+    required String fromId,
+    required String toId,
+    required double amount,
+    String? notes,
+    String? idempotencyKey,
+  });
 }
 
 /// Repository untuk data master tipe instrumen (dari instrument_types).
@@ -157,6 +166,17 @@ abstract class PurchaseDecisionRepository {
   /// Unggah berkas gambar produk ke backend storage
   Future<String> uploadImage(String filePath);
 
+  /// Analisis dampak pembelian terpadu (Fase 4C)
+  Future<Map<String, dynamic>> getPurchaseAnalysis(String id);
+
+  /// Catat transaksi pembelian ke buku kas & potong saldo rekening (Fase 4C)
+  Future<Map<String, dynamic>> recordPurchase(
+    String id, {
+    required int accountId,
+    String? information,
+    String? idempotencyKey,
+  });
+
   /// Bersihkan data / cache consideration
   void clear();
 }
@@ -218,6 +238,8 @@ class MockAccountRepository implements AccountRepository {
         return AccountType.digitalBank;
       case InstrumentType.ewallet:
         return AccountType.ewallet;
+      case InstrumentType.cash:
+        return AccountType.legacyCash;
     }
   }
 
@@ -229,6 +251,8 @@ class MockAccountRepository implements AccountRepository {
         return InstrumentType.digitalBank;
       case AccountType.ewallet:
         return InstrumentType.ewallet;
+      case AccountType.legacyCash:
+        return InstrumentType.cash;
     }
   }
 
@@ -319,6 +343,27 @@ class MockAccountRepository implements AccountRepository {
     final toAcc = _items.firstWhere((e) => e.id == toId);
     if (fromAcc.initialBalance < amount) {
       throw Exception('Saldo instrumen sumber tidak mencukupi.');
+    }
+    await _onboarding.updateInstrument(
+      fromAcc.copyWith(initialBalance: fromAcc.initialBalance - amount),
+    );
+    await _onboarding.updateInstrument(
+      toAcc.copyWith(initialBalance: toAcc.initialBalance + amount),
+    );
+  }
+
+  @override
+  Future<void> reconcileLegacyCash({
+    required String fromId,
+    required String toId,
+    required double amount,
+    String? notes,
+    String? idempotencyKey,
+  }) async {
+    final fromAcc = _items.firstWhere((e) => e.id == fromId);
+    final toAcc = _items.firstWhere((e) => e.id == toId);
+    if (fromAcc.initialBalance < amount) {
+      throw Exception('Saldo akun Uang Tunai tidak mencukupi untuk direkonsiliasi.');
     }
     await _onboarding.updateInstrument(
       fromAcc.copyWith(initialBalance: fromAcc.initialBalance - amount),
@@ -572,6 +617,82 @@ class MockPurchaseDecisionRepository
   @override
   Future<String> uploadImage(String filePath) {
     return mockDelay('wishlists/mock/uploaded_photo.jpg');
+  }
+
+  @override
+  Future<Map<String, dynamic>> getPurchaseAnalysis(String id) {
+    final matches = _items.where((e) => e.id == id);
+    final item = matches.isNotEmpty ? matches.first : null;
+    final price = item?.price ?? 0.0;
+    const flexible = 1500000.0;
+    const totalBalance = 4000000.0;
+    final budgetOk = flexible >= price;
+    final balanceOk = totalBalance >= price;
+
+    final String rec;
+    final String recTitle;
+    final String recReason;
+
+    if (!budgetOk && !balanceOk) {
+      rec = 'postpone';
+      recTitle = 'Disarankan Menunda Pembelian';
+      recReason = 'Harga barang melebihi budget bebas dan saldo rekening.';
+    } else if (!budgetOk) {
+      rec = 'postpone';
+      recTitle = 'Budget Pengeluaran Bebas Terbatas';
+      recReason = 'Saldo rekening mencukupi, namun melebihi sisa budget pengeluaran bebas.';
+    } else if (!balanceOk) {
+      rec = 'postpone';
+      recTitle = 'Saldo Rekening Belum Mencukupi';
+      recReason = 'Budget pengeluaran bebas ada, namun saldo rekening belum mencukupi.';
+    } else {
+      rec = 'ready';
+      recTitle = 'Kondisi Finansial Mendukung';
+      recReason = 'Budget pengeluaran bebas dan saldo rekening mencukupi untuk pembelian.';
+    }
+
+    return mockDelay({
+      'flexible_budget': flexible,
+      'remaining_pengeluaran_bebas': flexible,
+      'safe_daily': 50000.0,
+      'safe_daily_spending': 50000.0,
+      'today_remaining': 50000.0,
+      'has_accounts': true,
+      'accounts_count': 2,
+      'total_liquid_balance': totalBalance,
+      'budget_sufficient': budgetOk,
+      'balance_sufficient': balanceOk,
+      'is_bridge_mode': false,
+      'period_budget_ceiling': 6000000.0,
+      'bridge_mode_notice': null,
+      'scheduled_obligations': {
+        'monthly_admin_fees': 25000.0,
+        'pending_admin_fees': 25000.0,
+        'recurring_expenses': 150000.0,
+        'total_scheduled': 175000.0,
+      },
+      'recommendation': rec,
+      'recommendation_title': recTitle,
+      'recommendation_reason': recReason,
+    });
+  }
+
+  @override
+  Future<Map<String, dynamic>> recordPurchase(
+    String id, {
+    required int accountId,
+    String? information,
+    String? idempotencyKey,
+  }) {
+    final index = _items.indexWhere((e) => e.id == id);
+    if (index != -1) {
+      _items[index] = _items[index].copyWith(status: ConsiderationStatus.bought);
+    }
+    return mockDelay({
+      'success': true,
+      'message': 'Pembelian berhasil dicatat ke buku kas.',
+      'account_id': accountId,
+    });
   }
 
   @override

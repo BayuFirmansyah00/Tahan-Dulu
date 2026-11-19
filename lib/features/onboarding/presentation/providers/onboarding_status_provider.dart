@@ -7,12 +7,12 @@ import '../../../profile/presentation/providers/profile_providers.dart';
 ///
 /// Sumber kebenaran: field `is_onboarded` pada model pengguna dari backend
 /// (dikirim via `GET /api/me` setelah autentikasi). Field ini diset `true`
-/// secara eksplisit setelah pengguna menyelesaikan langkah onboarding wajib
-/// (salary → instrumen → plan) melalui `PUT /user { is_onboarded: true }`.
+/// secara eksplisit setelah semua input onboarding (gaji → instrumen → budget
+/// → pengeluaran rutin → target) selesai dan ringkasan dikonfirmasi melalui
+/// `PUT /user { is_onboarded: true }`.
 ///
-/// Fallback kompatibilitas: pengguna lama yang belum punya field ini di
-/// backend akan mendapat `is_onboarded=true` dari accessor Eloquent jika
-/// sudah punya instrumen terdaftar (backward compatibility).
+/// Fallback kompatibilitas akun lama dikendalikan backend dengan batas waktu
+/// rollout; akun baru tidak dianggap selesai hanya karena punya instrumen.
 class OnboardingStatus extends Equatable {
   const OnboardingStatus({
     required this.userId,

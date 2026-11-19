@@ -10,6 +10,7 @@
         android:label="tahan_dulu"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:usesCleartextTraffic="true">
         <!-- Default channel FCM agar push notification memakai channel high-importance TahanDulu. -->
         <meta-data

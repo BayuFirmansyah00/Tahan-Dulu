@@ -11,6 +11,7 @@ import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_icons.dart';
 import '../../../../core/widgets/app_states.dart';
+import '../../../../data/models/financial_account.dart';
 import '../../../../data/providers/account_providers.dart';
 import '../../../dashboard/presentation/widgets/dashboard_bottom_nav.dart';
 import '../utils/account_ui.dart';
@@ -102,6 +103,20 @@ class _List extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final totalAdminFee = items
+        .where((i) => i.account.adminFeeEnabled)
+        .fold<double>(0.0, (sum, i) => sum + i.account.monthlyAdminFee);
+
+    final spendableTotal = items
+        .where((i) => i.account.type != AccountType.legacyCash)
+        .fold<double>(0.0, (sum, i) => sum + i.currentBalance);
+
+    final cashLegacyTotal = items
+        .where((i) => i.account.type == AccountType.legacyCash)
+        .fold<double>(0.0, (sum, i) => sum + i.currentBalance);
+
+    final hasCashLegacy = items.any((i) => i.account.type == AccountType.legacyCash);
+
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
       child: Column(
@@ -113,7 +128,14 @@ class _List extends StatelessWidget {
             total: total,
             obscured: obscured,
             onToggleObscure: onToggleObscure,
+            spendableTotal: spendableTotal,
+            cashLegacyTotal: cashLegacyTotal,
+            hasCashLegacy: hasCashLegacy,
           ),
+          if (totalAdminFee > 0) ...[
+            const SizedBox(height: 12),
+            _AdminFeeSummaryBanner(totalFee: totalAdminFee),
+          ],
           const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -128,7 +150,7 @@ class _List extends StatelessWidget {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (items.length >= 2) ...[
+                  if (items.where((i) => i.account.type != AccountType.legacyCash).length >= 2) ...[
                     TextButton.icon(
                       onPressed: () => context.push(AppRoutes.accountTransfer),
                       icon: const AppImageIcon(
@@ -176,11 +198,17 @@ class _TotalHero extends StatelessWidget {
     required this.total,
     required this.obscured,
     required this.onToggleObscure,
+    this.spendableTotal,
+    this.cashLegacyTotal,
+    this.hasCashLegacy = false,
   });
 
   final AsyncValue<double> total;
   final bool obscured;
   final VoidCallback onToggleObscure;
+  final double? spendableTotal;
+  final double? cashLegacyTotal;
+  final bool hasCashLegacy;
 
   @override
   Widget build(BuildContext context) {
@@ -191,62 +219,106 @@ class _TotalHero extends StatelessWidget {
         color: AppColors.primary,
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  AppStrings.totalBalanceLabel,
-                  style: textTheme.labelSmall?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.9),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                total.when(
-                  data: (value) => Text(
-                    obscured
-                        ? 'Rp••••••'
-                        : CurrencyFormatter.formatCompact(value),
-                    style: textTheme.displayLarge?.copyWith(
-                      color: Colors.white,
-                      fontSize: 30,
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      hasCashLegacy ? 'Total Aset Tercatat' : AppStrings.totalBalanceLabel,
+                      style: textTheme.labelSmall?.copyWith(
+                        color: Colors.white.withValues(alpha: 0.9),
+                      ),
                     ),
-                  ),
-                  loading: () => const SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2,
+                    const SizedBox(height: 4),
+                    total.when(
+                      data: (value) => Text(
+                        obscured
+                            ? 'Rp••••••'
+                            : CurrencyFormatter.formatCompact(value),
+                        style: textTheme.displayLarge?.copyWith(
+                          color: Colors.white,
+                          fontSize: 30,
+                        ),
+                      ),
+                      loading: () => const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      ),
+                      error: (_, _) => Text(
+                        '-',
+                        style: textTheme.displayLarge?.copyWith(
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
-                  ),
-                  error: (_, _) => Text(
-                    '-',
-                    style: textTheme.displayLarge?.copyWith(
-                      color: Colors.white,
+                    Text(
+                      AppStrings.recordedBalanceHint,
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: Colors.white.withValues(alpha: 0.9),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-                Text(
-                  AppStrings.recordedBalanceHint,
-                  style: textTheme.bodyMedium?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.9),
-                  ),
+              ),
+              IconButton(
+                icon: Icon(
+                  obscured
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
+                  color: Colors.white,
                 ),
-              ],
-            ),
+                onPressed: onToggleObscure,
+              ),
+            ],
           ),
-          IconButton(
-            icon: Icon(
-              obscured
-                  ? Icons.visibility_off_outlined
-                  : Icons.visibility_outlined,
-              color: Colors.white,
+          if (hasCashLegacy && (cashLegacyTotal ?? 0) > 0) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Siap Pakai: ${obscured ? 'Rp•••' : CurrencyFormatter.formatCompact(spendableTotal ?? 0)}',
+                      style: textTheme.labelSmall?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    width: 1,
+                    height: 14,
+                    color: Colors.white.withValues(alpha: 0.3),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Uang Tunai: ${obscured ? 'Rp•••' : CurrencyFormatter.formatCompact(cashLegacyTotal ?? 0)}',
+                      style: textTheme.labelSmall?.copyWith(
+                        color: Colors.white.withValues(alpha: 0.9),
+                        fontWeight: FontWeight.w700,
+                      ),
+                      textAlign: TextAlign.end,
+                    ),
+                  ),
+                ],
+              ),
             ),
-            onPressed: onToggleObscure,
-          ),
+          ],
         ],
       ),
     );
@@ -261,6 +333,8 @@ class _AccountCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final isLegacy = item.account.type == AccountType.legacyCash;
+
     return GestureDetector(
       onTap: () => context.push('${AppRoutes.accounts}/${item.account.id}'),
       child: Container(
@@ -268,7 +342,9 @@ class _AccountCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(
+            color: isLegacy ? const Color(0xFFFFEEBA) : AppColors.border,
+          ),
         ),
         child: Row(
           children: [
@@ -285,12 +361,69 @@ class _AccountCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(item.account.name, style: textTheme.titleMedium),
-                  Text(
-                    item.account.bankName ??
-                        accountTypeLabel(item.account.type),
-                    style: textTheme.bodyMedium,
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(item.account.name, style: textTheme.titleMedium),
+                      ),
+                      if (isLegacy) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFF3CD),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: const Color(0xFFFFEEBA)),
+                          ),
+                          child: Text(
+                            'Akun Lama',
+                            style: textTheme.labelSmall?.copyWith(
+                              color: const Color(0xFF856404),
+                              fontWeight: FontWeight.w700,
+                              fontSize: 10,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
+                  Text(
+                    isLegacy
+                        ? 'Uang Tunai — Akun Lama'
+                        : (item.account.bankName ?? accountTypeLabel(item.account.type)),
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: isLegacy ? const Color(0xFF856404) : null,
+                      fontWeight: isLegacy ? FontWeight.w600 : null,
+                    ),
+                  ),
+                  if (isLegacy) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      'Akun ini dipertahankan untuk menjaga saldo dan riwayat pencatatan sebelumnya. Akun Uang Tunai baru tidak lagi didukung.',
+                      style: textTheme.bodySmall?.copyWith(
+                        color: AppColors.textSecondary,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                  if (item.account.type == AccountType.bank ||
+                      item.account.type == AccountType.digitalBank) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      item.account.adminFeeEnabled &&
+                              item.account.monthlyAdminFee > 0
+                          ? 'Biaya admin: ${CurrencyFormatter.formatCompact(item.account.monthlyAdminFee)}/bln (tgl ${item.account.adminFeeDay})'
+                          : 'Bebas biaya admin',
+                      style: textTheme.bodySmall?.copyWith(
+                        color: item.account.adminFeeEnabled &&
+                                item.account.monthlyAdminFee > 0
+                            ? AppColors.textSecondary
+                            : AppColors.success,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -372,6 +505,67 @@ class _PromoCard extends StatelessWidget {
             assetPath: AppAssets.navForward,
             size: 20,
             fallbackIcon: Icons.chevron_right,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AdminFeeSummaryBanner extends StatelessWidget {
+  const _AdminFeeSummaryBanner({required this.totalFee});
+
+  final double totalFee;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.secondarySoft,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: AppColors.border.withValues(alpha: 0.6),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.receipt_long_outlined,
+              size: 18,
+              color: AppColors.primary,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Estimasi Biaya Admin: ${CurrencyFormatter.formatCompact(totalFee)} / bln',
+                  style: textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Perkiraan total biaya administrasi dari rekening aktif. Nilai ini tidak otomatis memotong saldo.',
+                  style: textTheme.bodySmall?.copyWith(
+                    color: AppColors.textSecondary,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),

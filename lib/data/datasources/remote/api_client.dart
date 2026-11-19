@@ -176,6 +176,43 @@ class ApiClient {
     }
   }
 
+  /// Mengambil data biner mentah (misal unduhan dokumen Excel .xlsx).
+  Future<List<int>> getBytes(
+    String path, {
+    String? token,
+    Map<String, String>? headers,
+  }) async {
+    try {
+      final reqHeaders = _headers(token);
+      reqHeaders['Accept'] =
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/octet-stream, application/json';
+      if (headers != null) {
+        reqHeaders.addAll(headers);
+      }
+      final res = await _http
+          .get(Uri.parse('$baseUrl$path'), headers: reqHeaders)
+          .timeout(timeout);
+      if (res.statusCode == 401) {
+        onUnauthorized?.call();
+        throw ApiException(
+          'Sesi habis atau tidak valid. Silakan login ulang.',
+          statusCode: 401,
+        );
+      }
+      if (res.statusCode >= 400) {
+        throw ApiException(
+          'Gagal mengunduh berkas (${res.statusCode}).',
+          statusCode: res.statusCode,
+        );
+      }
+      return res.bodyBytes;
+    } on TimeoutException {
+      throw ApiException('Server tidak merespons. Periksa koneksi.');
+    } on http.ClientException catch (e) {
+      throw ApiException('Tidak dapat menghubungi server: ${e.message}');
+    }
+  }
+
   Future<Map<String, dynamic>> put(
     String path,
     Map<String, dynamic> payload, {

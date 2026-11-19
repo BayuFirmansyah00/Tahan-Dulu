@@ -11,9 +11,11 @@ import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_icons.dart';
 import '../../../../core/widgets/app_states.dart';
+import '../../../../data/models/financial_account.dart';
 import '../../../../data/models/transaction_model.dart';
 import '../../../../data/providers/account_providers.dart';
 import '../../../../data/providers/app_providers.dart';
+import '../../../../data/providers/dashboard_providers.dart';
 import '../../../dashboard/presentation/widgets/dashboard_bottom_nav.dart';
 import '../utils/account_ui.dart';
 
@@ -29,8 +31,7 @@ class AccountDetailScreen extends ConsumerStatefulWidget {
       _AccountDetailScreenState();
 }
 
-class _AccountDetailScreenState
-    extends ConsumerState<AccountDetailScreen> {
+class _AccountDetailScreenState extends ConsumerState<AccountDetailScreen> {
   bool _obscured = false;
 
   void _onNav(int index) {
@@ -83,31 +84,24 @@ class _Body extends ConsumerWidget {
     if (overview is AsyncLoading || transactions is AsyncLoading) {
       return const AppLoading();
     }
-    final overviewError =
-        overview is AsyncError ? overview : null;
-    final transactionsError =
-        transactions is AsyncError ? transactions : null;
+    final overviewError = overview is AsyncError ? overview : null;
+    final transactionsError = transactions is AsyncError ? transactions : null;
     if (overviewError != null) {
       return AppErrorState(
         onRetry: () => ref.invalidate(accountsOverviewProvider),
       );
     }
     if (transactionsError != null) {
-      return AppErrorState(
-        onRetry: () => ref.invalidate(transactionsProvider),
-      );
+      return AppErrorState(onRetry: () => ref.invalidate(transactionsProvider));
     }
-    final matches = overview.value?.where(
-          (e) => e.account.id == accountId,
-        ) ??
-        const [];
+    final matches =
+        overview.value?.where((e) => e.account.id == accountId) ?? const [];
     if (matches.isEmpty) {
       return const Center(child: Text(AppStrings.accountNotFound));
     }
     final item = matches.first;
-    final txs = transactions.value
-            ?.where((t) => t.accountId == accountId)
-            .toList() ??
+    final txs =
+        transactions.value?.where((t) => t.accountId == accountId).toList() ??
         const [];
     final textTheme = Theme.of(context).textTheme;
     final account = item.account;
@@ -138,35 +132,80 @@ class _Body extends ConsumerWidget {
                       children: [
                         Text(account.name, style: textTheme.headlineMedium),
                         Text(
-                          account.bankName != null
-                              ? '${account.bankName} • ${accountTypeLabel(account.type)}'
-                              : accountTypeLabel(account.type),
-                          style: textTheme.bodyMedium,
+                          account.type == AccountType.legacyCash
+                              ? 'Uang Tunai — Akun Lama'
+                              : (account.bankName != null
+                                  ? '${account.bankName} • ${accountTypeLabel(account.type)}'
+                                  : accountTypeLabel(account.type)),
+                          style: textTheme.bodyMedium?.copyWith(
+                            color: account.type == AccountType.legacyCash
+                                ? const Color(0xFF856404)
+                                : null,
+                            fontWeight: account.type == AccountType.legacyCash
+                                ? FontWeight.w600
+                                : null,
+                          ),
                         ),
                       ],
                     ),
                   ),
-                  IconButton(
-                    tooltip: AppStrings.editAccountTitle,
-                    icon: const AppImageIcon(
-                      assetPath: AppAssets.actionEdit,
-                      size: 20,
-                      fallbackIcon: Icons.edit_outlined,
+                  if (account.type != AccountType.legacyCash)
+                    IconButton(
+                      icon: const AppImageIcon(
+                        assetPath: AppAssets.actionEdit,
+                        size: 20,
+                        fallbackIcon: Icons.edit_outlined,
+                      ),
+                      color: AppColors.primary,
+                      onPressed: () =>
+                          context.push('${AppRoutes.accounts}/$accountId/edit'),
                     ),
-                    color: AppColors.primary,
-                    onPressed: () => context.push(
-                      '${AppRoutes.accounts}/$accountId/edit',
-                    ),
-                  ),
                 ],
               ),
+              if (account.type == AccountType.legacyCash) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF3CD),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFFFEEBA)),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.info_outline, color: Color(0xFF856404), size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Uang Tunai — Akun Lama',
+                              style: textTheme.labelLarge?.copyWith(
+                                color: const Color(0xFF856404),
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Akun ini dipertahankan untuk menjaga saldo dan riwayat pencatatan sebelumnya. Akun Uang Tunai baru tidak lagi didukung.',
+                              style: textTheme.bodySmall?.copyWith(
+                                color: const Color(0xFF856404),
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
               if (account.institutionName != null &&
                   account.institutionName!.isNotEmpty) ...[
                 const SizedBox(height: 4),
-                Text(
-                  account.institutionName!,
-                  style: textTheme.bodyMedium,
-                ),
+                Text(account.institutionName!, style: textTheme.bodyMedium),
               ],
               const SizedBox(height: 16),
               Row(
@@ -201,31 +240,67 @@ class _Body extends ConsumerWidget {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: AppButton(
-                      label: AppStrings.transferAction,
-                      assetPath: AppAssets.txTransfer,
-                      icon: Icons.arrow_outward,
-                      onPressed: () => context.push(
-                        '${AppRoutes.accountTransfer}?from=$accountId',
+              if (account.type == AccountType.legacyCash) ...[
+                if (item.currentBalance > 0)
+                  AppButton(
+                    label: 'Rekonsiliasi Saldo ke Rekening',
+                    icon: Icons.account_balance,
+                    onPressed: () => _showReconciliationSheet(
+                      context,
+                      ref,
+                      account,
+                      item.currentBalance,
+                    ),
+                  )
+                else
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceVariant,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Center(
+                      child: Text(
+                        'Seluruh saldo tunai telah direkonsiliasi (Rp0)',
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: AppOutlineButton(
-                      label: AppStrings.editAccountTitle,
-                      assetPath: AppAssets.actionEdit,
-                      icon: Icons.edit_outlined,
-                      onPressed: () => context.push(
-                        '${AppRoutes.accounts}/$accountId/edit',
+              ] else ...[
+                Row(
+                  children: [
+                    Expanded(
+                      child: AppButton(
+                        label: AppStrings.transferAction,
+                        assetPath: AppAssets.txTransfer,
+                        icon: Icons.arrow_outward,
+                        onPressed: () => context.push(
+                          '${AppRoutes.accountTransfer}?from=$accountId',
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: AppOutlineButton(
+                        label: AppStrings.editAccountTitle,
+                        assetPath: AppAssets.actionEdit,
+                        icon: Icons.edit_outlined,
+                        onPressed: () =>
+                            context.push('${AppRoutes.accounts}/$accountId/edit'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+              if (account.type == AccountType.bank ||
+                  account.type == AccountType.digitalBank) ...[
+                const SizedBox(height: 16),
+                _AdminFeeCard(account: account),
+              ],
               const SizedBox(height: 20),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -264,8 +339,7 @@ class _Body extends ConsumerWidget {
                   ),
                 )
               else
-                for (final t in txs.take(5))
-                  _TxRow(transaction: t),
+                for (final t in txs.take(5)) _TxRow(transaction: t),
             ],
           ),
         ),
@@ -314,6 +388,404 @@ class _TxRow extends StatelessWidget {
               color: color,
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AdminFeeCard extends StatelessWidget {
+  const _AdminFeeCard({required this.account});
+
+  final FinancialAccount account;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final hasFee = account.adminFeeEnabled && account.monthlyAdminFee > 0;
+    final nextDate = account.getNextAdminFeeDate();
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: hasFee ? AppColors.surface : AppColors.secondarySoft,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: hasFee ? AppColors.border : AppColors.border.withValues(alpha: 0.5),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: hasFee
+                      ? AppColors.primary.withValues(alpha: 0.1)
+                      : AppColors.successSoft,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  hasFee
+                      ? Icons.calendar_month_outlined
+                      : Icons.check_circle_outline,
+                  color: hasFee ? AppColors.primary : AppColors.success,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Biaya Administrasi Bulanan',
+                      style: textTheme.bodySmall?.copyWith(
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    Text(
+                      hasFee
+                          ? '${CurrencyFormatter.formatCompact(account.monthlyAdminFee)} / bulan'
+                          : 'Bebas biaya bulanan (Rp0)',
+                      style: textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color:
+                            hasFee ? AppColors.textPrimary : AppColors.success,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          if (hasFee && account.adminFeeDay != null) ...[
+            const SizedBox(height: 12),
+            const Divider(height: 1),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Jadwal Pemotongan',
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+                Text(
+                  'Setiap tanggal ${account.adminFeeDay}',
+                  style: textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+            if (nextDate != null) ...[
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Estimasi Berikutnya',
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    DateFormatter.dayMonthYear(nextDate),
+                    style: textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+            const SizedBox(height: 10),
+            Text(
+              'Biaya ini adalah rencana terjadwal dan tidak memotong saldo secara otomatis.',
+              style: textTheme.bodySmall?.copyWith(
+                color: AppColors.textSecondary,
+                fontSize: 11,
+              ),
+            ),
+          ] else if (!hasFee) ...[
+            const SizedBox(height: 6),
+            Text(
+              'Rekening ini tidak memiliki jadwal biaya administrasi rutin.',
+              style: textTheme.bodySmall?.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+void _showReconciliationSheet(
+  BuildContext context,
+  WidgetRef ref,
+  FinancialAccount cashAccount,
+  double currentBalance,
+) {
+  showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+    ),
+    builder: (ctx) => _ReconcileLegacyCashSheet(
+      cashAccount: cashAccount,
+      currentBalance: currentBalance,
+    ),
+  );
+}
+
+class _ReconcileLegacyCashSheet extends ConsumerStatefulWidget {
+  const _ReconcileLegacyCashSheet({
+    required this.cashAccount,
+    required this.currentBalance,
+  });
+
+  final FinancialAccount cashAccount;
+  final double currentBalance;
+
+  @override
+  ConsumerState<_ReconcileLegacyCashSheet> createState() =>
+      _ReconcileLegacyCashSheetState();
+}
+
+class _ReconcileLegacyCashSheetState
+    extends ConsumerState<_ReconcileLegacyCashSheet> {
+  late final TextEditingController _amountController;
+  String? _selectedToAccountId;
+  bool _confirmed = false;
+  bool _isSubmitting = false;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _amountController = TextEditingController(
+      text: widget.currentBalance > 0
+          ? widget.currentBalance.toInt().toString()
+          : '',
+    );
+  }
+
+  @override
+  void dispose() {
+    _amountController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit(List<AccountOverview> availableAccounts) async {
+    setState(() => _error = null);
+
+    if (_selectedToAccountId == null) {
+      setState(() => _error = 'Pilih rekening bank atau e-wallet tujuan');
+      return;
+    }
+
+    final rawAmount = double.tryParse(_amountController.text.trim()) ?? 0;
+    if (rawAmount <= 0) {
+      setState(() => _error = 'Nominal rekonsiliasi harus lebih dari 0');
+      return;
+    }
+    if (rawAmount > widget.currentBalance) {
+      setState(() => _error =
+          'Nominal tidak boleh melebihi sisa saldo tunai (${CurrencyFormatter.formatCompact(widget.currentBalance)})');
+      return;
+    }
+
+    if (!_confirmed) {
+      setState(() => _error = 'Harap centang konfirmasi penyetoran fisik');
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      final repo = ref.read(accountRepositoryProvider);
+      await repo.reconcileLegacyCash(
+        fromId: widget.cashAccount.id,
+        toId: _selectedToAccountId!,
+        amount: rawAmount,
+        notes: 'Rekonsiliasi tunai ke rekening aktif',
+      );
+
+      ref.invalidate(accountsOverviewProvider);
+      ref.invalidate(accountsTotalProvider);
+      ref.invalidate(accountsProvider);
+      ref.invalidate(dashboardDataProvider);
+      ref.invalidate(transactionsProvider);
+
+      if (mounted) {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Berhasil merekonsiliasi ${CurrencyFormatter.formatCompact(rawAmount)} ke rekening tujuan.',
+            ),
+            backgroundColor: AppColors.success,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e.toString().replaceFirst('Exception: ', '');
+          _isSubmitting = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final overview = ref.watch(accountsOverviewProvider);
+    final availableAccounts = overview.maybeWhen(
+      data: (items) => items
+          .where((i) =>
+              i.account.id != widget.cashAccount.id &&
+              i.account.type != AccountType.legacyCash)
+          .toList(),
+      orElse: () => <AccountOverview>[],
+    );
+
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 20,
+        right: 20,
+        top: 20,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Rekonsiliasi Saldo Tunai',
+                style: textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Pindahkan catatan saldo uang tunai lama ke rekening bank atau e-wallet yang telah menerima setoran tunai riil.',
+            style: textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+          ),
+          const SizedBox(height: 16),
+          if (availableAccounts.isEmpty) ...[
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceVariant,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Text(
+                'Tidak ada rekening bank atau e-wallet aktif. Silakan tambahkan rekening tujuan terlebih dahulu.',
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
+            ),
+          ] else ...[
+            Text('Rekening Tujuan', style: textTheme.labelMedium),
+            const SizedBox(height: 6),
+            DropdownButtonFormField<String>(
+              initialValue: _selectedToAccountId,
+              hint: const Text('Pilih rekening tujuan'),
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: AppColors.surface,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: AppColors.border),
+                ),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              ),
+              items: availableAccounts.map((item) {
+                return DropdownMenuItem<String>(
+                  value: item.account.id,
+                  child: Text(
+                    '${item.account.name} (${item.account.bankName ?? accountTypeLabel(item.account.type)})',
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                );
+              }).toList(),
+              onChanged: (val) => setState(() => _selectedToAccountId = val),
+            ),
+            const SizedBox(height: 14),
+            Text('Nominal Rekonsiliasi (Rp)', style: textTheme.labelMedium),
+            const SizedBox(height: 6),
+            TextField(
+              controller: _amountController,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                prefixText: 'Rp ',
+                hintText: '0',
+                filled: true,
+                fillColor: AppColors.surface,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: AppColors.border),
+                ),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Maksimal saldo tunai: ${CurrencyFormatter.formatCompact(widget.currentBalance)}',
+              style: textTheme.bodySmall
+                  ?.copyWith(color: AppColors.textSecondary, fontSize: 11),
+            ),
+            const SizedBox(height: 14),
+            CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              value: _confirmed,
+              title: Text(
+                'Saya mengonfirmasi bahwa uang tunai fisik ini telah disetorkan atau diisi ke rekening tujuan di atas.',
+                style:
+                    textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
+              ),
+              controlAffinity: ListTileControlAffinity.leading,
+              onChanged: (v) => setState(() => _confirmed = v ?? false),
+            ),
+            if (_error != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                _error!,
+                style: textTheme.bodySmall?.copyWith(
+                    color: AppColors.error, fontWeight: FontWeight.w600),
+              ),
+            ],
+            const SizedBox(height: 16),
+            AppButton(
+              label: _isSubmitting ? 'Memproses...' : 'Rekonsiliasi Sekarang',
+              icon: Icons.check_circle_outline,
+              onPressed:
+                  _isSubmitting ? null : () => _submit(availableAccounts),
+            ),
+          ],
         ],
       ),
     );

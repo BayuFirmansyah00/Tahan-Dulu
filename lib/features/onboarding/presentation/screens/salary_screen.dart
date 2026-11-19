@@ -14,8 +14,8 @@ import '../providers/salary_controller.dart';
 /// Pilihan hari gajian cepat.
 const List<int> _quickDays = [1, 25, 28];
 
-/// No.3 — Input Gaji Bulanan: nominal pemasukan + tanggal gajian.
-/// Sukses simpan -> No.4 (/onboarding/instruments).
+/// Tahap 1 — Input pemasukan dan tanggal gajian.
+/// Sukses simpan -> tahap 2 (/onboarding/instruments).
 class SalaryScreen extends ConsumerStatefulWidget {
   const SalaryScreen({super.key});
 
@@ -34,6 +34,11 @@ class _SalaryScreenState extends ConsumerState<SalaryScreen> {
     _incomeController = TextEditingController(
       text: initial > 0 ? RupiahInputFormatter.format(initial) : '',
     );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref.read(salaryControllerProvider.notifier).loadExisting();
+      }
+    });
   }
 
   @override
@@ -59,6 +64,15 @@ class _SalaryScreenState extends ConsumerState<SalaryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<SalaryState>(salaryControllerProvider, (prev, next) {
+      if (prev?.monthlyIncome != next.monthlyIncome && next.monthlyIncome > 0) {
+        final formatted = RupiahInputFormatter.format(next.monthlyIncome);
+        if (_incomeController.text != formatted) {
+          _incomeController.text = formatted;
+        }
+      }
+    });
+
     final state = ref.watch(salaryControllerProvider);
     final textTheme = Theme.of(context).textTheme;
     final showIncomeError = _incomeTouched && !state.isIncomeValid;

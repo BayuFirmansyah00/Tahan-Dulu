@@ -9,6 +9,11 @@ class ApiFinancialInstrument extends Equatable {
     required this.balance,
     required this.isActive,
     this.balanceFormatted,
+    this.monthlyAdminFee = 0,
+    this.monthlyAdminFeeFormatted,
+    this.adminFeeDay,
+    this.adminFeeEnabled = false,
+    this.nextAdminFeeDate,
     this.type,
     this.bank,
     this.createdAt,
@@ -20,6 +25,11 @@ class ApiFinancialInstrument extends Equatable {
   final int balance;
   final bool isActive;
   final String? balanceFormatted;
+  final int monthlyAdminFee;
+  final String? monthlyAdminFeeFormatted;
+  final int? adminFeeDay;
+  final bool adminFeeEnabled;
+  final String? nextAdminFeeDate;
   final ApiInstrumentType? type;
   final ApiBank? bank;
   final String? createdAt;
@@ -34,10 +44,19 @@ class ApiFinancialInstrument extends Equatable {
           : int.tryParse('${json['balance']}') ?? 0,
       isActive: json['is_active'] as bool? ?? false,
       balanceFormatted: json['balance_formatted'] as String?,
-      type: json['type'] != null
+      monthlyAdminFee: json['monthly_admin_fee'] is int
+          ? json['monthly_admin_fee'] as int
+          : int.tryParse('${json['monthly_admin_fee']}') ?? 0,
+      monthlyAdminFeeFormatted: json['monthly_admin_fee_formatted'] as String?,
+      adminFeeDay: json['admin_fee_day'] is int
+          ? json['admin_fee_day'] as int
+          : int.tryParse('${json['admin_fee_day']}'),
+      adminFeeEnabled: json['admin_fee_enabled'] as bool? ?? false,
+      nextAdminFeeDate: json['next_admin_fee_date'] as String?,
+      type: json['type'] is Map<String, dynamic>
           ? ApiInstrumentType.fromJson(json['type'] as Map<String, dynamic>)
           : null,
-      bank: json['bank'] != null
+      bank: json['bank'] is Map<String, dynamic>
           ? ApiBank.fromJson(json['bank'] as Map<String, dynamic>)
           : null,
       createdAt: json['created_at'] as String?,
@@ -52,6 +71,11 @@ class ApiFinancialInstrument extends Equatable {
       'balance': balance,
       'is_active': isActive,
       'balance_formatted': balanceFormatted,
+      'monthly_admin_fee': monthlyAdminFee,
+      'monthly_admin_fee_formatted': monthlyAdminFeeFormatted,
+      'admin_fee_day': adminFeeDay,
+      'admin_fee_enabled': adminFeeEnabled,
+      'next_admin_fee_date': nextAdminFeeDate,
       'type': type?.toJson(),
       'bank': bank?.toJson(),
       'created_at': createdAt,
@@ -65,6 +89,11 @@ class ApiFinancialInstrument extends Equatable {
     int? balance,
     bool? isActive,
     String? Function()? balanceFormatted,
+    int? monthlyAdminFee,
+    String? Function()? monthlyAdminFeeFormatted,
+    int? Function()? adminFeeDay,
+    bool? adminFeeEnabled,
+    String? Function()? nextAdminFeeDate,
     ApiInstrumentType? Function()? type,
     ApiBank? Function()? bank,
     String? Function()? createdAt,
@@ -76,6 +105,11 @@ class ApiFinancialInstrument extends Equatable {
       balance: balance ?? this.balance,
       isActive: isActive ?? this.isActive,
       balanceFormatted: balanceFormatted != null ? balanceFormatted() : this.balanceFormatted,
+      monthlyAdminFee: monthlyAdminFee ?? this.monthlyAdminFee,
+      monthlyAdminFeeFormatted: monthlyAdminFeeFormatted != null ? monthlyAdminFeeFormatted() : this.monthlyAdminFeeFormatted,
+      adminFeeDay: adminFeeDay != null ? adminFeeDay() : this.adminFeeDay,
+      adminFeeEnabled: adminFeeEnabled ?? this.adminFeeEnabled,
+      nextAdminFeeDate: nextAdminFeeDate != null ? nextAdminFeeDate() : this.nextAdminFeeDate,
       type: type != null ? type() : this.type,
       bank: bank != null ? bank() : this.bank,
       createdAt: createdAt != null ? createdAt() : this.createdAt,
@@ -84,7 +118,22 @@ class ApiFinancialInstrument extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id, name, balance, isActive, balanceFormatted, type, bank, createdAt, updatedAt];
+  List<Object?> get props => [
+        id,
+        name,
+        balance,
+        isActive,
+        balanceFormatted,
+        monthlyAdminFee,
+        monthlyAdminFeeFormatted,
+        adminFeeDay,
+        adminFeeEnabled,
+        nextAdminFeeDate,
+        type,
+        bank,
+        createdAt,
+        updatedAt,
+      ];
 }
 
 /// Jenis instrumen (dari instrument_types) yang dikemas dalam resource.

@@ -29,6 +29,14 @@ abstract class OnboardingRepository {
   Future<FinancialInstrument> updateInstrument(FinancialInstrument instrument);
   Future<void> removeInstrument(String id);
 
+  /// Hidrasi data tersimpan dari backend agar pengguna dapat melanjutkan onboarding
+  /// tanpa kehilangan data setelah restart atau kembali ke tahap sebelumnya.
+  Future<({double income, int salaryDay})> fetchExistingSalary();
+  Future<List<FinancialInstrument>> fetchExistingInstruments();
+  Future<List<RecurringExpense>> fetchExistingExpenses();
+  Future<FinancialGoal?> fetchExistingGoal();
+  Future<OnboardingData?> hydrateAll();
+
   /// Bersihkan data / cache onboarding (digunakan saat logout / ganti akun).
   void clear();
 }
@@ -142,6 +150,34 @@ class InMemoryOnboardingRepository implements OnboardingRepository {
       [for (final e in _instruments()) if (e.id != id) e],
     );
     return mockDelay(null);
+  }
+
+  @override
+  Future<({double income, int salaryDay})> fetchExistingSalary() async {
+    return (
+      income: _data?.monthlyIncome ?? MockData.income,
+      salaryDay: _data?.salaryDay ?? MockData.salaryDay,
+    );
+  }
+
+  @override
+  Future<List<FinancialInstrument>> fetchExistingInstruments() async {
+    return _data?.financialInstruments ?? MockData.instruments;
+  }
+
+  @override
+  Future<List<RecurringExpense>> fetchExistingExpenses() async {
+    return _data?.recurringExpenses ?? MockData.expenses;
+  }
+
+  @override
+  Future<FinancialGoal?> fetchExistingGoal() async {
+    return _data?.financialGoal ?? MockData.defaultGoal;
+  }
+
+  @override
+  Future<OnboardingData?> hydrateAll() async {
+    return _data;
   }
 
   @override

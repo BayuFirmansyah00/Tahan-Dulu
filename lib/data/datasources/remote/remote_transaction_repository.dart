@@ -11,8 +11,8 @@ class RemoteTransactionRepository implements TransactionRepository {
     required ApiClient client,
     required TokenStore tokens,
     this.onUnauthorized,
-  })  : _client = client,
-        _tokens = tokens;
+  })  : _client = client, // ignore: prefer_initializing_formals
+        _tokens = tokens; // ignore: prefer_initializing_formals
 
   final ApiClient _client;
   final TokenStore _tokens;

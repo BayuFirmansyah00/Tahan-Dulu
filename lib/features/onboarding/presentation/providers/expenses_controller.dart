@@ -77,6 +77,17 @@ class ExpensesController extends Notifier<ExpensesState> {
     }
   }
 
+  /// Pulihkan pengeluaran rutin tersimpan dari backend agar tidak hilang setelah restart.
+  Future<void> loadExisting() async {
+    final repo = ref.read(onboardingRepositoryProvider);
+    try {
+      final items = await repo.fetchExistingExpenses();
+      if (items.isNotEmpty && state.expenses.isEmpty) {
+        state = state.copyWith(expenses: items);
+      }
+    } catch (_) {}
+  }
+
   /// Reset state (digunakan saat logout / ganti akun).
   void reset() {
     state = ExpensesState(expenses: const []);

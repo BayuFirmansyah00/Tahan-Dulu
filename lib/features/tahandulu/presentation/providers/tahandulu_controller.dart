@@ -8,6 +8,7 @@ import '../../../../core/utils/rupiah_input_formatter.dart';
 import '../../../../data/models/purchase_consideration.dart';
 import '../../../../data/providers/app_providers.dart';
 import '../../../../data/providers/dashboard_providers.dart';
+import '../../../../data/providers/reports_providers.dart';
 import '../../../goals/presentation/providers/goals_controller.dart'
     show goalsListProvider;
 
@@ -72,7 +73,7 @@ bool isValidProductUrl(String url) {
       uri.host.isNotEmpty;
 }
 
-/// Hasil analisis dampak pembelian (estimasi, read-only).
+/// Hasil analisis dampak pembelian (estimasi terpadu Fase 4C).
 class PurchaseAnalysis extends Equatable {
   const PurchaseAnalysis({
     required this.item,
@@ -83,6 +84,22 @@ class PurchaseAnalysis extends Equatable {
     required this.goalName,
     required this.goalCurrent,
     required this.monthlyContribution,
+    this.totalLiquidBalance = 0.0,
+    this.spendableBalance = 0.0,
+    this.cashLegacyBalance = 0.0,
+    this.hasCashLegacy = false,
+    this.hasAccounts = false,
+    this.budgetSufficient = false,
+    this.balanceSufficient = false,
+    this.isBridgeMode = false,
+    this.periodBudgetCeiling,
+    this.bridgeModeNotice,
+    this.monthlyAdminFees = 0.0,
+    this.recurringExpenses = 0.0,
+    this.daysRemaining = 1,
+    this.recommendation = 'consider',
+    this.recommendationTitle = 'Pertimbangkan Kembali (Tahan Dulu)',
+    this.recommendationReason = '',
   });
 
   final PurchaseConsideration item;
@@ -98,6 +115,28 @@ class PurchaseAnalysis extends Equatable {
   final double? goalCurrent;
   final double monthlyContribution;
 
+  // Properti Terpadu Finansial Fase 4C & 4D:
+  final double totalLiquidBalance;
+  final double spendableBalance;
+  final double cashLegacyBalance;
+  final bool hasCashLegacy;
+  final bool hasAccounts;
+  final bool budgetSufficient;
+  final bool balanceSufficient;
+  final bool isBridgeMode;
+  final double? periodBudgetCeiling;
+  final String? bridgeModeNotice;
+  final double monthlyAdminFees;
+  final double recurringExpenses;
+  final int daysRemaining;
+  final String recommendation;
+  final String recommendationTitle;
+  final String recommendationReason;
+
+  bool get isReady => recommendation == 'ready' || recommendation == 'buy';
+  bool get isPostpone => recommendation == 'postpone';
+  bool get isConsider => !isReady && !isPostpone;
+
   @override
   List<Object?> get props => [
         item,
@@ -108,6 +147,22 @@ class PurchaseAnalysis extends Equatable {
         goalName,
         goalCurrent,
         monthlyContribution,
+        totalLiquidBalance,
+        spendableBalance,
+        cashLegacyBalance,
+        hasCashLegacy,
+        hasAccounts,
+        budgetSufficient,
+        balanceSufficient,
+        isBridgeMode,
+        periodBudgetCeiling,
+        bridgeModeNotice,
+        monthlyAdminFees,
+        recurringExpenses,
+        daysRemaining,
+        recommendation,
+        recommendationTitle,
+        recommendationReason,
       ];
 }
 
@@ -276,6 +331,34 @@ class TahanDuluController extends Notifier<ConsiderationDraft> {
     }
   }
 
+  /// Catat transaksi pembelian ke buku kas & potong saldo rekening (Fase 4C).
+  Future<bool> recordPurchase(
+    String id, {
+    required int accountId,
+    String? information,
+  }) async {
+    if (_saving) return false;
+    _saving = true;
+    try {
+      final repo = ref.read(purchaseDecisionRepositoryProvider);
+      await repo.recordPurchase(
+        id,
+        accountId: accountId,
+        information: information,
+      );
+      _refreshAll();
+      ref.invalidate(accountsProvider);
+      ref.invalidate(currentBudgetProvider);
+      ref.invalidate(transactionsProvider);
+      ref.invalidate(recentTransactionsProvider);
+      return true;
+    } catch (_) {
+      return false;
+    } finally {
+      _saving = false;
+    }
+  }
+
   Future<bool> deleteItem(String id) async {
     if (_saving) return false;
     _saving = true;
@@ -295,6 +378,8 @@ class TahanDuluController extends Notifier<ConsiderationDraft> {
   void _refreshAll() {
     ref.invalidate(considerationsProvider);
     ref.invalidate(dashboardDataProvider);
+    ref.invalidate(monthlyReportProvider);
+    ref.invalidate(apiFinancialReportProvider);
   }
 }
 
@@ -303,14 +388,112 @@ final tahanDuluControllerProvider =
   TahanDuluController.new,
 );
 
-/// Analisis dampak pembelian: agregat + item + goal acuan.
-/// Murni estimasi read-only (tidak menulis apa pun).
+/// Analisis dampak pembelian: agregat + item + goal acuan terpadu (Fase 4C).
 final purchaseAnalysisProvider =
     FutureProvider.family<PurchaseAnalysis?, String>((ref, itemId) async {
   final items = await ref.watch(considerationsProvider.future);
   final matches = items.where((e) => e.id == itemId);
   if (matches.isEmpty) return null;
   final item = matches.first;
+
+  final repo = ref.watch(purchaseDecisionRepositoryProvider);
+
+  try {
+    final remoteData = await repo.getPurchaseAnalysis(itemId);
+    if (remoteData.isNotEmpty) {
+      final flex = (remoteData['remaining_pengeluaran_bebas'] ??
+              remoteData['flexible_budget'] ??
+              0.0)
+          .toDouble();
+      final safe = (remoteData['safe_daily_spending'] ??
+              remoteData['safe_daily'] ??
+              0.0)
+          .toDouble();
+      final totalBalance = (remoteData['total_assets'] ??
+              remoteData['total_liquid_balance'] ??
+              0.0)
+          .toDouble();
+      final spendableBalance =
+          (remoteData['spendable_balance'] ?? totalBalance).toDouble();
+      final cashLegacyBalance =
+          (remoteData['cash_legacy_balance'] ?? 0.0).toDouble();
+      final hasCashLegacy = remoteData['has_cash_legacy'] as bool? ??
+          (cashLegacyBalance > 0);
+      final hasAccs = remoteData['has_accounts'] as bool? ?? false;
+      final hasSpendableAccs =
+          remoteData['has_spendable_accounts'] as bool? ?? hasAccs;
+      final bSufficient = remoteData['budget_sufficient'] as bool? ??
+          (flex >= item.price);
+      final lSufficient = remoteData['balance_sufficient'] as bool? ??
+          (hasSpendableAccs && spendableBalance >= item.price);
+      final bridge = remoteData['is_bridge_mode'] as bool? ?? false;
+      final ceiling = remoteData['period_budget_ceiling'] != null
+          ? (remoteData['period_budget_ceiling'] as num).toDouble()
+          : null;
+      final bridgeNotice = remoteData['bridge_mode_notice'] as String?;
+      final obligations =
+          remoteData['scheduled_obligations'] as Map<String, dynamic>?;
+      final adminFees = obligations != null
+          ? ((obligations['pending_admin_fees'] ??
+                  obligations['monthly_admin_fees'] ??
+                  0.0) as num)
+              .toDouble()
+          : 0.0;
+      final recurring = obligations != null
+          ? ((obligations['recurring_expenses'] ?? 0.0) as num).toDouble()
+          : 0.0;
+      final days = (remoteData['days_remaining'] as num?)?.toInt() ?? 1;
+      final rec = remoteData['recommendation'] as String? ?? 'consider';
+      final recTitle = remoteData['recommendation_title'] as String? ??
+          'Pertimbangkan Kembali (Tahan Dulu)';
+      final recReason = remoteData['recommendation_reason'] as String? ?? '';
+
+      final rawShare = remoteData['budget_share'];
+      final shareVal = rawShare != null
+          ? (rawShare as num).toDouble()
+          : purchaseBudgetShare(price: item.price, flexible: flex);
+
+      final rawDelay = remoteData['delay_days'];
+      final delayVal = rawDelay != null
+          ? (rawDelay as num).toInt()
+          : null;
+
+      final goalContribution = remoteData['monthly_goal_contribution'] != null
+          ? (remoteData['monthly_goal_contribution'] as num).toDouble()
+          : 0.0;
+
+      return PurchaseAnalysis(
+        item: item,
+        flexible: flex,
+        safeDaily: safe,
+        share: shareVal,
+        delayDays: delayVal,
+        goalName: remoteData['goal_name'] as String?,
+        goalCurrent: remoteData['goal_current_amount'] != null
+            ? (remoteData['goal_current_amount'] as num).toDouble()
+            : null,
+        monthlyContribution: goalContribution,
+        totalLiquidBalance: totalBalance,
+        spendableBalance: spendableBalance,
+        cashLegacyBalance: cashLegacyBalance,
+        hasCashLegacy: hasCashLegacy,
+        hasAccounts: hasAccs,
+        budgetSufficient: bSufficient,
+        balanceSufficient: lSufficient,
+        isBridgeMode: bridge,
+        periodBudgetCeiling: ceiling,
+        bridgeModeNotice: bridgeNotice,
+        monthlyAdminFees: adminFees,
+        recurringExpenses: recurring,
+        daysRemaining: days,
+        recommendation: rec,
+        recommendationTitle: recTitle,
+        recommendationReason: recReason,
+      );
+    }
+  } catch (_) {
+    // Gunakan fallback lokal bila remote call gagal
+  }
 
   final dashboard = await ref.watch(dashboardDataProvider.future);
   final goals = await ref.watch(goalsListProvider.future);
@@ -331,5 +514,15 @@ final purchaseAnalysisProvider =
     goalName: goal?.name,
     goalCurrent: goal?.currentAmount,
     monthlyContribution: dashboard.goalContribution,
+    totalLiquidBalance: dashboard.totalBalance,
+    spendableBalance: dashboard.spendableBalance,
+    cashLegacyBalance: dashboard.cashLegacyBalance,
+    hasCashLegacy: dashboard.hasCashLegacy,
+    hasAccounts: dashboard.hasAccounts,
+    budgetSufficient: dashboard.remainingFlexible >= item.price,
+    balanceSufficient: dashboard.hasSpendableAccounts && dashboard.spendableBalance >= item.price,
+    isBridgeMode: dashboard.isBridgeMode,
+    periodBudgetCeiling: dashboard.periodBudgetCeiling,
+    daysRemaining: dashboard.daysRemaining,
   );
 });

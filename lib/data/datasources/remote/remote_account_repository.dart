@@ -22,8 +22,20 @@ class RemoteAccountRepository implements AccountRepository {
   final TokenStore _tokens;
   final void Function()? onUnauthorized;
 
-  static AccountType mapAccountType(String? type) {
-    switch (type?.toLowerCase()) {
+  static AccountType mapAccountType(String? type, [String? name, String? bankSlug]) {
+    final t = type?.toLowerCase().trim();
+    final n = name?.toLowerCase().trim() ?? '';
+    final s = bankSlug?.toLowerCase().trim() ?? '';
+
+    if (t == 'cash' ||
+        t == 'uang tunai' ||
+        t == 'tunai' ||
+        const ['cash', 'uang tunai', 'tunai', 'uang kas', 'kas', 'petty cash'].contains(n) ||
+        const ['cash', 'uang-tunai', 'tunai'].contains(s)) {
+      return AccountType.legacyCash;
+    }
+
+    switch (t) {
       case 'bank':
         return AccountType.bank;
       case 'digitalbank':
@@ -40,8 +52,7 @@ class RemoteAccountRepository implements AccountRepository {
 
   /// Map AccountType ke type_id (instrument_types.id) untuk dikirim ke backend.
   ///
-  /// Catatan: ID ini harus sinkron dengan data instrument_types di Laravel.
-  /// Nilai default: 1 (Bank), 2 (Digital Bank), 3 (E-Wallet).
+  /// Nilai aktif: 1 (Bank), 2 (Digital Bank), 3 (E-Wallet).
   static int? mapTypeId(AccountType type) {
     switch (type) {
       case AccountType.bank:
@@ -50,6 +61,8 @@ class RemoteAccountRepository implements AccountRepository {
         return 2;
       case AccountType.ewallet:
         return 3;
+      case AccountType.legacyCash:
+        return 4;
     }
   }
 
@@ -72,7 +85,7 @@ class RemoteAccountRepository implements AccountRepository {
         .map((e) => FinancialAccount(
               id: e.id.toString(),
               name: e.name,
-              type: mapAccountType(e.type?.type),
+              type: mapAccountType(e.type?.type, e.name, e.bank?.slug),
               typeId: e.type?.id,
               balance: e.balance.toDouble(),
               institutionName: e.type?.name,
@@ -80,6 +93,9 @@ class RemoteAccountRepository implements AccountRepository {
               bankSlug: e.bank?.slug,
               bankName: e.bank?.name,
               bankLogoUrl: e.bank?.logoUrl,
+              monthlyAdminFee: e.monthlyAdminFee.toDouble(),
+              adminFeeDay: e.adminFeeDay,
+              adminFeeEnabled: e.adminFeeEnabled,
             ))
         .toList();
   }
@@ -99,6 +115,12 @@ class RemoteAccountRepository implements AccountRepository {
         'name': account.name,
         'type_id': account.typeId ?? mapTypeId(account.type),
         'balance': account.balance.round(),
+        'monthly_admin_fee': account.adminFeeEnabled
+            ? account.monthlyAdminFee.round()
+            : 0,
+        'admin_fee_day':
+            account.adminFeeEnabled ? account.adminFeeDay : null,
+        'admin_fee_enabled': account.adminFeeEnabled,
         'is_active': true,
         if (account.bankId != null) 'bank_id': account.bankId,
         if (account.bankSlug != null) 'bank_slug': account.bankSlug,
@@ -110,7 +132,7 @@ class RemoteAccountRepository implements AccountRepository {
     return FinancialAccount(
       id: resp.id.toString(),
       name: resp.name,
-      type: mapAccountType(resp.type?.type),
+      type: mapAccountType(resp.type?.type, resp.name, resp.bank?.slug),
       typeId: resp.type?.id,
       balance: resp.balance.toDouble(),
       institutionName: resp.type?.name,
@@ -118,6 +140,9 @@ class RemoteAccountRepository implements AccountRepository {
       bankSlug: resp.bank?.slug ?? account.bankSlug,
       bankName: resp.bank?.name ?? account.bankName,
       bankLogoUrl: resp.bank?.logoUrl ?? account.bankLogoUrl,
+      monthlyAdminFee: resp.monthlyAdminFee.toDouble(),
+      adminFeeDay: resp.adminFeeDay ?? account.adminFeeDay,
+      adminFeeEnabled: resp.adminFeeEnabled,
     );
   }
 
@@ -130,6 +155,12 @@ class RemoteAccountRepository implements AccountRepository {
         'name': account.name,
         'type_id': account.typeId ?? mapTypeId(account.type),
         'balance': account.balance.round(),
+        'monthly_admin_fee': account.adminFeeEnabled
+            ? account.monthlyAdminFee.round()
+            : 0,
+        'admin_fee_day':
+            account.adminFeeEnabled ? account.adminFeeDay : null,
+        'admin_fee_enabled': account.adminFeeEnabled,
         'is_active': true,
         'bank_id': account.bankId,
         'bank_slug': account.bankSlug,
@@ -141,7 +172,7 @@ class RemoteAccountRepository implements AccountRepository {
     return FinancialAccount(
       id: resp.id.toString(),
       name: resp.name,
-      type: mapAccountType(resp.type?.type),
+      type: mapAccountType(resp.type?.type, resp.name, resp.bank?.slug),
       typeId: resp.type?.id,
       balance: resp.balance.toDouble(),
       institutionName: resp.type?.name,
@@ -149,6 +180,9 @@ class RemoteAccountRepository implements AccountRepository {
       bankSlug: resp.bank?.slug,
       bankName: resp.bank?.name,
       bankLogoUrl: resp.bank?.logoUrl,
+      monthlyAdminFee: resp.monthlyAdminFee.toDouble(),
+      adminFeeDay: resp.adminFeeDay ?? account.adminFeeDay,
+      adminFeeEnabled: resp.adminFeeEnabled,
     );
   }
 
@@ -173,6 +207,30 @@ class RemoteAccountRepository implements AccountRepository {
         'from_id': int.tryParse(fromId) ?? fromId,
         'to_id': int.tryParse(toId) ?? toId,
         'amount': amount.round(),
+        if (notes != null && notes.trim().isNotEmpty) 'notes': notes.trim(),
+        if (idempotencyKey != null && idempotencyKey.trim().isNotEmpty)
+          'idempotency_key': idempotencyKey.trim(),
+      },
+      token: token,
+    );
+  }
+
+  @override
+  Future<void> reconcileLegacyCash({
+    required String fromId,
+    required String toId,
+    required double amount,
+    String? notes,
+    String? idempotencyKey,
+  }) async {
+    final token = await _requireToken();
+    await _client.post(
+      '/transfers/reconcile-legacy-cash',
+      {
+        'from_id': int.tryParse(fromId) ?? fromId,
+        'to_id': int.tryParse(toId) ?? toId,
+        'amount': amount.round(),
+        'confirmed': true,
         if (notes != null && notes.trim().isNotEmpty) 'notes': notes.trim(),
         if (idempotencyKey != null && idempotencyKey.trim().isNotEmpty)
           'idempotency_key': idempotencyKey.trim(),
