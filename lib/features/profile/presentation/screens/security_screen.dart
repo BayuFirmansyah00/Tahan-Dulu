@@ -9,6 +9,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/widgets/app_image_icon.dart';
 import '../../../auth/presentation/providers/auth_controller.dart';
+import '../utils/account_security_dialogs.dart';
 import '../utils/profile_ui.dart';
 
 /// Keamanan Akun: metode login aktual sesi, ubah sandi, sesi, keluar.
@@ -129,12 +130,7 @@ class SecurityScreen extends ConsumerWidget {
                         iconBackground: const Color(0xFFFEF3C7),
                         title: AppStrings.securityChangePassword,
                         description: AppStrings.securityChangePasswordDesc,
-                        onTap: () => showInfoDialog(
-                          context: context,
-                          title: AppStrings
-                              .securityPasswordUnavailableTitle,
-                          body: AppStrings.securityPasswordUnavailableBody,
-                        ),
+                        onTap: () => showChangePasswordBottomSheet(context, ref),
                       )
                     else
                       Container(
@@ -181,6 +177,16 @@ class SecurityScreen extends ConsumerWidget {
                     titleColor: AppColors.error,
                     description: AppStrings.securityLogoutDesc,
                     onTap: () => _confirmLogout(context, ref),
+                  ),
+                  const SizedBox(height: 8),
+                  SettingsMenuRow(
+                    iconForeground: AppColors.error,
+                    iconBackground: const Color(0xFFFEE2E2),
+                    asset: AppAssets.setDeleteAccount,
+                    title: AppStrings.privacyDelete,
+                    titleColor: AppColors.error,
+                    description: AppStrings.privacyDeleteDesc,
+                    onTap: () => showDeleteAccountFlow(context, ref),
                   ),
                   const SizedBox(height: 12),
                   const SettingsBanner(

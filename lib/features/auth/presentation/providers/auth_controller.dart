@@ -194,12 +194,54 @@ class AuthController extends Notifier<AuthState> {
         user: updated,
         loginMethod: state.loginMethod,
       );
+      ref.invalidate(userProvider);
       return true;
     } catch (_) {
-      return false;
+      rethrow;
     } finally {
       _saving = false;
     }
+  }
+
+  /// Ubah kata sandi pengguna terautentikasi (email/password).
+  Future<bool> changePassword({
+    required String currentPassword,
+    required String newPassword,
+    required String newPasswordConfirmation,
+  }) async {
+    try {
+      await ref.read(authRepositoryProvider).changePassword(
+            currentPassword: currentPassword,
+            newPassword: newPassword,
+            newPasswordConfirmation: newPasswordConfirmation,
+          );
+      return true;
+    } catch (_) {
+      rethrow;
+    }
+  }
+
+  /// Hapus akun pengguna secara permanen dari server dan bersihkan seluruh state lokal.
+  Future<bool> deleteAccount({
+    String? password,
+    String? googleIdToken,
+  }) async {
+    try {
+      await ref.read(authRepositoryProvider).deleteAccount(
+            password: password,
+            googleIdToken: googleIdToken,
+          );
+      _resetUserData();
+      state = const AuthState.initial();
+      return true;
+    } catch (_) {
+      rethrow;
+    }
+  }
+
+  /// Ambil Google ID Token segar untuk verifikasi autentikasi ulang.
+  Future<String?> getGoogleReauthIdToken() async {
+    return ref.read(authRepositoryProvider).getGoogleReauthIdToken();
   }
 
   /// Perbarui monthly_income + salary_day + is_onboarded secara permanen di backend.

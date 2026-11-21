@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../data/models/app_preferences.dart';
 import '../../../../data/models/user_model.dart';
@@ -64,28 +65,63 @@ final profileStatsProvider = FutureProvider<ProfileStats>((ref) async {
 });
 
 // ---------------------------------------------------------------------------
-// Preferensi aplikasi (in-memory, sesi saja).
+// Preferensi aplikasi (tersimpan persisten via SharedPreferences).
 // ---------------------------------------------------------------------------
 
 class AppPreferencesController extends Notifier<AppPreferences> {
+  static const _keyReduceMotion = 'app_prefs_reduce_motion';
+  static const _keyInAppNotif = 'app_prefs_in_app_notif';
+  static const _keyShowTips = 'app_prefs_show_tips';
+
   @override
-  AppPreferences build() => const AppPreferences();
+  AppPreferences build() {
+    _loadFromStorage();
+    return const AppPreferences();
+  }
+
+  Future<void> _loadFromStorage() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final reduceMotion = prefs.getBool(_keyReduceMotion) ?? false;
+      final showInAppNotifications = prefs.getBool(_keyInAppNotif) ?? true;
+      final showTips = prefs.getBool(_keyShowTips) ?? true;
+      state = state.copyWith(
+        reduceMotion: reduceMotion,
+        showInAppNotifications: showInAppNotifications,
+        showTips: showTips,
+      );
+    } catch (_) {
+      // Abaikan bila di environment test tanpa SharedPreferences mock
+    }
+  }
 
   void setTheme(AppThemeChoice theme) {
     if (theme == AppThemeChoice.dark) return; // Belum tersedia.
     state = state.copyWith(theme: theme);
   }
 
-  void setReduceMotion(bool value) {
+  Future<void> setReduceMotion(bool value) async {
     state = state.copyWith(reduceMotion: value);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_keyReduceMotion, value);
+    } catch (_) {}
   }
 
-  void setShowInAppNotifications(bool value) {
+  Future<void> setShowInAppNotifications(bool value) async {
     state = state.copyWith(showInAppNotifications: value);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_keyInAppNotif, value);
+    } catch (_) {}
   }
 
-  void setShowTips(bool value) {
+  Future<void> setShowTips(bool value) async {
     state = state.copyWith(showTips: value);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_keyShowTips, value);
+    } catch (_) {}
   }
 }
 

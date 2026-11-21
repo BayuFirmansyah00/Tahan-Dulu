@@ -65,6 +65,16 @@ abstract class AuthRepository {
   /// Akun email/password: verifikasi kata sandi.
   /// Akun Google-only: verifikasi autentikasi ulang via Google ID Token.
   Future<void> deleteAccount({String? password, String? googleIdToken});
+
+  /// Ubah kata sandi pengguna terautentikasi (khusus akun email/password).
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+    required String newPasswordConfirmation,
+  });
+
+  /// Ambil Google ID Token segar untuk verifikasi tindakan sensitif (mis. hapus akun).
+  Future<String?> getGoogleReauthIdToken();
 }
 
 /// Mock authentication — simulasi login/register tanpa backend.
@@ -75,6 +85,23 @@ class MockAuthRepository implements AuthRepository {
   Future<void> deleteAccount({String? password, String? googleIdToken}) async {
     _current = MockData.user;
   }
+
+  @override
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+    required String newPasswordConfirmation,
+  }) async {
+    if (newPassword.length < 8) {
+      throw ArgumentError('Kata sandi baru minimal 8 karakter.');
+    }
+    if (newPassword != newPasswordConfirmation) {
+      throw ArgumentError('Konfirmasi kata sandi tidak cocok.');
+    }
+  }
+
+  @override
+  Future<String?> getGoogleReauthIdToken() async => 'mock-google-id-token';
 
   @override
   Future<UserModel> loginWithEmail({

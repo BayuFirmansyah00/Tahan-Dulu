@@ -38,7 +38,6 @@ class ProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(profileUserProvider);
-    final stats = ref.watch(profileStatsProvider);
     final prefs = ref.watch(appPreferencesProvider);
 
     return Scaffold(
@@ -52,18 +51,15 @@ class ProfileScreen extends ConsumerWidget {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
             child: user.when(
-              data: (u) => stats.when(
-                data: (s) => _Body(
-                  user: u,
-                  stats: s,
-                  showTips: prefs.showTips,
-                  onLogout: () => _confirmLogout(context, ref),
-                ),
-                loading: () => const AppLoading(),
-                error: (error, _) => AppErrorState(onRetry: () => ref.invalidate(profileStatsProvider)),
+              data: (u) => _Body(
+                user: u,
+                showTips: prefs.showTips,
+                onLogout: () => _confirmLogout(context, ref),
               ),
               loading: () => const AppLoading(),
-              error: (error, _) => AppErrorState(onRetry: () => ref.invalidate(profileUserProvider)),
+              error: (error, _) => AppErrorState(
+                onRetry: () => ref.invalidate(profileUserProvider),
+              ),
             ),
           ),
         ),
@@ -94,13 +90,11 @@ class _HeaderBackButton extends StatelessWidget {
 class _Body extends StatelessWidget {
   const _Body({
     required this.user,
-    required this.stats,
     required this.showTips,
     required this.onLogout,
   });
 
   final UserModel user;
-  final ProfileStats stats;
   final bool showTips;
   final VoidCallback onLogout;
 

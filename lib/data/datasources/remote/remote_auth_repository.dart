@@ -39,6 +39,7 @@ class RemoteAuthRepository implements AuthRepository {
       id: '${json['id']}',
       name: '${json['name'] ?? ''}',
       email: json['email'] as String?,
+      bio: json['bio'] as String?,
       monthlyIncome: json['monthly_income'] != null
           ? (json['monthly_income'] is int
                 ? json['monthly_income'] as int
@@ -205,8 +206,56 @@ class RemoteAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<UserModel> updateProfile({required String name, String? bio}) {
-    throw UnsupportedError('Ubah nama/bio belum tersedia di backend.');
+  Future<UserModel> updateProfile({required String name, String? bio}) async {
+    final token = await _tokens.readToken();
+    if (token == null || token.isEmpty) {
+      throw ApiException(
+        'Token tidak tersedia. Silakan login ulang.',
+        statusCode: 401,
+      );
+    }
+    final payload = <String, dynamic>{
+      'name': name.trim(),
+      'bio': bio?.trim(),
+    };
+    final body = await _client.put('/user', payload, token: token);
+    final data = body['data'];
+    if (data is! Map<String, dynamic>) {
+      throw ApiException('Respons update profil tidak lengkap.');
+    }
+    return _toUser(data);
+  }
+
+  @override
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+    required String newPasswordConfirmation,
+  }) async {
+    final token = await _tokens.readToken();
+    if (token == null || token.isEmpty) {
+      throw ApiException(
+        'Token tidak tersedia. Silakan login ulang.',
+        statusCode: 401,
+      );
+    }
+    await _client.put('/user/password', {
+      'current_password': currentPassword,
+      'new_password': newPassword,
+      'new_password_confirmation': newPasswordConfirmation,
+    }, token: token);
+  }
+
+  @override
+  Future<String?> getGoogleReauthIdToken() async {
+    try {
+      final account = await _googleSignIn.signIn();
+      if (account == null) return null;
+      final auth = await account.authentication;
+      return auth.idToken;
+    } catch (_) {
+      return null;
+    }
   }
 
   @override

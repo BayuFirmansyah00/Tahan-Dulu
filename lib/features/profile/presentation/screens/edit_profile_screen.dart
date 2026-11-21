@@ -11,6 +11,7 @@ import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_image_icon.dart';
 import '../../../../core/widgets/app_states.dart';
 import '../../../../core/widgets/app_text_field.dart';
+import '../../../../data/datasources/remote/api_client.dart';
 import '../../../../data/models/user_model.dart';
 import '../providers/profile_providers.dart';
 
@@ -72,14 +73,33 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     try {
       final ok = await ref.read(editProfileControllerProvider.notifier).save();
       if (!mounted) return;
+      if (ok) {
+        ref.invalidate(profileUserProvider);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(AppStrings.editProfileSaved),
+            backgroundColor: AppColors.success,
+          ),
+        );
+        context.pop();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(AppStrings.editProfileFailed),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      final message =
+          e is ApiException ? e.message : AppStrings.editProfileFailed;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            ok ? AppStrings.editProfileSaved : AppStrings.editProfileFailed,
-          ),
+          content: Text(message),
+          backgroundColor: AppColors.error,
         ),
       );
-      if (ok) context.pop();
     } finally {
       if (mounted) setState(() => _saving = false);
     }

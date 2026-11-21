@@ -49,6 +49,18 @@ class RemoteDashboardRepository implements DashboardRepository {
       id: '${data['id']}',
       name: '${data['name'] ?? ''}',
       email: data['email'] as String?,
+      bio: data['bio'] as String?,
+      monthlyIncome: data['monthly_income'] != null
+          ? (data['monthly_income'] is int
+                ? data['monthly_income'] as int
+                : int.tryParse('${data['monthly_income']}'))
+          : null,
+      salaryDay: data['salary_day'] != null
+          ? (data['salary_day'] is int
+                ? data['salary_day'] as int
+                : int.tryParse('${data['salary_day']}'))
+          : null,
+      isOnboarded: data['is_onboarded'] as bool? ?? false,
     );
   }
 
