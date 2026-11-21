@@ -198,8 +198,8 @@ class RemoteGoalRepository implements GoalRepository {
   @override
   Future<GoalDeposit> updateDeposit(GoalDeposit deposit) async {
     final token = await _requireToken();
-    final transactionId = int.tryParse(deposit.id);
-    if (transactionId == null) throw StateError('ID setoran tidak valid');
+    final transactionId = deposit.id.trim();
+    if (transactionId.isEmpty) throw StateError('ID setoran tidak valid');
 
     final body = await _client.put(
       '/goals/${deposit.goalId}/transactions/$transactionId',
@@ -226,8 +226,8 @@ class RemoteGoalRepository implements GoalRepository {
         orElse: () => throw StateError('Setoran tidak ditemukan'),
       );
       if (match.id == id) {
-        final transactionId = int.tryParse(id);
-        if (transactionId != null) {
+        final transactionId = id.trim();
+        if (transactionId.isNotEmpty) {
           await _client.delete(
               '/goals/${goal.id}/transactions/$transactionId',
               token: token);

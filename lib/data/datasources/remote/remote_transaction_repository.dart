@@ -70,7 +70,7 @@ class RemoteTransactionRepository implements TransactionRepository {
         'type': transaction.type == TransactionType.income ? 'income' : 'expense',
         'category': transaction.category ?? '',
         'amount': transaction.amount.round(),
-        'instrument_id': int.tryParse(transaction.accountId ?? ''),
+        'instrument_id': int.tryParse(transaction.accountId ?? '') ?? transaction.accountId,
         'date': transaction.date.toIso8601String(),
         'information': transaction.note,
         if (transaction.idempotencyKey != null &&
@@ -123,7 +123,7 @@ class RemoteTransactionRepository implements TransactionRepository {
         'type': transaction.type == TransactionType.income ? 'income' : 'expense',
         'category': transaction.category ?? '',
         'amount': transaction.amount.round(),
-        'instrument_id': int.tryParse(transaction.accountId ?? ''),
+        'instrument_id': int.tryParse(transaction.accountId ?? '') ?? transaction.accountId,
         'date': transaction.date.toIso8601String(),
         'information': transaction.note,
       },

@@ -177,8 +177,8 @@ class RemoteNotificationRepository implements NotificationRepository {
       'hour': config.hour,
       'minute': config.minute,
       'enabled': config.enabled,
-      if (config.goalId != null && int.tryParse(config.goalId!) != null)
-        'goal_id': int.parse(config.goalId!),
+      if (config.goalId != null && config.goalId!.trim().isNotEmpty)
+        'goal_id': int.tryParse(config.goalId!) ?? config.goalId!.trim(),
       if (config.frequency == SavingFrequency.weekly)
         'weekday': config.weekday,
       if (config.frequency == SavingFrequency.monthly)
