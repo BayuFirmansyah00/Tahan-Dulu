@@ -227,6 +227,12 @@ class AuthController extends Notifier<AuthState> {
     String? googleIdToken,
   }) async {
     try {
+      try {
+        await FcmService.instance.unregisterBeforeLogout(
+          ref.read(fcmTokenRepositoryProvider),
+        );
+      } catch (_) {}
+
       await ref.read(authRepositoryProvider).deleteAccount(
             password: password,
             googleIdToken: googleIdToken,

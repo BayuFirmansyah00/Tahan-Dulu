@@ -249,6 +249,10 @@ class RemoteAuthRepository implements AuthRepository {
   @override
   Future<String?> getGoogleReauthIdToken() async {
     try {
+      // Pastikan sesi Google SDK di-clear sebelum prompt agar memaksa interaksi autentikasi ulang yang segar
+      try {
+        await _googleSignIn.signOut();
+      } catch (_) {}
       final account = await _googleSignIn.signIn();
       if (account == null) return null;
       final auth = await account.authentication;

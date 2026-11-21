@@ -311,6 +311,115 @@ void main() {
       expect(find.text(AppStrings.privacyDelete), findsOneWidget);
     });
   });
+
+  group('Fase 7C: Multi-User Isolation & Preferences Hardening', () {
+    test('AppPreferences mengisolasi preferensi per pengguna (User A vs User B)', () async {
+      final sp = await SharedPreferences.getInstance();
+
+      // Simulasikan User A (id: 'user_a')
+      final containerA = ProviderContainer(
+        overrides: [
+          authControllerProvider.overrideWith(() => _MockScopedAuthController('user_a')),
+        ],
+      );
+      addTearDown(containerA.dispose);
+
+      containerA.read(appPreferencesProvider);
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      // User A mengubah reduceMotion menjadi true dan showTips menjadi false
+      await containerA.read(appPreferencesProvider.notifier).setReduceMotion(true);
+      await containerA.read(appPreferencesProvider.notifier).setShowTips(false);
+
+      expect(sp.getBool('app_prefs_reduce_motion_user_a'), isTrue);
+      expect(sp.getBool('app_prefs_show_tips_user_a'), isFalse);
+
+      // Simulasikan User B (id: 'user_b') login di perangkat yang sama
+      final containerB = ProviderContainer(
+        overrides: [
+          authControllerProvider.overrideWith(() => _MockScopedAuthController('user_b')),
+        ],
+      );
+      addTearDown(containerB.dispose);
+
+      containerB.read(appPreferencesProvider);
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      // User B mengubah preferensinya sendiri ke nilai berlawanan
+      await containerB.read(appPreferencesProvider.notifier).setReduceMotion(false);
+      await containerB.read(appPreferencesProvider.notifier).setShowTips(true);
+      await containerB.read(appPreferencesProvider.notifier).setShowInAppNotifications(false);
+
+      expect(sp.getBool('app_prefs_reduce_motion_user_b'), isFalse);
+      expect(sp.getBool('app_prefs_show_tips_user_b'), isTrue);
+      expect(sp.getBool('app_prefs_in_app_notif_user_b'), isFalse);
+
+      // Pastikan preferensi User A di SharedPreferences tetap tidak berubah/bocor
+      expect(sp.getBool('app_prefs_reduce_motion_user_a'), isTrue);
+      expect(sp.getBool('app_prefs_show_tips_user_a'), isFalse);
+      expect(sp.getBool('app_prefs_in_app_notif_user_a'), isNull);
+    });
+  });
+
+  group('Fase 7C: Responsive Layout Validation (360dp, 393dp, 412dp)', () {
+    final screenSizes = [
+      const Size(360, 800), // Standar layar kecil (misal: Galaxy A series)
+      const Size(393, 852), // Standar modern (misal: Pixel 7 / iPhone 14)
+      const Size(412, 915), // Layar lebar (misal: Pixel 7 Pro)
+    ];
+
+    for (final size in screenSizes) {
+      testWidgets('ProfileScreen responsif pada lebar ${size.width}dp tanpa overflow', (tester) async {
+        tester.view.physicalSize = size;
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+
+        final container = ProviderContainer(
+          overrides: [
+            profileUserProvider.overrideWith((ref) async => const UserModel(
+                  id: '10',
+                  name: 'Responsive Tester',
+                  email: 'responsive@example.com',
+                  bio: 'Testing across screen sizes seamlessly',
+                  isOnboarded: true,
+                )),
+          ],
+        );
+        addTearDown(container.dispose);
+
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: const MaterialApp(
+              home: ProfileScreen(),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(tester.takeException(), isNull);
+        expect(find.text('Responsive Tester'), findsOneWidget);
+        expect(find.text('Testing across screen sizes seamlessly'), findsOneWidget);
+      });
+    }
+  });
+}
+
+class _MockScopedAuthController extends AuthController {
+  _MockScopedAuthController(this.userId);
+  final String userId;
+
+  @override
+  AuthState build() => AuthState.authenticated(
+        UserModel(
+          id: userId,
+          name: 'User $userId',
+          email: '$userId@example.com',
+          isOnboarded: true,
+        ),
+        loginMethod: 'email',
+      );
 }
 
 class _MockEmailAuthController extends AuthController {

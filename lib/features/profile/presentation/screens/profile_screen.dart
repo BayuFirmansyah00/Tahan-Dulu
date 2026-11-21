@@ -329,6 +329,18 @@ class _ProfileCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: textTheme.bodyMedium?.copyWith(fontSize: 12.5),
                 ),
+                if (user.bio != null && user.bio!.trim().isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    user.bio!,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: textTheme.bodySmall?.copyWith(
+                      color: AppColors.textSecondary,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 4),
                 Container(
                   padding: const EdgeInsets.symmetric(

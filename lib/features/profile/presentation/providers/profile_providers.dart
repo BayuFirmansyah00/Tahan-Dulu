@@ -69,12 +69,22 @@ final profileStatsProvider = FutureProvider<ProfileStats>((ref) async {
 // ---------------------------------------------------------------------------
 
 class AppPreferencesController extends Notifier<AppPreferences> {
-  static const _keyReduceMotion = 'app_prefs_reduce_motion';
-  static const _keyInAppNotif = 'app_prefs_in_app_notif';
-  static const _keyShowTips = 'app_prefs_show_tips';
+  static const _baseReduceMotion = 'app_prefs_reduce_motion';
+  static const _baseInAppNotif = 'app_prefs_in_app_notif';
+  static const _baseShowTips = 'app_prefs_show_tips';
+
+  String? _userId;
+
+  String _scopedKey(String base) {
+    if (_userId != null && _userId!.isNotEmpty) {
+      return '${base}_$_userId';
+    }
+    return base;
+  }
 
   @override
   AppPreferences build() {
+    _userId = ref.watch(authControllerProvider.select((s) => s.user?.id));
     _loadFromStorage();
     return const AppPreferences();
   }
@@ -82,9 +92,20 @@ class AppPreferencesController extends Notifier<AppPreferences> {
   Future<void> _loadFromStorage() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final reduceMotion = prefs.getBool(_keyReduceMotion) ?? false;
-      final showInAppNotifications = prefs.getBool(_keyInAppNotif) ?? true;
-      final showTips = prefs.getBool(_keyShowTips) ?? true;
+      final scopedReduce = _scopedKey(_baseReduceMotion);
+      final scopedNotif = _scopedKey(_baseInAppNotif);
+      final scopedTips = _scopedKey(_baseShowTips);
+
+      final reduceMotion = prefs.getBool(scopedReduce) ??
+          prefs.getBool(_baseReduceMotion) ??
+          false;
+      final showInAppNotifications = prefs.getBool(scopedNotif) ??
+          prefs.getBool(_baseInAppNotif) ??
+          true;
+      final showTips = prefs.getBool(scopedTips) ??
+          prefs.getBool(_baseShowTips) ??
+          true;
+
       state = state.copyWith(
         reduceMotion: reduceMotion,
         showInAppNotifications: showInAppNotifications,
@@ -104,7 +125,7 @@ class AppPreferencesController extends Notifier<AppPreferences> {
     state = state.copyWith(reduceMotion: value);
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool(_keyReduceMotion, value);
+      await prefs.setBool(_scopedKey(_baseReduceMotion), value);
     } catch (_) {}
   }
 
@@ -112,7 +133,7 @@ class AppPreferencesController extends Notifier<AppPreferences> {
     state = state.copyWith(showInAppNotifications: value);
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool(_keyInAppNotif, value);
+      await prefs.setBool(_scopedKey(_baseInAppNotif), value);
     } catch (_) {}
   }
 
@@ -120,7 +141,7 @@ class AppPreferencesController extends Notifier<AppPreferences> {
     state = state.copyWith(showTips: value);
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool(_keyShowTips, value);
+      await prefs.setBool(_scopedKey(_baseShowTips), value);
     } catch (_) {}
   }
 }
