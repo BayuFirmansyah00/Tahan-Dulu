@@ -96,15 +96,35 @@ class AppPreferencesController extends Notifier<AppPreferences> {
       final scopedNotif = _scopedKey(_baseInAppNotif);
       final scopedTips = _scopedKey(_baseShowTips);
 
-      final reduceMotion = prefs.getBool(scopedReduce) ??
-          prefs.getBool(_baseReduceMotion) ??
-          false;
-      final showInAppNotifications = prefs.getBool(scopedNotif) ??
-          prefs.getBool(_baseInAppNotif) ??
-          true;
-      final showTips = prefs.getBool(scopedTips) ??
-          prefs.getBool(_baseShowTips) ??
-          true;
+      // Migrasi satu kali (one-time migration) dari global legacy keys:
+      // Hanya jika user terautentikasi dan kunci global warisan masih ada di storage.
+      if (_userId != null && _userId!.isNotEmpty) {
+        final migrationKey = 'app_prefs_migrated_$_userId';
+        if (!(prefs.getBool(migrationKey) ?? false)) {
+          if (!prefs.containsKey(scopedReduce) && prefs.containsKey(_baseReduceMotion)) {
+            final oldVal = prefs.getBool(_baseReduceMotion);
+            if (oldVal != null) await prefs.setBool(scopedReduce, oldVal);
+            await prefs.remove(_baseReduceMotion);
+          }
+          if (!prefs.containsKey(scopedNotif) && prefs.containsKey(_baseInAppNotif)) {
+            final oldVal = prefs.getBool(_baseInAppNotif);
+            if (oldVal != null) await prefs.setBool(scopedNotif, oldVal);
+            await prefs.remove(_baseInAppNotif);
+          }
+          if (!prefs.containsKey(scopedTips) && prefs.containsKey(_baseShowTips)) {
+            final oldVal = prefs.getBool(_baseShowTips);
+            if (oldVal != null) await prefs.setBool(scopedTips, oldVal);
+            await prefs.remove(_baseShowTips);
+          }
+          await prefs.setBool(migrationKey, true);
+        }
+      }
+
+      // Baca nilai spesifik scoped. Jika akun baru belum pernah menyetel,
+      // selalu gunakan default bersih aplikasi tanpa mewarisi preferensi akun lain.
+      final reduceMotion = prefs.getBool(scopedReduce) ?? false;
+      final showInAppNotifications = prefs.getBool(scopedNotif) ?? true;
+      final showTips = prefs.getBool(scopedTips) ?? true;
 
       state = state.copyWith(
         reduceMotion: reduceMotion,

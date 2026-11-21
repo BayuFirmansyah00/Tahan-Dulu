@@ -227,16 +227,18 @@ class AuthController extends Notifier<AuthState> {
     String? googleIdToken,
   }) async {
     try {
+      await ref.read(authRepositoryProvider).deleteAccount(
+            password: password,
+            googleIdToken: googleIdToken,
+          );
+
+      // Setelah server mengonfirmasi penghapusan berhasil, bersihkan registrasi FCM dan status lokal
       try {
         await FcmService.instance.unregisterBeforeLogout(
           ref.read(fcmTokenRepositoryProvider),
         );
       } catch (_) {}
 
-      await ref.read(authRepositoryProvider).deleteAccount(
-            password: password,
-            googleIdToken: googleIdToken,
-          );
       _resetUserData();
       state = const AuthState.initial();
       return true;

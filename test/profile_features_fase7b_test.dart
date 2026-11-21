@@ -357,7 +357,49 @@ void main() {
       // Pastikan preferensi User A di SharedPreferences tetap tidak berubah/bocor
       expect(sp.getBool('app_prefs_reduce_motion_user_a'), isTrue);
       expect(sp.getBool('app_prefs_show_tips_user_a'), isFalse);
-      expect(sp.getBool('app_prefs_in_app_notif_user_a'), isNull);
+      expect(sp.getBool('app_prefs_reduce_motion_user_b'), isFalse);
+      expect(sp.getBool('app_prefs_show_tips_user_b'), isTrue);
+    });
+
+    test('One-time migration mentransfer kunci legacy global ke user dan menghapus kunci legacy', () async {
+      final sp = await SharedPreferences.getInstance();
+      await sp.setBool('app_prefs_reduce_motion', true);
+      await sp.setBool('app_prefs_show_tips', false);
+
+      final containerMigrate = ProviderContainer(
+        overrides: [
+          authControllerProvider.overrideWith(() => _MockScopedAuthController('user_legacy')),
+        ],
+      );
+      addTearDown(containerMigrate.dispose);
+
+      containerMigrate.read(appPreferencesProvider);
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      final prefs = containerMigrate.read(appPreferencesProvider);
+
+      expect(prefs.reduceMotion, isTrue);
+      expect(prefs.showTips, isFalse);
+
+      // Kunci scoped terbentuk dan kunci global dihapus
+      expect(sp.getBool('app_prefs_reduce_motion_user_legacy'), isTrue);
+      expect(sp.getBool('app_prefs_show_tips_user_legacy'), isFalse);
+      expect(sp.containsKey('app_prefs_reduce_motion'), isFalse);
+      expect(sp.containsKey('app_prefs_show_tips'), isFalse);
+
+      // Akun baru (user_fresh) login setelahnya tidak mewarisi preferensi legacy
+      final containerFresh = ProviderContainer(
+        overrides: [
+          authControllerProvider.overrideWith(() => _MockScopedAuthController('user_fresh')),
+        ],
+      );
+      addTearDown(containerFresh.dispose);
+
+      containerFresh.read(appPreferencesProvider);
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      final prefsFresh = containerFresh.read(appPreferencesProvider);
+
+      expect(prefsFresh.reduceMotion, isFalse); // default bersih
+      expect(prefsFresh.showTips, isTrue); // default bersih
     });
   });
 
