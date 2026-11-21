@@ -66,6 +66,31 @@ class _TahanDuluFormScreenState extends ConsumerState<TahanDuluFormScreen> {
       );
       if (picked != null) {
         ref.read(tahanDuluControllerProvider.notifier).setImageRef(picked.path);
+
+        // Jika nama atau harga masih kosong, coba pindai teks dengan OCR
+        if (_nameController.text.trim().isEmpty || _priceController.text.trim().isEmpty) {
+          final ocr = ref.read(productOcrServiceProvider);
+          final ocrResult = await ocr.scanProductImage(picked.path);
+          if (ocrResult.hasDetectedInfo) {
+            if (_nameController.text.trim().isEmpty && ocrResult.itemName != null) {
+              _nameController.text = ocrResult.itemName!;
+              ref.read(tahanDuluControllerProvider.notifier).setName(ocrResult.itemName!);
+            }
+            if (_priceController.text.trim().isEmpty && ocrResult.price != null && ocrResult.price! > 0) {
+              _priceController.text = RupiahInputFormatter.format(ocrResult.price!);
+              ref.read(tahanDuluControllerProvider.notifier).setPrice(ocrResult.price!);
+            }
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Detail produk otomatis terdeteksi dari foto!'),
+                  backgroundColor: Color(0xFF10B981),
+                  duration: Duration(seconds: 3),
+                ),
+              );
+            }
+          }
+        }
       }
     } catch (_) {
       if (mounted) {
@@ -301,6 +326,88 @@ class _TahanDuluFormScreenState extends ConsumerState<TahanDuluFormScreen> {
                 ),
               ),
               const SizedBox(height: 16),
+            ],
+
+            // Banner Informasi Ekstraksi (Marketplace, Rentang Harga, atau Diskon)
+            if (draft.marketplace != null || draft.extractionNotice != null || draft.priceRequiresConfirmation || (draft.isDiscount && draft.originalPrice != null)) ...[
+              Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: draft.priceRequiresConfirmation
+                      ? const Color(0xFFFFFBEB)
+                      : const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: draft.priceRequiresConfirmation
+                        ? const Color(0xFFFDE68A)
+                        : const Color(0xFFBFDBFE),
+                  ),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      draft.priceRequiresConfirmation
+                          ? Icons.info_outline
+                          : Icons.verified_outlined,
+                      size: 20,
+                      color: draft.priceRequiresConfirmation
+                          ? const Color(0xFFD97706)
+                          : const Color(0xFF2563EB),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (draft.marketplace != null)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              margin: const EdgeInsets.only(bottom: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(color: const Color(0xFFE2E8F0)),
+                              ),
+                              child: Text(
+                                draft.marketplace!,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF102A43),
+                                ),
+                              ),
+                            ),
+                          if (draft.extractionNotice != null)
+                            Text(
+                              draft.extractionNotice!,
+                              style: TextStyle(
+                                fontSize: 12.5,
+                                color: draft.priceRequiresConfirmation
+                                    ? const Color(0xFF92400E)
+                                    : const Color(0xFF1E40AF),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          if (draft.isDiscount && draft.originalPrice != null)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 2),
+                              child: Text(
+                                'Harga Asli: Rp ${RupiahInputFormatter.format(draft.originalPrice!)} (Diskon Terdeteksi)',
+                                style: const TextStyle(
+                                  fontSize: 11.5,
+                                  color: Color(0xFF64748B),
+                                  decoration: TextDecoration.lineThrough,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
 
             AppTextField(

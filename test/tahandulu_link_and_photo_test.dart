@@ -7,7 +7,9 @@ import 'package:tahan_dulu/core/routing/app_routes.dart';
 import 'package:tahan_dulu/data/models/purchase_consideration.dart';
 import 'package:tahan_dulu/data/providers/app_providers.dart';
 import 'package:tahan_dulu/data/repositories/repositories.dart';
+import 'package:tahan_dulu/features/tahandulu/data/services/product_ocr_service.dart';
 import 'package:tahan_dulu/features/tahandulu/presentation/providers/tahandulu_controller.dart';
+import 'package:tahan_dulu/features/tahandulu/presentation/screens/tahandulu_add_screen.dart';
 import 'package:tahan_dulu/features/tahandulu/presentation/screens/tahandulu_form_screen.dart';
 import 'package:tahan_dulu/features/tahandulu/presentation/screens/tahandulu_link_screen.dart';
 
@@ -346,5 +348,150 @@ void main() {
       expect(items.first.imageRef, 'https://example.com/watch.jpg');
       expect(find.textContaining('Analysis Screen for'), findsOneWidget);
     });
+
+    testWidgets('LINK-04: Metadata lengkap dengan marketplace dan diskon -> banner toko & harga muncul di form', (
+      tester,
+    ) async {
+      fakeRepo.mockMetadata = {
+        'title': 'Sepatu Sneakers Running Pro',
+        'price': 350000.0,
+        'original_price': 500000.0,
+        'is_discount': true,
+        'image_url': 'https://example.com/shoes.jpg',
+        'marketplace': 'Tokopedia',
+        'store_name': 'Official Store',
+        'description': 'Sepatu sneakers original nyaman dipakai.',
+        'canonical_url': 'https://www.tokopedia.com/product/shoes',
+        'original_url': 'https://tokopedia.link/shoes',
+        'status': 'complete',
+        'extracted': true,
+      };
+
+      await tester.pumpWidget(
+        _buildTestApp(
+          child: const TahanDuluLinkScreen(),
+          repository: fakeRepo,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final urlField = find.byType(TextField);
+      await tester.enterText(urlField, 'https://tokopedia.link/shoes');
+      await tester.pumpAndSettle();
+
+      final continueButton = find.text(AppStrings.continueAction);
+      await tester.tap(continueButton);
+      await tester.pumpAndSettle();
+
+      expect(find.text(AppStrings.addItemTitle), findsOneWidget);
+      expect(find.text('Sepatu Sneakers Running Pro'), findsOneWidget);
+      expect(find.text('350.000'), findsOneWidget);
+      expect(find.text('Tokopedia'), findsOneWidget);
+      expect(find.textContaining('Harga Asli: Rp 500.000 (Diskon Terdeteksi)'), findsOneWidget);
+    });
+
+    testWidgets('LINK-05: Metadata sebagian dengan rentang harga -> banner konfirmasi harga muncul dan harga kosong', (
+      tester,
+    ) async {
+      fakeRepo.mockMetadata = {
+        'title': 'Kemeja Flannel Pria Aneka Ukuran',
+        'price': null,
+        'price_min': 129000.0,
+        'price_max': 199000.0,
+        'is_price_range': true,
+        'price_requires_confirmation': true,
+        'image_url': 'https://example.com/flannel.jpg',
+        'marketplace': 'Shopee',
+        'canonical_url': 'https://shopee.co.id/kemeja-flannel',
+        'status': 'partial',
+        'extracted': true,
+        'missing_fields': ['price_confirmation'],
+      };
+
+      await tester.pumpWidget(
+        _buildTestApp(
+          child: const TahanDuluLinkScreen(),
+          repository: fakeRepo,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final urlField = find.byType(TextField);
+      await tester.enterText(urlField, 'https://shopee.co.id/kemeja-flannel');
+      await tester.pumpAndSettle();
+
+      final continueButton = find.text(AppStrings.continueAction);
+      await tester.tap(continueButton);
+      await tester.pumpAndSettle();
+
+      expect(find.text(AppStrings.addItemTitle), findsOneWidget);
+      expect(find.text('Kemeja Flannel Pria Aneka Ukuran'), findsOneWidget);
+      expect(find.text('Shopee'), findsOneWidget);
+      expect(find.textContaining('Produk memiliki varian / rentang harga'), findsNWidgets(2));
+    });
+
+    test('OCR-01: NativeProductOcrService.parseProductText mengenali teks screenshot Shopee', () {
+      const mockRawText = '''
+Shopee Mall
+Earphone TWS Bluetooth 5.3 Waterproof
+Rp 189.000
+Rp 350.000
+Beli Sekarang
+Gratis Ongkir
+''';
+      final result = NativeProductOcrService.parseProductText(mockRawText);
+      expect(result.hasDetectedInfo, isTrue);
+      expect(result.marketplace, 'Shopee');
+      expect(result.itemName, 'Earphone TWS Bluetooth 5.3 Waterproof');
+      expect(result.price, 350000.0);
+    });
+
+    test('OCR-02: NativeProductOcrService.parseProductText mengenali Tokopedia dan membersihkan tombol UI', () {
+      const mockRawText = '''
+Tokopedia Official
+Tas Ransel Laptop Anti Air USB Charger
+Chat Penjual
+Tambah ke Keranjang
+Rp 275.000
+Ulasan (4.9)
+''';
+      final result = NativeProductOcrService.parseProductText(mockRawText);
+      expect(result.hasDetectedInfo, isTrue);
+      expect(result.marketplace, 'Tokopedia');
+      expect(result.itemName, 'Tas Ransel Laptop Anti Air USB Charger');
+      expect(result.price, 275000.0);
+    });
+
+    test('OCR-03: NativeProductOcrService.parseProductText pada foto fisik tanpa harga tidak menebak harga', () {
+      const mockRawText = '''
+PHOTO_DSC_001
+MADE IN INDONESIA
+''';
+      final result = NativeProductOcrService.parseProductText(mockRawText);
+      expect(result.price, isNull);
+      expect(result.marketplace, isNull);
+    });
+
+    for (final width in [360.0, 393.0, 412.0]) {
+      testWidgets('RESPONSIVE: TahanDuluAddScreen responsif pada lebar ${width}dp', (tester) async {
+        tester.view.physicalSize = Size(width * 2, 800 * 2);
+        tester.view.devicePixelRatio = 2.0;
+        addTearDown(() => tester.view.resetPhysicalSize());
+
+        await tester.pumpWidget(
+          _buildTestApp(
+            child: const TahanDuluAddScreen(),
+            repository: fakeRepo,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text(AppStrings.addItemTitle), findsOneWidget);
+        expect(find.text(AppStrings.methodManual), findsOneWidget);
+        expect(find.text(AppStrings.methodLink), findsOneWidget);
+        expect(find.text(AppStrings.methodPhoto), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      });
+    }
   });
 }

@@ -51,29 +51,74 @@ class _TahanDuluLinkScreenState extends ConsumerState<TahanDuluLinkScreen> {
       if (!mounted) return;
 
       final isExtracted = metadata['extracted'] == true;
+      final status = (metadata['status'] as String?) ?? (isExtracted ? 'complete' : 'failed');
       final title = metadata['title'] as String?;
       final price = (metadata['price'] as num?)?.toDouble();
+      final originalPrice = (metadata['original_price'] as num?)?.toDouble();
+      final isDiscount = metadata['is_discount'] == true;
       final imageUrl = metadata['image_url'] as String?;
+      final marketplace = metadata['marketplace'] as String?;
+      final storeName = metadata['store_name'] as String?;
+      final description = metadata['description'] as String?;
+      final canonicalUrl = (metadata['canonical_url'] as String?) ?? url;
+      final priceRequiresConfirmation = metadata['price_requires_confirmation'] == true;
 
-      ref.read(tahanDuluControllerProvider.notifier).reset(url);
+      ref.read(tahanDuluControllerProvider.notifier).reset(canonicalUrl);
 
-      if (isExtracted && (title != null || price != null || imageUrl != null)) {
-        ref.read(tahanDuluControllerProvider.notifier).prefillDraft(
-          itemName: title,
-          price: price,
-          productUrl: url,
-          imageRef: imageUrl,
+      String? notice;
+      if (status == 'complete') {
+        final source = storeName ?? marketplace ?? 'toko online';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Informasi produk berhasil dimuat dari $source!'),
+            backgroundColor: const Color(0xFF10B981),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      } else if (status == 'partial') {
+        if (priceRequiresConfirmation) {
+          notice = 'Produk memiliki varian / rentang harga. Silakan tentukan harga pilihan kamu.';
+        } else if (price == null || price <= 0) {
+          notice = 'Harga produk tidak dapat dimuat otomatis. Silakan isi harga barang.';
+        } else if (imageUrl == null || imageUrl.isEmpty) {
+          notice = 'Foto produk tidak ditemukan di website. Kamu dapat menambahkan foto secara manual.';
+        } else {
+          notice = 'Sebagian informasi produk berhasil dimuat. Silakan periksa kembali.';
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(notice),
+            backgroundColor: const Color(0xFFF59E0B),
+            duration: const Duration(seconds: 4),
+          ),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-              'Info produk tidak dapat dimuat otomatis. Silakan lengkapi di formulir.',
+              'Info produk tidak dapat dimuat otomatis dari link ini. Silakan lengkapi di formulir.',
             ),
-            duration: Duration(seconds: 3),
+            duration: Duration(seconds: 4),
           ),
         );
       }
+
+      if (isExtracted && (title != null || price != null || imageUrl != null)) {
+        ref.read(tahanDuluControllerProvider.notifier).prefillDraft(
+          itemName: title,
+          price: price,
+          originalPrice: originalPrice,
+          isDiscount: isDiscount,
+          marketplace: marketplace,
+          productUrl: canonicalUrl,
+          imageRef: imageUrl,
+          note: description,
+          priceRequiresConfirmation: priceRequiresConfirmation,
+          extractionNotice: notice,
+        );
+      }
+
       context.push(AppRoutes.tahanDuluForm);
     } catch (_) {
       if (!mounted) return;

@@ -213,8 +213,42 @@ class TahanDuluAddScreen extends ConsumerWidget {
       );
 
       if (picked != null) {
-        ref.read(tahanDuluControllerProvider.notifier).reset();
-        ref.read(tahanDuluControllerProvider.notifier).setImageRef(picked.path);
+        final notifier = ref.read(tahanDuluControllerProvider.notifier);
+        notifier.reset();
+
+        // Pindai gambar dengan OCR untuk mendeteksi informasi nama produk, harga, atau marketplace
+        final ocr = ref.read(productOcrServiceProvider);
+        final ocrResult = await ocr.scanProductImage(picked.path);
+
+        if (ocrResult.hasDetectedInfo) {
+          notifier.prefillDraft(
+            itemName: ocrResult.itemName,
+            price: ocrResult.price,
+            marketplace: ocrResult.marketplace,
+            imageRef: picked.path,
+            extractionNotice: 'Informasi produk berhasil dideteksi dari gambar.',
+          );
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Informasi produk berhasil dideteksi dari gambar!'),
+                backgroundColor: Color(0xFF10B981),
+                duration: Duration(seconds: 3),
+              ),
+            );
+          }
+        } else {
+          notifier.setImageRef(picked.path);
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Foto produk berhasil dipilih. Silakan lengkapi nama dan harga barang.'),
+                duration: Duration(seconds: 3),
+              ),
+            );
+          }
+        }
+
         if (context.mounted) {
           context.push(AppRoutes.tahanDuluForm);
         }

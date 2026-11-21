@@ -99,13 +99,24 @@ class RemotePurchaseDecisionRepository implements PurchaseDecisionRepository {
   @override
   Future<Map<String, dynamic>> extractMetadata(String url) async {
     final token = await _requireToken();
-    final body = await client.post(
-      '/wishlists/extract-metadata',
-      {'url': url},
-      token: token,
-    );
-    if (body['data'] is Map<String, dynamic>) {
-      return body['data'] as Map<String, dynamic>;
+    try {
+      final body = await client.post(
+        '/wishlists/preview-link',
+        {'url': url},
+        token: token,
+      );
+      if (body['data'] is Map<String, dynamic>) {
+        return body['data'] as Map<String, dynamic>;
+      }
+    } catch (_) {
+      final body = await client.post(
+        '/wishlists/extract-metadata',
+        {'url': url},
+        token: token,
+      );
+      if (body['data'] is Map<String, dynamic>) {
+        return body['data'] as Map<String, dynamic>;
+      }
     }
     return {};
   }

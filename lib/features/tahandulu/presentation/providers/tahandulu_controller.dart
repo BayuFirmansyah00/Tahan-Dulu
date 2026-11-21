@@ -12,6 +12,13 @@ import '../../../../data/providers/reports_providers.dart';
 import '../../../goals/presentation/providers/goals_controller.dart'
     show goalsListProvider;
 
+import '../../data/services/product_ocr_service.dart';
+
+/// Provider layanan OCR produk dari tangkapan layar atau foto barang.
+final productOcrServiceProvider = Provider<ProductOcrService>((ref) {
+  return NativeProductOcrService();
+});
+
 /// Draf form produk (dibawa antar layar metode -> form).
 class ConsiderationDraft extends Equatable {
   const ConsiderationDraft({
@@ -22,6 +29,11 @@ class ConsiderationDraft extends Equatable {
     this.productUrl = '',
     this.note = '',
     this.imageRef,
+    this.originalPrice,
+    this.isDiscount = false,
+    this.marketplace,
+    this.priceRequiresConfirmation = false,
+    this.extractionNotice,
   });
 
   final String? id;
@@ -31,6 +43,11 @@ class ConsiderationDraft extends Equatable {
   final String productUrl;
   final String note;
   final String? imageRef;
+  final double? originalPrice;
+  final bool isDiscount;
+  final String? marketplace;
+  final bool priceRequiresConfirmation;
+  final String? extractionNotice;
 
   bool get isNameValid => itemName.trim().isNotEmpty;
   bool get isPriceValid => price > 0;
@@ -47,7 +64,13 @@ class ConsiderationDraft extends Equatable {
     String? productUrl,
     String? note,
     String? imageRef,
+    double? originalPrice,
+    bool? isDiscount,
+    String? marketplace,
+    bool? priceRequiresConfirmation,
+    String? extractionNotice,
     bool clearImageRef = false,
+    bool clearNotice = false,
   }) {
     return ConsiderationDraft(
       id: id ?? this.id,
@@ -57,12 +80,31 @@ class ConsiderationDraft extends Equatable {
       productUrl: productUrl ?? this.productUrl,
       note: note ?? this.note,
       imageRef: clearImageRef ? null : (imageRef ?? this.imageRef),
+      originalPrice: originalPrice ?? this.originalPrice,
+      isDiscount: isDiscount ?? this.isDiscount,
+      marketplace: marketplace ?? this.marketplace,
+      priceRequiresConfirmation:
+          priceRequiresConfirmation ?? this.priceRequiresConfirmation,
+      extractionNotice:
+          clearNotice ? null : (extractionNotice ?? this.extractionNotice),
     );
   }
 
   @override
-  List<Object?> get props =>
-      [id, itemName, price, category, productUrl, note, imageRef];
+  List<Object?> get props => [
+        id,
+        itemName,
+        price,
+        category,
+        productUrl,
+        note,
+        imageRef,
+        originalPrice,
+        isDiscount,
+        marketplace,
+        priceRequiresConfirmation,
+        extractionNotice,
+      ];
 }
 
 /// Validasi URL produk: skema http(s) + host.
@@ -195,18 +237,29 @@ class TahanDuluController extends Notifier<ConsiderationDraft> {
   void prefillDraft({
     String? itemName,
     double? price,
+    double? originalPrice,
+    bool? isDiscount,
+    String? marketplace,
     ProductCategory? category,
     String? productUrl,
     String? note,
     String? imageRef,
+    bool? priceRequiresConfirmation,
+    String? extractionNotice,
   }) {
     state = state.copyWith(
       itemName: itemName ?? state.itemName,
       price: price ?? state.price,
+      originalPrice: originalPrice ?? state.originalPrice,
+      isDiscount: isDiscount ?? state.isDiscount,
+      marketplace: marketplace ?? state.marketplace,
       category: category ?? state.category,
       productUrl: productUrl ?? state.productUrl,
       note: note ?? state.note,
       imageRef: imageRef ?? state.imageRef,
+      priceRequiresConfirmation:
+          priceRequiresConfirmation ?? state.priceRequiresConfirmation,
+      extractionNotice: extractionNotice ?? state.extractionNotice,
     );
   }
 
