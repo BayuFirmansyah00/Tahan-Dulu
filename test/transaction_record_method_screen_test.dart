@@ -557,6 +557,9 @@ void main() {
         await tester.pumpWidget(
           _createTestApp(
             overrides: [
+              accountsProvider.overrideWith(
+                (ref) => Future.value(sampleAccounts),
+              ),
               speechRecognitionServiceProvider.overrideWithValue(mockSpeech),
             ],
             child: const TransactionVoiceScreen(),
@@ -570,6 +573,9 @@ void main() {
         await tester.pumpWidget(
           _createTestApp(
             overrides: [
+              accountsProvider.overrideWith(
+                (ref) => Future.value(sampleAccounts),
+              ),
               speechRecognitionServiceProvider.overrideWithValue(mockSpeech),
             ],
             child: const SizedBox(),

@@ -7,6 +7,7 @@ import '../../../../core/routing/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_icons.dart';
@@ -298,25 +299,26 @@ class _TransactionVoiceScreenState
 
     final notifier = ref.read(transactionFormProvider.notifier);
 
+    String? notice;
+    if (!result.isTypeExplicit) {
+      notice = 'Jenis transaksi belum spesifik. Silakan konfirmasi pemasukan atau pengeluaran di formulir.';
+    } else if (!result.hasCategory) {
+      notice = 'Kategori transaksi belum ditentukan. Silakan pilih kategori pada formulir.';
+    } else if (!result.hasAccount) {
+      notice = 'Rekening pembayaran belum dipilih. Silakan pilih rekening pada formulir.';
+    }
+
     // Terapkan hasil suara ke draf form transaksi
-    notifier.setType(result.type);
-    if (result.hasAmount) {
-      notifier.setAmount(result.amount);
-    }
-    if (result.hasCategory) {
-      notifier.setCategory(result.category!);
-    }
-    if (result.hasAccount) {
-      notifier.setAccount(result.accountId);
-    }
-    if (result.hasDate) {
-      notifier.setDate(result.date!);
-    }
-    // B3-04: Judul transaksi dari deskripsi yang sudah dibersihkan
-    if (result.description.isNotEmpty) {
-      notifier.setTitle(result.description);
-      notifier.setNote(result.description);
-    }
+    notifier.prefillFromVoice(
+      type: result.type,
+      amount: result.hasAmount ? result.amount : null,
+      category: result.category,
+      accountId: result.accountId,
+      date: result.date,
+      title: result.description.isNotEmpty ? result.description : null,
+      note: result.description.isNotEmpty ? result.description : null,
+      notice: notice,
+    );
 
     // Arahkan ke formulir transaksi manual untuk verifikasi dan review pengguna
     context.push(AppRoutes.transactionAdd);
@@ -620,6 +622,15 @@ class _TransactionVoiceScreenState
                                 ? (_parsedResult!.accountName ?? '-')
                                 : 'Belum pasti (pilih di form)',
                           ),
+                          if (_parsedResult!.hasDate) ...[
+                            const Divider(height: 16),
+                            _DetailRow(
+                              label: 'Tanggal Transaksi',
+                              value: DateFormatter.dayMonthYear(
+                                _parsedResult!.date!,
+                              ),
+                            ),
+                          ],
                           const Divider(height: 16),
                           _DetailRow(
                             label: 'Catatan',

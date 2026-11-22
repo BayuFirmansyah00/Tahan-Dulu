@@ -28,6 +28,20 @@ void main() {
       balance: 350000,
       institutionName: 'GoPay',
     ),
+    const FinancialAccount(
+      id: 'acc-4',
+      name: 'BRI',
+      type: AccountType.bank,
+      balance: 10000000,
+      institutionName: 'Bank Rakyat Indonesia',
+    ),
+    const FinancialAccount(
+      id: 'acc-cash',
+      name: 'Cash',
+      type: AccountType.bank,
+      balance: 500000,
+      institutionName: 'Uang Tunai',
+    ),
   ];
 
   group('VoiceTransactionParser Tests', () {
@@ -311,6 +325,86 @@ void main() {
         final result = testParser.parse('Beli makan siang dua puluh ribu');
         expect(result.hasDate, isFalse);
         expect(result.date, isNull);
+      });
+    });
+
+    group('Fase 8B Section 5.3 Specific Utterance Tests', () {
+      final refDate = DateTime(2026, 11, 22, 10, 0);
+      final phaseParser = VoiceTransactionParser(clock: () => refDate);
+
+      test('Contoh A: "Catat pengeluaran makan siang 25 ribu pakai BCA."', () {
+        final result = phaseParser.parse(
+          'Catat pengeluaran makan siang 25 ribu pakai BCA.',
+          userAccounts: userAccounts,
+          referenceDate: refDate,
+        );
+
+        expect(result.type, equals(TransactionType.expense));
+        expect(result.amount, equals(25000.0));
+        expect(result.category, equals(TransactionCategory.food));
+        expect(result.accountId, equals('acc-1'));
+        expect(result.accountName, equals('BCA'));
+        expect(result.description, equals('Makan siang'));
+      });
+
+      test('Contoh B: "Tadi beli bensin 50 ribu pakai cash."', () {
+        final result = phaseParser.parse(
+          'Tadi beli bensin 50 ribu pakai cash.',
+          userAccounts: userAccounts,
+          referenceDate: refDate,
+        );
+
+        expect(result.type, equals(TransactionType.expense));
+        expect(result.amount, equals(50000.0));
+        expect(result.hasDate, isTrue);
+        expect(result.date, equals(DateTime(2026, 11, 22)));
+        expect(result.category, equals(TransactionCategory.transport));
+        expect(result.accountId, equals('acc-cash'));
+        expect(result.description, equals('Beli bensin'));
+      });
+
+      test('Contoh C: "Terima gaji 3 juta ke rekening BRI."', () {
+        final result = phaseParser.parse(
+          'Terima gaji 3 juta ke rekening BRI.',
+          userAccounts: userAccounts,
+          referenceDate: refDate,
+        );
+
+        expect(result.type, equals(TransactionType.income));
+        expect(result.amount, equals(3000000.0));
+        expect(result.category, equals(TransactionCategory.salary));
+        expect(result.accountId, equals('acc-4'));
+        expect(result.accountName, equals('BRI'));
+        expect(result.description, equals('Terima gaji'));
+      });
+
+      test('Contoh D: "Catat belanja kemarin seratus dua puluh lima ribu."', () {
+        final result = phaseParser.parse(
+          'Catat belanja kemarin seratus dua puluh lima ribu.',
+          userAccounts: userAccounts,
+          referenceDate: refDate,
+        );
+
+        expect(result.amount, equals(125000.0));
+        expect(result.hasDate, isTrue);
+        expect(result.date, equals(DateTime(2026, 11, 21))); // Kemarin dari 22 Nov
+        expect(result.category, equals(TransactionCategory.shopping));
+        expect(result.accountId, isNull); // Rekening belum dipilih
+        expect(result.description, equals('Belanja'));
+      });
+
+      test('Contoh E: "Catat transaksi dua puluh lima ribu."', () {
+        final result = phaseParser.parse(
+          'Catat transaksi dua puluh lima ribu.',
+          userAccounts: userAccounts,
+          referenceDate: refDate,
+        );
+
+        expect(result.amount, equals(25000.0));
+        expect(result.category, isNull); // Tidak mengarang kategori
+        expect(result.accountId, isNull); // Tidak mengarang akun
+        expect(result.isTypeExplicit, isFalse); // Jenis belum spesifik
+        expect(result.description, equals('Transaksi'));
       });
     });
   });

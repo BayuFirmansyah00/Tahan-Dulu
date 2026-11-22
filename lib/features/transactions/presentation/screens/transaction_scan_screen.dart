@@ -12,7 +12,6 @@ import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_icons.dart';
-import '../../../../data/models/transaction_model.dart';
 import '../../data/services/receipt_ocr_service.dart';
 import '../../domain/receipt_parser.dart';
 import '../providers/native_input_providers.dart';
@@ -198,31 +197,32 @@ class _TransactionScanScreenState extends ConsumerState<TransactionScanScreen> {
 
     final notifier = ref.read(transactionFormProvider.notifier);
 
-    // Struk belanja selalu dikategorikan sebagai pengeluaran
-    notifier.setType(TransactionType.expense);
-
-    if (receipt.total > 0) {
-      notifier.setAmount(receipt.total);
-    }
-
-    if (receipt.date != null) {
-      notifier.setDate(receipt.date!);
-    }
-
-    // B3-04: Judul transaksi menggunakan nama merchant jika terdeteksi
-    if (receipt.hasMerchant && receipt.merchantName!.trim().isNotEmpty) {
-      notifier.setTitle(receipt.merchantName!.trim());
-    }
-
     // Susun catatan dari rincian item belanja yang terbaca (tanpa menduplikasi merchant)
     final noteParts = <String>[];
     if (receipt.items.isNotEmpty) {
       final itemSummary = receipt.items.map((i) => i.name).take(3).join(', ');
       noteParts.add('Item: $itemSummary');
     }
-    if (noteParts.isNotEmpty) {
-      notifier.setNote(noteParts.join(' - '));
+    if (receipt.time != null && receipt.time!.isNotEmpty) {
+      noteParts.add('Waktu: ${receipt.time}');
     }
+
+    String? notice;
+    if (receipt.hasMultipleTotals) {
+      notice = 'Struk memiliki beberapa kemungkinan nominal. Harap pastikan total akhir pembayaran.';
+    } else if (receipt.total <= 0) {
+      notice = 'Nominal struk belum terdeteksi. Silakan masukkan nominal pembayaran secara manual.';
+    }
+
+    notifier.prefillFromScan(
+      amount: receipt.total,
+      date: receipt.date,
+      title: (receipt.hasMerchant && receipt.merchantName!.trim().isNotEmpty)
+          ? receipt.merchantName!.trim()
+          : null,
+      note: noteParts.isNotEmpty ? noteParts.join(' - ') : null,
+      notice: notice,
+    );
 
     // Arahkan ke formulir transaksi manual untuk verifikasi akun & kategori
     context.push(AppRoutes.transactionAdd);
@@ -600,12 +600,49 @@ class _TransactionScanScreenState extends ConsumerState<TransactionScanScreen> {
                                   )
                                 : 'Hari ini (dapat diubah di form)',
                           ),
+                          if (_parsedReceipt!.time != null) ...[
+                            const Divider(height: 16),
+                            _ReceiptRow(
+                              label: 'Waktu / Jam Transaksi',
+                              value: _parsedReceipt!.time!,
+                            ),
+                          ],
                           if (_parsedReceipt!.subtotal != null) ...[
                             const Divider(height: 16),
                             _ReceiptRow(
                               label: 'Subtotal Terbaca',
                               value: CurrencyFormatter.format(
                                 _parsedReceipt!.subtotal!,
+                              ),
+                            ),
+                          ],
+                          if (_parsedReceipt!.discount != null &&
+                              _parsedReceipt!.discount! > 0) ...[
+                            const Divider(height: 16),
+                            _ReceiptRow(
+                              label: 'Diskon Terbaca',
+                              value:
+                                  '- ${CurrencyFormatter.format(_parsedReceipt!.discount!)}',
+                              highlightColor: AppColors.success,
+                            ),
+                          ],
+                          if (_parsedReceipt!.tax != null &&
+                              _parsedReceipt!.tax! > 0) ...[
+                            const Divider(height: 16),
+                            _ReceiptRow(
+                              label: 'Pajak / PPN Terbaca',
+                              value: CurrencyFormatter.format(
+                                _parsedReceipt!.tax!,
+                              ),
+                            ),
+                          ],
+                          if (_parsedReceipt!.serviceFee != null &&
+                              _parsedReceipt!.serviceFee! > 0) ...[
+                            const Divider(height: 16),
+                            _ReceiptRow(
+                              label: 'Biaya Layanan Terbaca',
+                              value: CurrencyFormatter.format(
+                                _parsedReceipt!.serviceFee!,
                               ),
                             ),
                           ],
@@ -620,6 +657,38 @@ class _TransactionScanScreenState extends ConsumerState<TransactionScanScreen> {
                             isHighlight: true,
                             highlightColor: AppColors.primary,
                           ),
+                          if (_parsedReceipt!.hasMultipleTotals) ...[
+                            const SizedBox(height: 10),
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFFFBEB),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: const Color(0xFFFDE68A),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.info_outline,
+                                    size: 16,
+                                    color: Color(0xFFD97706),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      'Terdapat beberapa kandidat total pada struk. Periksa kembali total akhir di form.',
+                                      style: textTheme.bodySmall?.copyWith(
+                                        color: const Color(0xFF92400E),
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                           if (_parsedReceipt!.items.isNotEmpty) ...[
                             const Divider(height: 16),
                             Text(

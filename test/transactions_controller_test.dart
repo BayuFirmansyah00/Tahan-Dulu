@@ -17,7 +17,7 @@ void _fillValid(TransactionFormController notifier) {
   notifier.setAmount(41000);
   notifier.setCategory(TransactionCategory.food);
   notifier.setAccount('inst-bca');
-  notifier.setDate(DateTime(2026, 10, 9));
+  notifier.setDate(DateTime.now().add(const Duration(days: 1)));
   notifier.setNote('Ayam geprek');
 }
 
@@ -117,7 +117,10 @@ void main() {
         isTrue,
       );
     }
-    expect(items.first.date, DateTime(2026, 10, 5));
+    expect(
+      items.first.date,
+      DateTime(DateTime.now().year, DateTime.now().month, 5),
+    );
   });
 
   group('amount parsing', () {

@@ -13,6 +13,9 @@ import '../../../../data/providers/reports_providers.dart';
 import '../utils/transaction_categories.dart'
     show categoriesFor, categoryLabel;
 
+/// Sumber asal pengisian form transaksi.
+enum TransactionInputSource { manual, voice, scan }
+
 /// Draf form input manual (sumber kebenaran selama mengisi & review).
 class TransactionDraft extends Equatable {
   const TransactionDraft({
@@ -25,6 +28,8 @@ class TransactionDraft extends Equatable {
     this.note = '',
     this.fee = 0,
     this.idempotencyKey = '',
+    this.source = TransactionInputSource.manual,
+    this.sourceNotice,
   });
 
   /// Judul transaksi (misal: nama merchant dari struk atau ringkasan suara).
@@ -42,6 +47,12 @@ class TransactionDraft extends Equatable {
 
   /// Kunci idempotensi unik (UUID v4) untuk sesi draf transaksi ini.
   final String idempotencyKey;
+
+  /// Sumber asal pengisian draf (manual, voice, atau scan struk).
+  final TransactionInputSource source;
+
+  /// Keterangan atau notifikasi kontekstual untuk pengguna (misal konfirmasi ekstraksi).
+  final String? sourceNotice;
 
   bool get isAmountValid => amount > 0;
   bool get isCategoryValid => category != null;
@@ -76,6 +87,8 @@ class TransactionDraft extends Equatable {
     String? note,
     double? fee,
     String? idempotencyKey,
+    TransactionInputSource? source,
+    String? sourceNotice,
   }) {
     return TransactionDraft(
       title: title ?? this.title,
@@ -87,12 +100,25 @@ class TransactionDraft extends Equatable {
       note: note ?? this.note,
       fee: fee ?? this.fee,
       idempotencyKey: idempotencyKey ?? this.idempotencyKey,
+      source: source ?? this.source,
+      sourceNotice: sourceNotice ?? this.sourceNotice,
     );
   }
 
   @override
-  List<Object?> get props =>
-      [title, type, amount, category, accountId, date, note, fee, idempotencyKey];
+  List<Object?> get props => [
+        title,
+        type,
+        amount,
+        category,
+        accountId,
+        date,
+        note,
+        fee,
+        idempotencyKey,
+        source,
+        sourceNotice,
+      ];
 }
 
 /// Controller form manual: validasi, review, simpan anti-ganda.
@@ -166,6 +192,58 @@ class TransactionFormController extends Notifier<TransactionDraft> {
 
   void setNote(String note) {
     state = state.copyWith(note: note);
+  }
+
+  void setSource(TransactionInputSource source, {String? notice}) {
+    state = state.copyWith(source: source, sourceNotice: notice);
+  }
+
+  void prefillFromVoice({
+    required TransactionType type,
+    double? amount,
+    TransactionCategory? category,
+    String? accountId,
+    DateTime? date,
+    String? title,
+    String? note,
+    String? notice,
+  }) {
+    final compatibleCategory =
+        category != null && categoriesFor(type).contains(category)
+            ? category
+            : null;
+
+    state = state.copyWith(
+      type: type,
+      amount: amount ?? state.amount,
+      category: compatibleCategory,
+      accountId: accountId ?? state.accountId,
+      date: date ?? state.date,
+      title: title ?? state.title,
+      note: note ?? state.note,
+      source: TransactionInputSource.voice,
+      sourceNotice: notice ??
+          'Data terisi dari input suara. Silakan periksa kembali sebelum menyimpan.',
+    );
+  }
+
+  void prefillFromScan({
+    required double amount,
+    DateTime? date,
+    String? title,
+    String? note,
+    String? notice,
+  }) {
+    state = state.copyWith(
+      type: TransactionType.expense,
+      amount: amount,
+      date: date ?? state.date,
+      title: title ?? state.title,
+      note: note ?? state.note,
+      source: TransactionInputSource.scan,
+      sourceNotice: notice ??
+          'Data terisi dari scan struk. Pilih kategori dan rekening pembayaran.',
+    );
   }
 
   /// Biaya tambahan: kosong/negatif -> Rp0 (ditolak, bukan disimpan).

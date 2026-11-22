@@ -17,19 +17,29 @@ class ParsedReceipt {
     required this.rawText,
     this.merchantName,
     this.date,
+    this.time,
     this.total = 0,
     this.subtotal,
+    this.discount,
+    this.tax,
+    this.serviceFee,
     this.paymentMethod,
     this.items = const [],
+    this.hasMultipleTotals = false,
   });
 
   final String rawText;
   final String? merchantName;
   final DateTime? date;
+  final String? time;
   final double total;
   final double? subtotal;
+  final double? discount;
+  final double? tax;
+  final double? serviceFee;
   final String? paymentMethod;
   final List<ReceiptItem> items;
+  final bool hasMultipleTotals;
 
   bool get hasTotal => total > 0;
   bool get hasMerchant => merchantName != null && merchantName!.trim().isNotEmpty;
@@ -57,7 +67,7 @@ class ReceiptParser {
         .toList();
 
     final merchant = _extractMerchant(lines);
-    final date = _extractDate(lines);
+    final dateResult = _extractDate(lines);
     final totals = _extractTotals(lines);
     final items = _extractItems(lines);
     final payment = _extractPaymentMethod(lines);
@@ -65,9 +75,14 @@ class ReceiptParser {
     return ParsedReceipt(
       rawText: cleanText,
       merchantName: merchant,
-      date: date,
+      date: dateResult.date,
+      time: dateResult.time,
       total: totals.total,
       subtotal: totals.subtotal,
+      discount: totals.discount,
+      tax: totals.tax,
+      serviceFee: totals.serviceFee,
+      hasMultipleTotals: totals.hasMultipleTotals,
       paymentMethod: payment,
       items: items,
     );
@@ -118,7 +133,7 @@ class ReceiptParser {
     return null;
   }
 
-  DateTime? _extractDate(List<String> lines) {
+  _ReceiptDateResult _extractDate(List<String> lines) {
     const monthMap = <String, int>{
       'januari': 1, 'jan': 1,
       'februari': 2, 'feb': 2,
@@ -146,46 +161,79 @@ class ReceiptParser {
     // 3. Pola numerik standar: DD/MM/YYYY, DD-MM-YYYY, DD.MM.YYYY
     final numericPattern = RegExp(r'\b(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](20\d{2}|\d{2})\b');
 
+    final timePattern = RegExp(r'\b([01]?\d|2[0-3])[:.]([0-5]\d)(?:[:.]([0-5]\d))?\b');
+
+    DateTime? foundDate;
+    String? foundTime;
+
     for (final line in lines) {
-      // Prioritas 1: Format ISO (YYYY-MM-DD)
-      final isoMatch = isoPattern.firstMatch(line);
-      if (isoMatch != null) {
-        final year = int.tryParse(isoMatch.group(1) ?? '');
-        final month = int.tryParse(isoMatch.group(2) ?? '');
-        final day = int.tryParse(isoMatch.group(3) ?? '');
-        final validDate = _validateCalendarDate(year, month, day);
-        if (validDate != null) return validDate;
-      }
-
-      // Prioritas 2: Format dengan nama/singkatan bulan (05 Nov 2026, 05 Oktober 2026)
-      final textMatch = textMonthPattern.firstMatch(line);
-      if (textMatch != null) {
-        final day = int.tryParse(textMatch.group(1) ?? '');
-        final monthName = textMatch.group(2)?.toLowerCase() ?? '';
-        var year = int.tryParse(textMatch.group(3) ?? '');
-        if (year != null && year < 100) year += 2000;
-
-        final month = monthMap[monthName];
-        if (month != null) {
+      if (foundDate == null) {
+        // Prioritas 1: Format ISO (YYYY-MM-DD)
+        final isoMatch = isoPattern.firstMatch(line);
+        if (isoMatch != null) {
+          final year = int.tryParse(isoMatch.group(1) ?? '');
+          final month = int.tryParse(isoMatch.group(2) ?? '');
+          final day = int.tryParse(isoMatch.group(3) ?? '');
           final validDate = _validateCalendarDate(year, month, day);
-          if (validDate != null) return validDate;
+          if (validDate != null) {
+            foundDate = validDate;
+          }
+        }
+
+        // Prioritas 2: Format dengan nama/singkatan bulan (05 Nov 2026, 05 Oktober 2026)
+        if (foundDate == null) {
+          final textMatch = textMonthPattern.firstMatch(line);
+          if (textMatch != null) {
+            final day = int.tryParse(textMatch.group(1) ?? '');
+            final monthName = textMatch.group(2)?.toLowerCase() ?? '';
+            var year = int.tryParse(textMatch.group(3) ?? '');
+            if (year != null && year < 100) year += 2000;
+
+            final month = monthMap[monthName];
+            if (month != null) {
+              final validDate = _validateCalendarDate(year, month, day);
+              if (validDate != null) {
+                foundDate = validDate;
+              }
+            }
+          }
+        }
+
+        // Prioritas 3: Format numerik standar (05/11/2026, 05-11-2026, 05.11.2026)
+        if (foundDate == null) {
+          final numMatch = numericPattern.firstMatch(line);
+          if (numMatch != null) {
+            final day = int.tryParse(numMatch.group(1) ?? '');
+            final month = int.tryParse(numMatch.group(2) ?? '');
+            var year = int.tryParse(numMatch.group(3) ?? '');
+            if (year != null && year < 100) year += 2000;
+
+            final validDate = _validateCalendarDate(year, month, day);
+            if (validDate != null) {
+              foundDate = validDate;
+            }
+          }
         }
       }
 
-      // Prioritas 3: Format numerik standar (05/11/2026, 05-11-2026, 05.11.2026)
-      final numMatch = numericPattern.firstMatch(line);
-      if (numMatch != null) {
-        final day = int.tryParse(numMatch.group(1) ?? '');
-        final month = int.tryParse(numMatch.group(2) ?? '');
-        var year = int.tryParse(numMatch.group(3) ?? '');
-        if (year != null && year < 100) year += 2000;
+      // Deteksi waktu/jam jika baris mengandung format HH:MM
+      if (foundTime == null) {
+        final tMatch = timePattern.firstMatch(line);
+        if (tMatch != null) {
+          final h = int.tryParse(tMatch.group(1) ?? '');
+          final m = int.tryParse(tMatch.group(2) ?? '');
+          if (h != null && m != null && h >= 0 && h <= 23 && m >= 0 && m <= 59) {
+            foundTime = '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}';
+          }
+        }
+      }
 
-        final validDate = _validateCalendarDate(year, month, day);
-        if (validDate != null) return validDate;
+      if (foundDate != null && foundTime != null) {
+        break;
       }
     }
 
-    return null;
+    return _ReceiptDateResult(date: foundDate, time: foundTime);
   }
 
   static DateTime? _validateCalendarDate(int? year, int? month, int? day) {
@@ -205,6 +253,9 @@ class ReceiptParser {
 
   _TotalResult _extractTotals(List<String> lines) {
     double? subtotal;
+    double? discount;
+    double? tax;
+    double? serviceFee;
     final candidates = <_CandidateTotal>[];
     final subtotalKeywords = ['subtotal', 'sub total', 'sub-total'];
 
@@ -225,6 +276,30 @@ class ReceiptParser {
         }
       }
 
+      // 2. Cek apakah ini baris diskon / potongan
+      if (_isDiscountLine(lower)) {
+        final dAmount = _parseAmountFromLine(line);
+        if (dAmount != null && dAmount > 0) {
+          discount = (discount ?? 0) + dAmount;
+        }
+      }
+
+      // 3. Cek apakah ini baris pajak / PPN
+      if (_isTaxLine(lower)) {
+        final tAmount = _parseAmountFromLine(line);
+        if (tAmount != null && tAmount > 0) {
+          tax = (tax ?? 0) + tAmount;
+        }
+      }
+
+      // 4. Cek apakah ini baris service charge / biaya layanan
+      if (_isServiceFeeLine(lower)) {
+        final sAmount = _parseAmountFromLine(line);
+        if (sAmount != null && sAmount > 0) {
+          serviceFee = (serviceFee ?? 0) + sAmount;
+        }
+      }
+
       // Jika baris hanya memuat subtotal tanpa payment total eksplisit, lewati ke baris berikutnya
       final hasExplicitTotalInSameLine = lower.contains('grand total') ||
           lower.contains('total bayar') ||
@@ -232,7 +307,7 @@ class ReceiptParser {
           lower.contains('total tagihan');
       if (isSubtotal && !hasExplicitTotalInSameLine) continue;
 
-      // 2. Filter baris informasi terpisah / bukan total pembayaran tagihan
+      // Filter baris informasi terpisah / bukan total pembayaran tagihan
       if (_isPromoOrLoyalty(lower)) continue;
       if (_isItemCount(lower)) continue;
       if (_isChange(lower)) continue;
@@ -241,7 +316,7 @@ class ReceiptParser {
       if (_isDiscountOnly(lower)) continue;
       if (_isTaxOrFeeOnly(lower)) continue;
 
-      // 3. Tentukan priority tier jika baris mengandung keyword total yang sah
+      // Tentukan priority tier jika baris mengandung keyword total yang sah
       final priorityMatch = _matchPriorityTier(lower);
       if (priorityMatch != null) {
         final amount = _parseAmountForKeyword(line, priorityMatch.keyword);
@@ -257,10 +332,11 @@ class ReceiptParser {
       }
     }
 
-    // 4. Seleksi deterministik kandidat terbaik:
+    // Seleksi deterministik kandidat terbaik:
     // Prioritaskan tier tertinggi (angka terkecil: Tier 1 > Tier 2 > ... > Tier 8).
     // Jika tier sama, pilih kandidat kemunculan terakhir (baris paling bawah pada struk).
     double? total;
+    bool hasMultipleTotals = false;
     if (candidates.isNotEmpty) {
       candidates.sort((a, b) {
         final cmp = a.priority.compareTo(b.priority);
@@ -268,12 +344,50 @@ class ReceiptParser {
         return b.lineIndex.compareTo(a.lineIndex);
       });
       total = candidates.first.amount;
+
+      // Cek apakah terdapat kandidat di top priority tier dengan nominal berbeda
+      final topPriority = candidates.first.priority;
+      final distinctAmountsInTopTier = candidates
+          .where((c) => c.priority == topPriority)
+          .map((c) => c.amount)
+          .toSet();
+      if (distinctAmountsInTopTier.length > 1) {
+        hasMultipleTotals = true;
+      }
     }
 
     return _TotalResult(
       total: total ?? 0,
       subtotal: subtotal,
+      discount: discount,
+      tax: tax,
+      serviceFee: serviceFee,
+      hasMultipleTotals: hasMultipleTotals,
     );
+  }
+
+  static bool _isDiscountLine(String lower) {
+    if (lower.contains('grand total') || lower.contains('total bayar')) return false;
+    return lower.contains('diskon') ||
+        lower.contains('discount') ||
+        lower.contains('potongan');
+  }
+
+  static bool _isTaxLine(String lower) {
+    if (lower.contains('grand total') || lower.contains('total bayar')) return false;
+    return lower.contains('ppn') ||
+        lower.contains('pajak') ||
+        lower.contains('pb1') ||
+        lower.contains('tax');
+  }
+
+  static bool _isServiceFeeLine(String lower) {
+    if (lower.contains('grand total') || lower.contains('total bayar')) return false;
+    return lower.contains('biaya layanan') ||
+        lower.contains('service charge') ||
+        lower.contains('ongkir') ||
+        lower.contains('ongkos kirim') ||
+        (lower.contains('service') && !lower.contains('customer service'));
   }
 
   static bool _isPromoOrLoyalty(String lower) {
@@ -608,9 +722,27 @@ class ReceiptParser {
 }
 
 class _TotalResult {
-  const _TotalResult({required this.total, this.subtotal});
+  const _TotalResult({
+    required this.total,
+    this.subtotal,
+    this.discount,
+    this.tax,
+    this.serviceFee,
+    this.hasMultipleTotals = false,
+  });
+
   final double total;
   final double? subtotal;
+  final double? discount;
+  final double? tax;
+  final double? serviceFee;
+  final bool hasMultipleTotals;
+}
+
+class _ReceiptDateResult {
+  const _ReceiptDateResult({this.date, this.time});
+  final DateTime? date;
+  final String? time;
 }
 
 class _CandidateTotal {

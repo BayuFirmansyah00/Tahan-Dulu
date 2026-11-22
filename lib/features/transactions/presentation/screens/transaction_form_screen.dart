@@ -71,6 +71,7 @@ class TransactionFormScreen extends ConsumerStatefulWidget {
 
 class _TransactionFormScreenState
     extends ConsumerState<TransactionFormScreen> {
+  late final TextEditingController _titleController;
   late final TextEditingController _amountController;
   late final TextEditingController _noteController;
   late final TextEditingController _feeController;
@@ -90,6 +91,7 @@ class _TransactionFormScreenState
       });
     }
     final draft = ref.read(transactionFormProvider);
+    _titleController = TextEditingController(text: draft.title);
     _amountController = TextEditingController(
       text: draft.amount > 0
           ? RupiahInputFormatter.format(draft.amount)
@@ -103,6 +105,7 @@ class _TransactionFormScreenState
 
   @override
   void dispose() {
+    _titleController.dispose();
     _amountController.dispose();
     _noteController.dispose();
     _feeController.dispose();
@@ -183,6 +186,10 @@ class _TransactionFormScreenState
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        if (draft.source != TransactionInputSource.manual) ...[
+                          _SourceInfoBanner(draft: draft),
+                          const SizedBox(height: 16),
+                        ],
                         Text(
                           AppStrings.formType,
                           style: textTheme.titleMedium,
@@ -301,6 +308,15 @@ class _TransactionFormScreenState
                               _pickDate(draft.date ?? DateTime.now()),
                         ),
                         const SizedBox(height: 16),
+                        if (draft.source != TransactionInputSource.manual) ...[
+                          AppTextField(
+                            controller: _titleController,
+                            label: 'Judul Transaksi (Opsional)',
+                            hint: 'Contoh: Makan Siang, Indomaret, dsb',
+                            onChanged: notifier.setTitle,
+                          ),
+                          const SizedBox(height: 16),
+                        ],
                         AppTextField(
                           controller: _noteController,
                           label: AppStrings.noteLabel,
@@ -613,6 +629,85 @@ class _FieldError extends StatelessWidget {
       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             color: Theme.of(context).colorScheme.error,
           ),
+    );
+  }
+}
+
+class _SourceInfoBanner extends StatelessWidget {
+  const _SourceInfoBanner({required this.draft});
+
+  final TransactionDraft draft;
+
+  @override
+  Widget build(BuildContext context) {
+    final isVoice = draft.source == TransactionInputSource.voice;
+    final accentColor =
+        isVoice ? const Color(0xFF8B5CF6) : const Color(0xFFF59E0B);
+    final bgColor =
+        isVoice ? const Color(0xFFF5F3FF) : const Color(0xFFFFFBEB);
+    final borderColor =
+        isVoice ? const Color(0xFFDDD6FE) : const Color(0xFFFDE68A);
+    final title =
+        isVoice ? 'Data Terisi dari Input Suara' : 'Data Terisi dari Scan Struk';
+    final icon = isVoice ? Icons.mic_rounded : Icons.receipt_long_rounded;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: borderColor),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: accentColor.withValues(alpha: 0.15),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Icon(icon, size: 20, color: accentColor),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: isVoice
+                        ? const Color(0xFF5B21B6)
+                        : const Color(0xFF92400E),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13.5,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  draft.sourceNotice ??
+                      'Pastikan nominal, kategori, dan rekening sesuai sebelum menekan Periksa Transaksi.',
+                  style: TextStyle(
+                    color: isVoice
+                        ? const Color(0xFF6D28D9)
+                        : const Color(0xFFB45309),
+                    fontSize: 12,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

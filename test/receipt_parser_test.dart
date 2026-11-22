@@ -487,6 +487,117 @@ TOTAL 50.000
         expect(result.date, equals(DateTime(2026, 10, 5)));
       });
     });
+
+    group('Fase 8B Section 6.3 & 6.4 Receipt Scenarios', () {
+      test('Contoh Struk 6.3: Subtotal, Diskon, PPN -> Total Bayar adalah nominal final', () {
+        const text = '''
+SUPERMARKET NUSANTARA
+02/11/2026 14:30
+-----------------------------
+BERAS PREMIUM 5KG    75.000
+MINYAK GORENG 2L     25.000
+-----------------------------
+Subtotal: Rp100.000
+Diskon: Rp10.000
+PPN: Rp9.900
+Total Bayar: Rp99.900
+TUNAI: Rp100.000
+KEMBALIAN: Rp100
+TERIMA KASIH
+''';
+
+        final result = parser.parse(text);
+
+        expect(result.merchantName, equals('SUPERMARKET NUSANTARA'));
+        expect(result.date, equals(DateTime(2026, 11, 2)));
+        expect(result.time, equals('14:30'));
+        expect(result.subtotal, equals(100000.0));
+        expect(result.discount, equals(10000.0));
+        expect(result.tax, equals(9900.0));
+        // Prioritas utama: Total akhir yang benar-benar dibayar adalah Rp99.900
+        expect(result.total, equals(99900.0));
+        expect(result.hasTotal, isTrue);
+      });
+
+      test('Struk Restoran dengan Biaya Layanan, PB1, dan Kembalian', () {
+        const text = '''
+KAFE KENANGAN
+JL. SENOPATI NO. 12
+22/11/2026 15:45
+-----------------------------
+KOPI KENANGAN MANTAN   22.000
+ROTI COKLAT KLASIK     15.000
+-----------------------------
+SUBTOTAL               37.000
+BIAYA LAYANAN           2.000
+PB1 10%                 3.900
+PEMBULATAN               -100
+TOTAL AKHIR            42.800
+BAYAR TUNAI            50.000
+KEMBALIAN               7.200
+''';
+
+        final result = parser.parse(text);
+
+        expect(result.merchantName, equals('KAFE KENANGAN'));
+        expect(result.date, equals(DateTime(2026, 11, 22)));
+        expect(result.time, equals('15:45'));
+        expect(result.subtotal, equals(37000.0));
+        expect(result.serviceFee, equals(2000.0));
+        expect(result.tax, equals(3900.0));
+        // Total akhir harus Rp42.800 (bukan Rp50.000 tunai dan bukan Rp7.200 kembalian)
+        expect(result.total, equals(42800.0));
+      });
+
+      test('Struk QRIS digital: Payment method terdeteksi QRIS', () {
+        const text = '''
+WARUNG KOPI LESTARI
+20/11/2026 09:15
+-----------------------------
+AMERICANO DINGIN       20.000
+CROISSANT              25.000
+-----------------------------
+TOTAL PEMBAYARAN       45.000
+PEMBAYARAN: QRIS BCA   45.000
+STATUS: BERHASIL
+''';
+
+        final result = parser.parse(text);
+
+        expect(result.merchantName, equals('WARUNG KOPI LESTARI'));
+        expect(result.total, equals(45000.0));
+        expect(result.paymentMethod, equals('QRIS'));
+      });
+
+      test('Struk buram tanpa angka valid menghasilkan total 0 (minta isi manual)', () {
+        const text = '''
+TOKO MAKMUR
+KERTAS BASAH
+TIDAK DAPAT DIBACA
+TERIMA KASIH
+''';
+
+        final result = parser.parse(text);
+
+        expect(result.total, equals(0.0));
+        expect(result.hasTotal, isFalse);
+      });
+
+      test('Multiple conflicting totals terdeteksi dan set hasMultipleTotals', () {
+        const text = '''
+TOKO SERBA ADA
+10/11/2026
+-----------------------------
+GRAND TOTAL            100.000
+GRAND TOTAL            120.000
+''';
+
+        final result = parser.parse(text);
+
+        expect(result.hasMultipleTotals, isTrue);
+        expect(result.total, greaterThan(0));
+      });
+    });
   });
 }
 

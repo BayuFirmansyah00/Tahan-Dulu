@@ -12,6 +12,7 @@ class ParsedVoiceTransaction {
     this.accountId,
     this.accountName,
     this.date,
+    this.isTypeExplicit = true,
   });
 
   final String rawText;
@@ -22,6 +23,7 @@ class ParsedVoiceTransaction {
   final String? accountId;
   final String? accountName;
   final DateTime? date;
+  final bool isTypeExplicit;
 
   bool get hasAmount => amount > 0;
   bool get hasCategory => category != null;
@@ -76,7 +78,7 @@ class VoiceTransactionParser {
     }
 
     // 2. Deteksi Jenis Transaksi (Income vs Expense)
-    final type = _detectType(lower);
+    final typeResult = _detectType(lower);
 
     // 3. Deteksi Nominal
     final amount = _detectAmount(textForAmount);
@@ -85,7 +87,7 @@ class VoiceTransactionParser {
     final matchedAccount = _detectAccount(lower, userAccounts);
 
     // 5. Deteksi Kategori
-    final category = _detectCategory(lower, type);
+    final category = _detectCategory(lower, typeResult.type);
 
     // 6. Ekstraksi Deskripsi Bersih (bersihkan akun, angka, dan frasa tanggal)
     final description = _extractDescription(
@@ -96,17 +98,31 @@ class VoiceTransactionParser {
 
     return ParsedVoiceTransaction(
       rawText: cleanInput,
-      type: type,
+      type: typeResult.type,
       amount: amount,
       description: description,
       category: category,
       accountId: matchedAccount?.id,
       accountName: matchedAccount?.name,
       date: dateMatch?.date,
+      isTypeExplicit: typeResult.isExplicit,
     );
   }
 
-  TransactionType _detectType(String text) {
+  _VoiceTypeResult _detectType(String text) {
+    const expenseExplicitKeywords = [
+      'pengeluaran',
+      'beli',
+      'belanja',
+      'bayar',
+      'membeli',
+      'membayar',
+      'ongkir',
+      'jajan',
+      'makan',
+      'biaya',
+    ];
+
     const incomeKeywords = [
       'gaji',
       'gajian',
@@ -127,13 +143,30 @@ class VoiceTransactionParser {
       'uang masuk',
     ];
 
+    // Jika secara eksplisit menyebut "pengeluaran", prioritaskan expense
+    if (text.contains('pengeluaran')) {
+      return const _VoiceTypeResult(TransactionType.expense, true);
+    }
+    // Jika secara eksplisit menyebut "pemasukan", prioritaskan income
+    if (text.contains('pemasukan')) {
+      return const _VoiceTypeResult(TransactionType.income, true);
+    }
+
     for (final kw in incomeKeywords) {
       if (text.contains(kw)) {
-        return TransactionType.income;
+        return const _VoiceTypeResult(TransactionType.income, true);
       }
     }
 
-    return TransactionType.expense;
+    for (final kw in expenseExplicitKeywords) {
+      if (text.contains(kw)) {
+        return const _VoiceTypeResult(TransactionType.expense, true);
+      }
+    }
+
+    // Jika tidak dapat ditentukan secara pasti (misal: "catat transaksi 25 ribu"),
+    // default ke expense tetapi tandai bahwa jenis belum eksplisit.
+    return const _VoiceTypeResult(TransactionType.expense, false);
   }
 
   double _detectAmount(String text) {
@@ -543,9 +576,17 @@ class VoiceTransactionParser {
     if (datePhrase != null && datePhrase.isNotEmpty) {
       desc = desc.replaceAll(
         RegExp('\\b${RegExp.escape(datePhrase)}\\b', caseSensitive: false),
-        '',
+        ' ',
       );
     }
+
+    // Bersihkan kata perintah umum di awal masukan suara
+    // seperti "catat pengeluaran", "catat transaksi", "catat", "tolong catat", dsb.
+    desc = desc.replaceAll(
+      RegExp(r'^(?:tolong\s+)?(?:catat(?:kan)?|masukkan|tambahkan)\s+(?:pengeluaran|pemasukan|transaksi)?\s*', caseSensitive: false),
+      '',
+    );
+
     // Bersihkan juga kata penunjuk tanggal umum jika masih tersisa di awal kalimat
     desc = desc.replaceAll(
       RegExp(r'^(kemarin dulu|kemarin lusa|kemarin|hari ini|tadi pagi|tadi siang|tadi sore|tadi malam|tadi|besok|lusa)\b\s*', caseSensitive: false),
@@ -556,35 +597,41 @@ class VoiceTransactionParser {
     if (matchedAccount != null) {
       desc = desc.replaceAll(
         RegExp(
-          '\\b(menggunakan|pakai|lewat|dengan|ke|di)?\\s*${RegExp.escape(matchedAccount.name)}\\b',
+          '\\b(?:menggunakan|pakai|pake|lewat|dengan|ke|di)?\\s*${RegExp.escape(matchedAccount.name)}\\b',
           caseSensitive: false,
         ),
-        '',
+        ' ',
       );
       if (matchedAccount.institutionName != null &&
           matchedAccount.institutionName!.isNotEmpty) {
         desc = desc.replaceAll(
           RegExp(
-            '\\b(menggunakan|pakai|lewat|dengan|ke|di)?\\s*${RegExp.escape(matchedAccount.institutionName!)}\\b',
+            '\\b(?:menggunakan|pakai|pake|lewat|dengan|ke|di)?\\s*${RegExp.escape(matchedAccount.institutionName!)}\\b',
             caseSensitive: false,
           ),
-          '',
+          ' ',
         );
       }
     }
 
+    // Bersihkan kata metode pembayaran umum seperti "pakai cash", "pakai tunai", "rekening"
+    desc = desc.replaceAll(
+      RegExp(r'\b(?:menggunakan|pakai|pake|lewat|dengan|via|ke|di)?\s*(?:cash|tunai|rekening)\b', caseSensitive: false),
+      ' ',
+    );
+
     // Hapus frasa angka umum di Indonesia
     final numberPhrases = [
       RegExp(
-        r'\b(sebesar|senilai|rp\.?|rupiah)?\s*(\d{1,3}(?:[.,]\d{3})*|\d+)\s*(ribu|k|rb|juta|jt)?\s*(rupiah)?\b',
+        r'\b(?:sebesar|senilai|rp\.?|rupiah)?\s*(\d{1,3}(?:[.,]\d{3})*|\d+)\s*(?:ribu|k|rb|juta|jt)?\s*(?:rupiah)?\b',
         caseSensitive: false,
       ),
       RegExp(
-        r'\b(satu|dua|tiga|empat|lima|enam|tujuh|delapan|sembilan|sepuluh|sebelas|belas|puluh|ratus|ribu|juta|setengah)+\s*(rupiah)?\b',
+        r'\b(?:seratus|seribu|sejuta|setengah|satu|dua|tiga|empat|lima|enam|tujuh|delapan|sembilan|sepuluh|sebelas|belas|puluh|ratus|ribu|juta)+\s*(?:rupiah)?\b',
         caseSensitive: false,
       ),
       RegExp(
-        r'\b(menggunakan|pakai|lewat|dengan|via|sebesar|senilai|rupiah)\b',
+        r'\b(?:menggunakan|pakai|pake|lewat|dengan|via|sebesar|senilai|rupiah)\b',
         caseSensitive: false,
       ),
     ];
@@ -603,6 +650,12 @@ class VoiceTransactionParser {
     // Kapitalisasi huruf pertama
     return desc[0].toUpperCase() + desc.substring(1);
   }
+}
+
+class _VoiceTypeResult {
+  const _VoiceTypeResult(this.type, this.isExplicit);
+  final TransactionType type;
+  final bool isExplicit;
 }
 
 class _VoiceDateMatch {
