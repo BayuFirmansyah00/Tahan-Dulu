@@ -13,12 +13,13 @@ class ApiTransaction extends Equatable {
     this.amountFormatted,
     this.information,
     this.instrument,
+    this.instrumentId,
     this.attachments = const [],
     this.createdAt,
     this.updatedAt,
   });
 
-  final int id;
+  final String id;
   final String title;
   final String type; // 'income' | 'expense'
   final String category;
@@ -26,13 +27,14 @@ class ApiTransaction extends Equatable {
   final String? amountFormatted;
   final String? information;
   final ApiFinancialInstrument? instrument;
+  final String? instrumentId;
   final List<String> attachments;
   final String? createdAt;
   final String? updatedAt;
 
   factory ApiTransaction.fromJson(Map<String, dynamic> json) {
     return ApiTransaction(
-      id: json['id'] is int ? json['id'] as int : int.tryParse('${json['id']}') ?? 0,
+      id: '${json['id'] ?? ''}',
       title: '${json['title'] ?? ''}',
       type: '${json['type'] ?? ''}',
       category: '${json['category'] ?? ''}',
@@ -44,6 +46,9 @@ class ApiTransaction extends Equatable {
       instrument: json['instrument'] != null
           ? ApiFinancialInstrument.fromJson(json['instrument'] as Map<String, dynamic>)
           : null,
+      instrumentId: json['instrument_id'] != null
+          ? '${json['instrument_id']}'
+          : (json['instrument'] is Map ? '${json['instrument']['id'] ?? ''}' : null),
       attachments: (json['attachments'] as List? ?? const [])
           .cast<String>()
           .toList(),
@@ -88,7 +93,7 @@ class ApiTransaction extends Equatable {
   }
 
   ApiTransaction copyWith({
-    int? id,
+    String? id,
     String? title,
     String? type,
     String? category,

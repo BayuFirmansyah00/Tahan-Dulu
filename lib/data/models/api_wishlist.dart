@@ -26,7 +26,7 @@ class ApiWishlist extends Equatable {
     this.updatedAt,
   });
 
-  final int id;
+  final String id;
   final String itemName;
   final String title;
   final double price;
@@ -61,9 +61,7 @@ class ApiWishlist extends Equatable {
     final name = '${json['item_name'] ?? json['title'] ?? ''}';
 
     return ApiWishlist(
-      id: json['id'] is int
-          ? json['id'] as int
-          : int.tryParse('${json['id']}') ?? 0,
+      id: '${json['id'] ?? ''}',
       itemName: name,
       title: '${json['title'] ?? name}',
       price: priceVal,

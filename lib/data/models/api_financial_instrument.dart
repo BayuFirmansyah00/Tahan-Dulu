@@ -20,7 +20,7 @@ class ApiFinancialInstrument extends Equatable {
     this.updatedAt,
   });
 
-  final int id;
+  final String id;
   final String name;
   final int balance;
   final bool isActive;
@@ -37,7 +37,7 @@ class ApiFinancialInstrument extends Equatable {
 
   factory ApiFinancialInstrument.fromJson(Map<String, dynamic> json) {
     return ApiFinancialInstrument(
-      id: json['id'] is int ? json['id'] as int : int.tryParse('${json['id']}') ?? 0,
+      id: '${json['id'] ?? ''}',
       name: '${json['name'] ?? ''}',
       balance: json['balance'] is int
           ? json['balance'] as int
@@ -84,7 +84,7 @@ class ApiFinancialInstrument extends Equatable {
   }
 
   ApiFinancialInstrument copyWith({
-    int? id,
+    String? id,
     String? name,
     int? balance,
     bool? isActive,

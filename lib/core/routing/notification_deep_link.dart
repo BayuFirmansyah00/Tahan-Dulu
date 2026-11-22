@@ -56,7 +56,9 @@ abstract final class NotificationDeepLink {
             ? '${AppRoutes.goals}/$cleanEntityId'
             : AppRoutes.goals;
       case 'savingsReminder':
-        return AppRoutes.goals;
+        return hasValidEntityId
+            ? '${AppRoutes.goals}/$cleanEntityId'
+            : AppRoutes.notificationSavings;
       case 'salary':
         return AppRoutes.transactions;
       case 'bill':

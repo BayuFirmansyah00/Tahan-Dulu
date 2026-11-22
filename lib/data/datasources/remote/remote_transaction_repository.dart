@@ -28,7 +28,7 @@ class RemoteTransactionRepository implements TransactionRepository {
     }
   }
 
-  static AppTransaction _toAppTransaction(ApiTransaction api) {
+  static AppTransaction _toAppTransaction(ApiTransaction api, {String? fallbackAccountId}) {
     return AppTransaction(
       id: api.id.toString(),
       title: api.title,
@@ -36,7 +36,7 @@ class RemoteTransactionRepository implements TransactionRepository {
       type: _toTransactionType(api.type),
       date: api.parsedCreatedAt ?? DateTime.now(),
       category: api.category,
-      accountId: api.instrument?.id.toString(),
+      accountId: api.instrument?.id.toString() ?? api.instrumentId ?? fallbackAccountId,
       note: api.information,
       fee: 0,
     );
@@ -80,7 +80,7 @@ class RemoteTransactionRepository implements TransactionRepository {
       token: token,
     );
     final resp = ApiTransactionResponse.fromJson(body);
-    return _toAppTransaction(resp.data);
+    return _toAppTransaction(resp.data, fallbackAccountId: transaction.accountId);
   }
 
   @override
@@ -130,7 +130,7 @@ class RemoteTransactionRepository implements TransactionRepository {
       token: token,
     );
     final resp = ApiTransactionResponse.fromJson(body);
-    return _toAppTransaction(resp.data);
+    return _toAppTransaction(resp.data, fallbackAccountId: transaction.accountId);
   }
 
   @override
