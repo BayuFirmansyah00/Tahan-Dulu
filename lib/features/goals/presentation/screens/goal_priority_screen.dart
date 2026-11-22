@@ -433,32 +433,27 @@ class _RankBadgeChip extends StatelessWidget {
     final String label;
     final Color foreground;
     final Color background;
-    final String asset;
     final IconData icon;
     switch (index) {
       case 0:
         label = AppStrings.priorityFirst;
         foreground = AppColors.primary;
         background = AppColors.primarySoft;
-        asset = AppAssets.rankMedal1;
         icon = Icons.emoji_events_outlined;
       case 1:
         label = AppStrings.prioritySecond;
         foreground = AppColors.secondary;
         background = AppColors.infoSoft;
-        asset = AppAssets.rankMedal2;
         icon = Icons.star;
       case 2:
         label = AppStrings.priorityThird;
         foreground = AppColors.warning;
         background = AppColors.warningSoft;
-        asset = AppAssets.rankMedal3;
         icon = Icons.flag_outlined;
       default:
         label = AppStrings.priorityOthers;
         foreground = AppColors.accentPurple;
         background = AppColors.accentPurpleSoft;
-        asset = AppAssets.rankBadge4;
         icon = Icons.work_outline;
     }
     return Container(
@@ -470,11 +465,7 @@ class _RankBadgeChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          AppImageIcon(
-            assetPath: asset,
-            size: 14,
-            fallbackIcon: icon,
-          ),
+          Icon(icon, color: foreground, size: 14),
           const SizedBox(width: 4),
           Flexible(
             child: Text(

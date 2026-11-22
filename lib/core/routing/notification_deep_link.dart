@@ -6,6 +6,12 @@ import 'app_routes.dart';
 /// [AppRoutes.notifications] sebagai fallback aman.
 abstract final class NotificationDeepLink {
   static final RegExp _numericId = RegExp(r'^[0-9]+$');
+  static final RegExp _uuidPattern = RegExp(
+    r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
+  );
+
+  static bool _isValidEntityId(String id) =>
+      _numericId.hasMatch(id) || _uuidPattern.hasMatch(id);
 
   static final Set<String> _exactAllowedRoutes = {
     AppRoutes.dashboard,
@@ -37,16 +43,16 @@ abstract final class NotificationDeepLink {
     }
 
     final cleanEntityId = entityId?.trim() ?? '';
-    final hasValidNumericId =
-        cleanEntityId.isNotEmpty && _numericId.hasMatch(cleanEntityId);
+    final hasValidEntityId =
+        cleanEntityId.isNotEmpty && _isValidEntityId(cleanEntityId);
 
     switch (type?.trim()) {
       case 'tahandulu':
-        return hasValidNumericId
+        return hasValidEntityId
             ? '${AppRoutes.tahanDulu}/$cleanEntityId'
             : AppRoutes.tahanDulu;
       case 'savingsGoal':
-        return hasValidNumericId
+        return hasValidEntityId
             ? '${AppRoutes.goals}/$cleanEntityId'
             : AppRoutes.goals;
       case 'savingsReminder':
@@ -80,14 +86,14 @@ abstract final class NotificationDeepLink {
     // /goals/:id
     if (segments.length == 2 &&
         segments[0] == 'goals' &&
-        _numericId.hasMatch(segments[1])) {
+        _isValidEntityId(segments[1])) {
       return true;
     }
 
     // /tahan-dulu/:id atau /tahan-dulu/:id/{wait|decide|simulate|success}
     if (segments.length >= 2 &&
         segments[0] == 'tahan-dulu' &&
-        _numericId.hasMatch(segments[1])) {
+        _isValidEntityId(segments[1])) {
       if (segments.length == 2) return true;
       if (segments.length == 3 &&
           const {'wait', 'decide', 'simulate', 'success'}.contains(segments[2])) {

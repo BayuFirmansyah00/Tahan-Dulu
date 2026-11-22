@@ -87,7 +87,7 @@ class RemoteGoalRepository implements GoalRepository {
       goalId: api.goalId.toString(),
       amount: api.amount.toDouble(),
       date: api.parsedCreatedAt ?? DateTime.now(),
-      accountId: null,
+      accountId: api.instrument?.id.toString(),
       note: api.notes,
     );
   }
@@ -187,12 +187,20 @@ class RemoteGoalRepository implements GoalRepository {
         'type': 'deposit',
         'amount': deposit.amount.round(),
         'notes': deposit.note,
-        'instrument_id': null,
+        'instrument_id': deposit.accountId,
       },
       token: token,
     );
     final resp = ApiGoalTransactionResponse.fromJson(body);
-    return _toGoalDeposit(resp.data);
+    final mapped = _toGoalDeposit(resp.data);
+    return GoalDeposit(
+      id: mapped.id,
+      goalId: mapped.goalId,
+      amount: mapped.amount,
+      date: mapped.date,
+      accountId: mapped.accountId ?? deposit.accountId,
+      note: mapped.note,
+    );
   }
 
   @override
@@ -207,12 +215,20 @@ class RemoteGoalRepository implements GoalRepository {
         'type': 'deposit',
         'amount': deposit.amount.round(),
         'notes': deposit.note,
-        'instrument_id': null,
+        'instrument_id': deposit.accountId,
       },
       token: token,
     );
     final resp = ApiGoalTransactionResponse.fromJson(body);
-    return _toGoalDeposit(resp.data);
+    final mapped = _toGoalDeposit(resp.data);
+    return GoalDeposit(
+      id: mapped.id,
+      goalId: mapped.goalId,
+      amount: mapped.amount,
+      date: mapped.date,
+      accountId: mapped.accountId ?? deposit.accountId,
+      note: mapped.note,
+    );
   }
 
   @override
@@ -221,11 +237,8 @@ class RemoteGoalRepository implements GoalRepository {
     final goals = await getGoals();
     for (final goal in goals) {
       final deposits = await getDeposits(goal.id);
-      final match = deposits.firstWhere(
-        (e) => e.id == id,
-        orElse: () => throw StateError('Setoran tidak ditemukan'),
-      );
-      if (match.id == id) {
+      final match = deposits.where((e) => e.id == id).firstOrNull;
+      if (match != null) {
         final transactionId = id.trim();
         if (transactionId.isNotEmpty) {
           await _client.delete(
@@ -235,6 +248,7 @@ class RemoteGoalRepository implements GoalRepository {
         return;
       }
     }
+    throw StateError('Setoran tidak ditemukan');
   }
 
   @override

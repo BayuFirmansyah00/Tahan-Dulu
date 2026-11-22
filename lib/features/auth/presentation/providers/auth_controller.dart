@@ -325,6 +325,7 @@ class AuthController extends Notifier<AuthState> {
     ref.invalidate(transactionsProvider);
     ref.invalidate(goalsProvider);
     ref.invalidate(goalsListProvider);
+    ref.invalidate(goalsControllerProvider);
     ref.invalidate(currentBudgetProvider);
     ref.invalidate(budgetRepositoryProvider);
     ref.invalidate(dashboardRepositoryProvider);
