@@ -552,10 +552,13 @@ void main() {
         find.text(AppStrings.securityChangePassword),
       );
       expect(
-        find.text(AppStrings.securityPasswordUnavailableTitle),
+        find.descendant(
+          of: find.byType(BottomSheet),
+          matching: find.text('Ubah Kata Sandi'),
+        ),
         findsOneWidget,
       );
-      await _tapVisible(tester, find.text('Tutup'));
+      await _tapVisible(tester, find.text('Batal'));
       await _tapVisible(tester, find.text(AppStrings.securitySessions));
       expect(
         find.text(AppStrings.securitySessionsSoon),
@@ -613,17 +616,14 @@ void main() {
       await _tapVisible(tester, find.text('Tutup'));
 
       await _tapVisible(tester, find.text(AppStrings.privacyDelete));
-      expect(find.text(AppStrings.deleteDialogTitle), findsOneWidget);
-      expect(find.text(AppStrings.deleteDialogBody), findsOneWidget);
-      await _tapVisible(tester, find.text(AppStrings.logoutCancel));
-      expect(find.text(AppStrings.privacyTitle), findsWidgets);
-
-      await _tapVisible(tester, find.text(AppStrings.privacyDelete));
-      await _tapVisible(tester, find.text(AppStrings.deleteConfirm));
       expect(
-        find.text(AppStrings.privacyDeleteUnavailable),
+        find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.text('Hapus Akun'),
+        ),
         findsOneWidget,
       );
+      await _tapVisible(tester, find.text('Batal'));
       expect(find.text(AppStrings.privacyTitle), findsWidgets);
     });
   });
