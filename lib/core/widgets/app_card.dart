@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_radius.dart';
+import '../theme/glass.dart';
 
 /// Card standar TahanDulu: rounded 16–20px + soft shadow + padding 16.
 class AppCard extends StatelessWidget {
@@ -20,14 +21,7 @@ class AppCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardTheme.color,
-        borderRadius: large ? AppRadius.cardLarge : AppRadius.card,
-        boxShadow: large ? AppShadows.cardLarge : AppShadows.card,
-        border: Border.all(
-          color: Theme.of(context).dividerColor,
-        ),
-      ),
+      decoration: Glass.panel(context, radius: large ? AppRadius.cardLarge : AppRadius.card),
       child: Material(
         color: Colors.transparent,
         borderRadius: large ? AppRadius.cardLarge : AppRadius.card,

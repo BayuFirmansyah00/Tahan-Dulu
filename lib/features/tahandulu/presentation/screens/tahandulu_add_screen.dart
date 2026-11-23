@@ -7,6 +7,7 @@ import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/widgets/app_icons.dart';
+import '../../../../core/widgets/app_method_tile.dart';
 import '../../../dashboard/presentation/widgets/dashboard_bottom_nav.dart';
 import '../providers/tahandulu_controller.dart';
 import '../widgets/tahandulu_widgets.dart';
@@ -57,13 +58,11 @@ class TahanDuluAddScreen extends ConsumerWidget {
 
                   // --- Pilihan Metode Tambah Barang ---
                   // Card 1: Masukkan Manual
-                  _MethodSelectionCard(
+                  AppMethodTile(
                     title: AppStrings.methodManual,
                     subtitle: 'Isi detail barang sendiri',
                     assetPath: AppAssets.tambahBarangManual,
-                    tileBg: const Color(0xFFFFF5DB),
-                    tileBorder: const Color(0xFFFDE68A),
-                    splashColor: const Color(0xFFF59E0B).withValues(alpha: 0.12),
+                    accent: const Color(0xFFFFF5DB),
                     onTap: () {
                       ref.read(tahanDuluControllerProvider.notifier).reset();
                       context.push(AppRoutes.tahanDuluForm);
@@ -72,13 +71,11 @@ class TahanDuluAddScreen extends ConsumerWidget {
                   const SizedBox(height: 12),
 
                   // Card 2: Masukkan Link Produk
-                  _MethodSelectionCard(
+                  AppMethodTile(
                     title: AppStrings.methodLink,
                     subtitle: 'Tempel tautan barang dari toko online',
                     assetPath: AppAssets.tambahBarangLink,
-                    tileBg: const Color(0xFFEAF8F1),
-                    tileBorder: const Color(0xFFDCFCE7),
-                    splashColor: const Color(0xFF10B981).withValues(alpha: 0.12),
+                    accent: const Color(0xFFEAF8F1),
                     onTap: () {
                       ref.read(tahanDuluControllerProvider.notifier).reset();
                       context.push(AppRoutes.tahanDuluLink);
@@ -87,13 +84,11 @@ class TahanDuluAddScreen extends ConsumerWidget {
                   const SizedBox(height: 12),
 
                   // Card 3: Upload Foto
-                  _MethodSelectionCard(
+                  AppMethodTile(
                     title: AppStrings.methodPhoto,
                     subtitle: 'Tambahkan barang melalui foto',
                     assetPath: AppAssets.tambahBarangFoto,
-                    tileBg: const Color(0xFFF2ECFF),
-                    tileBorder: const Color(0xFFDDD6FE),
-                    splashColor: const Color(0xFF8B5CF6).withValues(alpha: 0.12),
+                    accent: const Color(0xFFF2ECFF),
                     onTap: () => _showImageSourcePicker(context, ref),
                   ),
                   const SizedBox(height: 20),
@@ -335,122 +330,6 @@ class _AddHeroSection extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// Kartu pilihan metode dengan container ikon pastel lembut, judul, subtitle, dan chevron.
-class _MethodSelectionCard extends StatelessWidget {
-  const _MethodSelectionCard({
-    required this.title,
-    required this.subtitle,
-    required this.assetPath,
-    required this.tileBg,
-    required this.tileBorder,
-    required this.onTap,
-    this.splashColor,
-  });
-
-  final String title;
-  final String subtitle;
-  final String assetPath;
-  final Color tileBg;
-  final Color tileBorder;
-  final VoidCallback onTap;
-  final Color? splashColor;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(20),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        splashColor: splashColor ?? const Color(0xFF102A43).withValues(alpha: 0.06),
-        highlightColor: const Color(0xFF102A43).withValues(alpha: 0.03),
-        child: Container(
-          constraints: const BoxConstraints(minHeight: 88),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFE8EDF3), width: 1.2),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF102A43).withValues(alpha: 0.03),
-                blurRadius: 10,
-                offset: const Offset(0, 3),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              // Container ikon 3D dengan latar warna pastel lembut
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  color: tileBg,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: tileBorder, width: 1.0),
-                ),
-                padding: const EdgeInsets.all(6),
-                child: Image.asset(
-                  assetPath,
-                  width: 48,
-                  height: 48,
-                  fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) => const Icon(
-                    Icons.add_shopping_cart_rounded,
-                    size: 32,
-                    color: Color(0xFF102A43),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 14),
-              // Teks: Judul, status/badge, subtitle
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            title,
-                            style: const TextStyle(
-                              color: Color(0xFF102A43),
-                              fontWeight: FontWeight.w700,
-                              fontSize: 15,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      subtitle,
-                      style: const TextStyle(
-                        color: Color(0xFF718096),
-                        fontSize: 12.5,
-                        height: 1.3,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              // Chevron kanan
-              const Icon(
-                Icons.chevron_right_rounded,
-                color: Color(0xFF94A3B8),
-                size: 22,
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

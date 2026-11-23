@@ -6,6 +6,7 @@ import '../../../../core/constants/app_assets.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_icons.dart';
+import '../../../../core/widgets/app_method_tile.dart';
 import '../providers/transactions_controller.dart';
 
 /// Halaman pemilihan metode pencatatan transaksi TahanDulu:
@@ -68,34 +69,31 @@ class TransactionRecordMethodScreen extends ConsumerWidget {
 
                   // --- Pilihan Metode ---
                   // 1. Input Manual
-                  _MethodCard(
+                  AppMethodTile(
                     title: 'Input Manual',
                     subtitle: 'Catat transaksi secara langsung',
                     assetPath: AppAssets.txMethodManual,
-                    accentColor: const Color(0xFF3B82F6),
-                    iconBgColor: const Color(0xFFEFF6FF),
+                    accent: const Color(0xFF3B82F6),
                     onTap: () => _onManualSelected(context, ref),
                   ),
                   const SizedBox(height: 12),
 
                   // 2. Input Suara
-                  _MethodCard(
+                  AppMethodTile(
                     title: 'Input Suara',
                     subtitle: 'Cukup ucapkan transaksimu',
                     assetPath: AppAssets.txMethodVoice,
-                    accentColor: const Color(0xFF8B5CF6),
-                    iconBgColor: const Color(0xFFF5F3FF),
+                    accent: const Color(0xFF8B5CF6),
                     onTap: () => _onVoiceSelected(context, ref),
                   ),
                   const SizedBox(height: 12),
 
                   // 3. Scan Struk
-                  _MethodCard(
+                  AppMethodTile(
                     title: 'Scan Struk',
                     subtitle: 'Pindai struk secara otomatis',
                     assetPath: AppAssets.txMethodScan,
-                    accentColor: const Color(0xFFF59E0B),
-                    iconBgColor: const Color(0xFFFFFBEB),
+                    accent: const Color(0xFFF59E0B),
                     onTap: () => _onScanSelected(context, ref),
                   ),
                   const SizedBox(height: 18),
@@ -186,119 +184,6 @@ class _HeroSection extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// Kartu pilihan metode dengan visual 3D, background pastel lembut, dan border halus.
-class _MethodCard extends StatelessWidget {
-  const _MethodCard({
-    required this.title,
-    required this.subtitle,
-    required this.assetPath,
-    required this.accentColor,
-    required this.iconBgColor,
-    required this.onTap,
-  });
-
-  final String title;
-  final String subtitle;
-  final String assetPath;
-  final Color accentColor;
-  final Color iconBgColor;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(20),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        splashColor: accentColor.withValues(alpha: 0.12),
-        highlightColor: accentColor.withValues(alpha: 0.06),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFE8EDF3), width: 1.1),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF102A43).withValues(alpha: 0.03),
-                blurRadius: 10,
-                offset: const Offset(0, 3),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 66,
-                height: 66,
-                padding: const EdgeInsets.all(5),
-                decoration: BoxDecoration(
-                  color: iconBgColor,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                alignment: Alignment.center,
-                child: Image.asset(
-                  assetPath,
-                  width: 56,
-                  height: 56,
-                  fit: BoxFit.contain,
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      title,
-                      style: textTheme.titleMedium?.copyWith(
-                        color: const Color(0xFF102A43),
-                        fontWeight: FontWeight.w700,
-                        fontSize: 15.5,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      subtitle,
-                      style: textTheme.bodySmall?.copyWith(
-                        color: const Color(0xFF718096),
-                        fontSize: 12.5,
-                        height: 1.3,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                width: 30,
-                height: 30,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF7F9FC),
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: const Color(0xFFE8EDF3),
-                    width: 0.8,
-                  ),
-                ),
-                child: const Icon(
-                  Icons.chevron_right_rounded,
-                  color: Color(0xFF94A3B8),
-                  size: 19,
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

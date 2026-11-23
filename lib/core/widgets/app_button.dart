@@ -37,10 +37,10 @@ class AppButton extends StatelessWidget {
       style: style,
       onPressed: isLoading ? null : onPressed,
       child: isLoading
-          ? const SizedBox(
+          ? SizedBox(
               width: 20,
               height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2),
+              child: CircularProgressIndicator(strokeWidth: 2, semanticsLabel: label),
             )
           : Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -59,7 +59,7 @@ class AppButton extends StatelessWidget {
                 Flexible(
                   child: Text(
                     label,
-                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
                   ),
                 ),
               ],
@@ -113,7 +113,7 @@ class AppOutlineButton extends StatelessWidget {
           Flexible(
             child: Text(
               label,
-              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
             ),
           ),
         ],

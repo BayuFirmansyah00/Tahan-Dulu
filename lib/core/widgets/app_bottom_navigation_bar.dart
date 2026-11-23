@@ -4,23 +4,9 @@ import 'package:go_router/go_router.dart';
 import '../constants/app_assets.dart';
 import '../constants/app_strings.dart';
 import '../routing/app_routes.dart';
+import '../theme/glass.dart';
 
-/// Navigation bar global TAHAN DULU dengan konsep Floating Rounded Navigation Bar.
-///
-/// Menyediakan lima menu tersusun simetris:
-/// 0: Beranda — ikon rumah 3D transparan
-/// 1: Transaksi — ikon dua panah 3D transparan
-/// 2: Catat (+) — primary action button lingkaran hijau elevated dengan simbol plus putih
-/// 3: Tujuan — ikon target 3D transparan
-/// 4: Profil — ikon pengguna 3D transparan
-///
-/// Karakteristik desain:
-/// - Floating bar putih dengan rounded corners (26 dp) dan margin horizontal (14 dp)
-/// - Shadow halus natural dengan border tipis #E8EDF3
-/// - Tombol Catat (+) terangkat (elevated) dengan shadow emerald yang lembut
-/// - Active state otomatis mengikuti route halaman aktif (atau index eksplisit via [currentIndex])
-/// - Animasi transisi active state halus (scale 1.06, soft mint pill #EAF8F1, dan indicator bar)
-/// - Menghindari overflow dan auto-hide saat virtual keyboard terbuka
+/// Navigasi utama dengan satu permukaan kaca untuk kelima aksi.
 class AppBottomNavigationBar extends StatelessWidget {
   const AppBottomNavigationBar({
     super.key,
@@ -95,311 +81,65 @@ class AppBottomNavigationBar extends StatelessWidget {
     }
   }
 
+
+  static const _items = [
+    (AppStrings.navHome, AppAssets.nav3dHome, Icons.home_rounded),
+    (AppStrings.navTransactions, AppAssets.nav3dTransaction, Icons.swap_horiz_rounded),
+    (AppStrings.navRecord, AppAssets.nav3dRecord, Icons.add_rounded),
+    (AppStrings.navGoals, AppAssets.nav3dGoal, Icons.track_changes_rounded),
+    (AppStrings.navProfile, AppAssets.nav3dProfile, Icons.person_rounded),
+  ];
+
   @override
   Widget build(BuildContext context) {
-    // Sembunyikan navbar saat virtual keyboard muncul agar tidak menutupi input field
-    final isKeyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
-    if (isKeyboardOpen) {
-      return const SizedBox.shrink();
-    }
-
-    final activeIndex = _resolveCurrentIndex(context);
-
+    if (MediaQuery.viewInsetsOf(context).bottom > 0) return const SizedBox.shrink();
+    final selected = _resolveCurrentIndex(context);
+    final scheme = Theme.of(context).colorScheme;
+    final height = 43 + MediaQuery.textScalerOf(context).scale(11) * 1.5;
     return SafeArea(
-      top: false,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
-        child: SizedBox(
-          height: 88,
-          child: Stack(
-            clipBehavior: Clip.none,
-            alignment: Alignment.bottomCenter,
-            children: [
-              // Floating Rounded Navigation Bar
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                child: Container(
-                  height: 68,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(26),
-                    border: Border.all(
-                      color: const Color(0xFFE8EDF3),
-                      width: 1.0,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF102A43).withValues(alpha: 0.08),
-                        blurRadius: 18,
-                        offset: const Offset(0, 4),
-                      ),
-                      BoxShadow(
-                        color: const Color(0xFF102A43).withValues(alpha: 0.03),
-                        blurRadius: 6,
-                        offset: const Offset(0, 1),
-                      ),
-                    ],
+      top: false, minimum: const EdgeInsets.fromLTRB(8, 5, 8, 8),
+      child: Align(heightFactor: 1, child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 520),
+        child: FloatingGlass(child: Padding(
+          padding: const EdgeInsets.all(4),
+          child: SizedBox(height: height, child: LayoutBuilder(
+            builder: (context, constraints) {
+              final width = constraints.maxWidth / _items.length;
+              return Stack(children: [
+                if (selected != null && selected >= 0 && selected < _items.length)
+                  AnimatedPositionedDirectional(
+                    duration: Glass.motion(context), curve: Glass.curve,
+                    start: selected * width, width: width, top: 0, bottom: 0,
+                    child: DecoratedBox(decoration: BoxDecoration(
+                      borderRadius: Glass.capsule,
+                      color: scheme.primaryContainer,
+                      border: Border.all(color: scheme.primary.withValues(alpha: .26)),
+                    )),
                   ),
-                  child: Row(
-                    children: [
-                      // Tab 0: Beranda
-                      _NavSlot(
-                        active: activeIndex == 0,
-                        onTap: () => _handleTap(context, 0),
-                        child: _NavContent(
-                          assetPath: AppAssets.nav3dHome,
-                          fallbackIcon: Icons.home_rounded,
-                          label: AppStrings.navHome,
-                          active: activeIndex == 0,
-                        ),
-                      ),
-                      // Tab 1: Transaksi
-                      _NavSlot(
-                        active: activeIndex == 1,
-                        onTap: () => _handleTap(context, 1),
-                        child: _NavContent(
-                          assetPath: AppAssets.nav3dTransaction,
-                          fallbackIcon: Icons.swap_horiz_rounded,
-                          label: AppStrings.navTransactions,
-                          active: activeIndex == 1,
-                        ),
-                      ),
-                      // Ruang simetris tengah untuk tombol Catat (+)
-                      const Expanded(child: SizedBox()),
-                      // Tab 3: Tujuan
-                      _NavSlot(
-                        active: activeIndex == 3,
-                        onTap: () => _handleTap(context, 3),
-                        child: _NavContent(
-                          assetPath: AppAssets.nav3dGoal,
-                          fallbackIcon: Icons.track_changes_rounded,
-                          label: AppStrings.navGoals,
-                          active: activeIndex == 3,
-                        ),
-                      ),
-                      // Tab 4: Profil
-                      _NavSlot(
-                        active: activeIndex == 4,
-                        onTap: () => _handleTap(context, 4),
-                        child: _NavContent(
-                          assetPath: AppAssets.nav3dProfile,
-                          fallbackIcon: Icons.person_rounded,
-                          label: AppStrings.navProfile,
-                          active: activeIndex == 4,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              // Tombol Catat (+) Floating Elevated di Tengah
-              Positioned(
-                top: 0,
-                bottom: 0,
-                child: Center(
-                  child: _FloatingRecordButton(
-                    onTap: () => _handleTap(context, 2),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Slot satu tab dengan area sentuh nyaman (tinggi 68 dp, feedback ripple halus).
-class _NavSlot extends StatelessWidget {
-  const _NavSlot({
-    required this.active,
-    required this.onTap,
-    required this.child,
-  });
-
-  final bool active;
-  final VoidCallback onTap;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(22),
-          splashColor: const Color(0xFF10B981).withValues(alpha: 0.12),
-          highlightColor: const Color(0xFF10B981).withValues(alpha: 0.05),
-          child: Container(
-            height: 68,
-            alignment: Alignment.center,
-            child: child,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Konten ikon 3D + label + indikator animasi active state.
-class _NavContent extends StatelessWidget {
-  const _NavContent({
-    required this.assetPath,
-    required this.fallbackIcon,
-    required this.label,
-    required this.active,
-  });
-
-  final String assetPath;
-  final IconData fallbackIcon;
-  final String label;
-  final bool active;
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 220),
-      curve: Curves.easeOutCubic,
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
-      decoration: BoxDecoration(
-        color: active ? const Color(0xFFEAF8F1) : Colors.transparent,
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          AnimatedScale(
-            scale: active ? 1.06 : 1.0,
-            duration: const Duration(milliseconds: 220),
-            curve: Curves.easeOutCubic,
-            child: SizedBox(
-              height: 28,
-              width: 28,
-              child: Image.asset(
-                assetPath,
-                width: 28,
-                height: 28,
-                fit: BoxFit.contain,
-                opacity: AlwaysStoppedAnimation(active ? 1.0 : 0.65),
-                errorBuilder: (context, error, stackTrace) => Icon(
-                  fallbackIcon,
-                  size: 24,
-                  color: active
-                      ? const Color(0xFF10B981)
-                      : const Color(0xFF718096),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 2),
-          AnimatedDefaultTextStyle(
-            duration: const Duration(milliseconds: 220),
-            curve: Curves.easeOutCubic,
-            style: TextStyle(
-              color: active ? const Color(0xFF10B981) : const Color(0xFF718096),
-              fontSize: 10.5,
-              fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-            ),
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          const SizedBox(height: 2),
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 220),
-            curve: Curves.easeOutCubic,
-            width: active ? 20 : 0,
-            height: 3.5,
-            decoration: BoxDecoration(
-              color: const Color(0xFF10B981),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Tombol Catat (+): lingkaran hijau elevated dengan ikon plus putih dan shadow emerald.
-class _FloatingRecordButton extends StatefulWidget {
-  const _FloatingRecordButton({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  State<_FloatingRecordButton> createState() => _FloatingRecordButtonState();
-}
-
-class _FloatingRecordButtonState extends State<_FloatingRecordButton> {
-  bool _pressed = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      key: const Key('record_button'),
-      onTapDown: (_) => setState(() => _pressed = true),
-      onTapUp: (_) => setState(() => _pressed = false),
-      onTapCancel: () => setState(() => _pressed = false),
-      onTap: widget.onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          AnimatedScale(
-            scale: _pressed ? 0.93 : 1.0,
-            duration: const Duration(milliseconds: 150),
-            curve: Curves.easeOutCubic,
-            child: Container(
-              width: 58,
-              height: 58,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: const Color(0xFF10B981),
-                border: Border.all(color: Colors.white, width: 3.0),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF10B981).withValues(alpha: 0.38),
-                    blurRadius: 14,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
-              ),
-              child: Center(
-                child: Image.asset(
-                  AppAssets.nav3dRecord,
-                  key: const Key('record_button_icon'),
-                  width: 50,
-                  height: 50,
-                  fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) => const Icon(
-                    Icons.add_rounded,
-                    color: Colors.white,
-                    size: 32,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 3),
-          const Text(
-            AppStrings.navRecord,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: Color(0xFF10B981),
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
+                Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                  for (final (index, item) in _items.indexed)
+                    Expanded(child: Semantics(
+                      selected: index == selected, button: true, label: item.$1,
+                      child: Material(type: MaterialType.transparency, child: InkWell(
+                        key: index == 2 ? const Key('record_button') : null,
+                        borderRadius: Glass.capsule, onTap: () => _handleTap(context, index),
+                        child: ExcludeSemantics(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                          Image.asset(item.$2, key: index == 2 ? const Key('record_button_icon') : null,
+                            width: index == 2 ? 31 : 25, height: 31, fit: BoxFit.contain,
+                            errorBuilder: (_, _, _) => Icon(item.$3, color: scheme.primary)),
+                          FittedBox(fit: BoxFit.scaleDown, child: Text(item.$1,
+                            style: TextStyle(fontSize: 11, height: 1.3,
+                              fontWeight: index == selected ? FontWeight.w700 : FontWeight.w500,
+                              color: index == selected ? scheme.onPrimaryContainer : scheme.onSurface))),
+                        ])),
+                      )),
+                    )),
+                ]),
+              ]);
+            },
+          )),
+        )),
+      )),
     );
   }
 }
