@@ -4,175 +4,67 @@ import 'app_colors.dart';
 import 'app_radius.dart';
 import 'app_typography.dart';
 
-/// Centralized Material 3 theme TahanDulu.
-/// Modern vivid: tombol primer menyala dengan glow lembut, field putih
-/// bersih dengan border crisp dan fokus emerald yang hidup.
-/// Jangan gunakan warna hardcoded di widget — selalu via Theme.of(context).
 abstract final class AppTheme {
-  static ThemeData get light {
+  static final light = _build(Brightness.light);
+  static final dark = _build(Brightness.dark);
+
+  static ThemeData _build(Brightness brightness) {
+    final dark = brightness == Brightness.dark;
+    final canvas = dark ? const Color(0xff131c24) : AppColors.background;
     final scheme = ColorScheme.fromSeed(
-      seedColor: AppColors.primary,
-      primary: AppColors.primary,
-      secondary: AppColors.secondary,
-      surface: AppColors.surface,
-    ).copyWith(error: AppColors.error);
-
-    return ThemeData(
-      useMaterial3: true,
-      colorScheme: scheme,
-      scaffoldBackgroundColor: AppColors.background,
-      fontFamily: AppTypography.fontFamily,
-      textTheme: AppTypography.textTheme,
-      textSelectionTheme: const TextSelectionThemeData(
-        cursorColor: AppColors.primary,
-        selectionColor: AppColors.primarySoft,
-        selectionHandleColor: AppColors.primary,
-      ),
-      appBarTheme: const AppBarTheme(
-        backgroundColor: AppColors.background,
-        foregroundColor: AppColors.textPrimary,
-        elevation: 0,
-        centerTitle: true,
-      ),
-
-      // Cards: rounded 16–20px + soft shadow.
-      cardTheme: CardThemeData(
-        color: AppColors.surface,
-        elevation: 0,
-        margin: EdgeInsets.zero,
-        shape: RoundedRectangleBorder(
-          borderRadius: AppRadius.cardLarge,
-          side: const BorderSide(color: AppColors.border),
-        ),
-      ),
-
-      // Buttons: vivid primer + glow, ekstra rounded, tegas.
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: AppColors.onPrimary,
-          disabledBackgroundColor: const Color(0xFFE6EBF0),
-          disabledForegroundColor: AppColors.textDisabled,
-          minimumSize: const Size.fromHeight(54),
-          textStyle: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.2,
-          ),
-          shape: RoundedRectangleBorder(borderRadius: AppRadius.button),
-          elevation: 3,
-          shadowColor: AppColors.primaryGlow,
-        ),
-      ),
-      outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.primary,
-          disabledForegroundColor: AppColors.textDisabled,
-          minimumSize: const Size.fromHeight(54),
-          textStyle: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.2,
-          ),
-          side: const BorderSide(color: AppColors.primary, width: 1.5),
-          shape: RoundedRectangleBorder(borderRadius: AppRadius.button),
-        ),
-      ),
-      textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(
-          foregroundColor: AppColors.primary,
-          textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
-        ),
-      ),
-
-      // Inputs: putih bersih, border crisp, fokus hidup + label tegas.
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: AppColors.fieldFill,
-        hintStyle: const TextStyle(color: AppColors.textDisabled),
-        labelStyle: const TextStyle(
-          color: AppColors.textPrimary,
-          fontWeight: FontWeight.w600,
-          fontSize: 13.5,
-        ),
-        floatingLabelStyle: const TextStyle(
-          color: AppColors.primary,
-          fontWeight: FontWeight.w700,
-          fontSize: 14,
-        ),
-        helperStyle: const TextStyle(color: AppColors.textSecondary),
-        errorStyle: const TextStyle(
-          color: AppColors.error,
-          fontWeight: FontWeight.w500,
-          fontSize: 12.5,
-        ),
-        prefixIconColor: AppColors.textSecondary,
-        suffixIconColor: AppColors.textSecondary,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 18,
-          vertical: 16,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: AppRadius.button,
-          borderSide: const BorderSide(
-            color: AppColors.fieldBorder,
-            width: 1.5,
-          ),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: AppRadius.button,
-          borderSide: const BorderSide(
-            color: AppColors.fieldBorder,
-            width: 1.5,
-          ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: AppRadius.button,
-          borderSide: const BorderSide(color: AppColors.primary, width: 2),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: AppRadius.button,
-          borderSide: const BorderSide(color: AppColors.error, width: 1.5),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: AppRadius.button,
-          borderSide: const BorderSide(color: AppColors.error, width: 2),
-        ),
-        disabledBorder: OutlineInputBorder(
-          borderRadius: AppRadius.button,
-          borderSide: const BorderSide(color: AppColors.fieldBorder),
-        ),
-      ),
-
-      // Toggle & pilihan: aksen vivid yang konsisten dengan tombol.
-      switchTheme: SwitchThemeData(
-        thumbColor: WidgetStateProperty.resolveWith(
-          (states) => states.contains(WidgetState.selected)
-              ? Colors.white
-              : AppColors.textDisabled,
-        ),
-        trackColor: WidgetStateProperty.resolveWith(
-          (states) => states.contains(WidgetState.selected)
-              ? AppColors.primary
-              : const Color(0xFFE2E8F0),
-        ),
-        trackOutlineColor: const WidgetStatePropertyAll(Colors.transparent),
-      ),
-      checkboxTheme: CheckboxThemeData(
-        fillColor: WidgetStateProperty.resolveWith(
-          (states) => states.contains(WidgetState.selected)
-              ? AppColors.primary
-              : Colors.transparent,
-        ),
-        checkColor: const WidgetStatePropertyAll(Colors.white),
-        side: const BorderSide(color: AppColors.fieldBorder, width: 1.5),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-      ),
-      radioTheme: const RadioThemeData(
-        fillColor: WidgetStatePropertyAll(AppColors.primary),
-      ),
-
-      dividerTheme: const DividerThemeData(color: AppColors.divider),
+      seedColor: AppColors.primary, brightness: brightness,
+      primary: dark ? const Color(0xff9bdace) : AppColors.primary,
+      secondary: dark ? const Color(0xffb7cfed) : AppColors.secondary,
+      tertiary: dark ? const Color(0xffd3beef) : AppColors.accentPurple,
+      surface: dark ? const Color(0xff202d38) : AppColors.surface,
+      onSurface: dark ? const Color(0xffedf4f6) : AppColors.textPrimary,
+      onSurfaceVariant: dark ? const Color(0xffbfccd3) : AppColors.textSecondary,
+      outlineVariant: dark ? const Color(0xff45525c) : AppColors.border,
+      error: dark ? const Color(0xffffacb8) : AppColors.error,
+    );
+    final outline = BorderSide(color: scheme.outlineVariant);
+    final shape = RoundedRectangleBorder(borderRadius: AppRadius.cardLarge, side: outline);
+    final field = OutlineInputBorder(borderRadius: AppRadius.button, borderSide: BorderSide(color: scheme.outline));
+    final base = ThemeData(useMaterial3: true, colorScheme: scheme);
+    final text = base.textTheme.merge(AppTypography.textTheme).apply(
+      bodyColor: scheme.onSurface, displayColor: scheme.onSurface,
+    );
+    return base.copyWith(
+      textTheme: text.copyWith(bodySmall: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant)),
+      scaffoldBackgroundColor: canvas, dividerColor: scheme.outlineVariant,
+      appBarTheme: AppBarTheme(backgroundColor: canvas, foregroundColor: scheme.onSurface,
+        elevation: 0, scrolledUnderElevation: 0, centerTitle: true, titleTextStyle: text.titleLarge),
+      cardTheme: CardThemeData(color: scheme.surface, margin: EdgeInsets.zero, elevation: 0, shape: shape),
+      elevatedButtonTheme: ElevatedButtonThemeData(style: ElevatedButton.styleFrom(
+        backgroundColor: scheme.primary, foregroundColor: scheme.onPrimary,
+        minimumSize: const Size.fromHeight(50), elevation: 0,
+        textStyle: text.labelLarge?.copyWith(fontWeight: FontWeight.w700),
+        shape: RoundedRectangleBorder(borderRadius: AppRadius.button),
+      ).copyWith(backgroundBuilder: (context, states, child) => DecoratedBox(
+        decoration: BoxDecoration(borderRadius: AppRadius.button,
+          gradient: states.contains(WidgetState.disabled) ? null : const LinearGradient(
+            begin: Alignment.topLeft, end: Alignment.bottomRight,
+            colors: [Color(0x13ffffff), Colors.transparent, Color(0x10000000)])),
+        child: child ?? const SizedBox.shrink()))),
+      outlinedButtonTheme: OutlinedButtonThemeData(style: OutlinedButton.styleFrom(
+        minimumSize: const Size.fromHeight(50), side: outline,
+        backgroundColor: scheme.surface, foregroundColor: scheme.primary,
+        shape: RoundedRectangleBorder(borderRadius: AppRadius.button))),
+      iconButtonTheme: IconButtonThemeData(style: IconButton.styleFrom(minimumSize: const Size.square(48))),
+      floatingActionButtonTheme: FloatingActionButtonThemeData(backgroundColor: scheme.primary,
+        foregroundColor: scheme.onPrimary, elevation: 3, shape: const StadiumBorder()),
+      chipTheme: base.chipTheme.copyWith(shape: const StadiumBorder(), side: outline,
+        selectedColor: scheme.primaryContainer, backgroundColor: scheme.surface),
+      inputDecorationTheme: InputDecorationTheme(filled: true, fillColor: scheme.surface,
+        border: field, enabledBorder: field,
+        focusedBorder: field.copyWith(borderSide: BorderSide(color: scheme.primary, width: 2)),
+        hintStyle: TextStyle(color: scheme.onSurfaceVariant), errorMaxLines: 3,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15)),
+      dialogTheme: DialogThemeData(backgroundColor: scheme.surface, shape: shape, elevation: 3),
+      bottomSheetTheme: BottomSheetThemeData(backgroundColor: scheme.surface,
+        modalBackgroundColor: scheme.surface, clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(borderRadius: AppRadius.sheet, side: outline)),
+      progressIndicatorTheme: ProgressIndicatorThemeData(color: scheme.primary, linearTrackColor: scheme.surfaceContainerHighest),
     );
   }
 }

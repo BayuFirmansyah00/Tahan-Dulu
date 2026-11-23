@@ -5,6 +5,7 @@ import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_image_icon.dart';
+import '../../../../data/models/app_preferences.dart';
 import '../providers/profile_providers.dart';
 import '../utils/profile_ui.dart';
 
@@ -38,6 +39,18 @@ class AppSettingsScreen extends ConsumerWidget {
                     title: AppStrings.appSettingsExperience,
                   ),
                   const SizedBox(height: 8),
+                  DropdownButtonFormField<AppThemeChoice>(
+                    initialValue: prefs.theme,
+                    key: ValueKey(prefs.theme),
+                    decoration: const InputDecoration(labelText: 'Tema tampilan'),
+                    items: const [
+                      DropdownMenuItem(value: AppThemeChoice.system, child: Text('Ikuti sistem')),
+                      DropdownMenuItem(value: AppThemeChoice.light, child: Text('Terang')),
+                      DropdownMenuItem(value: AppThemeChoice.dark, child: Text('Gelap')),
+                    ],
+                    onChanged: (value) { if (value != null) notifier.setTheme(value); },
+                  ),
+                  const SizedBox(height: 12),
                   _SwitchRow(
                     icon: Icons.animation_outlined,
                     iconForeground: AppColors.secondary,

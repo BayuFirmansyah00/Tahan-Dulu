@@ -90,8 +90,11 @@ class AppPreferencesController extends Notifier<AppPreferences> {
   }
 
   Future<void> _loadFromStorage() async {
+    final userId = _userId;
+    final themeKey = _scopedKey('app_prefs_theme');
     try {
       final prefs = await SharedPreferences.getInstance();
+      if (!ref.mounted || userId != _userId) return;
       final scopedReduce = _scopedKey(_baseReduceMotion);
       final scopedNotif = _scopedKey(_baseInAppNotif);
       final scopedTips = _scopedKey(_baseShowTips);
@@ -126,7 +129,10 @@ class AppPreferencesController extends Notifier<AppPreferences> {
       final showInAppNotifications = prefs.getBool(scopedNotif) ?? true;
       final showTips = prefs.getBool(scopedTips) ?? true;
 
+      if (!ref.mounted || userId != _userId) return;
+      final theme = AppThemeChoice.values.asNameMap()[prefs.getString(themeKey)];
       state = state.copyWith(
+        theme: theme ?? state.theme,
         reduceMotion: reduceMotion,
         showInAppNotifications: showInAppNotifications,
         showTips: showTips,
@@ -136,9 +142,11 @@ class AppPreferencesController extends Notifier<AppPreferences> {
     }
   }
 
-  void setTheme(AppThemeChoice theme) {
-    if (theme == AppThemeChoice.dark) return; // Belum tersedia.
+  Future<void> setTheme(AppThemeChoice theme) async {
+    final key = _scopedKey('app_prefs_theme');
     state = state.copyWith(theme: theme);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(key, theme.name);
   }
 
   Future<void> setReduceMotion(bool value) async {
@@ -178,7 +186,7 @@ final themeModeProvider = Provider<ThemeMode>((ref) {
     case AppThemeChoice.light:
       return ThemeMode.light;
     case AppThemeChoice.dark:
-      return ThemeMode.light; // Fallback aman: tema gelap belum ada.
+      return ThemeMode.dark;
   }
 });
 

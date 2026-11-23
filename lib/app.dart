@@ -56,10 +56,20 @@ class _TahanDuluAppState extends ConsumerState<TahanDuluApp> {
     });
 
     final router = ref.watch(goRouterProvider);
+    final reduceMotion = ref.watch(appPreferencesProvider.select((p) => p.reduceMotion));
     return MaterialApp.router(
       title: AppConstants.appName,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
+      themeAnimationDuration: reduceMotion ? Duration.zero : kThemeAnimationDuration,
+      builder: (context, child) {
+        final media = MediaQuery.of(context);
+        return MediaQuery(
+          data: media.copyWith(disableAnimations: media.disableAnimations || reduceMotion),
+          child: child!,
+        );
+      },
       themeMode: ref.watch(themeModeProvider),
       routerConfig: router,
     );
