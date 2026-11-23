@@ -238,13 +238,13 @@ void main() {
         container.read(appPreferencesProvider).theme,
         AppThemeChoice.light,
       );
-      // Gelap belum tersedia: ditolak.
+      // Pilihan gelap menggunakan tema gelap aplikasi.
       container
           .read(appPreferencesProvider.notifier)
           .setTheme(AppThemeChoice.dark);
       expect(
         container.read(appPreferencesProvider).theme,
-        AppThemeChoice.light,
+        AppThemeChoice.dark,
       );
     });
   });
