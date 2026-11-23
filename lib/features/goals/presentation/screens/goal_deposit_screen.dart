@@ -13,6 +13,7 @@ import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_icons.dart';
 import '../../../../core/widgets/app_states.dart';
 import '../../../../core/widgets/app_text_field.dart';
+import '../../../../data/datasources/remote/api_client.dart';
 import '../../../../data/models/financial_goal.dart';
 import '../../../../data/providers/onboarding_providers.dart';
 import '../../../dashboard/presentation/widgets/dashboard_bottom_nav.dart';
@@ -75,6 +76,14 @@ class _GoalDepositScreenState extends ConsumerState<GoalDepositScreen> {
         setState(() => _saveFailed = true);
         return;
       }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Setoran sebesar ${CurrencyFormatter.formatCompact(_amount)} berhasil dicatat.',
+          ),
+          backgroundColor: context.palette.primary,
+        ),
+      );
       final updated = goal.copyWith(
         currentAmount: goal.currentAmount + _amount,
       );
@@ -83,6 +92,21 @@ class _GoalDepositScreenState extends ConsumerState<GoalDepositScreen> {
       } else {
         context.pop();
       }
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _saveFailed = true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _saveFailed = true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text(AppStrings.saveFailed)),
+      );
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -111,7 +135,7 @@ class _GoalDepositScreenState extends ConsumerState<GoalDepositScreen> {
                     items.where((e) => e.id == widget.goalId);
                 if (matches.isEmpty) {
                   return const Center(
-                    child: Text(AppStrings.accountNotFound),
+                    child: Text(AppStrings.goalNotFound),
                   );
                 }
                 return _Body(

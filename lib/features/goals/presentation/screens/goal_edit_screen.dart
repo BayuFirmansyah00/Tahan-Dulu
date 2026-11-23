@@ -82,13 +82,15 @@ class _GoalEditScreenState extends ConsumerState<GoalEditScreen> {
   }
 
   Future<void> _pickDate() async {
-    final tomorrow = DateTime.now().add(const Duration(days: 1));
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final tomorrow = today.add(const Duration(days: 1));
     final picked = await showDatePicker(
       context: context,
       initialDate:
-          _date != null && _date!.isAfter(tomorrow) ? _date! : tomorrow,
-      firstDate: tomorrow,
-      lastDate: DateTime.now().add(const Duration(days: 365 * 30)),
+          _date != null && !_date!.isBefore(today) ? _date! : tomorrow,
+      firstDate: today,
+      lastDate: today.add(const Duration(days: 365 * 30)),
     );
     if (picked != null) setState(() => _date = picked);
   }
@@ -97,10 +99,12 @@ class _GoalEditScreenState extends ConsumerState<GoalEditScreen> {
     final amount = RupiahInputFormatter.parse(_amountController.text);
     final name = _nameController.text.trim();
     final date = _date;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
     if (name.isEmpty ||
         amount <= 0 ||
         date == null ||
-        !date.isAfter(DateTime.now()) ||
+        date.isBefore(today) ||
         _category == null) {
       setState(() {
         _attempted = true;
@@ -127,6 +131,9 @@ class _GoalEditScreenState extends ConsumerState<GoalEditScreen> {
           );
       if (!mounted) return;
       if (ok) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Perubahan target berhasil disimpan.')),
+        );
         context.pop();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -139,9 +146,18 @@ class _GoalEditScreenState extends ConsumerState<GoalEditScreen> {
         _fieldErrors = e.fieldErrors;
         _saving = false;
       });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
     } catch (_) {
       if (!mounted) return;
       setState(() => _saving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text(AppStrings.saveFailed)),
+      );
     }
   }
 
@@ -176,12 +192,23 @@ class _GoalEditScreenState extends ConsumerState<GoalEditScreen> {
           .deleteGoal(goal.id);
       if (!mounted) return;
       if (ok) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Target berhasil dihapus.')),
+        );
         context.go(AppRoutes.goals);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text(AppStrings.saveFailed)),
         );
       }
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -216,7 +243,7 @@ class _GoalEditScreenState extends ConsumerState<GoalEditScreen> {
                     items.where((e) => e.id == widget.goalId);
                 if (matches.isEmpty) {
                   return const Center(
-                    child: Text(AppStrings.accountNotFound),
+                    child: Text(AppStrings.goalNotFound),
                   );
                 }
                 final goal = matches.first;

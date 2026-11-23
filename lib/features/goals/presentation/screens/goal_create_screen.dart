@@ -73,14 +73,16 @@ class _GoalCreateScreenState extends ConsumerState<GoalCreateScreen> {
   }
 
   Future<void> _pickDate(DateTime? current) async {
-    final tomorrow = DateTime.now().add(const Duration(days: 1));
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final tomorrow = today.add(const Duration(days: 1));
     final picked = await showDatePicker(
       context: context,
-      initialDate: current != null && current.isAfter(tomorrow)
+      initialDate: current != null && !current.isBefore(today)
           ? current
           : tomorrow,
-      firstDate: tomorrow,
-      lastDate: DateTime.now().add(const Duration(days: 365 * 30)),
+      firstDate: today,
+      lastDate: today.add(const Duration(days: 365 * 30)),
     );
     if (picked != null) {
       ref.read(goalsControllerProvider.notifier).setTargetDate(picked);
@@ -88,8 +90,27 @@ class _GoalCreateScreenState extends ConsumerState<GoalCreateScreen> {
   }
 
   void _next() {
-    if (!ref.read(goalsControllerProvider).isStepOneValid) {
+    final draft = ref.read(goalsControllerProvider);
+    if (!draft.isStepOneValid) {
       setState(() => _attempted = true);
+      String? errorMessage;
+      if (draft.category == null) {
+        errorMessage = 'Pilih salah satu kategori target.';
+      } else if (!draft.isNameValid) {
+        errorMessage = AppStrings.goalNameRequired;
+      } else if (!draft.isAmountValid) {
+        errorMessage = AppStrings.goalAmountRequired;
+      } else if (!draft.isDateValid) {
+        errorMessage = AppStrings.goalDateRequired;
+      }
+      if (errorMessage != null && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
       return;
     }
     context.push(AppRoutes.goalsSetup);
@@ -148,6 +169,12 @@ class _GoalCreateScreenState extends ConsumerState<GoalCreateScreen> {
                               ),
                           ],
                         ),
+                        if (_attempted && draft.category == null) ...[
+                          const SizedBox(height: 6),
+                          const _FieldError(
+                            text: 'Pilih salah satu kategori target di atas.',
+                          ),
+                        ],
                         if (draft.category != null &&
                             draft.category != GoalCategory.others) ...[
                           const SizedBox(height: 8),

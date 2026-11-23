@@ -79,8 +79,12 @@ class GoalDraft extends Equatable {
 
   bool get isNameValid => name.trim().isNotEmpty;
   bool get isAmountValid => targetAmount > 0;
-  bool get isDateValid =>
-      targetDate != null && targetDate!.isAfter(DateTime.now());
+  bool get isDateValid {
+    if (targetDate == null) return false;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    return !targetDate!.isBefore(today);
+  }
   bool get isStepOneValid =>
       category != null && isNameValid && isAmountValid && isDateValid;
 
@@ -182,12 +186,20 @@ class GoalsController extends Notifier<GoalDraft> {
     if (_saving || !state.isStepOneValid) return null;
     _saving = true;
     try {
-      final existing = await ref.read(goalRepositoryProvider).getGoals();
-      final maxPriority = existing.isEmpty
-          ? -1
-          : existing
-              .map((e) => e.priority)
-              .reduce((a, b) => a > b ? a : b);
+      int nextPriority = 0;
+      try {
+        final existing = await ref.read(goalRepositoryProvider).getGoals();
+        if (existing.isNotEmpty) {
+          nextPriority = existing
+                  .map((e) => e.priority)
+                  .reduce((a, b) => a > b ? a : b) +
+              1;
+        }
+      } catch (_) {
+        // Jika fetch list gagal, tetap lanjutkan dengan priority 0
+        // (backend Laravel akan meng-assign max priority).
+        nextPriority = 0;
+      }
       final saved =
           await ref.read(goalRepositoryProvider).addGoal(
                 FinancialGoal(
@@ -200,13 +212,13 @@ class GoalsController extends Notifier<GoalDraft> {
                   recurringAmount: state.recurringAmount,
                   frequency: state.frequency,
                   sourceAccountId: state.sourceAccountId,
-                  priority: maxPriority + 1,
+                  priority: nextPriority,
                 ),
               );
       _refreshGoals();
       return saved;
     } on ApiException {
-      // Error validasi dari backend (422) akan ditangani oleh UI melalui state.
+      // Error validasi dari backend (422) akan ditangani oleh pemanggil.
       rethrow;
     } catch (_) {
       return null;
@@ -228,22 +240,40 @@ class GoalsController extends Notifier<GoalDraft> {
   }) async {
     if (_saving) return false;
     if (name.trim().isEmpty || targetAmount <= 0) return false;
-    if (!targetDate.isAfter(DateTime.now())) return false;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    if (targetDate.isBefore(today)) return false;
     _saving = true;
     try {
-      final goals = await ref.read(goalRepositoryProvider).getGoals();
-      final existing = goals.firstWhere((e) => e.id == id);
-      await ref.read(goalRepositoryProvider).updateGoal(
-            existing.copyWith(
-              name: name.trim(),
-              category: category,
-              targetAmount: targetAmount,
-              deadline: targetDate,
-              recurringAmount: recurringAmount,
-              frequency: frequency,
-              sourceAccountId: sourceAccountId,
-            ),
-          );
+      FinancialGoal? existing;
+      try {
+        final goals = await ref.read(goalRepositoryProvider).getGoals();
+        existing = goals.where((e) => e.id == id).firstOrNull;
+      } catch (_) {
+        // Fallback jika fetch list bermasalah
+      }
+      final goalToUpdate = (existing ??
+              FinancialGoal(
+                id: id,
+                name: name.trim(),
+                targetAmount: targetAmount,
+                currentAmount: 0,
+                deadline: targetDate,
+                category: category,
+                recurringAmount: recurringAmount,
+                frequency: frequency,
+                sourceAccountId: sourceAccountId,
+              ))
+          .copyWith(
+        name: name.trim(),
+        category: category,
+        targetAmount: targetAmount,
+        deadline: targetDate,
+        recurringAmount: recurringAmount,
+        frequency: frequency,
+        sourceAccountId: sourceAccountId,
+      );
+      await ref.read(goalRepositoryProvider).updateGoal(goalToUpdate);
       _refreshGoals();
       return true;
     } on ApiException {

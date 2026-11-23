@@ -9,6 +9,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_icons.dart';
 import '../../../../core/widgets/app_states.dart';
+import '../../../../data/datasources/remote/api_client.dart';
 import '../../../../data/models/financial_goal.dart';
 import '../../../dashboard/presentation/widgets/dashboard_bottom_nav.dart';
 import '../providers/goals_controller.dart';
@@ -48,12 +49,28 @@ class _GoalPriorityScreenState extends ConsumerState<GoalPriorityScreen> {
           .saveOrder(order);
       if (!mounted) return;
       if (ok) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Urutan prioritas berhasil disimpan.')),
+        );
         context.pop();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text(AppStrings.saveFailed)),
         );
       }
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text(AppStrings.saveFailed)),
+      );
     } finally {
       if (mounted) setState(() => _saving = false);
     }

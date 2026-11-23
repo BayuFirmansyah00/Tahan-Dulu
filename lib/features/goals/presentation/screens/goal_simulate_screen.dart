@@ -13,6 +13,7 @@ import '../../../../core/utils/goal_math.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_icons.dart';
 import '../../../../core/widgets/app_states.dart';
+import '../../../../data/datasources/remote/api_client.dart';
 import '../../../../data/models/financial_goal.dart';
 import '../../../dashboard/presentation/widgets/dashboard_bottom_nav.dart';
 import '../providers/goals_controller.dart';
@@ -54,17 +55,35 @@ class _GoalSimulateScreenState
       ),
     );
     if (confirmed != true || !mounted) return;
-    final ok = await ref
-        .read(goalsControllerProvider.notifier)
-        .applyPlan(
-          goalId: widget.goalId,
-          recurringAmount: amount,
-          frequency: frequency,
+    try {
+      final ok = await ref
+          .read(goalsControllerProvider.notifier)
+          .applyPlan(
+            goalId: widget.goalId,
+            recurringAmount: amount,
+            frequency: frequency,
+          );
+      if (!mounted) return;
+      if (ok) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Rencana berkala target berhasil diperbarui.')),
         );
-    if (!mounted) return;
-    if (ok) {
-      context.pop();
-    } else {
+        context.pop();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text(AppStrings.saveFailed)),
+        );
+      }
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text(AppStrings.saveFailed)),
       );
@@ -95,7 +114,7 @@ class _GoalSimulateScreenState
                     items.where((e) => e.id == widget.goalId);
                 if (matches.isEmpty) {
                   return const Center(
-                    child: Text(AppStrings.accountNotFound),
+                    child: Text(AppStrings.goalNotFound),
                   );
                 }
                 final goal = matches.first;

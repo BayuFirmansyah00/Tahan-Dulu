@@ -58,33 +58,39 @@ class GoalCircularProgress extends StatelessWidget {
   final double progress;
   final double size;
 
+  static const double _strokeWidth = 12.0;
+  static const double _padding = 8.0;
+
   @override
   Widget build(BuildContext context) {
     final percent = '${((progress * 100).clamp(0, 100)).round()}%';
-    return SizedBox(
-      width: size,
-      height: size,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          SizedBox(
-            width: size,
-            height: size,
-            child: CircularProgressIndicator(
-              value: progress.clamp(0.0, 1.0),
-              strokeWidth: 12,
-              backgroundColor: context.palette.surfaceContainerHighest,
-              valueColor:
-                  AlwaysStoppedAnimation<Color>(context.palette.primary),
+    return Padding(
+      padding: const EdgeInsets.all(_padding),
+      child: SizedBox(
+        width: size,
+        height: size,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            SizedBox(
+              width: size,
+              height: size,
+              child: CircularProgressIndicator(
+                value: progress.clamp(0.0, 1.0),
+                strokeWidth: _strokeWidth,
+                backgroundColor: context.palette.surfaceContainerHighest,
+                valueColor:
+                    AlwaysStoppedAnimation<Color>(context.palette.primary),
+              ),
             ),
-          ),
-          Text(
-            percent,
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
-          ),
-        ],
+            Text(
+              percent,
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+            ),
+          ],
+        ),
       ),
     );
   }

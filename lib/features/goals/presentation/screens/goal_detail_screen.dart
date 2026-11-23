@@ -13,6 +13,7 @@ import '../../../../core/utils/goal_math.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_icons.dart';
 import '../../../../core/widgets/app_states.dart';
+import '../../../../data/datasources/remote/api_client.dart';
 import '../../../../data/models/financial_goal.dart';
 import '../../../dashboard/presentation/widgets/dashboard_bottom_nav.dart';
 import '../providers/goals_controller.dart';
@@ -68,13 +69,31 @@ class GoalDetailScreen extends ConsumerWidget {
                 ),
               );
               if (confirmed != true || !context.mounted) return;
-              final ok = await ref
-                  .read(goalsControllerProvider.notifier)
-                  .deleteGoal(goalId);
-              if (!context.mounted) return;
-              if (ok) {
-                context.go(AppRoutes.goals);
-              } else {
+              try {
+                final ok = await ref
+                    .read(goalsControllerProvider.notifier)
+                    .deleteGoal(goalId);
+                if (!context.mounted) return;
+                if (ok) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Target berhasil dihapus.')),
+                  );
+                  context.go(AppRoutes.goals);
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text(AppStrings.saveFailed)),
+                  );
+                }
+              } on ApiException catch (e) {
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(e.message),
+                    backgroundColor: Theme.of(context).colorScheme.error,
+                  ),
+                );
+              } catch (_) {
+                if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text(AppStrings.saveFailed)),
                 );
@@ -152,7 +171,7 @@ class _Body extends StatelessWidget {
       etaValue = AppStrings.simulateUnreachable;
     }
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [

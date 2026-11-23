@@ -14,6 +14,7 @@ import '../../../../core/utils/rupiah_input_formatter.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_icons.dart';
 import '../../../../core/widgets/app_text_field.dart';
+import '../../../../data/datasources/remote/api_client.dart';
 import '../../../../data/models/financial_goal.dart';
 import '../../../dashboard/presentation/widgets/dashboard_bottom_nav.dart';
 import '../providers/goals_controller.dart';
@@ -84,12 +85,34 @@ class _GoalSetupScreenState extends ConsumerState<GoalSetupScreen> {
           await ref.read(goalsControllerProvider.notifier).saveGoal();
       if (!mounted) return;
       if (saved != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Target "${saved.name}" berhasil dibuat.'),
+            backgroundColor: context.palette.primary,
+          ),
+        );
         context.go('${AppRoutes.goals}/${saved.id}');
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text(AppStrings.saveFailed)),
         );
       }
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(AppStrings.saveFailed),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
     } finally {
       if (mounted) setState(() => _saving = false);
     }

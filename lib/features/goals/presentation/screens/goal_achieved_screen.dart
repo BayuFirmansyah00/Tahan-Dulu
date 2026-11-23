@@ -44,7 +44,7 @@ class GoalAchievedScreen extends ConsumerWidget {
                     items.where((e) => e.id == goalId);
                 if (matches.isEmpty) {
                   return const Center(
-                    child: Text(AppStrings.accountNotFound),
+                    child: Text(AppStrings.goalNotFound),
                   );
                 }
                 final goal = matches.first;
