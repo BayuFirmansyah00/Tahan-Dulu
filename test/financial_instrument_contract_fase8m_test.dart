@@ -2,12 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tahan_dulu/core/constants/app_strings.dart';
-import 'package:tahan_dulu/data/datasources/remote/api_client.dart';
-import 'package:tahan_dulu/data/datasources/remote/remote_account_repository.dart';
-import 'package:tahan_dulu/data/models/api_bank.dart';
 import 'package:tahan_dulu/data/models/api_financial_instrument.dart';
 import 'package:tahan_dulu/data/models/financial_account.dart';
-import 'package:tahan_dulu/data/providers/account_providers.dart';
 import 'package:tahan_dulu/data/providers/app_providers.dart';
 import 'package:tahan_dulu/data/repositories/repositories.dart';
 import 'package:tahan_dulu/features/accounts/presentation/providers/accounts_controller.dart';
@@ -36,11 +32,6 @@ class _FakeAccountRepository implements AccountRepository {
     final idx = accounts.indexWhere((a) => a.id == account.id);
     if (idx != -1) accounts[idx] = account;
     return account;
-  }
-
-  @override
-  Future<void> deleteAccount(String id) async {
-    accounts.removeWhere((a) => a.id == id);
   }
 
   @override

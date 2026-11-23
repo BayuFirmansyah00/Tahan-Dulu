@@ -311,7 +311,7 @@ void main() {
           id: 'temp-id',
           name: 'Tabungan Jago',
           type: AccountType.digitalBank,
-          typeId: 2,
+          typeId: '2',
           balance: 1500000,
           bankId: 5,
           bankSlug: 'jago',

@@ -72,7 +72,7 @@ void main() {
           name: 'Rekening Operasional Alice',
           type: AccountType.bank,
           balance: 5000000,
-          typeId: 1,
+          typeId: '1',
         ),
       );
       expect(acc.balance, 5000000.0);
