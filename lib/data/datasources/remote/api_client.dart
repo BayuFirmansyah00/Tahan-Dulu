@@ -76,9 +76,20 @@ class ApiClient {
     }
 
     if (res.statusCode >= 400) {
-      final message = body is Map && body['message'] is String
+      String message = body is Map && body['message'] is String
           ? body['message'] as String
           : 'Permintaan gagal (${res.statusCode}).';
+
+      // Keamanan Production: Cegah SQL query mentah atau exception stack trace bocor ke UI pengguna
+      if (res.statusCode >= 500 ||
+          message.contains('SQLSTATE') ||
+          message.contains('SQL:') ||
+          message.contains('syntax for type') ||
+          message.contains('PDOException') ||
+          message.contains('QueryException')) {
+        message = 'Terjadi kesalahan pada server. Silakan coba lagi.';
+      }
+
       throw ApiException(
         message,
         statusCode: res.statusCode,
