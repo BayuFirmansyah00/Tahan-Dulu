@@ -145,14 +145,14 @@ class ApiInstrumentType extends Equatable {
     this.logoUrl,
   });
 
-  final int id;
+  final String id;
   final String name;
   final String type;
   final String? logoUrl;
 
   factory ApiInstrumentType.fromJson(Map<String, dynamic> json) {
     return ApiInstrumentType(
-      id: json['id'] is int ? json['id'] as int : int.tryParse('${json['id']}') ?? 0,
+      id: '${json['id'] ?? ''}',
       name: '${json['name'] ?? ''}',
       type: '${json['type'] ?? ''}',
       logoUrl: json['logo_url'] as String?,

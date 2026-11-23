@@ -26,7 +26,7 @@ class FinancialInstrument extends Equatable {
   final InstrumentType type;
 
   /// ID tipe instrumen dari instrument_types Laravel (type_id).
-  final int? typeId;
+  final String? typeId;
 
   /// ID katalog bank / e-wallet dari bank_catalogs (bank_id).
   final int? bankId;
@@ -55,7 +55,7 @@ class FinancialInstrument extends Equatable {
     String? id,
     String? name,
     InstrumentType? type,
-    int? typeId,
+    String? typeId,
     int? bankId,
     String? bankSlug,
     double? initialBalance,

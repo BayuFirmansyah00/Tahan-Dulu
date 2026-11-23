@@ -379,9 +379,9 @@ class MockInstrumentTypeRepository implements InstrumentTypeRepository {
   @override
   Future<List<ApiInstrumentType>> getInstrumentTypes() =>
       mockDelay(const [
-        ApiInstrumentType(id: 1, name: 'Bank', type: 'bank', logoUrl: null),
-        ApiInstrumentType(id: 2, name: 'Bank Digital', type: 'digitalBank', logoUrl: null),
-        ApiInstrumentType(id: 3, name: 'E-Wallet', type: 'ewallet', logoUrl: null),
+        ApiInstrumentType(id: '1', name: 'Bank', type: 'bank', logoUrl: null),
+        ApiInstrumentType(id: '2', name: 'Bank Digital', type: 'digitalBank', logoUrl: null),
+        ApiInstrumentType(id: '3', name: 'E-Wallet', type: 'ewallet', logoUrl: null),
       ]);
 }
 

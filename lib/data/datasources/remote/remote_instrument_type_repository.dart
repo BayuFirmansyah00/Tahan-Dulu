@@ -29,10 +29,10 @@ class RemoteInstrumentTypeRepository implements InstrumentTypeRepository {
   }
 
   static const List<ApiInstrumentType> defaultTypes = [
-    ApiInstrumentType(id: 1, name: 'Bank', type: 'bank'),
-    ApiInstrumentType(id: 2, name: 'Bank Digital', type: 'digitalBank'),
-    ApiInstrumentType(id: 3, name: 'E-Wallet', type: 'ewallet'),
-    ApiInstrumentType(id: 4, name: 'Uang Tunai', type: 'cash'),
+    ApiInstrumentType(id: 'bank', name: 'Bank', type: 'bank'),
+    ApiInstrumentType(id: 'digitalBank', name: 'Bank Digital', type: 'digitalBank'),
+    ApiInstrumentType(id: 'ewallet', name: 'E-Wallet', type: 'ewallet'),
+    ApiInstrumentType(id: 'cash', name: 'Uang Tunai', type: 'cash'),
   ];
 
   @override

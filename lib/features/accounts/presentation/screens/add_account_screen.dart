@@ -12,6 +12,7 @@ import '../../../../core/widgets/app_text_field.dart';
 import '../../../../data/datasources/remote/api_client.dart';
 import '../../../../data/models/api_bank.dart';
 import '../../../../data/models/api_financial_instrument.dart';
+import '../../../../data/models/financial_account.dart';
 import '../../../../data/providers/app_providers.dart';
 import '../providers/accounts_controller.dart';
 import '../widgets/admin_fee_form_section.dart';
@@ -33,7 +34,7 @@ class _AddAccountScreenState extends ConsumerState<AddAccountScreen> {
   final _feeController = TextEditingController();
   int _feeDay = 15;
   bool _feeEnabled = false;
-  int? _selectedInstrumentTypeId;
+  String? _selectedInstrumentTypeId;
   ApiBank? _selectedBank;
   bool _attempted = false;
   bool _saving = false;
@@ -200,6 +201,13 @@ class _AddAccountScreenState extends ConsumerState<AddAccountScreen> {
     final feeDay = (isBankOrDigital && _feeEnabled) ? _feeDay : 15;
     final feeEnabled = isBankOrDigital && _feeEnabled && feeAmount > 0;
 
+    final resolvedCat = _selectedCategoryFilter;
+    final accType = resolvedCat == 'ewallet'
+        ? AccountType.ewallet
+        : resolvedCat == 'digitalBank'
+            ? AccountType.digitalBank
+            : AccountType.bank;
+
     setState(() {
       _saving = true;
       _fieldErrors = null;
@@ -207,6 +215,7 @@ class _AddAccountScreenState extends ConsumerState<AddAccountScreen> {
     try {
       final ok = await ref.read(accountsControllerProvider).addAccount(
             name: name,
+            type: accType,
             typeId: _selectedInstrumentTypeId,
             initialBalance: balance,
             institutionName: _institutionController.text,
@@ -296,12 +305,12 @@ class _AddAccountScreenState extends ConsumerState<AddAccountScreen> {
                             ),
                           )
                         else
-                          DropdownButtonFormField<int>(
+                          DropdownButtonFormField<String>(
                             isExpanded: true,
                             initialValue: _selectedInstrumentTypeId,
                             hint: const Text('Pilih kategori instrumen...'),
                             items: _instrumentTypes
-                                .map((type) => DropdownMenuItem<int>(
+                                .map((type) => DropdownMenuItem<String>(
                                       value: type.id,
                                       child: Text(
                                         type.name,

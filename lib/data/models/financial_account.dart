@@ -29,7 +29,7 @@ class FinancialAccount extends Equatable {
   final AccountType type;
 
   /// ID tipe instrumen dari instrument_types (dikirim ke backend sebagai type_id).
-  final int? typeId;
+  final String? typeId;
 
   /// Saldo TERCATAT (opening). Saldo saat ini dihitung engine.
   final double balance;
@@ -94,7 +94,7 @@ class FinancialAccount extends Equatable {
     String? id,
     String? name,
     AccountType? type,
-    int? typeId,
+    String? typeId,
     double? balance,
     String? institutionName,
     int? bankId,

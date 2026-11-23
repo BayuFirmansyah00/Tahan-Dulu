@@ -521,7 +521,7 @@ class _AddInstrumentSheetState extends ConsumerState<_AddInstrumentSheet> {
     }
   }
 
-  int _resolveTypeId(InstrumentType category, List<ApiInstrumentType>? types) {
+  String? _resolveTypeId(InstrumentType category, List<ApiInstrumentType>? types) {
     if (types != null && types.isNotEmpty) {
       for (final t in types) {
         final slug = t.type.toLowerCase().replaceAll(RegExp(r'[\s\-_]'), '');
@@ -533,13 +533,13 @@ class _AddInstrumentSheetState extends ConsumerState<_AddInstrumentSheet> {
     }
     switch (category) {
       case InstrumentType.bank:
-        return 1;
+        return 'bank';
       case InstrumentType.digitalBank:
-        return 2;
+        return 'digitalBank';
       case InstrumentType.ewallet:
-        return 3;
+        return 'ewallet';
       case InstrumentType.cash:
-        return 4;
+        return 'cash';
     }
   }
 

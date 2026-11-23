@@ -72,25 +72,22 @@ class AccountsController {
       value < 0 ? AppStrings.balanceRequired : null;
 
   /// Menyelesaikan tipe akun lokal dari `type` eksplisit atau `typeId` master.
-  ///
-  /// `typeId` mengikuti pemetaan instrument_types (1 = Bank,
-  /// 2 = Bank Digital, 3 = E-Wallet).
-  static AccountType _resolveAccountType(AccountType? type, int? typeId) {
+  static AccountType _resolveAccountType(AccountType? type, String? typeId) {
     if (type != null) return type;
-    switch (typeId) {
-      case 2:
-        return AccountType.digitalBank;
-      case 3:
-        return AccountType.ewallet;
-      default:
-        return AccountType.bank;
+    final idStr = typeId?.toLowerCase().trim() ?? '';
+    if (idStr == '2' || idStr == 'digitalbank' || idStr.contains('digital')) {
+      return AccountType.digitalBank;
     }
+    if (idStr == '3' || idStr == 'ewallet' || idStr.contains('wallet')) {
+      return AccountType.ewallet;
+    }
+    return AccountType.bank;
   }
 
   Future<bool> addAccount({
     required String name,
     AccountType? type,
-    int? typeId,
+    String? typeId,
     required double initialBalance,
     String? institutionName,
     int? bankId,
@@ -109,8 +106,8 @@ class AccountsController {
           resolvedType == AccountType.digitalBank;
       final resolvedTypeId = typeId ??
           (resolvedType == AccountType.bank
-              ? 1
-              : (resolvedType == AccountType.digitalBank ? 2 : 3));
+              ? 'bank'
+              : (resolvedType == AccountType.digitalBank ? 'digitalBank' : 'ewallet'));
       await _ref.read(accountRepositoryProvider).addAccount(
             FinancialAccount(
               id: 'acc-${DateTime.now().millisecondsSinceEpoch}',
@@ -145,7 +142,7 @@ class AccountsController {
     required String id,
     required String name,
     AccountType? type,
-    int? typeId,
+    String? typeId,
     required double initialBalance,
     String? institutionName,
     int? bankId,
@@ -164,8 +161,8 @@ class AccountsController {
           resolvedType == AccountType.digitalBank;
       final resolvedTypeId = typeId ??
           (resolvedType == AccountType.bank
-              ? 1
-              : (resolvedType == AccountType.digitalBank ? 2 : 3));
+              ? 'bank'
+              : (resolvedType == AccountType.digitalBank ? 'digitalBank' : 'ewallet'));
       await _ref.read(accountRepositoryProvider).updateAccount(
             FinancialAccount(
               id: id,

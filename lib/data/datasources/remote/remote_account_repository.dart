@@ -50,19 +50,17 @@ class RemoteAccountRepository implements AccountRepository {
     }
   }
 
-  /// Map AccountType ke type_id (instrument_types.id) untuk dikirim ke backend.
-  ///
-  /// Nilai aktif: 1 (Bank), 2 (Digital Bank), 3 (E-Wallet).
-  static int? mapTypeId(AccountType type) {
+  /// Map AccountType ke type_id fallback ('bank', 'digitalBank', 'ewallet') untuk dikirim ke backend.
+  static String? mapTypeId(AccountType type) {
     switch (type) {
       case AccountType.bank:
-        return 1;
+        return 'bank';
       case AccountType.digitalBank:
-        return 2;
+        return 'digitalBank';
       case AccountType.ewallet:
-        return 3;
+        return 'ewallet';
       case AccountType.legacyCash:
-        return 4;
+        return 'cash';
     }
   }
 

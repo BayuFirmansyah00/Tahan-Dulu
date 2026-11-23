@@ -316,9 +316,9 @@ void main() {
 
   group('AddAccountScreen Bank Selection Flow Tests', () {
     const sampleInstrumentTypes = [
-      ApiInstrumentType(id: 1, name: 'Bank', type: 'bank'),
-      ApiInstrumentType(id: 2, name: 'Bank Digital', type: 'digitalBank'),
-      ApiInstrumentType(id: 3, name: 'E-Wallet', type: 'ewallet'),
+      ApiInstrumentType(id: '1', name: 'Bank', type: 'bank'),
+      ApiInstrumentType(id: '2', name: 'Bank Digital', type: 'digitalBank'),
+      ApiInstrumentType(id: '3', name: 'E-Wallet', type: 'ewallet'),
     ];
 
     testWidgets('shows bank picker when category is Bank and auto-fills account & institution name', (tester) async {
@@ -334,10 +334,10 @@ void main() {
       await tester.pumpAndSettle();
 
       // Dropdown tipe instrumen contains categories
-      expect(find.byType(DropdownButtonFormField<int>), findsOneWidget);
+      expect(find.byType(DropdownButtonFormField<String>), findsOneWidget);
 
       // Select Bank (id: 1)
-      await tester.tap(find.byType(DropdownButtonFormField<int>));
+      await tester.tap(find.byType(DropdownButtonFormField<String>));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Bank').last);
       await tester.pumpAndSettle();
@@ -368,7 +368,7 @@ void main() {
       expect(find.widgetWithText(TextFormField, 'Bank Mandiri'), findsWidgets);
 
       // Change category to E-Wallet
-      await tester.tap(find.byType(DropdownButtonFormField<int>));
+      await tester.tap(find.byType(DropdownButtonFormField<String>));
       await tester.pumpAndSettle();
       await tester.tap(find.text('E-Wallet').last);
       await tester.pumpAndSettle();
