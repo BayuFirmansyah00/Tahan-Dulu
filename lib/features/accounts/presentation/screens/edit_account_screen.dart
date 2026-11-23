@@ -14,8 +14,10 @@ import '../../../../core/widgets/app_states.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../data/datasources/remote/api_client.dart';
 import '../../../../data/models/api_bank.dart';
+import '../../../../data/models/api_financial_instrument.dart';
 import '../../../../data/models/financial_account.dart';
 import '../../../../data/providers/account_providers.dart';
+import '../../../../data/providers/app_providers.dart';
 import '../../../dashboard/presentation/widgets/dashboard_bottom_nav.dart';
 import '../providers/accounts_controller.dart';
 import '../utils/account_ui.dart';
@@ -43,6 +45,8 @@ class _EditAccountScreenState extends ConsumerState<EditAccountScreen> {
   int _feeDay = 15;
   bool _feeEnabled = false;
   AccountType? _type;
+  String? _typeId;
+  List<ApiInstrumentType> _instrumentTypes = const [];
   ApiBank? _selectedBank;
   bool _initialized = false;
   bool _attempted = false;
@@ -50,6 +54,22 @@ class _EditAccountScreenState extends ConsumerState<EditAccountScreen> {
 
   /// Error validasi per field dari backend (status 422).
   Map<String, List<String>>? _fieldErrors;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadInstrumentTypes();
+  }
+
+  Future<void> _loadInstrumentTypes() async {
+    try {
+      final types = await ref.read(instrumentTypesProvider.future);
+      if (!mounted) return;
+      setState(() {
+        _instrumentTypes = types;
+      });
+    } catch (_) {}
+  }
 
   @override
   void dispose() {
@@ -66,6 +86,7 @@ class _EditAccountScreenState extends ConsumerState<EditAccountScreen> {
     _balanceController.text =
         RupiahInputFormatter.format(account.balance);
     _type = account.type;
+    _typeId = account.typeId;
     _feeEnabled = account.adminFeeEnabled;
     _feeDay = account.adminFeeDay ?? 15;
     _feeController.text = account.monthlyAdminFee > 0
@@ -172,6 +193,7 @@ class _EditAccountScreenState extends ConsumerState<EditAccountScreen> {
                 id: id,
                 name: _nameController.text,
                 type: _type!,
+                typeId: _typeId,
                 initialBalance: balance,
                 institutionName: _institutionController.text,
                 bankId: _selectedBank?.id,
@@ -288,6 +310,17 @@ class _EditAccountScreenState extends ConsumerState<EditAccountScreen> {
                   fieldErrors: _fieldErrors,
                   onType: (t) => setState(() {
                     _type = t;
+                    if (_instrumentTypes.isNotEmpty) {
+                      final targetSlug = t == AccountType.ewallet
+                          ? 'ewallet'
+                          : (t == AccountType.digitalBank ? 'digitalbank' : 'bank');
+                      final matched = _instrumentTypes.where(
+                        (it) => it.type.toLowerCase().replaceAll(RegExp(r'[\s\-_]'), '') == targetSlug,
+                      );
+                      if (matched.isNotEmpty) {
+                        _typeId = matched.first.id;
+                      }
+                    }
                     if (_selectedBank != null) {
                       final cat = _selectedBank!.category;
                       final isMatch = (t == AccountType.bank &&

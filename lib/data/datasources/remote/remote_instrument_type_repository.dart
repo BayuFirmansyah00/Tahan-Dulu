@@ -1,6 +1,7 @@
 import '../../../data/models/api_financial_instrument.dart';
 import '../../../data/repositories/repositories.dart';
 import 'api_client.dart';
+import 'api_config.dart';
 import 'token_storage.dart';
 
 /// Implementasi [InstrumentTypeRepository] di atas Laravel API
@@ -46,8 +47,14 @@ class RemoteInstrumentTypeRepository implements InstrumentTypeRepository {
           .map((e) => ApiInstrumentType.fromJson(e))
           .toList();
       if (list.isNotEmpty) return list;
+      if (ApiConfig.useRemoteApi) {
+        throw ApiException('Master tipe instrumen kosong dari server.', statusCode: 500);
+      }
       return defaultTypes;
-    } catch (_) {
+    } catch (e) {
+      if (ApiConfig.useRemoteApi) {
+        rethrow;
+      }
       return defaultTypes;
     }
   }

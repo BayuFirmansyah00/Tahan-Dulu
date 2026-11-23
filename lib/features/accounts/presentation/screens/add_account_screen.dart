@@ -39,6 +39,7 @@ class _AddAccountScreenState extends ConsumerState<AddAccountScreen> {
   bool _attempted = false;
   bool _saving = false;
   bool _loadingInstrumentTypes = true;
+  String? _instrumentTypesError;
 
   /// Error validasi per field dari backend (status 422).
   Map<String, List<String>>? _fieldErrors;
@@ -88,25 +89,38 @@ class _AddAccountScreenState extends ConsumerState<AddAccountScreen> {
   }
 
   Future<void> _loadInstrumentTypes() async {
-    final types = await ref.read(instrumentTypesProvider.future);
-    if (!mounted) return;
-    final filtered = types.where((t) {
-      final typeLower =
-          t.type.toLowerCase().replaceAll(RegExp(r'[\s\-_]'), '');
-      if (typeLower == 'cash' ||
-          typeLower == 'uangtunai' ||
-          typeLower == 'tunai') {
-        return false;
-      }
-      return typeLower == 'bank' ||
-          typeLower == 'digitalbank' ||
-          typeLower == 'ewallet';
-    }).toList();
-
     setState(() {
-      _instrumentTypes = filtered.isNotEmpty ? filtered : types;
-      _loadingInstrumentTypes = false;
+      _loadingInstrumentTypes = true;
+      _instrumentTypesError = null;
     });
+    try {
+      final types = await ref.read(instrumentTypesProvider.future);
+      if (!mounted) return;
+      final filtered = types.where((t) {
+        final typeLower =
+            t.type.toLowerCase().replaceAll(RegExp(r'[\s\-_]'), '');
+        if (typeLower == 'cash' ||
+            typeLower == 'uangtunai' ||
+            typeLower == 'tunai') {
+          return false;
+        }
+        return typeLower == 'bank' ||
+            typeLower == 'digitalbank' ||
+            typeLower == 'ewallet';
+      }).toList();
+
+      setState(() {
+        _instrumentTypes = filtered.isNotEmpty ? filtered : types;
+        _loadingInstrumentTypes = false;
+        _instrumentTypesError = null;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _loadingInstrumentTypes = false;
+        _instrumentTypesError = 'Gagal memuat tipe instrumen. Periksa koneksi internet.';
+      });
+    }
   }
 
   Future<void> _pickBank() async {
@@ -185,6 +199,14 @@ class _AddAccountScreenState extends ConsumerState<AddAccountScreen> {
         orElse: () => _instrumentTypes.first,
       );
       _selectedInstrumentTypeId = matched.id;
+    }
+    if (_instrumentTypesError != null || _instrumentTypes.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Tipe instrumen belum berhasil dimuat. Ketuk Coba Lagi sebelum menyimpan.'),
+        ),
+      );
+      return;
     }
     if (_selectedInstrumentTypeId == null) {
       setState(() {
@@ -290,6 +312,33 @@ class _AddAccountScreenState extends ConsumerState<AddAccountScreen> {
                                 height: 24,
                                 child: CircularProgressIndicator(),
                               ),
+                            ),
+                          )
+                        else if (_instrumentTypesError != null)
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: context.palette.errorContainer,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.error_outline, color: context.palette.error, size: 20),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    _instrumentTypesError!,
+                                    style: textTheme.bodySmall?.copyWith(color: context.palette.onErrorContainer),
+                                  ),
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    ref.invalidate(instrumentTypesProvider);
+                                    _loadInstrumentTypes();
+                                  },
+                                  child: const Text('Coba Lagi'),
+                                ),
+                              ],
                             ),
                           )
                         else if (_instrumentTypes.isEmpty)
