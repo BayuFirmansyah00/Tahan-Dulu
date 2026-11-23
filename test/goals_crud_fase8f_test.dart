@@ -1,15 +1,10 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:http/http.dart' as http;
-import 'package:http/testing.dart';
 import 'package:tahan_dulu/core/constants/app_strings.dart';
 import 'package:tahan_dulu/core/theme/app_theme.dart';
 import 'package:tahan_dulu/core/utils/goal_math.dart';
 import 'package:tahan_dulu/data/datasources/remote/api_client.dart';
-import 'package:tahan_dulu/data/datasources/remote/remote_goal_repository.dart';
-import 'package:tahan_dulu/data/datasources/remote/token_storage.dart';
 import 'package:tahan_dulu/data/models/financial_goal.dart';
 import 'package:tahan_dulu/data/models/goal_deposit.dart';
 import 'package:tahan_dulu/data/providers/app_providers.dart';
@@ -17,8 +12,6 @@ import 'package:tahan_dulu/data/repositories/repositories.dart';
 import 'package:tahan_dulu/features/goals/presentation/providers/goals_controller.dart';
 import 'package:tahan_dulu/features/goals/presentation/screens/goal_create_screen.dart';
 import 'package:tahan_dulu/features/goals/presentation/screens/goal_setup_screen.dart';
-import 'package:tahan_dulu/features/goals/presentation/screens/goal_detail_screen.dart';
-import 'package:tahan_dulu/features/goals/presentation/screens/goal_priority_screen.dart';
 import 'package:tahan_dulu/features/goals/presentation/widgets/goal_widgets.dart';
 
 class _FakeGoalRepository implements GoalRepository {
