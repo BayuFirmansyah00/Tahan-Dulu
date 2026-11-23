@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_image_icon.dart';
 import '../../../../core/widgets/app_states.dart';
 import '../../data/help_articles.dart';
@@ -51,7 +52,7 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
         leading: const AppBackButton(),
         title: const Text(AppStrings.helpTitle),
       ),
-      body: SafeArea(
+      body: GlassBackdrop(child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
@@ -69,10 +70,10 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
                             height: 148,
                             fit: BoxFit.contain,
                             errorBuilder: (context, error, stackTrace) =>
-                                const Icon(
+                                Icon(
                               Icons.support_agent_outlined,
                               size: 96,
-                              color: AppColors.primary,
+                              color: context.palette.primary,
                             ),
                           ),
                         ),
@@ -124,8 +125,8 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
                             Container(
                               width: 32,
                               height: 32,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFFE8EFFE),
+                              decoration: BoxDecoration(
+                                color: context.palette.secondaryContainer,
                                 shape: BoxShape.circle,
                               ),
                               child: Center(
@@ -137,7 +138,7 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
                                       )
                                     : Icon(
                                         category.icon,
-                                        color: AppColors.secondary,
+                                        color: context.palette.secondary,
                                         size: 18,
                                       ),
                               ),
@@ -227,11 +228,7 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
                         const EdgeInsets.fromLTRB(20, 8, 20, 16),
                     child: Container(
                       padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: AppColors.surface,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.border),
-                      ),
+                      decoration: Glass.panel(context, radius: BorderRadius.circular(16)),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
@@ -270,7 +267,7 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 }
@@ -292,11 +289,7 @@ class _ArticleTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
+      decoration: Glass.panel(context, radius: BorderRadius.circular(16)),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),

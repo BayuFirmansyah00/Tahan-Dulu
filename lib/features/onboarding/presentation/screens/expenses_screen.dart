@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
@@ -120,10 +122,9 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
   }
 
   Future<void> _openSheet([RecurringExpense? expense]) async {
-    final result = await showModalBottomSheet<_ExpenseSheetResult>(
+    final result = await showGlassSheet<_ExpenseSheetResult>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
       builder: (context) => _ExpenseBottomSheet(expense: expense),
     );
     if (result == null || !mounted) return;
@@ -172,7 +173,7 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
 
     return Scaffold(
       appBar: AppBar(),
-      body: SafeArea(
+      body: GlassBackdrop(child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
@@ -195,12 +196,12 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
                             Expanded(
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(8),
-                                child: const LinearProgressIndicator(
+                                child: LinearProgressIndicator(
                                   value: 0.8,
                                   minHeight: 8,
-                                  backgroundColor: AppColors.primarySoft,
+                                  backgroundColor: context.palette.primaryContainer,
                                   valueColor: AlwaysStoppedAnimation<Color>(
-                                    AppColors.primary,
+                                    context.palette.primary,
                                   ),
                                 ),
                               ),
@@ -216,7 +217,7 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
                         Text(
                           AppStrings.expensesSubtitle,
                           style: textTheme.bodyMedium?.copyWith(
-                            color: AppColors.textSecondary,
+                            color: context.palette.onSurfaceVariant,
                           ),
                         ),
                         const SizedBox(height: 24),
@@ -230,25 +231,21 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
                               horizontal: 20,
                               vertical: 32,
                             ),
-                            decoration: BoxDecoration(
-                              color: AppColors.surface,
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: AppColors.border),
-                            ),
+                            decoration: Glass.panel(context, radius: BorderRadius.circular(20)),
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Container(
                                   width: 64,
                                   height: 64,
-                                  decoration: const BoxDecoration(
-                                    color: AppColors.primarySoft,
+                                  decoration: BoxDecoration(
+                                    color: context.palette.primaryContainer,
                                     shape: BoxShape.circle,
                                   ),
-                                  child: const Icon(
+                                  child: Icon(
                                     Icons.receipt_long_outlined,
                                     size: 32,
-                                    color: AppColors.primary,
+                                    color: context.palette.primary,
                                   ),
                                 ),
                                 const SizedBox(height: 16),
@@ -256,7 +253,7 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
                                   AppStrings.emptyExpensesTitle,
                                   style: textTheme.titleMedium?.copyWith(
                                     fontWeight: FontWeight.w700,
-                                    color: AppColors.textPrimary,
+                                    color: context.palette.onSurface,
                                   ),
                                 ),
                                 const SizedBox(height: 8),
@@ -264,7 +261,7 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
                                   AppStrings.emptyExpensesSubtitle,
                                   textAlign: TextAlign.center,
                                   style: textTheme.bodyMedium?.copyWith(
-                                    color: AppColors.textSecondary,
+                                    color: context.palette.onSurfaceVariant,
                                     height: 1.4,
                                   ),
                                 ),
@@ -274,8 +271,8 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
                                   icon: const Icon(Icons.add, size: 20),
                                   label: const Text(AppStrings.addExpenseAction),
                                   style: OutlinedButton.styleFrom(
-                                    foregroundColor: AppColors.primary,
-                                    side: const BorderSide(color: AppColors.primary),
+                                    foregroundColor: context.palette.primary,
+                                    side: BorderSide(color: context.palette.primary),
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 24,
                                       vertical: 12,
@@ -310,8 +307,8 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
                             icon: const Icon(Icons.add, size: 18),
                             label: const Text(AppStrings.addAnotherExpenseAction),
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: AppColors.primary,
-                              side: const BorderSide(color: AppColors.primary),
+                              foregroundColor: context.palette.primary,
+                              side: BorderSide(color: context.palette.primary),
                               minimumSize: const Size(double.infinity, 48),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
@@ -355,7 +352,7 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 }
@@ -379,11 +376,7 @@ class _ExpenseCard extends StatelessWidget {
     final asset = visual.asset;
 
     return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
+      decoration: Glass.panel(context, radius: BorderRadius.circular(16)),
       child: Material(
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(16),
@@ -441,7 +434,7 @@ class _ExpenseCard extends StatelessWidget {
                             '${CurrencyFormatter.formatCompact(expense.monthlyAmount)} ${AppStrings.perMonth}',
                             style: textTheme.bodyMedium?.copyWith(
                               fontWeight: FontWeight.w700,
-                              color: AppColors.textPrimary,
+                              color: context.palette.onSurface,
                             ),
                           ),
                         ],
@@ -451,7 +444,7 @@ class _ExpenseCard extends StatelessWidget {
                 ),
                 IconButton(
                   icon: const Icon(Icons.edit_outlined, size: 20),
-                  color: AppColors.textSecondary,
+                  color: context.palette.onSurfaceVariant,
                   tooltip: AppStrings.editExpenseTitle,
                   onPressed: onTap,
                 ),
@@ -524,7 +517,7 @@ class _TotalCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
-                    color: AppColors.primary,
+                    color: context.palette.primary,
                   ),
                 ),
               ),
@@ -534,17 +527,17 @@ class _TotalCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(
+              Icon(
                 Icons.info_outline,
                 size: 16,
-                color: AppColors.textSecondary,
+                color: context.palette.onSurfaceVariant,
               ),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
                   AppStrings.expenseSummaryInfo,
                   style: textTheme.bodyMedium?.copyWith(
-                    color: AppColors.textSecondary,
+                    color: context.palette.onSurfaceVariant,
                   ),
                 ),
               ),
@@ -672,8 +665,8 @@ class _ExpenseBottomSheetState extends State<_ExpenseBottomSheet> {
     final isValid = isNameFilled && amount > 0;
 
     return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
+      decoration: BoxDecoration(
+        color: context.palette.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SafeArea(
@@ -691,7 +684,7 @@ class _ExpenseBottomSheetState extends State<_ExpenseBottomSheet> {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: AppColors.border,
+                      color: context.palette.outlineVariant,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -712,14 +705,14 @@ class _ExpenseBottomSheetState extends State<_ExpenseBottomSheet> {
                                   : AppStrings.addExpenseSheetTitle,
                               style: textTheme.titleLarge?.copyWith(
                                 fontWeight: FontWeight.w700,
-                                color: AppColors.textPrimary,
+                                color: context.palette.onSurface,
                               ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               AppStrings.expenseSheetSubtitle,
                               style: textTheme.bodyMedium?.copyWith(
-                                color: AppColors.textSecondary,
+                                color: context.palette.onSurfaceVariant,
                               ),
                             ),
                           ],
@@ -763,24 +756,24 @@ class _ExpenseBottomSheetState extends State<_ExpenseBottomSheet> {
                                 size: 16,
                                 color: _category == cat
                                     ? Colors.white
-                                    : AppColors.textSecondary,
+                                    : context.palette.onSurfaceVariant,
                               ),
                               selected: _category == cat,
                               onSelected: (_) => _onCategoryChanged(cat),
-                              selectedColor: AppColors.primary,
+                              selectedColor: context.palette.primary,
                               labelStyle: TextStyle(
                                 color: _category == cat
                                     ? Colors.white
-                                    : AppColors.textPrimary,
+                                    : context.palette.onSurface,
                                 fontWeight: _category == cat
                                     ? FontWeight.w600
                                     : FontWeight.normal,
                               ),
-                              backgroundColor: AppColors.surfaceVariant,
+                              backgroundColor: context.palette.surfaceContainerHighest,
                               side: BorderSide(
                                 color: _category == cat
-                                    ? AppColors.primary
-                                    : AppColors.border,
+                                    ? context.palette.primary
+                                    : context.palette.outlineVariant,
                               ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),

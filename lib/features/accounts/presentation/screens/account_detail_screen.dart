@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
@@ -54,13 +56,13 @@ class _AccountDetailScreenState extends ConsumerState<AccountDetailScreen> {
     return Scaffold(
       appBar: AppBar(leading: const AppBackButton()),
       bottomNavigationBar: DashboardBottomNav(onTap: _onNav),
-      body: SafeArea(
+      body: GlassBackdrop(child: SafeArea(
         child: _Body(
           accountId: widget.accountId,
           obscured: _obscured,
           onToggleObscure: () => setState(() => _obscured = !_obscured),
         ),
-      ),
+      )),
     );
   }
 }
@@ -139,7 +141,7 @@ class _Body extends ConsumerWidget {
                                   : accountTypeLabel(account.type)),
                           style: textTheme.bodyMedium?.copyWith(
                             color: account.type == AccountType.legacyCash
-                                ? const Color(0xFF856404)
+                                ? context.warningInk
                                 : null,
                             fontWeight: account.type == AccountType.legacyCash
                                 ? FontWeight.w600
@@ -156,7 +158,7 @@ class _Body extends ConsumerWidget {
                         size: 20,
                         fallbackIcon: Icons.edit_outlined,
                       ),
-                      color: AppColors.primary,
+                      color: context.palette.primary,
                       onPressed: () =>
                           context.push('${AppRoutes.accounts}/$accountId/edit'),
                     ),
@@ -167,14 +169,14 @@ class _Body extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFF3CD),
+                    color: context.warningFill,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFFFEEBA)),
+                    border: Border.all(color: context.warningFill),
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.info_outline, color: Color(0xFF856404), size: 20),
+                      Icon(Icons.info_outline, color: context.warningInk, size: 20),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Column(
@@ -183,7 +185,7 @@ class _Body extends ConsumerWidget {
                             Text(
                               'Uang Tunai — Akun Lama',
                               style: textTheme.labelLarge?.copyWith(
-                                color: const Color(0xFF856404),
+                                color: context.warningInk,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
@@ -191,7 +193,7 @@ class _Body extends ConsumerWidget {
                             Text(
                               'Akun ini dipertahankan untuk menjaga saldo dan riwayat pencatatan sebelumnya. Akun Uang Tunai baru tidak lagi didukung.',
                               style: textTheme.bodySmall?.copyWith(
-                                color: const Color(0xFF856404),
+                                color: context.warningInk,
                                 fontSize: 11,
                               ),
                             ),
@@ -223,7 +225,7 @@ class _Body extends ConsumerWidget {
                           ? Icons.visibility_off_outlined
                           : Icons.visibility_outlined,
                       size: 18,
-                      color: AppColors.textSecondary,
+                      color: context.palette.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -257,14 +259,14 @@ class _Body extends ConsumerWidget {
                     width: double.infinity,
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: AppColors.surfaceVariant,
+                      color: context.palette.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Center(
                       child: Text(
                         'Seluruh saldo tunai telah direkonsiliasi (Rp0)',
                         style: textTheme.bodyMedium?.copyWith(
-                          color: AppColors.textSecondary,
+                          color: context.palette.onSurfaceVariant,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -321,7 +323,7 @@ class _Body extends ConsumerWidget {
                         AppStrings.seeAllAction,
                         overflow: TextOverflow.ellipsis,
                         style: textTheme.bodyMedium?.copyWith(
-                          color: AppColors.primary,
+                          color: context.palette.primary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -357,15 +359,11 @@ class _TxRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final isIncome = transaction.type == TransactionType.income;
-    final color = isIncome ? AppColors.primary : AppColors.error;
+    final color = isIncome ? context.palette.primary : context.palette.error;
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
+      decoration: Glass.panel(context, radius: BorderRadius.circular(16)),
       child: Row(
         children: [
           Expanded(
@@ -409,10 +407,10 @@ class _AdminFeeCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: hasFee ? AppColors.surface : AppColors.secondarySoft,
+        color: hasFee ? context.palette.surface : context.palette.secondaryContainer,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: hasFee ? AppColors.border : AppColors.border.withValues(alpha: 0.5),
+          color: hasFee ? context.palette.outlineVariant : context.palette.outlineVariant.withValues(alpha: 0.5),
         ),
       ),
       child: Column(
@@ -424,15 +422,15 @@ class _AdminFeeCard extends StatelessWidget {
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: hasFee
-                      ? AppColors.primary.withValues(alpha: 0.1)
-                      : AppColors.successSoft,
+                      ? context.palette.primary.withValues(alpha: 0.1)
+                      : context.palette.primaryContainer,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   hasFee
                       ? Icons.calendar_month_outlined
                       : Icons.check_circle_outline,
-                  color: hasFee ? AppColors.primary : AppColors.success,
+                  color: hasFee ? context.palette.primary : context.palette.primary,
                   size: 20,
                 ),
               ),
@@ -444,7 +442,7 @@ class _AdminFeeCard extends StatelessWidget {
                     Text(
                       'Biaya Administrasi Bulanan',
                       style: textTheme.bodySmall?.copyWith(
-                        color: AppColors.textSecondary,
+                        color: context.palette.onSurfaceVariant,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -455,7 +453,7 @@ class _AdminFeeCard extends StatelessWidget {
                       style: textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                         color:
-                            hasFee ? AppColors.textPrimary : AppColors.success,
+                            hasFee ? context.palette.onSurface : context.palette.primary,
                       ),
                     ),
                   ],
@@ -473,7 +471,7 @@ class _AdminFeeCard extends StatelessWidget {
                   child: Text(
                     'Jadwal Pemotongan',
                     style: textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textSecondary,
+                      color: context.palette.onSurfaceVariant,
                     ),
                   ),
                 ),
@@ -493,7 +491,7 @@ class _AdminFeeCard extends StatelessWidget {
                     child: Text(
                       'Estimasi Berikutnya',
                       style: textTheme.bodyMedium?.copyWith(
-                        color: AppColors.textSecondary,
+                        color: context.palette.onSurfaceVariant,
                       ),
                     ),
                   ),
@@ -501,7 +499,7 @@ class _AdminFeeCard extends StatelessWidget {
                     DateFormatter.dayMonthYear(nextDate),
                     style: textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w600,
-                      color: AppColors.primary,
+                      color: context.palette.primary,
                     ),
                   ),
                 ],
@@ -511,7 +509,7 @@ class _AdminFeeCard extends StatelessWidget {
             Text(
               'Biaya ini adalah rencana terjadwal dan tidak memotong saldo secara otomatis.',
               style: textTheme.bodySmall?.copyWith(
-                color: AppColors.textSecondary,
+                color: context.palette.onSurfaceVariant,
                 fontSize: 11,
               ),
             ),
@@ -520,7 +518,7 @@ class _AdminFeeCard extends StatelessWidget {
             Text(
               'Rekening ini tidak memiliki jadwal biaya administrasi rutin.',
               style: textTheme.bodySmall?.copyWith(
-                color: AppColors.textSecondary,
+                color: context.palette.onSurfaceVariant,
               ),
             ),
           ],
@@ -536,13 +534,10 @@ void _showReconciliationSheet(
   FinancialAccount cashAccount,
   double currentBalance,
 ) {
-  showModalBottomSheet<void>(
+  showGlassSheet<void>(
     context: context,
     isScrollControlled: true,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-    ),
-    builder: (ctx) => _ReconcileLegacyCashSheet(
+      builder: (ctx) => _ReconcileLegacyCashSheet(
       cashAccount: cashAccount,
       currentBalance: currentBalance,
     ),
@@ -691,19 +686,19 @@ class _ReconcileLegacyCashSheetState
           const SizedBox(height: 6),
           Text(
             'Pindahkan catatan saldo uang tunai lama ke rekening bank atau e-wallet yang telah menerima setoran tunai riil.',
-            style: textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+            style: textTheme.bodySmall?.copyWith(color: context.palette.onSurfaceVariant),
           ),
           const SizedBox(height: 16),
           if (availableAccounts.isEmpty) ...[
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.surfaceVariant,
+                color: context.palette.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Text(
+              child: Text(
                 'Tidak ada rekening bank atau e-wallet aktif. Silakan tambahkan rekening tujuan terlebih dahulu.',
-                style: TextStyle(color: AppColors.textSecondary),
+                style: TextStyle(color: context.palette.onSurfaceVariant),
               ),
             ),
           ] else ...[
@@ -714,10 +709,10 @@ class _ReconcileLegacyCashSheetState
               hint: const Text('Pilih rekening tujuan'),
               decoration: InputDecoration(
                 filled: true,
-                fillColor: AppColors.surface,
+                fillColor: context.palette.surface,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.border),
+                  borderSide: BorderSide(color: context.palette.outlineVariant),
                 ),
                 contentPadding:
                     const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -743,10 +738,10 @@ class _ReconcileLegacyCashSheetState
                 prefixText: 'Rp ',
                 hintText: '0',
                 filled: true,
-                fillColor: AppColors.surface,
+                fillColor: context.palette.surface,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.border),
+                  borderSide: BorderSide(color: context.palette.outlineVariant),
                 ),
                 contentPadding:
                     const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -756,7 +751,7 @@ class _ReconcileLegacyCashSheetState
             Text(
               'Maksimal saldo tunai: ${CurrencyFormatter.formatCompact(widget.currentBalance)}',
               style: textTheme.bodySmall
-                  ?.copyWith(color: AppColors.textSecondary, fontSize: 11),
+                  ?.copyWith(color: context.palette.onSurfaceVariant, fontSize: 11),
             ),
             const SizedBox(height: 14),
             CheckboxListTile(
@@ -775,7 +770,7 @@ class _ReconcileLegacyCashSheetState
               Text(
                 _error!,
                 style: textTheme.bodySmall?.copyWith(
-                    color: AppColors.error, fontWeight: FontWeight.w600),
+                    color: context.palette.error, fontWeight: FontWeight.w600),
               ),
             ],
             const SizedBox(height: 16),

@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/rupiah_input_formatter.dart';
 import '../../../../core/widgets/app_button.dart';
@@ -100,7 +101,7 @@ class _GoalDepositScreenState extends ConsumerState<GoalDepositScreen> {
         currentIndex: 3,
         onTap: (i) => goalsBottomNavTap(context, i),
       ),
-      body: SafeArea(
+      body: GlassBackdrop(child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
@@ -135,7 +136,7 @@ class _GoalDepositScreenState extends ConsumerState<GoalDepositScreen> {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 }
@@ -246,11 +247,7 @@ class _Body extends StatelessWidget {
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.border),
-                  ),
+                  decoration: Glass.panel(context, radius: BorderRadius.circular(16)),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -278,10 +275,10 @@ class _Body extends StatelessWidget {
                       height: 20,
                       fit: BoxFit.contain,
                       errorBuilder: (context, error, stackTrace) =>
-                          const Icon(
+                          Icon(
                         Icons.info_outline,
                         size: 16,
-                        color: AppColors.textSecondary,
+                        color: context.palette.onSurfaceVariant,
                       ),
                     ),
                     const SizedBox(width: 6),
@@ -337,18 +334,18 @@ class _QuickChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primarySoft : Colors.transparent,
+          color: selected ? context.palette.primaryContainer : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: selected ? AppColors.primary : AppColors.border,
+            color: selected ? context.palette.primary : context.palette.outlineVariant,
           ),
         ),
         child: Text(
           label,
           style: Theme.of(context).textTheme.labelLarge?.copyWith(
                 color: selected
-                    ? AppColors.primary
-                    : AppColors.textPrimary,
+                    ? context.palette.primary
+                    : context.palette.onSurface,
                 fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
               ),
         ),

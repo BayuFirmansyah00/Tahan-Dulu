@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -19,12 +21,12 @@ class AppSettingsScreen extends ConsumerWidget {
     final notifier = ref.read(appPreferencesProvider.notifier);
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundWarm,
+      backgroundColor: context.canvasColor,
       appBar: AppBar(
         leading: const AppBackButton(),
         title: const Text(AppStrings.appSettingsTitle),
       ),
-      body: SafeArea(
+      body: GlassBackdrop(child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
@@ -53,8 +55,8 @@ class AppSettingsScreen extends ConsumerWidget {
                   const SizedBox(height: 12),
                   _SwitchRow(
                     icon: Icons.animation_outlined,
-                    iconForeground: AppColors.secondary,
-                    iconBackground: AppColors.secondarySoft,
+                    iconForeground: context.palette.secondary,
+                    iconBackground: context.palette.secondaryContainer,
                     title: AppStrings.appSettingsMotion,
                     description: AppStrings.appSettingsMotionDesc,
                     value: prefs.reduceMotion,
@@ -64,8 +66,8 @@ class AppSettingsScreen extends ConsumerWidget {
                   _SwitchRow(
                     assetPath: AppAssets.setNotif,
                     icon: Icons.notifications_outlined,
-                    iconForeground: AppColors.secondary,
-                    iconBackground: AppColors.secondarySoft,
+                    iconForeground: context.palette.secondary,
+                    iconBackground: context.palette.secondaryContainer,
                     title: AppStrings.appSettingsInAppNotif,
                     description: AppStrings.appSettingsInAppNotifDesc,
                     value: prefs.showInAppNotifications,
@@ -75,8 +77,8 @@ class AppSettingsScreen extends ConsumerWidget {
                   _SwitchRow(
                     assetPath: AppAssets.statusInfo,
                     icon: Icons.lightbulb_outline,
-                    iconForeground: AppColors.primary,
-                    iconBackground: AppColors.primarySoft,
+                    iconForeground: context.palette.primary,
+                    iconBackground: context.palette.primaryContainer,
                     title: AppStrings.appSettingsTips,
                     description: AppStrings.appSettingsTipsDesc,
                     value: prefs.showTips,
@@ -86,10 +88,10 @@ class AppSettingsScreen extends ConsumerWidget {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE8EFFE),
+                      color: context.palette.secondaryContainer,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: AppColors.secondary
+                        color: context.palette.secondary
                             .withValues(alpha: 0.18),
                       ),
                     ),
@@ -116,7 +118,7 @@ class AppSettingsScreen extends ConsumerWidget {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 }
@@ -148,12 +150,12 @@ class _SwitchRow extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.palette.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.palette.outlineVariant),
         boxShadow: [
           BoxShadow(
-            color: AppColors.textPrimary.withValues(alpha: 0.06),
+            color: context.palette.onSurface.withValues(alpha: 0.06),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -197,7 +199,7 @@ class _SwitchRow extends StatelessWidget {
           ),
           Switch(
             value: value,
-            activeTrackColor: AppColors.primary,
+            activeTrackColor: context.palette.primary,
             onChanged: onChanged,
           ),
         ],

@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/widgets/app_button.dart';
@@ -88,7 +89,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
         currentIndex: 1,
         onTap: _onNav,
       ),
-      body: SafeArea(
+      body: GlassBackdrop(child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
@@ -110,7 +111,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 }
@@ -258,16 +259,16 @@ class _FilterChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary : Colors.transparent,
+          color: selected ? context.palette.primary : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: selected ? AppColors.primary : AppColors.border,
+            color: selected ? context.palette.primary : context.palette.outlineVariant,
           ),
         ),
         child: Text(
           label,
           style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                color: selected ? Colors.white : AppColors.textPrimary,
+                color: selected ? context.palette.onPrimary : context.palette.onSurface,
               ),
         ),
       ),
@@ -293,9 +294,9 @@ class _AccountChip extends ConsumerWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: AppColors.secondarySoft,
+          color: context.palette.secondaryContainer,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.secondary),
+          border: Border.all(color: context.palette.secondary),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -303,14 +304,14 @@ class _AccountChip extends ConsumerWidget {
             Text(
               '${AppStrings.accountFilterPrefix} ${names[accountId] ?? accountId}',
               style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: AppColors.secondary,
+                    color: context.palette.secondary,
                   ),
             ),
             const SizedBox(width: 4),
-            const Icon(
+            Icon(
               Icons.close,
               size: 16,
-              color: AppColors.secondary,
+              color: context.palette.secondary,
             ),
           ],
         ),
@@ -442,7 +443,7 @@ class _TransactionRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final isIncome = item.type == TransactionType.income;
-    final color = isIncome ? AppColors.primary : AppColors.error;
+    final color = isIncome ? context.palette.primary : context.palette.error;
     final sign = isIncome ? '+' : '-';
     final detail = [
       if (item.category?.isNotEmpty ?? false) item.category,
@@ -452,11 +453,7 @@ class _TransactionRow extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
+      decoration: Glass.panel(context, radius: BorderRadius.circular(16)),
       child: Row(
         children: [
           CategoryIcon.forLabel(item.category, item.type, size: 44),
@@ -471,7 +468,7 @@ class _TransactionRow extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
+                    color: context.palette.onSurface,
                   ),
                 ),
                 if (detail.isNotEmpty)
@@ -480,7 +477,7 @@ class _TransactionRow extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: textTheme.bodySmall?.copyWith(
-                      color: AppColors.textSecondary,
+                      color: context.palette.onSurfaceVariant,
                     ),
                   ),
               ],

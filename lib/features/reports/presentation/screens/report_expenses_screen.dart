@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_icons.dart';
@@ -56,7 +57,7 @@ class _ReportExpensesScreenState
       bottomNavigationBar: DashboardBottomNav(
         onTap: _onNav,
       ),
-      body: SafeArea(
+      body: GlassBackdrop(child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
@@ -74,7 +75,7 @@ class _ReportExpensesScreenState
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 }
@@ -117,11 +118,7 @@ class _Body extends StatelessWidget {
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppColors.border),
-            ),
+            decoration: Glass.panel(context, radius: BorderRadius.circular(20)),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
@@ -141,7 +138,7 @@ class _Body extends StatelessWidget {
                       Text(
                         AppStrings.totalExpenseLabel,
                         style: textTheme.bodyMedium?.copyWith(
-                          color: AppColors.textSecondary,
+                          color: context.palette.onSurfaceVariant,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -164,8 +161,8 @@ class _Body extends StatelessWidget {
                           '${AppStrings.fromLastMonth}',
                           style: textTheme.labelSmall?.copyWith(
                             color: change > 0
-                                ? AppColors.error
-                                : AppColors.primary,
+                                ? context.palette.error
+                                : context.palette.primary,
                           ),
                         ),
                     ],
@@ -246,8 +243,8 @@ class _Body extends StatelessWidget {
             const SizedBox(height: 12),
             InsightCard(
               icon: Icons.lightbulb_outline,
-              iconColor: AppColors.warning,
-              iconBackground: const Color(0xFFFEF3C7),
+              iconColor: context.warningInk,
+              iconBackground: context.warningFill,
               title: top.isEmpty
                   ? AppStrings.emptyChartData
                   : '${top.first.label} terbesar',
@@ -279,7 +276,7 @@ class _Body extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: AppColors.secondarySoft,
+                color: context.palette.secondaryContainer,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Column(
@@ -325,10 +322,10 @@ class _TabButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 12),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary : AppColors.surface,
+          color: selected ? context.palette.primary : context.palette.surface,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: selected ? AppColors.primary : AppColors.border,
+            color: selected ? context.palette.primary : context.palette.outlineVariant,
           ),
         ),
         child: Text(
@@ -336,7 +333,7 @@ class _TabButton extends StatelessWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                color: selected ? Colors.white : AppColors.textPrimary,
+                color: selected ? context.palette.onPrimary : context.palette.onSurface,
                 fontWeight: FontWeight.w600,
               ),
         ),
@@ -420,17 +417,13 @@ class _TopRow extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
+      decoration: Glass.panel(context, radius: BorderRadius.circular(16)),
       child: Row(
         children: [
           Text(
             '$rank',
             style: textTheme.titleMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: context.palette.onSurfaceVariant,
             ),
           ),
           const SizedBox(width: 10),
@@ -443,12 +436,12 @@ class _TopRow extends StatelessWidget {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: AppColors.surfaceVariant,
+                color: context.palette.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.category_outlined,
-                color: AppColors.textSecondary,
+                color: context.palette.onSurfaceVariant,
                 size: 20,
               ),
             ),

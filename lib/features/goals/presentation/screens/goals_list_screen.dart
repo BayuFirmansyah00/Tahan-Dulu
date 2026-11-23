@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/widgets/app_button.dart';
@@ -36,10 +37,10 @@ class GoalsListScreen extends ConsumerWidget {
               height: 44,
               padding: const EdgeInsets.all(7),
               decoration: BoxDecoration(
-                color: AppColors.primarySoft,
+                color: context.palette.primaryContainer,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                  color: AppColors.primary.withValues(alpha: 0.25),
+                  color: context.palette.primary.withValues(alpha: 0.25),
                 ),
               ),
               child: const AppImageIcon(
@@ -55,7 +56,7 @@ class GoalsListScreen extends ConsumerWidget {
         currentIndex: 3,
         onTap: (i) => goalsBottomNavTap(context, i),
       ),
-      body: SafeArea(
+      body: GlassBackdrop(child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
@@ -68,7 +69,7 @@ class GoalsListScreen extends ConsumerWidget {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 }
@@ -135,10 +136,10 @@ class _ListState extends State<_List> {
             width: double.infinity,
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: AppColors.surface,
+              color: context.palette.surface,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: AppColors.primary.withValues(alpha: 0.25),
+                color: context.palette.primary.withValues(alpha: 0.25),
               ),
               boxShadow: [
                 BoxShadow(
@@ -161,7 +162,7 @@ class _ListState extends State<_List> {
                           Text(
                             AppStrings.goalsTotalTarget,
                             style: textTheme.bodyMedium?.copyWith(
-                              color: AppColors.textSecondary,
+                              color: context.palette.onSurfaceVariant,
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -175,7 +176,7 @@ class _ListState extends State<_List> {
                               style: textTheme.headlineMedium?.copyWith(
                                 fontSize: 24,
                                 fontWeight: FontWeight.w800,
-                                color: AppColors.textPrimary,
+                                color: context.palette.onSurface,
                               ),
                             ),
                           ),
@@ -209,7 +210,7 @@ class _ListState extends State<_List> {
                                     AppStrings.goalsTotalSaved,
                                     style:
                                         textTheme.labelSmall?.copyWith(
-                                      color: AppColors.textSecondary,
+                                      color: context.palette.onSurfaceVariant,
                                     ),
                                   ),
                                   FittedBox(
@@ -222,7 +223,7 @@ class _ListState extends State<_List> {
                                       style: textTheme.titleMedium
                                           ?.copyWith(
                                         fontWeight: FontWeight.w800,
-                                        color: AppColors.primary,
+                                        color: context.palette.primary,
                                       ),
                                     ),
                                   ),
@@ -314,16 +315,16 @@ class _StatusBadge extends StatelessWidget {
     final Color background;
     if (goal.isReached) {
       label = AppStrings.goalStatusReached;
-      foreground = AppColors.primary;
-      background = AppColors.primarySoft;
+      foreground = context.palette.primary;
+      background = context.palette.primaryContainer;
     } else if (overdue) {
       label = AppStrings.goalStatusOverdue;
-      foreground = AppColors.error;
-      background = const Color(0xFFFEE2E2);
+      foreground = context.palette.error;
+      background = context.palette.errorContainer;
     } else {
       label = AppStrings.goalStatusActive;
-      foreground = AppColors.textSecondary;
-      background = AppColors.surfaceVariant;
+      foreground = context.palette.onSurfaceVariant;
+      background = context.palette.surfaceContainerHighest;
     }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -367,16 +368,16 @@ class _TabBar extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
-            color: selected ? AppColors.primary : Colors.transparent,
+            color: selected ? context.palette.primary : Colors.transparent,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: selected ? AppColors.primary : AppColors.border,
+              color: selected ? context.palette.primary : context.palette.outlineVariant,
             ),
           ),
           child: Text(
             '$label $count',
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: selected ? Colors.white : AppColors.textPrimary,
+                  color: selected ? context.palette.onPrimary : context.palette.onSurface,
                   fontWeight: FontWeight.w600,
                 ),
           ),
@@ -408,11 +409,7 @@ class _GoalCard extends StatelessWidget {
       onTap: () => context.push('${AppRoutes.goals}/${goal.id}'),
       child: Container(
         padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
-        ),
+        decoration: Glass.panel(context, radius: BorderRadius.circular(16)),
         child: Column(
           children: [
             Row(
@@ -495,10 +492,10 @@ class _EmptyList extends ConsumerWidget {
               AppAssets.goalsPiggy,
               height: 150,
               fit: BoxFit.contain,
-              errorBuilder: (context, error, stackTrace) => const Icon(
+              errorBuilder: (context, error, stackTrace) => Icon(
                 Icons.flag_outlined,
                 size: 72,
-                color: AppColors.textSecondary,
+                color: context.palette.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 16),

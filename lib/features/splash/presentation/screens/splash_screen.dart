@@ -6,12 +6,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lottie/lottie.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/services/fcm_service.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_logo.dart';
 import '../../../auth/presentation/providers/auth_controller.dart';
 
@@ -122,6 +123,16 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _introController.value = 1;
+      _glowController.stop();
+      _dotsController.stop();
+    }
+  }
+
+  @override
   void dispose() {
     _introController.dispose();
     _glowController.dispose();
@@ -183,8 +194,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     final animSize = (size.width * 0.50).clamp(180.0, 230.0);
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundWarm,
-      body: SafeArea(
+      backgroundColor: context.canvasColor,
+      body: GlassBackdrop(child: SafeArea(
         child: Center(
           child: SingleChildScrollView(
             physics: const ClampingScrollPhysics(),
@@ -206,7 +217,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                       SizedBox(
                         width: animSize,
                         height: animSize,
-                        child: Lottie.asset(
+                        child: MediaQuery.disableAnimationsOf(context) ? const AppLogo(height: 104) : Lottie.asset(
                           AppAssets.splashAnimation,
                           repeat: false,
                           fit: BoxFit.contain,
@@ -231,7 +242,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                           fontSize: 32,
                           fontWeight: FontWeight.w800,
                           letterSpacing: -0.5,
-                          color: AppColors.textPrimary,
+                          color: context.palette.onSurface,
                         ),
                       ),
                     ),
@@ -249,7 +260,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                           fontSize: 15,
                           height: 1.45,
                           fontWeight: FontWeight.w400,
-                          color: AppColors.textSecondary,
+                          color: context.palette.onSurfaceVariant,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -271,7 +282,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
                             letterSpacing: 0.1,
-                            color: AppColors.textSecondary.withValues(alpha: 0.8),
+                            color: context.palette.onSurfaceVariant.withValues(alpha: 0.8),
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -283,7 +294,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 }
@@ -371,8 +382,8 @@ class _ThreeDotsLoading extends StatelessWidget {
                     child: Container(
                       width: 6.5,
                       height: 6.5,
-                      decoration: const BoxDecoration(
-                        color: AppColors.primary,
+                      decoration: BoxDecoration(
+                        color: context.palette.primary,
                         shape: BoxShape.circle,
                       ),
                     ),

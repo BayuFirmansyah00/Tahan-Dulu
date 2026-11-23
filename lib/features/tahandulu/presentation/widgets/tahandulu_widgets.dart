@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/routing/app_routes.dart';
+import '../../../../core/theme/glass.dart';
 import '../../../../core/widgets/app_icons.dart';
 import '../../../../data/datasources/remote/api_config.dart';
 import '../../../../data/models/purchase_consideration.dart';
@@ -47,16 +48,16 @@ class TahanDuluScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: TdColors.background,
+      backgroundColor: context.canvasColor,
       appBar: AppBar(
         leading: const AppBackButton(),
         title: Text(title),
-        backgroundColor: TdColors.background,
+        backgroundColor: context.canvasColor,
       ),
       bottomNavigationBar: DashboardBottomNav(
         onTap: (i) => tahanDuluBottomNavTap(context, i),
       ),
-      body: SafeArea(
+      body: GlassBackdrop(child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
@@ -72,7 +73,7 @@ class TahanDuluScaffold extends StatelessWidget {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 }
@@ -146,14 +147,10 @@ class TdHeroImage extends StatelessWidget {
     Widget materialFallback() => Container(
       height: height,
       width: width,
-      decoration: BoxDecoration(
-        color: TdColors.card,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: TdColors.border),
-      ),
-      child: const Icon(
+      decoration: Glass.panel(context, radius: BorderRadius.circular(16)),
+      child: Icon(
         Icons.shopping_bag_outlined,
-        color: TdColors.warning,
+        color: context.warningInk,
         size: 48,
       ),
     );
@@ -207,7 +204,7 @@ class ProductImage extends StatelessWidget {
       decoration: BoxDecoration(
         color: visual.background,
         borderRadius: BorderRadius.circular(borderRadius),
-        border: Border.all(color: TdColors.border),
+        border: Border.all(color: context.palette.outlineVariant),
       ),
       child: Center(
         child: TdCategoryIcon(category: category, size: iconSize),
@@ -275,30 +272,19 @@ class TdCard extends StatelessWidget {
     super.key,
     required this.child,
     this.padding = const EdgeInsets.all(14),
-    this.color = TdColors.card,
+    this.color,
   });
 
   final Widget child;
   final EdgeInsetsGeometry padding;
-  final Color color;
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
       padding: padding,
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: TdColors.border),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0F102A43),
-            blurRadius: 12,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
+      decoration: Glass.panel(context, tint: color),
       child: child,
     );
   }

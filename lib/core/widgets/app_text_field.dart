@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+
+import '../theme/glass.dart';
 import 'package:flutter/services.dart';
 
-import '../theme/app_colors.dart';
 
 /// Input standar TahanDulu (styling diambil dari [AppTheme]).
 /// Label tegas navy di atas field putih modern.
@@ -48,7 +49,7 @@ class AppTextField extends StatelessWidget {
           Text(
             label!,
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: AppColors.textPrimary,
+              color: context.palette.onSurface,
               fontWeight: FontWeight.w600,
               fontSize: 13.5,
             ),

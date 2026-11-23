@@ -2,6 +2,12 @@ import 'package:flutter/material.dart';
 
 import 'app_image_icon.dart';
 
+/// Gaya untuk tindakan hapus atau batalkan yang memerlukan konfirmasi.
+ButtonStyle destructiveButtonStyle(BuildContext context) {
+  final scheme = Theme.of(context).colorScheme;
+  return ElevatedButton.styleFrom(backgroundColor: scheme.error, foregroundColor: scheme.onError);
+}
+
 /// Tombol utama TahanDulu. Gunakan untuk semua CTA primer.
 /// Warna default emerald; override opsional untuk kasus desain khusus
 /// (mis. tombol Login dark navy) — tetap backward-compatible.
@@ -40,7 +46,10 @@ class AppButton extends StatelessWidget {
           ? SizedBox(
               width: 20,
               height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2, semanticsLabel: label),
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                semanticsLabel: label,
+              ),
             )
           : Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -56,12 +65,7 @@ class AppButton extends StatelessWidget {
                   Icon(icon, size: 18),
                   const SizedBox(width: 8),
                 ],
-                Flexible(
-                  child: Text(
-                    label,
-                    textAlign: TextAlign.center,
-                  ),
-                ),
+                Flexible(child: Text(label, textAlign: TextAlign.center)),
               ],
             ),
     );
@@ -110,12 +114,7 @@ class AppOutlineButton extends StatelessWidget {
             Icon(icon, size: 18),
             const SizedBox(width: 8),
           ],
-          Flexible(
-            child: Text(
-              label,
-              textAlign: TextAlign.center,
-            ),
-          ),
+          Flexible(child: Text(label, textAlign: TextAlign.center)),
         ],
       ),
     );

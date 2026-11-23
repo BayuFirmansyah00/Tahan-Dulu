@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../data/models/financial_goal.dart';
@@ -43,8 +44,8 @@ class GoalLinearProgress extends StatelessWidget {
       child: LinearProgressIndicator(
         value: value.clamp(0.0, 1.0),
         minHeight: height,
-        backgroundColor: const Color(0xFFEEF1F4),
-        valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+        backgroundColor: context.palette.surfaceContainerHighest,
+        valueColor: AlwaysStoppedAnimation<Color>(context.palette.primary),
       ),
     );
   }
@@ -72,9 +73,9 @@ class GoalCircularProgress extends StatelessWidget {
             child: CircularProgressIndicator(
               value: progress.clamp(0.0, 1.0),
               strokeWidth: 12,
-              backgroundColor: const Color(0xFFEEF1F4),
+              backgroundColor: context.palette.surfaceContainerHighest,
               valueColor:
-                  const AlwaysStoppedAnimation<Color>(AppColors.primary),
+                  AlwaysStoppedAnimation<Color>(context.palette.primary),
             ),
           ),
           Text(
@@ -155,11 +156,7 @@ class GoalSummaryHeader extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border),
-      ),
+      decoration: Glass.panel(context, radius: BorderRadius.circular(20)),
       child: Column(
         children: [
           Row(
@@ -216,10 +213,10 @@ class GoalCategoryTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primarySoft : Colors.transparent,
+          color: selected ? context.palette.primaryContainer : Colors.transparent,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: selected ? AppColors.primary : AppColors.border,
+            color: selected ? context.palette.primary : context.palette.outlineVariant,
             width: selected ? 1.5 : 1,
           ),
         ),
@@ -234,8 +231,8 @@ class GoalCategoryTile extends StatelessWidget {
               errorBuilder: (context, error, stackTrace) => Icon(
                 goalCategoryIcon(category),
                 color: selected
-                    ? AppColors.primary
-                    : AppColors.textSecondary,
+                    ? context.palette.primary
+                    : context.palette.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 6),
@@ -246,8 +243,8 @@ class GoalCategoryTile extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.labelLarge?.copyWith(
                     color: selected
-                        ? AppColors.primary
-                        : AppColors.textPrimary,
+                        ? context.palette.primary
+                        : context.palette.onSurface,
                   ),
             ),
           ],
@@ -279,10 +276,10 @@ class FrequencyToggle extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 12),
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: selected ? AppColors.primary : Colors.transparent,
+              color: selected ? context.palette.primary : Colors.transparent,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: selected ? AppColors.primary : AppColors.border,
+                color: selected ? context.palette.primary : context.palette.outlineVariant,
               ),
             ),
             child: Text(
@@ -290,8 +287,8 @@ class FrequencyToggle extends StatelessWidget {
               style:
                   Theme.of(context).textTheme.titleMedium?.copyWith(
                         color: selected
-                            ? Colors.white
-                            : AppColors.textPrimary,
+                            ? context.palette.onPrimary
+                            : context.palette.onSurface,
                       ),
             ),
           ),
@@ -392,13 +389,13 @@ class PriorityChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColors.primarySoft,
+        color: context.palette.primaryContainer,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
         label,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: AppColors.primary,
+              color: context.palette.primary,
               fontWeight: FontWeight.w600,
             ),
       ),
@@ -418,14 +415,14 @@ class RankBadge extends StatelessWidget {
       width: 32,
       height: 32,
       alignment: Alignment.center,
-      decoration: const BoxDecoration(
-        color: Color(0xFFFEF3C7),
+      decoration: BoxDecoration(
+        color: context.warningFill,
         shape: BoxShape.circle,
       ),
       child: Text(
         '$rank',
         style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: AppColors.warning,
+              color: context.warningInk,
               fontWeight: FontWeight.w700,
             ),
       ),
@@ -448,9 +445,9 @@ class GoalDateBox extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: AppColors.inputFill,
+          color: context.palette.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: context.palette.outlineVariant),
         ),
         child: Row(
           children: [

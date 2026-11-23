@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../providers/budget_controller.dart';
@@ -44,7 +45,7 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
           onPressed: () => Navigator.of(context).maybePop(),
         ),
       ),
-      body: SafeArea(
+      body: GlassBackdrop(child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
@@ -62,7 +63,7 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
                             Text(
                               AppStrings.onboardingStep3,
                               style: textTheme.labelSmall?.copyWith(
-                                color: AppColors.textSecondary,
+                                color: context.palette.onSurfaceVariant,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -70,12 +71,12 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
                             Expanded(
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(8),
-                                child: const LinearProgressIndicator(
+                                child: LinearProgressIndicator(
                                   value: 0.6,
                                   minHeight: 8,
-                                  backgroundColor: AppColors.primarySoft,
+                                  backgroundColor: context.palette.primaryContainer,
                                   valueColor: AlwaysStoppedAnimation<Color>(
-                                    AppColors.primary,
+                                    context.palette.primary,
                                   ),
                                 ),
                               ),
@@ -93,7 +94,7 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
                         Text(
                           'Bagi penghasilanmu ke dalam 4 pos alokasi keuangan sesuai rekomendasi TahanDulu.',
                           style: textTheme.bodyMedium?.copyWith(
-                            color: AppColors.textSecondary,
+                            color: context.palette.onSurfaceVariant,
                           ),
                         ),
                         const SizedBox(height: 20),
@@ -102,18 +103,14 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
                         Container(
                           width: double.infinity,
                           padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: AppColors.surface,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: AppColors.border),
-                          ),
+                          decoration: Glass.panel(context, radius: BorderRadius.circular(16)),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 'Penghasilan Utama Bulanan',
                                 style: textTheme.bodySmall?.copyWith(
-                                  color: AppColors.textSecondary,
+                                  color: context.palette.onSurfaceVariant,
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -123,14 +120,14 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
                                 ),
                                 style: textTheme.headlineSmall?.copyWith(
                                   fontWeight: FontWeight.bold,
-                                  color: AppColors.primary,
+                                  color: context.palette.primary,
                                 ),
                               ),
                               const SizedBox(height: 6),
                               Text(
                                 'Alokasi ini adalah batas rencana anggaran belanja dan tujuan keuangan, bukan transaksi otomatis.',
                                 style: textTheme.bodySmall?.copyWith(
-                                  color: AppColors.textSecondary,
+                                  color: context.palette.onSurfaceVariant,
                                   fontSize: 11,
                                 ),
                               ),
@@ -147,7 +144,7 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
                           percentage: state.kebutuhanPokok,
                           amount: state.amountKebutuhanPokok,
                           icon: Icons.home_outlined,
-                          accentColor: AppColors.primary,
+                          accentColor: context.palette.primary,
                           onChanged: controller.updateKebutuhanPokok,
                         ),
                         const SizedBox(height: 12),
@@ -183,7 +180,7 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
                           percentage: state.danaDarurat,
                           amount: state.amountDanaDarurat,
                           icon: Icons.shield_outlined,
-                          accentColor: const Color(0xFF10B981),
+                          accentColor: context.palette.primary,
                           onChanged: controller.updateDanaDarurat,
                         ),
                         const SizedBox(height: 20),
@@ -197,12 +194,12 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
                                 ? Theme.of(
                                     context,
                                   ).colorScheme.error.withValues(alpha: 0.08)
-                                : AppColors.surface,
+                                : context.palette.surface,
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
                               color: state.isExceeding100
                                   ? Theme.of(context).colorScheme.error
-                                  : AppColors.border,
+                                  : context.palette.outlineVariant,
                             ),
                           ),
                           child: Column(
@@ -225,8 +222,8 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
                                       color: state.isExceeding100
                                           ? Theme.of(context).colorScheme.error
                                           : (state.totalPercentage == 100.0
-                                                ? AppColors.primary
-                                                : AppColors.textPrimary),
+                                                ? context.palette.primary
+                                                : context.palette.onSurface),
                                     ),
                                   ),
                                 ],
@@ -240,7 +237,7 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
                                     child: Text(
                                       'Total Nominal Dialokasikan:',
                                       style: textTheme.bodySmall?.copyWith(
-                                        color: AppColors.textSecondary,
+                                        color: context.palette.onSurfaceVariant,
                                       ),
                                     ),
                                   ),
@@ -360,7 +357,7 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 }
@@ -390,11 +387,7 @@ class _CategoryAllocationCard extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
+      decoration: Glass.panel(context, radius: BorderRadius.circular(16)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -422,7 +415,7 @@ class _CategoryAllocationCard extends StatelessWidget {
                     Text(
                       description,
                       style: textTheme.bodySmall?.copyWith(
-                        color: AppColors.textSecondary,
+                        color: context.palette.onSurfaceVariant,
                         fontSize: 11,
                       ),
                       maxLines: 2,
@@ -458,14 +451,14 @@ class _CategoryAllocationCard extends StatelessWidget {
               Text(
                 'Nominal Alokasi:',
                 style: textTheme.bodySmall?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: context.palette.onSurfaceVariant,
                 ),
               ),
               Text(
                 CurrencyFormatter.format(amount.toDouble()),
                 style: textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
+                  color: context.palette.onSurface,
                 ),
               ),
             ],

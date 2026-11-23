@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/widgets/app_image_icon.dart';
 import '../../../../core/widgets/app_states.dart';
@@ -84,7 +85,7 @@ class NotificationSettingsScreen extends ConsumerWidget {
     final prefs = ref.watch(reminderPreferencesProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundWarm,
+      backgroundColor: context.canvasColor,
       appBar: AppBar(
         leading: const AppBackButton(),
         title: const Text(AppStrings.notifSettingsTitle),
@@ -104,7 +105,7 @@ class NotificationSettingsScreen extends ConsumerWidget {
       bottomNavigationBar: DashboardBottomNav(
         onTap: (i) => _onNav(i, context),
       ),
-      body: SafeArea(
+      body: GlassBackdrop(child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
@@ -123,7 +124,7 @@ class NotificationSettingsScreen extends ConsumerWidget {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 }
@@ -179,7 +180,7 @@ class _Body extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFFE8EFFE),
+              color: context.palette.secondaryContainer,
               borderRadius: BorderRadius.circular(14),
             ),
             child: Row(
@@ -195,7 +196,7 @@ class _Body extends StatelessWidget {
                   child: Text(
                     AppStrings.notifInfo,
                     style: textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textPrimary,
+                      color: context.palette.onSurface,
                     ),
                   ),
                 ),
@@ -228,18 +229,13 @@ class _ReminderRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final visual = visualForReminder(pref.type);
+    final visual = visualForReminder(context, pref.type);
     return InkWell(
       onTap: onTap,
       borderRadius: AppRadius.cardLarge,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: AppRadius.cardLarge,
-          border: Border.all(color: AppColors.border),
-          boxShadow: AppShadows.card,
-        ),
+        decoration: Glass.panel(context, radius: AppRadius.cardLarge),
         child: Row(
           children: [
             AppImageIcon(
@@ -270,7 +266,7 @@ class _ReminderRow extends StatelessWidget {
             ),
             Switch(
               value: pref.enabled,
-              activeTrackColor: AppColors.primary,
+              activeTrackColor: context.palette.primary,
               onChanged: onToggle,
             ),
             const AppImageIcon(

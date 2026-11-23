@@ -5,9 +5,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../data/datasources/remote/api_client.dart';
 import '../models/password_reset_flow.dart';
@@ -268,7 +269,7 @@ class _VerifyResetOtpScreenState extends ConsumerState<VerifyResetOtpScreen> {
                 ? 'Kode sudah kedaluwarsa.'
                 : 'Kode kedaluwarsa dalam ${_formatCountdown(expiresIn)}.',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: expiresIn == 0 ? AppColors.error : AppColors.textSecondary,
+              color: expiresIn == 0 ? context.palette.error : context.palette.onSurfaceVariant,
             ),
           ),
           if (_error != null) ...[

@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/rupiah_input_formatter.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
@@ -79,7 +80,7 @@ class _SalaryScreenState extends ConsumerState<SalaryScreen> {
 
     return Scaffold(
       appBar: AppBar(),
-      body: SafeArea(
+      body: GlassBackdrop(child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
@@ -101,12 +102,12 @@ class _SalaryScreenState extends ConsumerState<SalaryScreen> {
                             Expanded(
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(8),
-                                child: const LinearProgressIndicator(
+                                child: LinearProgressIndicator(
                                   value: 0.25,
                                   minHeight: 8,
-                                  backgroundColor: AppColors.primarySoft,
+                                  backgroundColor: context.palette.primaryContainer,
                                   valueColor: AlwaysStoppedAnimation<Color>(
-                                    AppColors.primary,
+                                    context.palette.primary,
                                   ),
                                 ),
                               ),
@@ -130,10 +131,10 @@ class _SalaryScreenState extends ConsumerState<SalaryScreen> {
                             height: 170,
                             fit: BoxFit.contain,
                             errorBuilder: (context, error, stackTrace) =>
-                                const Icon(
+                                Icon(
                               Icons.smartphone_outlined,
                               size: 120,
-                              color: AppColors.primary,
+                              color: context.palette.primary,
                             ),
                           ),
                         ),
@@ -233,7 +234,7 @@ class _SalaryScreenState extends ConsumerState<SalaryScreen> {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 }
@@ -257,16 +258,16 @@ class _DayChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary : Colors.transparent,
+          color: selected ? context.palette.primary : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: selected ? AppColors.primary : AppColors.border,
+            color: selected ? context.palette.primary : context.palette.outlineVariant,
           ),
         ),
         child: Text(
           label,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: selected ? Colors.white : AppColors.textPrimary,
+                color: selected ? context.palette.onPrimary : context.palette.onSurface,
               ),
         ),
       ),

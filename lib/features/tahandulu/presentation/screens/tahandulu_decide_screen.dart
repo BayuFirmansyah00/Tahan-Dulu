@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
@@ -93,13 +95,10 @@ class _TahanDuluDecideScreenState extends ConsumerState<TahanDuluDecideScreen> {
         .where((a) => a.type != AccountType.legacyCash)
         .toList();
 
-    await showModalBottomSheet<void>(
+    await showGlassSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+      scrollContent: true,
       builder: (bottomSheetContext) {
         return SafeArea(
           child: Padding(
@@ -113,7 +112,7 @@ class _TahanDuluDecideScreenState extends ConsumerState<TahanDuluDecideScreen> {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: TdColors.border,
+                      color: context.palette.outlineVariant,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -126,7 +125,7 @@ class _TahanDuluDecideScreenState extends ConsumerState<TahanDuluDecideScreen> {
                       .titleLarge
                       ?.copyWith(
                         fontWeight: FontWeight.w800,
-                        color: TdColors.navy,
+                        color: context.palette.onSurface,
                       ),
                 ),
                 const SizedBox(height: 4),
@@ -136,7 +135,7 @@ class _TahanDuluDecideScreenState extends ConsumerState<TahanDuluDecideScreen> {
                       .textTheme
                       .bodyMedium
                       ?.copyWith(
-                        color: TdColors.slate,
+                        color: context.palette.onSurfaceVariant,
                       ),
                 ),
                 const SizedBox(height: 16),
@@ -149,9 +148,9 @@ class _TahanDuluDecideScreenState extends ConsumerState<TahanDuluDecideScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: TdColors.primary.withValues(alpha: 0.15),
+                      color: context.palette.tertiaryContainer.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: TdColors.primary),
+                      border: Border.all(color: context.palette.tertiaryContainer),
                     ),
                     child: Row(
                       children: [
@@ -172,7 +171,7 @@ class _TahanDuluDecideScreenState extends ConsumerState<TahanDuluDecideScreen> {
                                     .titleSmall
                                     ?.copyWith(
                                       fontWeight: FontWeight.w700,
-                                      color: TdColors.navy,
+                                      color: context.palette.onSurface,
                                     ),
                               ),
                               const SizedBox(height: 2),
@@ -182,16 +181,16 @@ class _TahanDuluDecideScreenState extends ConsumerState<TahanDuluDecideScreen> {
                                     .textTheme
                                     .bodySmall
                                     ?.copyWith(
-                                      color: TdColors.slate,
+                                      color: context.palette.onSurfaceVariant,
                                     ),
                               ),
                             ],
                           ),
                         ),
-                        const Icon(
+                        Icon(
                           Icons.arrow_forward_ios,
                           size: 14,
-                          color: TdColors.navy,
+                          color: context.palette.onSurface,
                         ),
                       ],
                     ),
@@ -216,9 +215,9 @@ class _TahanDuluDecideScreenState extends ConsumerState<TahanDuluDecideScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
+                      color: context.canvasColor,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: TdColors.border),
+                      border: Border.all(color: context.palette.outlineVariant),
                     ),
                     child: Row(
                       children: [
@@ -239,7 +238,7 @@ class _TahanDuluDecideScreenState extends ConsumerState<TahanDuluDecideScreen> {
                                     .titleSmall
                                     ?.copyWith(
                                       fontWeight: FontWeight.w700,
-                                      color: TdColors.navy,
+                                      color: context.palette.onSurface,
                                     ),
                               ),
                               const SizedBox(height: 2),
@@ -249,16 +248,16 @@ class _TahanDuluDecideScreenState extends ConsumerState<TahanDuluDecideScreen> {
                                     .textTheme
                                     .bodySmall
                                     ?.copyWith(
-                                      color: TdColors.slate,
+                                      color: context.palette.onSurfaceVariant,
                                     ),
                               ),
                             ],
                           ),
                         ),
-                        const Icon(
+                        Icon(
                           Icons.arrow_forward_ios,
                           size: 14,
-                          color: TdColors.slate,
+                          color: context.palette.onSurfaceVariant,
                         ),
                       ],
                     ),
@@ -289,13 +288,10 @@ class _TahanDuluDecideScreenState extends ConsumerState<TahanDuluDecideScreen> {
       return;
     }
 
-    await showModalBottomSheet<void>(
+    await showGlassSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+      scrollContent: true,
       builder: (sheetContext) {
         return SafeArea(
           child: Padding(
@@ -309,7 +305,7 @@ class _TahanDuluDecideScreenState extends ConsumerState<TahanDuluDecideScreen> {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: TdColors.border,
+                      color: context.palette.outlineVariant,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -319,14 +315,14 @@ class _TahanDuluDecideScreenState extends ConsumerState<TahanDuluDecideScreen> {
                   'Pilih Rekening Pembayaran',
                   style: Theme.of(sheetContext).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w800,
-                        color: TdColors.navy,
+                        color: context.palette.onSurface,
                       ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Saldo akan dipotong sejumlah ${CurrencyFormatter.formatCompact(item.price)}',
                   style: Theme.of(sheetContext).textTheme.bodyMedium?.copyWith(
-                        color: TdColors.slate,
+                        color: context.palette.onSurfaceVariant,
                       ),
                 ),
                 const SizedBox(height: 16),
@@ -377,12 +373,12 @@ class _TahanDuluDecideScreenState extends ConsumerState<TahanDuluDecideScreen> {
                             vertical: 12,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: context.palette.surface,
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
                               color: isSufficient
-                                  ? TdColors.border
-                                  : TdColors.danger.withValues(alpha: 0.3),
+                                  ? context.palette.outlineVariant
+                                  : context.palette.error.withValues(alpha: 0.3),
                             ),
                           ),
                           child: Row(
@@ -404,7 +400,7 @@ class _TahanDuluDecideScreenState extends ConsumerState<TahanDuluDecideScreen> {
                                           .titleSmall
                                           ?.copyWith(
                                             fontWeight: FontWeight.w700,
-                                            color: TdColors.navy,
+                                            color: context.palette.onSurface,
                                           ),
                                     ),
                                     Row(
@@ -416,8 +412,8 @@ class _TahanDuluDecideScreenState extends ConsumerState<TahanDuluDecideScreen> {
                                               .bodySmall
                                               ?.copyWith(
                                                 color: isSufficient
-                                                    ? TdColors.slate
-                                                    : TdColors.danger,
+                                                    ? context.palette.onSurfaceVariant
+                                                    : context.palette.error,
                                                 fontWeight: isSufficient
                                                     ? FontWeight.normal
                                                     : FontWeight.w600,
@@ -431,7 +427,7 @@ class _TahanDuluDecideScreenState extends ConsumerState<TahanDuluDecideScreen> {
                                               vertical: 1,
                                             ),
                                             decoration: BoxDecoration(
-                                              color: TdColors.dangerBg,
+                                              color: context.palette.errorContainer,
                                               borderRadius:
                                                   BorderRadius.circular(4),
                                             ),
@@ -441,7 +437,7 @@ class _TahanDuluDecideScreenState extends ConsumerState<TahanDuluDecideScreen> {
                                                   .textTheme
                                                   .labelSmall
                                                   ?.copyWith(
-                                                    color: TdColors.danger,
+                                                    color: context.palette.error,
                                                     fontSize: 10,
                                                     fontWeight: FontWeight.w600,
                                                   ),
@@ -453,9 +449,9 @@ class _TahanDuluDecideScreenState extends ConsumerState<TahanDuluDecideScreen> {
                                   ],
                                 ),
                               ),
-                              const Icon(
+                              Icon(
                                 Icons.chevron_right,
-                                color: TdColors.slate,
+                                color: context.palette.onSurfaceVariant,
                               ),
                             ],
                           ),
@@ -494,7 +490,7 @@ class _TahanDuluDecideScreenState extends ConsumerState<TahanDuluDecideScreen> {
               children: [
                 Text(
                   AppStrings.decideSubtitle,
-                  style: textTheme.bodyMedium?.copyWith(color: TdColors.slate),
+                  style: textTheme.bodyMedium?.copyWith(color: context.palette.onSurfaceVariant),
                 ),
                 const SizedBox(height: 12),
                 TdCard(
@@ -511,7 +507,7 @@ class _TahanDuluDecideScreenState extends ConsumerState<TahanDuluDecideScreen> {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: textTheme.titleMedium?.copyWith(
-                                color: TdColors.navy,
+                                color: context.palette.onSurface,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
@@ -519,14 +515,14 @@ class _TahanDuluDecideScreenState extends ConsumerState<TahanDuluDecideScreen> {
                               CurrencyFormatter.formatCompact(item.price),
                               style: textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.w800,
-                                color: TdColors.navy,
+                                color: context.palette.onSurface,
                               ),
                             ),
                             Text(
                               '${productCategoryLabel(item.category)}'
                               '${item.waitEndsAt == null ? '' : ' • ${formatWaitShort(item.waitEndsAt!, DateTime.now())}'}',
                               style: textTheme.bodyMedium?.copyWith(
-                                color: TdColors.slate,
+                                color: context.palette.onSurfaceVariant,
                               ),
                             ),
                           ],
@@ -543,8 +539,8 @@ class _TahanDuluDecideScreenState extends ConsumerState<TahanDuluDecideScreen> {
                 _OptionCard(
                   assetPath: AppAssets.tdActionBuy,
                   icon: Icons.shopping_cart_outlined,
-                  foreground: TdColors.navy,
-                  background: TdColors.primary,
+                  foreground: context.palette.onSurface,
+                  background: context.palette.tertiaryContainer,
                   title: AppStrings.decideBuy,
                   subtitle: AppStrings.decideBuyDesc,
                   enabled: !locked && !_working,
@@ -554,8 +550,8 @@ class _TahanDuluDecideScreenState extends ConsumerState<TahanDuluDecideScreen> {
                 _OptionCard(
                   assetPath: AppAssets.tdActionWait,
                   icon: Icons.pause_circle_outline,
-                  foreground: TdColors.warning,
-                  background: TdColors.warningBg,
+                  foreground: context.warningInk,
+                  background: context.warningFill,
                   title: AppStrings.decideSnooze,
                   subtitle: AppStrings.decideSnoozeDesc,
                   enabled: !locked && !_working,
@@ -566,8 +562,8 @@ class _TahanDuluDecideScreenState extends ConsumerState<TahanDuluDecideScreen> {
                 _OptionCard(
                   assetPath: AppAssets.tdActionWishlist,
                   icon: Icons.favorite_outline,
-                  foreground: const Color(0xFF8B5CF6),
-                  background: const Color(0xFFEEE9FE),
+                  foreground: context.palette.tertiary,
+                  background: context.palette.tertiaryContainer,
                   title: AppStrings.decideWishlist,
                   subtitle: AppStrings.decideWishlistDesc,
                   enabled: !locked && !_working,
@@ -583,8 +579,8 @@ class _TahanDuluDecideScreenState extends ConsumerState<TahanDuluDecideScreen> {
                 _OptionCard(
                   assetPath: AppAssets.actionDelete,
                   icon: Icons.close,
-                  foreground: TdColors.danger,
-                  background: TdColors.dangerBg,
+                  foreground: context.palette.error,
+                  background: context.palette.errorContainer,
                   title: AppStrings.decideCancel,
                   subtitle: AppStrings.decideCancelDesc,
                   enabled: !locked && !_working,
@@ -594,7 +590,7 @@ class _TahanDuluDecideScreenState extends ConsumerState<TahanDuluDecideScreen> {
                 Text(
                   AppStrings.decideImpactTitle,
                   style: textTheme.titleMedium?.copyWith(
-                    color: TdColors.navy,
+                    color: context.palette.onSurface,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -602,7 +598,7 @@ class _TahanDuluDecideScreenState extends ConsumerState<TahanDuluDecideScreen> {
                 Text(
                   '${CurrencyFormatter.formatCompact(item.price)}'
                   ' • ${productCategoryLabel(item.category)}',
-                  style: textTheme.bodyMedium?.copyWith(color: TdColors.slate),
+                  style: textTheme.bodyMedium?.copyWith(color: context.palette.onSurfaceVariant),
                 ),
               ],
             ),
@@ -629,7 +625,7 @@ class _FinalBanner extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: TdColors.highlight,
+        color: context.palette.tertiaryContainer,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -644,7 +640,7 @@ class _FinalBanner extends StatelessWidget {
             child: Text(
               done ? AppStrings.boughtBadge : AppStrings.cancelledBadge,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: TdColors.navy,
+                color: context.palette.onSurface,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -686,9 +682,9 @@ class _OptionCard extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: TdColors.card,
+            color: context.palette.surface,
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: TdColors.border),
+            border: Border.all(color: context.palette.outlineVariant),
             boxShadow: const [
               BoxShadow(
                 color: Color(0x0F102A43),
@@ -724,14 +720,14 @@ class _OptionCard extends StatelessWidget {
                     Text(
                       title,
                       style: textTheme.titleMedium?.copyWith(
-                        color: TdColors.navy,
+                        color: context.palette.onSurface,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                     Text(
                       subtitle,
                       style: textTheme.bodyMedium?.copyWith(
-                        color: TdColors.slate,
+                        color: context.palette.onSurfaceVariant,
                       ),
                     ),
                   ],

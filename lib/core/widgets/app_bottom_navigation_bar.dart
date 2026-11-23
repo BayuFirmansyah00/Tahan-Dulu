@@ -8,11 +8,7 @@ import '../theme/glass.dart';
 
 /// Navigasi utama dengan satu permukaan kaca untuk kelima aksi.
 class AppBottomNavigationBar extends StatelessWidget {
-  const AppBottomNavigationBar({
-    super.key,
-    this.currentIndex,
-    this.onTap,
-  });
+  const AppBottomNavigationBar({super.key, this.currentIndex, this.onTap});
 
   /// Index menu aktif (0: Beranda, 1: Transaksi, 2: Catat, 3: Tujuan, 4: Profil).
   /// Bila bernilai null, akan dideteksi secara otomatis dari route lokasi saat ini.
@@ -81,10 +77,13 @@ class AppBottomNavigationBar extends StatelessWidget {
     }
   }
 
-
   static const _items = [
     (AppStrings.navHome, AppAssets.nav3dHome, Icons.home_rounded),
-    (AppStrings.navTransactions, AppAssets.nav3dTransaction, Icons.swap_horiz_rounded),
+    (
+      AppStrings.navTransactions,
+      AppAssets.nav3dTransaction,
+      Icons.swap_horiz_rounded,
+    ),
     (AppStrings.navRecord, AppAssets.nav3dRecord, Icons.add_rounded),
     (AppStrings.navGoals, AppAssets.nav3dGoal, Icons.track_changes_rounded),
     (AppStrings.navProfile, AppAssets.nav3dProfile, Icons.person_rounded),
@@ -92,54 +91,121 @@ class AppBottomNavigationBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (MediaQuery.viewInsetsOf(context).bottom > 0) return const SizedBox.shrink();
+    if (MediaQuery.viewInsetsOf(context).bottom > 0) {
+      return const SizedBox.shrink();
+    }
     final selected = _resolveCurrentIndex(context);
     final scheme = Theme.of(context).colorScheme;
     final height = 43 + MediaQuery.textScalerOf(context).scale(11) * 1.5;
     return SafeArea(
-      top: false, minimum: const EdgeInsets.fromLTRB(8, 5, 8, 8),
-      child: Align(heightFactor: 1, child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 520),
-        child: FloatingGlass(child: Padding(
-          padding: const EdgeInsets.all(4),
-          child: SizedBox(height: height, child: LayoutBuilder(
-            builder: (context, constraints) {
-              final width = constraints.maxWidth / _items.length;
-              return Stack(children: [
-                if (selected != null && selected >= 0 && selected < _items.length)
-                  AnimatedPositionedDirectional(
-                    duration: Glass.motion(context), curve: Glass.curve,
-                    start: selected * width, width: width, top: 0, bottom: 0,
-                    child: DecoratedBox(decoration: BoxDecoration(
-                      borderRadius: Glass.capsule,
-                      color: scheme.primaryContainer,
-                      border: Border.all(color: scheme.primary.withValues(alpha: .26)),
-                    )),
-                  ),
-                Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                  for (final (index, item) in _items.indexed)
-                    Expanded(child: Semantics(
-                      selected: index == selected, button: true, label: item.$1,
-                      child: Material(type: MaterialType.transparency, child: InkWell(
-                        key: index == 2 ? const Key('record_button') : null,
-                        borderRadius: Glass.capsule, onTap: () => _handleTap(context, index),
-                        child: ExcludeSemantics(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                          Image.asset(item.$2, key: index == 2 ? const Key('record_button_icon') : null,
-                            width: index == 2 ? 31 : 25, height: 31, fit: BoxFit.contain,
-                            errorBuilder: (_, _, _) => Icon(item.$3, color: scheme.primary)),
-                          FittedBox(fit: BoxFit.scaleDown, child: Text(item.$1,
-                            style: TextStyle(fontSize: 11, height: 1.3,
-                              fontWeight: index == selected ? FontWeight.w700 : FontWeight.w500,
-                              color: index == selected ? scheme.onPrimaryContainer : scheme.onSurface))),
-                        ])),
-                      )),
-                    )),
-                ]),
-              ]);
-            },
-          )),
-        )),
-      )),
+      top: false,
+      minimum: const EdgeInsets.fromLTRB(8, 5, 8, 8),
+      child: Align(
+        heightFactor: 1,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 520),
+          child: FloatingGlass(
+            child: Padding(
+              padding: const EdgeInsets.all(4),
+              child: SizedBox(
+                height: height,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final width = constraints.maxWidth / _items.length;
+                    return Stack(
+                      children: [
+                        if (selected != null &&
+                            selected >= 0 &&
+                            selected < _items.length)
+                          AnimatedPositionedDirectional(
+                            duration: Glass.motion(context),
+                            curve: Glass.curve,
+                            start: selected * width,
+                            width: width,
+                            top: 0,
+                            bottom: 0,
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                borderRadius: Glass.capsule,
+                                color: scheme.primaryContainer,
+                                border: Border.all(
+                                  color: scheme.primary.withValues(alpha: .26),
+                                ),
+                              ),
+                            ),
+                          ),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            for (final (index, item) in _items.indexed)
+                              Expanded(
+                                child: Semantics(
+                                  selected: index == selected,
+                                  button: true,
+                                  label: item.$1,
+                                  child: Material(
+                                    type: MaterialType.transparency,
+                                    child: InkWell(
+                                      key: index == 2
+                                          ? const Key('record_button')
+                                          : null,
+                                      borderRadius: Glass.capsule,
+                                      onTap: () => _handleTap(context, index),
+                                      child: ExcludeSemantics(
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Image.asset(
+                                              item.$2,
+                                              key: index == 2
+                                                  ? const Key(
+                                                      'record_button_icon',
+                                                    )
+                                                  : null,
+                                              width: index == 2 ? 31 : 25,
+                                              height: 31,
+                                              fit: BoxFit.contain,
+                                              errorBuilder: (_, _, _) => Icon(
+                                                item.$3,
+                                                color: scheme.primary,
+                                              ),
+                                            ),
+                                            FittedBox(
+                                              fit: BoxFit.scaleDown,
+                                              child: Text(
+                                                item.$1,
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  height: 1.3,
+                                                  fontWeight: index == selected
+                                                      ? FontWeight.w700
+                                                      : FontWeight.w500,
+                                                  color: index == selected
+                                                      ? scheme
+                                                            .onPrimaryContainer
+                                                      : scheme.onSurface,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

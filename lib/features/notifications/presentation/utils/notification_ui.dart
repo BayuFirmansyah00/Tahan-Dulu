@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_assets.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_image_icon.dart';
 import '../../../../data/models/app_notification.dart';
 import '../../../../data/models/reminder_settings.dart';
@@ -74,7 +75,7 @@ class NotifCategoryIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final visual = visualForCategory(category);
+    final visual = visualForCategory(context, category);
     return AppImageIcon(
       assetPath: notificationCategoryAsset(category),
       size: size,
@@ -96,38 +97,38 @@ class NotificationVisual {
   final Color background;
 }
 
-NotificationVisual visualForCategory(NotificationCategory category) {
+NotificationVisual visualForCategory(BuildContext context, NotificationCategory category) {
   switch (category) {
     case NotificationCategory.salary:
-      return const NotificationVisual(
+      return NotificationVisual(
         icon: Icons.account_balance_wallet_outlined,
-        foreground: AppColors.secondary,
-        background: AppColors.secondarySoft,
+        foreground: context.palette.secondary,
+        background: context.palette.secondaryContainer,
       );
     case NotificationCategory.savingsGoal:
-      return const NotificationVisual(
+      return NotificationVisual(
         icon: Icons.track_changes_outlined,
-        foreground: AppColors.primary,
-        background: AppColors.primarySoft,
+        foreground: context.palette.primary,
+        background: context.palette.primaryContainer,
       );
     case NotificationCategory.tahandulu:
-      return const NotificationVisual(
+      return NotificationVisual(
         icon: Icons.shopping_bag_outlined,
-        foreground: AppColors.error,
-        background: Color(0xFFFEE2E2),
+        foreground: context.palette.error,
+        background: context.palette.errorContainer,
       );
     case NotificationCategory.savingsReminder:
-      return const NotificationVisual(
+      return NotificationVisual(
         icon: Icons.savings_outlined,
-        foreground: AppColors.warning,
-        background: Color(0xFFFEF3C7),
+        foreground: context.warningInk,
+        background: context.warningFill,
       );
     case NotificationCategory.budget:
     case NotificationCategory.overspending:
-      return const NotificationVisual(
+      return NotificationVisual(
         icon: Icons.warning_amber_outlined,
-        foreground: AppColors.warning,
-        background: Color(0xFFFEF3C7),
+        foreground: context.warningInk,
+        background: context.warningFill,
       );
   }
 }
@@ -145,43 +146,43 @@ class ReminderVisual {
   final Color background;
 }
 
-ReminderVisual visualForReminder(ReminderType type) {
+ReminderVisual visualForReminder(BuildContext context, ReminderType type) {
   switch (type) {
     case ReminderType.salary:
-      return const ReminderVisual(
+      return ReminderVisual(
         icon: Icons.account_balance_wallet_outlined,
-        foreground: AppColors.secondary,
-        background: AppColors.secondarySoft,
+        foreground: context.palette.secondary,
+        background: context.palette.secondaryContainer,
       );
     case ReminderType.savings:
-      return const ReminderVisual(
+      return ReminderVisual(
         icon: Icons.savings_outlined,
-        foreground: AppColors.warning,
-        background: Color(0xFFFEF3C7),
+        foreground: context.warningInk,
+        background: context.warningFill,
       );
     case ReminderType.bills:
-      return const ReminderVisual(
+      return ReminderVisual(
         icon: Icons.receipt_long_outlined,
-        foreground: AppColors.primary,
-        background: AppColors.primarySoft,
+        foreground: context.palette.primary,
+        background: context.palette.primaryContainer,
       );
     case ReminderType.budget:
-      return const ReminderVisual(
+      return ReminderVisual(
         icon: Icons.monitor_heart_outlined,
-        foreground: AppColors.primary,
-        background: AppColors.primarySoft,
+        foreground: context.palette.primary,
+        background: context.palette.primaryContainer,
       );
     case ReminderType.tahandulu:
-      return const ReminderVisual(
+      return ReminderVisual(
         icon: Icons.shopping_bag_outlined,
-        foreground: AppColors.error,
-        background: Color(0xFFFEE2E2),
+        foreground: context.palette.error,
+        background: context.palette.errorContainer,
       );
     case ReminderType.overspending:
-      return const ReminderVisual(
+      return ReminderVisual(
         icon: Icons.warning_amber_outlined,
-        foreground: AppColors.warning,
-        background: Color(0xFFFEF3C7),
+        foreground: context.warningInk,
+        background: context.warningFill,
       );
   }
 }

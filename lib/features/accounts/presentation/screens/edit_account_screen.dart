@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/rupiah_input_formatter.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_image_icon.dart';
@@ -254,7 +255,7 @@ class _EditAccountScreenState extends ConsumerState<EditAccountScreen> {
         title: const Text(AppStrings.editAccountTitle),
       ),
       bottomNavigationBar: DashboardBottomNav(onTap: _onNav),
-      body: SafeArea(
+      body: GlassBackdrop(child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
@@ -319,7 +320,7 @@ class _EditAccountScreenState extends ConsumerState<EditAccountScreen> {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 }
@@ -432,12 +433,12 @@ class _Form extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: AppColors.surface,
+                      color: context.palette.surface,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: selectedBank != null
-                            ? AppColors.primary
-                            : AppColors.border,
+                            ? context.palette.primary
+                            : context.palette.outlineVariant,
                         width: selectedBank != null ? 1.5 : 1.0,
                       ),
                     ),
@@ -466,7 +467,7 @@ class _Form extends StatelessWidget {
                                       ? selectedBank!.aliases.join(' • ')
                                       : selectedBank!.slug.toUpperCase(),
                                   style: textTheme.bodySmall?.copyWith(
-                                    color: AppColors.textSecondary,
+                                    color: context.palette.onSurfaceVariant,
                                   ),
                                 ),
                               ],
@@ -481,7 +482,7 @@ class _Form extends StatelessWidget {
                             width: 40,
                             height: 40,
                             decoration: BoxDecoration(
-                              color: AppColors.secondarySoft,
+                              color: context.palette.secondaryContainer,
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Center(
@@ -491,7 +492,7 @@ class _Form extends StatelessWidget {
                                     : (type == AccountType.digitalBank
                                         ? Icons.smartphone_outlined
                                         : Icons.account_balance_outlined),
-                                color: AppColors.primary,
+                                color: context.palette.primary,
                                 size: 22,
                               ),
                             ),
@@ -518,7 +519,7 @@ class _Form extends StatelessWidget {
                                           ? '16 bank digital terverifikasi OJK'
                                           : '140+ bank resmi Indonesia'),
                                   style: textTheme.bodySmall?.copyWith(
-                                    color: AppColors.textSecondary,
+                                    color: context.palette.onSurfaceVariant,
                                   ),
                                 ),
                               ],

@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_icons.dart';
 import '../../../../core/widgets/app_states.dart';
@@ -72,7 +73,7 @@ class _GoalPriorityScreenState extends ConsumerState<GoalPriorityScreen> {
         currentIndex: 3,
         onTap: (i) => goalsBottomNavTap(context, i),
       ),
-      body: SafeArea(
+      body: GlassBackdrop(child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
@@ -122,9 +123,9 @@ class _GoalPriorityScreenState extends ConsumerState<GoalPriorityScreen> {
                                               ?.copyWith(
                                             fontWeight: FontWeight.w800,
                                             color:
-                                                AppColors.textPrimary,
+                                                context.palette.onSurface,
                                           ),
-                                          children: const [
+                                          children: [
                                             TextSpan(
                                               text: AppStrings
                                                   .priorityQuestionLead,
@@ -133,7 +134,7 @@ class _GoalPriorityScreenState extends ConsumerState<GoalPriorityScreen> {
                                               text: AppStrings
                                                   .priorityQuestionAccent,
                                               style: TextStyle(
-                                                color: AppColors.primary,
+                                                color: context.palette.primary,
                                               ),
                                             ),
                                           ],
@@ -178,7 +179,7 @@ class _GoalPriorityScreenState extends ConsumerState<GoalPriorityScreen> {
                               width: double.infinity,
                               padding: const EdgeInsets.all(14),
                               decoration: BoxDecoration(
-                                color: AppColors.infoSoft,
+                                color: context.palette.secondaryContainer,
                                 borderRadius:
                                     BorderRadius.circular(16),
                               ),
@@ -241,7 +242,7 @@ class _GoalPriorityScreenState extends ConsumerState<GoalPriorityScreen> {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 }
@@ -274,16 +275,16 @@ class _PriorityCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: first ? AppColors.primarySoft : AppColors.surface,
+        color: first ? context.palette.primaryContainer : context.palette.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: first ? AppColors.primary : AppColors.border,
+          color: first ? context.palette.primary : context.palette.outlineVariant,
           width: first ? 1.5 : 1,
         ),
         boxShadow: [
           BoxShadow(
             color: first
-                ? AppColors.primary.withValues(alpha: 0.12)
+                ? context.palette.primary.withValues(alpha: 0.12)
                 : Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
@@ -298,7 +299,7 @@ class _PriorityCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: AppColors.surfaceVariant,
+              color: context.palette.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(14),
             ),
             child: GoalIcon(category: goal.category, size: 44),
@@ -406,14 +407,14 @@ class _RankNumber extends StatelessWidget {
       width: 54,
       height: 54,
       alignment: Alignment.center,
-      decoration: const BoxDecoration(
-        color: AppColors.primarySoft,
+      decoration: BoxDecoration(
+        color: context.palette.primaryContainer,
         shape: BoxShape.circle,
       ),
       child: Text(
         '$rank',
         style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: AppColors.primary,
+              color: context.palette.primary,
               fontWeight: FontWeight.w800,
               fontSize: 20,
             ),
@@ -437,23 +438,23 @@ class _RankBadgeChip extends StatelessWidget {
     switch (index) {
       case 0:
         label = AppStrings.priorityFirst;
-        foreground = AppColors.primary;
-        background = AppColors.primarySoft;
+        foreground = context.palette.primary;
+        background = context.palette.primaryContainer;
         icon = Icons.emoji_events_outlined;
       case 1:
         label = AppStrings.prioritySecond;
-        foreground = AppColors.secondary;
-        background = AppColors.infoSoft;
+        foreground = context.palette.secondary;
+        background = context.palette.secondaryContainer;
         icon = Icons.star;
       case 2:
         label = AppStrings.priorityThird;
-        foreground = AppColors.warning;
-        background = AppColors.warningSoft;
+        foreground = context.warningInk;
+        background = context.warningFill;
         icon = Icons.flag_outlined;
       default:
         label = AppStrings.priorityOthers;
-        foreground = AppColors.accentPurple;
-        background = AppColors.accentPurpleSoft;
+        foreground = context.palette.tertiary;
+        background = context.palette.tertiaryContainer;
         icon = Icons.work_outline;
     }
     return Container(
@@ -520,15 +521,15 @@ class _MoveButton extends StatelessWidget {
         errorBuilder: (context, error, stackTrace) => Container(
           width: 44,
           height: 44,
-          decoration: const BoxDecoration(
-            color: AppColors.primarySoft,
+          decoration: BoxDecoration(
+            color: context.palette.primaryContainer,
             shape: BoxShape.circle,
           ),
           child: Icon(
             up ? Icons.arrow_upward : Icons.arrow_downward,
             color: enabled
-                ? AppColors.primary
-                : AppColors.textDisabled,
+                ? context.palette.primary
+                : context.palette.onSurfaceVariant,
             size: 24,
           ),
         ),

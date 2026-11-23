@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
@@ -206,7 +208,7 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: AppColors.secondarySoft,
+                          color: context.palette.secondaryContainer,
                           shape: BoxShape.circle,
                         ),
                         child: const AppImageIcon(
@@ -227,7 +229,7 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
                         AppStrings.transferMinAccountsError,
                         textAlign: TextAlign.center,
                         style: textTheme.bodyMedium?.copyWith(
-                          color: AppColors.textSecondary,
+                          color: context.palette.onSurfaceVariant,
                         ),
                       ),
                       const SizedBox(height: 24),
@@ -296,10 +298,10 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: AppColors.primarySoft,
+                        color: context.palette.primaryContainer,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: AppColors.primary.withValues(alpha: 0.2),
+                          color: context.palette.primary.withValues(alpha: 0.2),
                         ),
                       ),
                       child: Row(
@@ -315,7 +317,7 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
                             child: Text(
                               AppStrings.transferExplanation,
                               style: textTheme.bodySmall?.copyWith(
-                                color: AppColors.textPrimary,
+                                color: context.palette.onSurface,
                               ),
                             ),
                           ),
@@ -403,7 +405,7 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
                         hintText: 'Rp 0',
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: AppColors.border),
+                          borderSide: BorderSide(color: context.palette.outlineVariant),
                         ),
                         errorText: !isBalanceSufficient && enteredAmount > 0
                             ? AppStrings.transferInsufficientBalance
@@ -424,10 +426,10 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
                         if (sourceAccount.currentBalance > 0)
                           ActionChip(
                             label: const Text('Semua Saldo'),
-                            backgroundColor: AppColors.secondarySoft,
+                            backgroundColor: context.palette.secondaryContainer,
                             labelStyle: textTheme.bodySmall?.copyWith(
                               fontWeight: FontWeight.w600,
-                              color: AppColors.primary,
+                              color: context.palette.primary,
                             ),
                             onPressed: () =>
                                 _setAmount(sourceAccount.currentBalance),
@@ -449,13 +451,13 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
                       maxLength: 255,
                       decoration: InputDecoration(
                         hintText: AppStrings.transferNotesHint,
-                        prefixIcon: const Icon(
+                        prefixIcon: Icon(
                           Icons.notes_outlined,
-                          color: AppColors.textSecondary,
+                          color: context.palette.onSurfaceVariant,
                         ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: AppColors.border),
+                          borderSide: BorderSide(color: context.palette.outlineVariant),
                         ),
                       ),
                     ),
@@ -464,11 +466,7 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
                     // Visual Ringkasan Simulasi Saldo
                     Container(
                       padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: AppColors.surface,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.border),
-                      ),
+                      decoration: Glass.panel(context, radius: BorderRadius.circular(16)),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -516,10 +514,10 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: AppColors.error.withValues(alpha: 0.1),
+                          color: context.palette.error.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: AppColors.error.withValues(alpha: 0.3),
+                            color: context.palette.error.withValues(alpha: 0.3),
                           ),
                         ),
                         child: Row(
@@ -534,7 +532,7 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
                               child: Text(
                                 _errorMessage!,
                                 style: textTheme.bodySmall?.copyWith(
-                                  color: AppColors.error,
+                                  color: context.palette.error,
                                 ),
                               ),
                             ),
@@ -571,8 +569,8 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
   Widget _buildQuickAmountChip(String label, double amount) {
     return ActionChip(
       label: Text(label),
-      backgroundColor: AppColors.surface,
-      side: const BorderSide(color: AppColors.border),
+      backgroundColor: context.palette.surface,
+      side: BorderSide(color: context.palette.outlineVariant),
       onPressed: () => _setAmount(amount),
     );
   }
@@ -603,7 +601,7 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
               Text(
                 'Saldo saat ini: ${CurrencyFormatter.formatCompact(currentBalance)}',
                 style: textTheme.bodySmall?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: context.palette.onSurfaceVariant,
                 ),
               ),
             ],
@@ -615,7 +613,7 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
             Text(
               'Menjadi',
               style: textTheme.bodySmall?.copyWith(
-                color: AppColors.textSecondary,
+                color: context.palette.onSurfaceVariant,
               ),
             ),
             Text(
@@ -623,8 +621,8 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
               style: textTheme.bodyMedium?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: isNegative
-                    ? AppColors.error
-                    : (isDeduction ? AppColors.textPrimary : AppColors.primary),
+                    ? context.palette.error
+                    : (isDeduction ? context.palette.onSurface : context.palette.primary),
               ),
             ),
           ],
@@ -669,7 +667,7 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textSecondary,
+                  color: context.palette.onSurfaceVariant,
                 ),
               ),
             ],
@@ -680,7 +678,7 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
       decoration: InputDecoration(
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.border),
+          borderSide: BorderSide(color: context.palette.outlineVariant),
         ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 14,

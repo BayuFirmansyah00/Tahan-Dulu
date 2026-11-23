@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../data/models/financial_plan.dart';
@@ -61,32 +62,32 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
       (
         asset: AppAssets.obNeeds,
         icon: Icons.home_outlined,
-        foreground: AppColors.error,
-        background: const Color(0xFFFEE2E2),
+        foreground: context.palette.error,
+        background: context.palette.errorContainer,
         label: '${AppStrings.catNeeds} (${plan.kebutuhanPokokPercent.toStringAsFixed(0)}%)',
         value: plan.kebutuhanPokok,
       ),
       (
         asset: AppAssets.obAllocFlexible,
         icon: Icons.account_balance_wallet_outlined,
-        foreground: AppColors.textPrimary,
-        background: AppColors.surfaceVariant,
+        foreground: context.palette.onSurface,
+        background: context.palette.surfaceContainerHighest,
         label: '${AppStrings.flexibleExpense} (${plan.pengeluaranBebasPercent.toStringAsFixed(0)}%)',
         value: plan.pengeluaranBebas,
       ),
       (
         asset: AppAssets.obInvestment,
         icon: Icons.show_chart_outlined,
-        foreground: AppColors.secondary,
-        background: AppColors.secondarySoft,
+        foreground: context.palette.secondary,
+        background: context.palette.secondaryContainer,
         label: '${AppStrings.investmentSaving} (${plan.investasiTabunganPercent.toStringAsFixed(0)}%)',
         value: plan.investasiTabungan,
       ),
       (
         asset: AppAssets.obEmergency,
         icon: Icons.savings_outlined,
-        foreground: AppColors.warning,
-        background: const Color(0xFFFEF3C7),
+        foreground: context.warningInk,
+        background: context.warningFill,
         label: '${AppStrings.emergencyFund} (${plan.danaDaruratPercent.toStringAsFixed(0)}%)',
         value: plan.danaDarurat,
       ),
@@ -94,15 +95,15 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
         (
           asset: AppAssets.obAllocFlexible,
           icon: Icons.pie_chart_outline,
-          foreground: AppColors.textSecondary,
-          background: AppColors.surfaceVariant,
+          foreground: context.palette.onSurfaceVariant,
+          background: context.palette.surfaceContainerHighest,
           label: '${AppStrings.unallocatedBudget} (${plan.unallocatedPercent.toStringAsFixed(0)}%)',
           value: plan.unallocated,
         ),
     ];
 
     return Scaffold(
-      body: SafeArea(
+      body: GlassBackdrop(child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
@@ -176,10 +177,10 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.info_outline,
                               size: 16,
-                              color: AppColors.textSecondary,
+                              color: context.palette.onSurfaceVariant,
                             ),
                             const SizedBox(width: 6),
                             Flexible(
@@ -249,7 +250,7 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 }
@@ -312,11 +313,12 @@ class _SafeCard extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final isDeficit = plan.safePerDay < 0;
 
+    final foreground = isDeficit ? context.palette.onError : context.palette.onPrimary;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDeficit ? AppColors.error : AppColors.primary,
+        color: isDeficit ? context.palette.error : context.palette.primary,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
@@ -325,12 +327,12 @@ class _SafeCard extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
+              color: context.palette.surface.withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
             child: Icon(
               isDeficit ? Icons.warning_amber_rounded : Icons.verified_outlined,
-              color: Colors.white,
+              color: foreground,
               size: 24,
             ),
           ),
@@ -344,7 +346,7 @@ class _SafeCard extends StatelessWidget {
                     Text(
                       AppStrings.safeToday,
                       style: textTheme.labelSmall?.copyWith(
-                        color: Colors.white.withValues(alpha: 0.85),
+                        color: foreground.withValues(alpha: 0.85),
                         fontWeight: FontWeight.w700,
                         letterSpacing: 0.8,
                       ),
@@ -357,13 +359,13 @@ class _SafeCard extends StatelessWidget {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: context.palette.surface,
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
                           AppStrings.todayDeficitBadge,
                           style: textTheme.labelSmall?.copyWith(
-                            color: AppColors.error,
+                            color: context.palette.error,
                             fontWeight: FontWeight.w700,
                             fontSize: 10,
                           ),
@@ -376,7 +378,7 @@ class _SafeCard extends StatelessWidget {
                 Text(
                   CurrencyFormatter.formatCompact(plan.safePerDay),
                   style: textTheme.headlineMedium?.copyWith(
-                    color: Colors.white,
+                    color: foreground,
                     fontSize: 22,
                     fontWeight: FontWeight.w800,
                   ),
@@ -384,7 +386,7 @@ class _SafeCard extends StatelessWidget {
                 Text(
                   '${AppStrings.safeTodayDesc} (${plan.daysRemaining} hari tersisa)',
                   style: textTheme.bodyMedium?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.85),
+                    color: foreground.withValues(alpha: 0.85),
                   ),
                 ),
               ],
@@ -409,23 +411,19 @@ class _GoalCard extends StatelessWidget {
     if (!hasGoal) {
       return Container(
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
-        ),
+        decoration: Glass.panel(context, radius: BorderRadius.circular(16)),
         child: Row(
           children: [
             Container(
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: AppColors.surfaceVariant,
+                color: context.palette.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.flag_outlined,
-                color: AppColors.textSecondary,
+                color: context.palette.onSurfaceVariant,
                 size: 24,
               ),
             ),
@@ -439,7 +437,7 @@ class _GoalCard extends StatelessWidget {
                   Text(
                     'Belum diatur (dapat dibuat kapan saja di Dashboard)',
                     style: textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textSecondary,
+                      color: context.palette.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -456,23 +454,19 @@ class _GoalCard extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
+      decoration: Glass.panel(context, radius: BorderRadius.circular(16)),
       child: Row(
         children: [
           Container(
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: AppColors.secondarySoft,
+              color: context.palette.secondaryContainer,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.shield_outlined,
-              color: AppColors.secondary,
+              color: context.palette.secondary,
               size: 24,
             ),
           ),
@@ -492,7 +486,7 @@ class _GoalCard extends StatelessWidget {
               ],
             ),
           ),
-          const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+          Icon(Icons.chevron_right, color: context.palette.onSurfaceVariant),
         ],
       ),
     );
@@ -513,10 +507,10 @@ class _RecurringCommitmentCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: hasExpenses
-            ? AppColors.surfaceVariant.withValues(alpha: 0.5)
-            : AppColors.surface,
+            ? context.palette.surfaceContainerHighest.withValues(alpha: 0.5)
+            : context.palette.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.palette.outlineVariant),
       ),
       child: Row(
         children: [
@@ -524,13 +518,13 @@ class _RecurringCommitmentCard extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: hasExpenses ? AppColors.surface : AppColors.surfaceVariant,
+              color: hasExpenses ? context.palette.surface : context.palette.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(12),
-              border: hasExpenses ? Border.all(color: AppColors.border) : null,
+              border: hasExpenses ? Border.all(color: context.palette.outlineVariant) : null,
             ),
             child: Icon(
               hasExpenses ? Icons.repeat_rounded : Icons.receipt_long_outlined,
-              color: hasExpenses ? AppColors.textPrimary : AppColors.textSecondary,
+              color: hasExpenses ? context.palette.onSurface : context.palette.onSurfaceVariant,
               size: 24,
             ),
           ),
@@ -557,7 +551,7 @@ class _RecurringCommitmentCard extends StatelessWidget {
                   Text(
                     AppStrings.recurringCommitmentDesc,
                     style: textTheme.bodySmall?.copyWith(
-                      color: AppColors.textSecondary,
+                      color: context.palette.onSurfaceVariant,
                       fontSize: 11,
                     ),
                   ),
@@ -566,7 +560,7 @@ class _RecurringCommitmentCard extends StatelessWidget {
                   Text(
                     'Belum ada pengeluaran rutin (diatur nanti)',
                     style: textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textSecondary,
+                      color: context.palette.onSurfaceVariant,
                     ),
                   ),
                 ],

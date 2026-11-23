@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/utils/date_formatter.dart';
 
 /// Pemilih periode: chevron kiri/kanan + label bulan Indonesia.
@@ -20,17 +21,13 @@ class PeriodSelector extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
-      ),
+      decoration: Glass.panel(context, radius: BorderRadius.circular(12)),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
             icon: const Icon(Icons.chevron_left),
-            color: AppColors.textPrimary,
+            color: context.palette.onSurface,
             onPressed: onPrevious,
           ),
           Flexible(
@@ -45,7 +42,7 @@ class PeriodSelector extends StatelessWidget {
           ),
           IconButton(
             icon: const Icon(Icons.chevron_right),
-            color: AppColors.textPrimary,
+            color: context.palette.onSurface,
             onPressed: onNext,
           ),
         ],
@@ -98,7 +95,7 @@ class InsightCard extends StatelessWidget {
     final content = Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.secondarySoft,
+        color: context.palette.secondaryContainer,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(

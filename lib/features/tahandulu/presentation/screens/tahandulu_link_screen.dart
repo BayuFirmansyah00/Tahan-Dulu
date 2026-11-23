@@ -3,13 +3,14 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../data/providers/app_providers.dart';
 import '../providers/tahandulu_controller.dart';
-import '../utils/tahandulu_ui.dart';
 import '../widgets/tahandulu_widgets.dart';
 
 /// Link produk: URL disimpan sebagai referensi (tanpa klaim scraping).
@@ -71,7 +72,7 @@ class _TahanDuluLinkScreenState extends ConsumerState<TahanDuluLinkScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Informasi produk berhasil dimuat dari $source!'),
-            backgroundColor: const Color(0xFF10B981),
+            backgroundColor: context.palette.primary,
             duration: const Duration(seconds: 3),
           ),
         );
@@ -156,8 +157,8 @@ class _TahanDuluLinkScreenState extends ConsumerState<TahanDuluLinkScreen> {
       bottomButton: AppButton(
         label: _isLoading ? 'Memuat info...' : AppStrings.continueAction,
         isLoading: _isLoading,
-        backgroundColor: TdColors.primary,
-        foregroundColor: TdColors.navy,
+        backgroundColor: context.palette.tertiaryContainer,
+        foregroundColor: context.palette.onSurface,
         onPressed: _isLoading ? null : _next,
       ),
       child: SingleChildScrollView(
@@ -179,20 +180,20 @@ class _TahanDuluLinkScreenState extends ConsumerState<TahanDuluLinkScreen> {
               'Tempel link produk',
               style: textTheme.headlineMedium?.copyWith(
                 fontSize: 22,
-                color: TdColors.navy,
+                color: context.palette.onSurface,
                 fontWeight: FontWeight.w800,
               ),
             ),
             const SizedBox(height: 4),
             Text(
               AppStrings.methodLinkDesc,
-              style: textTheme.bodyMedium?.copyWith(color: TdColors.slate),
+              style: textTheme.bodyMedium?.copyWith(color: context.palette.onSurfaceVariant),
             ),
             const SizedBox(height: 16),
             Text(
               AppStrings.productUrlLabel,
               style: textTheme.titleMedium?.copyWith(
-                color: TdColors.navy,
+                color: context.palette.onSurface,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -224,7 +225,7 @@ class _TahanDuluLinkScreenState extends ConsumerState<TahanDuluLinkScreen> {
             Text(
               'Contoh link:',
               style: textTheme.titleSmall?.copyWith(
-                color: TdColors.navy,
+                color: context.palette.onSurface,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -238,13 +239,13 @@ class _TahanDuluLinkScreenState extends ConsumerState<TahanDuluLinkScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 2),
                 child: Row(
                   children: [
-                    const Icon(Icons.circle, size: 6, color: TdColors.warning),
+                    Icon(Icons.circle, size: 6, color: context.warningInk),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         example,
                         style: textTheme.bodyMedium?.copyWith(
-                          color: TdColors.slate,
+                          color: context.palette.onSurfaceVariant,
                         ),
                       ),
                     ),

@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_states.dart';
 import '../../../../data/models/financial_health.dart';
@@ -46,7 +47,7 @@ class ReportHealthScreen extends ConsumerWidget {
       bottomNavigationBar: DashboardBottomNav(
         onTap: (i) => _onNav(i, context),
       ),
-      body: SafeArea(
+      body: GlassBackdrop(child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
@@ -67,7 +68,7 @@ class ReportHealthScreen extends ConsumerWidget {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 
@@ -149,8 +150,8 @@ class _Body extends StatelessWidget {
           const SizedBox(height: 12),
           InsightCard(
             icon: Icons.spa_outlined,
-            iconColor: AppColors.primary,
-            iconBackground: AppColors.primarySoft,
+            iconColor: context.palette.primary,
+            iconBackground: context.palette.primaryContainer,
             title: healthLevelLabel(health.level),
             body: insufficient
                 ? AppStrings.healthInsufficientHint
@@ -162,22 +163,17 @@ class _Body extends StatelessWidget {
           const SizedBox(height: 12),
           InsightCard(
             icon: Icons.lightbulb_outline,
-            iconColor: AppColors.secondary,
-            iconBackground: AppColors.secondarySoft,
+            iconColor: context.palette.secondary,
+            iconBackground: context.palette.secondaryContainer,
             title: AppStrings.healthInsightTitle,
             body: _insightBody(health),
-            trailing: const Icon(
+            trailing: Icon(
               Icons.chevron_right,
-              color: AppColors.textSecondary,
+              color: context.palette.onSurfaceVariant,
             ),
-            onTap: () => showModalBottomSheet(
+            onTap: () => showGlassSheet(
               context: context,
-              shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.vertical(
-                  top: Radius.circular(20),
-                ),
-              ),
-              builder: (context) => _RecommendationsSheet(
+      builder: (context) => _RecommendationsSheet(
                 health: health,
               ),
             ),
@@ -185,14 +181,9 @@ class _Body extends StatelessWidget {
           const SizedBox(height: 12),
           AppButton(
             label: AppStrings.seeRecommendations,
-            onPressed: () => showModalBottomSheet(
+            onPressed: () => showGlassSheet(
               context: context,
-              shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.vertical(
-                  top: Radius.circular(20),
-                ),
-              ),
-              builder: (context) => _RecommendationsSheet(
+      builder: (context) => _RecommendationsSheet(
                 health: health,
               ),
             ),
@@ -222,23 +213,19 @@ class _IndicatorRow extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
+      decoration: Glass.panel(context, radius: BorderRadius.circular(16)),
       child: Row(
         children: [
           Container(
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: ok ? AppColors.primarySoft : const Color(0xFFFEE2E2),
+              color: ok ? context.palette.primaryContainer : context.palette.errorContainer,
               shape: BoxShape.circle,
             ),
             child: Icon(
               ok ? Icons.check : Icons.priority_high,
-              color: ok ? AppColors.primary : AppColors.error,
+              color: ok ? context.palette.primary : context.palette.error,
               size: 18,
             ),
           ),
@@ -298,8 +285,8 @@ class _RecommendationsSheet extends StatelessWidget {
                           : Icons.info_outline,
                       size: 18,
                       color: (indicator.score ?? 0) >= 50
-                          ? AppColors.primary
-                          : AppColors.warning,
+                          ? context.palette.primary
+                          : context.warningInk,
                     ),
                     const SizedBox(width: 8),
                     Expanded(

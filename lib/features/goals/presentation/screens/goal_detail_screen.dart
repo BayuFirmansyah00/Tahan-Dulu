@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/utils/goal_math.dart';
@@ -86,7 +87,7 @@ class GoalDetailScreen extends ConsumerWidget {
         currentIndex: 3,
         onTap: (i) => goalsBottomNavTap(context, i),
       ),
-      body: SafeArea(
+      body: GlassBackdrop(child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
@@ -104,7 +105,7 @@ class GoalDetailScreen extends ConsumerWidget {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 }
@@ -311,9 +312,9 @@ class _ReachedBanner extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: AppColors.primarySoft,
+          color: context.palette.primaryContainer,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.primary),
+          border: Border.all(color: context.palette.primary),
         ),
         child: Row(
           children: [
@@ -327,7 +328,7 @@ class _ReachedBanner extends StatelessWidget {
               child: Text(
                 AppStrings.achievedBadge,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: AppColors.primary,
+                      color: context.palette.primary,
                     ),
               ),
             ),

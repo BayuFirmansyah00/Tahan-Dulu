@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_assets.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_image_icon.dart';
 import '../../../../data/models/api_bank.dart';
 import '../../../../data/providers/app_providers.dart';
@@ -34,10 +35,9 @@ class BankPickerSheet extends ConsumerStatefulWidget {
     String title = 'Pilih Bank',
     String subtitle = 'Katalog bank resmi Indonesia',
   }) {
-    return showModalBottomSheet<ApiBank>(
+    return showGlassSheet<ApiBank>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
       builder: (context) => BankPickerSheet(
         selectedBankId: selectedBankId,
         selectedBankSlug: selectedBankSlug,
@@ -115,7 +115,7 @@ class _BankPickerSheetState extends ConsumerState<BankPickerSheet> {
     final banksAsync = ref.watch(banksProvider(null));
 
     return Material(
-      color: AppColors.surface,
+      color: context.palette.surface,
       borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       clipBehavior: Clip.antiAlias,
       child: ConstrainedBox(
@@ -130,7 +130,7 @@ class _BankPickerSheetState extends ConsumerState<BankPickerSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.border,
+                color: context.palette.outlineVariant,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -148,14 +148,14 @@ class _BankPickerSheetState extends ConsumerState<BankPickerSheet> {
                           widget.title,
                           style: textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
+                            color: context.palette.onSurface,
                           ),
                         ),
                         const SizedBox(height: 2),
                         Text(
                           widget.subtitle,
                           style: textTheme.bodySmall?.copyWith(
-                            color: AppColors.textSecondary,
+                            color: context.palette.onSurfaceVariant,
                           ),
                         ),
                       ],
@@ -177,11 +177,11 @@ class _BankPickerSheetState extends ConsumerState<BankPickerSheet> {
                 decoration: InputDecoration(
                   hintText: _searchHint,
                   hintStyle: textTheme.bodyMedium?.copyWith(
-                    color: AppColors.textDisabled,
+                    color: context.palette.onSurfaceVariant,
                   ),
-                  prefixIcon: const Icon(
+                  prefixIcon: Icon(
                     Icons.search,
-                    color: AppColors.textSecondary,
+                    color: context.palette.onSurfaceVariant,
                   ),
                   suffixIcon: _searchQuery.isNotEmpty
                       ? IconButton(
@@ -193,7 +193,7 @@ class _BankPickerSheetState extends ConsumerState<BankPickerSheet> {
                         )
                       : null,
                   filled: true,
-                  fillColor: AppColors.inputFill,
+                  fillColor: context.palette.surfaceContainerHighest,
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 12,
@@ -209,7 +209,7 @@ class _BankPickerSheetState extends ConsumerState<BankPickerSheet> {
               ),
             ),
 
-            const Divider(height: 1, color: AppColors.divider),
+            Divider(height: 1, color: context.palette.outlineVariant),
 
             // Konten Daftar Bank
             Expanded(
@@ -249,7 +249,7 @@ class _BankPickerSheetState extends ConsumerState<BankPickerSheet> {
                           'Pastikan terhubung ke internet atau server backend aktif.',
                           textAlign: TextAlign.center,
                           style: textTheme.bodySmall?.copyWith(
-                            color: AppColors.textSecondary,
+                            color: context.palette.onSurfaceVariant,
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -292,16 +292,16 @@ class _BankPickerSheetState extends ConsumerState<BankPickerSheet> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.search_off,
                               size: 48,
-                              color: AppColors.textDisabled,
+                              color: context.palette.onSurfaceVariant,
                             ),
                             const SizedBox(height: 12),
                             Text(
                               _emptyTitle,
                               style: textTheme.titleMedium?.copyWith(
-                                color: AppColors.textPrimary,
+                                color: context.palette.onSurface,
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -309,7 +309,7 @@ class _BankPickerSheetState extends ConsumerState<BankPickerSheet> {
                               _emptySubtitle,
                               textAlign: TextAlign.center,
                               style: textTheme.bodySmall?.copyWith(
-                                color: AppColors.textSecondary,
+                                color: context.palette.onSurfaceVariant,
                               ),
                             ),
                           ],
@@ -331,7 +331,7 @@ class _BankPickerSheetState extends ConsumerState<BankPickerSheet> {
                               ? '${filtered.length} pilihan tersedia'
                               : '${filtered.length} hasil ditemukan',
                           style: textTheme.labelSmall?.copyWith(
-                            color: AppColors.textSecondary,
+                            color: context.palette.onSurfaceVariant,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -347,10 +347,10 @@ class _BankPickerSheetState extends ConsumerState<BankPickerSheet> {
                               vertical: 8,
                             ),
                             itemCount: filtered.length,
-                            separatorBuilder: (context, index) => const Divider(
+                            separatorBuilder: (context, index) => Divider(
                               height: 1,
                               indent: 64,
-                              color: AppColors.divider,
+                              color: context.palette.outlineVariant,
                             ),
                             itemBuilder: (context, index) {
                               final bank = filtered[index];
@@ -381,13 +381,13 @@ class _BankPickerSheetState extends ConsumerState<BankPickerSheet> {
                                     fontWeight: isSelected
                                         ? FontWeight.w700
                                         : FontWeight.w500,
-                                    color: AppColors.textPrimary,
+                                    color: context.palette.onSurface,
                                   ),
                                 ),
                                 subtitle: Text(
                                   aliasText,
                                   style: textTheme.bodySmall?.copyWith(
-                                    color: AppColors.textSecondary,
+                                    color: context.palette.onSurfaceVariant,
                                   ),
                                 ),
                                 trailing: isSelected
@@ -412,7 +412,7 @@ class _BankPickerSheetState extends ConsumerState<BankPickerSheet> {
             // Footer info lisensi
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              color: AppColors.backgroundWarm,
+              color: context.canvasColor,
               child: Row(
                 children: [
                   const AppImageIcon(
@@ -425,7 +425,7 @@ class _BankPickerSheetState extends ConsumerState<BankPickerSheet> {
                     child: Text(
                       _footerText,
                       style: textTheme.labelSmall?.copyWith(
-                        color: AppColors.textSecondary,
+                        color: context.palette.onSurfaceVariant,
                         fontSize: 11,
                       ),
                     ),

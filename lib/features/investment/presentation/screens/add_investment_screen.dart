@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_strings.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/rupiah_input_formatter.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
@@ -84,7 +85,7 @@ class _AddInvestmentScreenState extends ConsumerState<AddInvestmentScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text(AppStrings.addInvestmentTitle)),
-      body: SafeArea(
+      body: GlassBackdrop(child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
@@ -111,7 +112,7 @@ class _AddInvestmentScreenState extends ConsumerState<AddInvestmentScreen> {
                           Text(
                             AppStrings.investmentNameRequired,
                             style: textTheme.bodyMedium?.copyWith(
-                              color: AppColors.error,
+                              color: context.palette.error,
                             ),
                           ),
                         ],
@@ -145,7 +146,7 @@ class _AddInvestmentScreenState extends ConsumerState<AddInvestmentScreen> {
                           Text(
                             AppStrings.investmentAchievedRequired,
                             style: textTheme.bodyMedium?.copyWith(
-                              color: AppColors.error,
+                              color: context.palette.error,
                             ),
                           ),
                         ],
@@ -179,7 +180,7 @@ class _AddInvestmentScreenState extends ConsumerState<AddInvestmentScreen> {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 }

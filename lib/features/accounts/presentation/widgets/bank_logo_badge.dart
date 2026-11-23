@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http;
 
-import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/glass.dart';
+
 
 /// Komponen logo bank reusable untuk TahanDulu.
 ///
@@ -289,10 +290,10 @@ class BankLogoBadge extends StatelessWidget {
       width: effectiveWidth,
       height: effectiveHeight,
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.palette.surface,
         borderRadius: BorderRadius.circular(borderRadius),
         border: Border.all(
-          color: AppColors.border,
+          color: context.palette.outlineVariant,
           width: 1.0,
         ),
       ),
@@ -446,7 +447,7 @@ class _AcronymBadge extends StatelessWidget {
       width: double.infinity,
       height: double.infinity,
       decoration: BoxDecoration(
-        color: AppColors.secondarySoft,
+        color: context.palette.secondaryContainer,
         borderRadius: BorderRadius.circular(8),
       ),
       alignment: Alignment.center,
@@ -456,7 +457,7 @@ class _AcronymBadge extends StatelessWidget {
         maxLines: 1,
         overflow: TextOverflow.fade,
         style: TextStyle(
-          color: AppColors.secondary,
+          color: context.palette.secondary,
           fontWeight: FontWeight.w700,
           fontSize: fontSize,
           letterSpacing: -0.2,

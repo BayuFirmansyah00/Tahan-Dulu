@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../theme/glass.dart';
+
 export 'app_image_icon.dart';
 
 import '../constants/app_assets.dart';
@@ -227,11 +229,11 @@ class TransactionTypeIcon extends StatelessWidget {
             ? Icons.arrow_upward
             : Icons.arrow_downward,
         foreground: type == TransactionType.income
-            ? AppColors.primary
-            : AppColors.error,
+            ? context.palette.primary
+            : context.palette.error,
         background: type == TransactionType.income
-            ? AppColors.primarySoft
-            : AppColors.dangerSoft,
+            ? context.palette.primaryContainer
+            : context.palette.errorContainer,
         size: size,
       ),
     );

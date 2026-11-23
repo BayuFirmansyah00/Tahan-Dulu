@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
@@ -83,10 +85,10 @@ class NotificationsScreen extends ConsumerWidget {
     final list = ref.watch(notificationsListProvider);
 
     return Scaffold(
-      backgroundColor: NotifColors.background,
+      backgroundColor: context.canvasColor,
       appBar: AppBar(
         leading: const AppBackButton(),
-        backgroundColor: NotifColors.background,
+        backgroundColor: context.canvasColor,
         title: const Text(AppStrings.notificationsTitle),
         titleSpacing: 0,
         centerTitle: false,
@@ -120,7 +122,7 @@ class NotificationsScreen extends ConsumerWidget {
         ],
       ),
       bottomNavigationBar: DashboardBottomNav(onTap: (i) => _onNav(i, context)),
-      body: SafeArea(
+      body: GlassBackdrop(child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
@@ -165,7 +167,7 @@ class NotificationsScreen extends ConsumerWidget {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 }
@@ -186,9 +188,9 @@ class _HeroBanner extends ConsumerWidget {
       margin: const EdgeInsets.fromLTRB(20, 4, 20, 12),
       padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
       decoration: BoxDecoration(
-        color: NotifColors.hero,
+        color: context.palette.primaryContainer,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: NotifColors.heroBorder),
+        border: Border.all(color: context.palette.outlineVariant),
       ),
       child: Row(
         children: [
@@ -200,14 +202,14 @@ class _HeroBanner extends ConsumerWidget {
                   AppStrings.notifHeroTitle,
                   style: textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w800,
-                    color: NotifColors.navy,
+                    color: context.palette.onSurface,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   AppStrings.notifHeroSubtitle,
                   style: textTheme.bodyMedium?.copyWith(
-                    color: NotifColors.slate,
+                    color: context.palette.onSurfaceVariant,
                   ),
                 ),
               ],
@@ -238,17 +240,17 @@ class _BellBadge extends StatelessWidget {
           Container(
             width: 72,
             height: 72,
-            decoration: const BoxDecoration(
-              color: NotifColors.card,
+            decoration: BoxDecoration(
+              color: context.palette.surface,
               shape: BoxShape.circle,
             ),
             padding: const EdgeInsets.all(8),
             child: Image.asset(
               NotifAssets.bell,
               fit: BoxFit.contain,
-              errorBuilder: (context, error, stackTrace) => const Icon(
+              errorBuilder: (context, error, stackTrace) => Icon(
                 Icons.notifications_outlined,
-                color: NotifColors.primary,
+                color: context.palette.primary,
                 size: 36,
               ),
             ),
@@ -262,9 +264,9 @@ class _BellBadge extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 6),
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: NotifColors.primary,
+                  color: context.palette.primary,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: NotifColors.card, width: 2),
+                  border: Border.all(color: context.palette.surface, width: 2),
                 ),
                 child: Text(
                   unread > 99 ? '99+' : '$unread',
@@ -341,10 +343,10 @@ class _Tab extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 11),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: selected ? NotifColors.primary : NotifColors.card,
+          color: selected ? context.palette.primary : context.palette.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: selected ? NotifColors.primary : NotifColors.border,
+            color: selected ? context.palette.primary : context.palette.outlineVariant,
           ),
           boxShadow: selected
               ? const [
@@ -362,7 +364,7 @@ class _Tab extends StatelessWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: Theme.of(context).textTheme.labelLarge?.copyWith(
-            color: selected ? Colors.white : NotifColors.navy,
+            color: selected ? context.palette.onPrimary : context.palette.onSurface,
             fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
             fontSize: 12.5,
           ),
@@ -387,9 +389,9 @@ class _MarkAllRow extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
           decoration: BoxDecoration(
-            color: NotifColors.card,
+            color: context.palette.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: NotifColors.border),
+            border: Border.all(color: context.palette.outlineVariant),
             boxShadow: const [
               BoxShadow(
                 color: Color(0x0F102A43),
@@ -404,7 +406,7 @@ class _MarkAllRow extends StatelessWidget {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: NotifColors.chipInactive,
+                  color: context.palette.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Center(
@@ -420,7 +422,7 @@ class _MarkAllRow extends StatelessWidget {
                 child: Text(
                   AppStrings.notifMarkAllRead,
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: NotifColors.navy,
+                    color: context.palette.onSurface,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -505,7 +507,7 @@ class _GroupedList extends StatelessWidget {
                   title,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w800,
-                    color: NotifColors.navy,
+                    color: context.palette.onSurface,
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -515,7 +517,7 @@ class _GroupedList extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(
                       context,
-                    ).textTheme.bodySmall?.copyWith(color: NotifColors.slate),
+                    ).textTheme.bodySmall?.copyWith(color: context.palette.onSurfaceVariant),
                   ),
                 ),
               ],
@@ -539,7 +541,7 @@ class _NotificationCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final visual = visualForCategory(item.category);
+    final visual = visualForCategory(context, item.category);
     final openable = item.targetRoute != null && item.targetRoute!.isNotEmpty;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
@@ -549,10 +551,10 @@ class _NotificationCard extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(13),
           decoration: BoxDecoration(
-            color: NotifColors.card,
+            color: context.palette.surface,
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: item.isRead ? NotifColors.border : NotifColors.heroBorder,
+              color: item.isRead ? context.palette.outlineVariant : context.palette.primary.withValues(alpha: .38),
               width: item.isRead ? 1 : 1.5,
             ),
             boxShadow: const [
@@ -585,7 +587,7 @@ class _NotificationCard extends StatelessWidget {
                       item.title,
                       style: textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
-                        color: NotifColors.navy,
+                        color: context.palette.onSurface,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -594,7 +596,7 @@ class _NotificationCard extends StatelessWidget {
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,
                       style: textTheme.bodyMedium?.copyWith(
-                        color: NotifColors.slate,
+                        color: context.palette.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -607,7 +609,7 @@ class _NotificationCard extends StatelessWidget {
                   Text(
                     DateFormatter.hourMinute(item.createdAt),
                     style: textTheme.bodySmall?.copyWith(
-                      color: NotifColors.slate,
+                      color: context.palette.onSurfaceVariant,
                     ),
                   ),
                   const SizedBox(height: 6),

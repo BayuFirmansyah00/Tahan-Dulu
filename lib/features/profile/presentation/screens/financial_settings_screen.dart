@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/rupiah_input_formatter.dart';
@@ -136,10 +138,7 @@ class _FinancialSettingsScreenState
             child: const Text('Batal'),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.error,
-              foregroundColor: Colors.white,
-            ),
+            style: destructiveButtonStyle(context),
             onPressed: () => Navigator.of(ctx).pop(true),
             child: const Text('Ya, Batalkan'),
           ),
@@ -161,7 +160,7 @@ class _FinancialSettingsScreenState
                     ? 'Perubahan jadwal berhasil dibatalkan.'
                     : 'Gagal membatalkan jadwal perubahan.',
               ),
-              backgroundColor: ok ? AppColors.success : AppColors.error,
+              backgroundColor: ok ? context.palette.primary : context.palette.error,
             ),
           );
         }
@@ -186,13 +185,9 @@ class _FinancialSettingsScreenState
           : '',
     );
 
-    return showModalBottomSheet<_TransitionConfirmationResult>(
+    return showGlassSheet<_TransitionConfirmationResult>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setModalState) {
           return SingleChildScrollView(
@@ -211,7 +206,7 @@ class _FinancialSettingsScreenState
                     width: 44,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: AppColors.fieldBorder,
+                      color: context.palette.outlineVariant,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -222,12 +217,12 @@ class _FinancialSettingsScreenState
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: AppColors.primarySoft,
+                        color: context.palette.primaryContainer,
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.calendar_month_outlined,
-                        color: AppColors.primary,
+                        color: context.palette.primary,
                         size: 24,
                       ),
                     ),
@@ -246,7 +241,7 @@ class _FinancialSettingsScreenState
                           Text(
                             'Berlaku mulai periode berikutnya',
                             style: textTheme.bodySmall?.copyWith(
-                              color: AppColors.textSecondary,
+                              color: context.palette.onSurfaceVariant,
                             ),
                           ),
                         ],
@@ -258,9 +253,9 @@ class _FinancialSettingsScreenState
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: AppColors.backgroundWarm,
+                    color: context.canvasColor,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.fieldBorder),
+                    border: Border.all(color: context.palette.outlineVariant),
                   ),
                   child: Column(
                     children: [
@@ -286,7 +281,7 @@ class _FinancialSettingsScreenState
                           label: 'Masa Penyesuaian',
                           value:
                               '${info.transitionDays} hari (${info.transitionStart} s.d. ${info.transitionEnd})',
-                          valueColor: AppColors.warning,
+                          valueColor: context.warningInk,
                         ),
                         const Divider(height: 16),
                         _PreviewRow(
@@ -303,7 +298,7 @@ class _FinancialSettingsScreenState
                     'Batas Anggaran Masa Transisi (${info.transitionDays} Hari)',
                     style: textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
+                      color: context.palette.onSurface,
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -319,7 +314,7 @@ class _FinancialSettingsScreenState
                     Text(
                       'Saran pro-rata: Rp ${RupiahInputFormatter.format(info.suggestedTransitionBudget)}',
                       style: textTheme.bodySmall?.copyWith(
-                        color: AppColors.textSecondary,
+                        color: context.palette.onSurfaceVariant,
                         fontSize: 11.5,
                       ),
                     ),
@@ -328,16 +323,16 @@ class _FinancialSettingsScreenState
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFFFBEB),
+                      color: context.warningFill,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFFDE68A)),
+                      border: Border.all(color: context.warningFill),
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.info_outline,
-                          color: Color(0xFFD97706),
+                          color: context.warningInk,
                           size: 18,
                         ),
                         const SizedBox(width: 8),
@@ -345,7 +340,7 @@ class _FinancialSettingsScreenState
                           child: Text(
                             'Nominal ini adalah batas belanja terencana selama ${info.transitionDays} hari masa transisi, BUKAN pemotongan atau penambahan saldo rekening bank Anda.',
                             style: textTheme.bodySmall?.copyWith(
-                              color: const Color(0xFF92400E),
+                              color: context.warningInk,
                               fontSize: 12,
                             ),
                           ),
@@ -358,16 +353,16 @@ class _FinancialSettingsScreenState
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF0FDF4),
+                    color: context.palette.primaryContainer,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFBBF7D0)),
+                    border: Border.all(color: context.palette.primaryContainer),
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.verified_user_outlined,
-                        color: AppColors.primary,
+                        color: context.palette.primary,
                         size: 18,
                       ),
                       const SizedBox(width: 8),
@@ -375,7 +370,7 @@ class _FinancialSettingsScreenState
                         child: Text(
                           'Histori budget periode saat ini dan saldo rekening Anda tetap aman dan tidak berubah.',
                           style: textTheme.bodySmall?.copyWith(
-                            color: AppColors.textPrimary,
+                            color: context.palette.onSurface,
                             fontSize: 12,
                           ),
                         ),
@@ -420,13 +415,13 @@ class _FinancialSettingsScreenState
     final settingsAsync = ref.watch(financialSettingsControllerProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundWarm,
+      backgroundColor: context.canvasColor,
       appBar: AppBar(
         leading: const AppBackButton(),
         title: const Text('Pengaturan Keuangan'),
         elevation: 0,
       ),
-      body: SafeArea(
+      body: GlassBackdrop(child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
@@ -484,7 +479,7 @@ class _FinancialSettingsScreenState
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 }
@@ -502,9 +497,9 @@ class _CurrentStatusCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.palette.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.fieldBorder),
+        border: Border.all(color: context.palette.outlineVariant),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
@@ -521,7 +516,7 @@ class _CurrentStatusCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.primarySoft,
+                  color: context.palette.primaryContainer,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const AppImageIcon(
@@ -545,7 +540,7 @@ class _CurrentStatusCard extends StatelessWidget {
                     Text(
                       'Dasar perhitungan anggaran periode ini',
                       style: textTheme.bodySmall?.copyWith(
-                        color: AppColors.textSecondary,
+                        color: context.palette.onSurfaceVariant,
                         fontSize: 12,
                       ),
                     ),
@@ -559,19 +554,19 @@ class _CurrentStatusCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: const Color(0xFFFEF3C7),
+                color: context.warningFill,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFFFDE68A)),
+                border: Border.all(color: context.warningFill),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.sync_alt, size: 14, color: Color(0xFFD97706)),
+                  Icon(Icons.sync_alt, size: 14, color: context.warningInk),
                   const SizedBox(width: 6),
                   Text(
                     'Masa Penyesuaian Anggaran (Transisi)',
                     style: textTheme.bodySmall?.copyWith(
-                      color: const Color(0xFF92400E),
+                      color: context.warningInk,
                       fontWeight: FontWeight.w600,
                       fontSize: 11.5,
                     ),
@@ -608,7 +603,7 @@ class _CurrentStatusCard extends StatelessWidget {
               label: 'Batas Belanja Harian',
               value:
                   'Rp ${RupiahInputFormatter.format(active.safeDailySpending)} / hari',
-              valueColor: AppColors.primary,
+              valueColor: context.palette.primary,
               valueBold: true,
             ),
           ],
@@ -634,9 +629,9 @@ class _PendingBannerCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFBEB),
+        color: context.warningFill,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFFDE68A)),
+        border: Border.all(color: context.warningFill),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -646,12 +641,12 @@ class _PendingBannerCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFEF3C7),
+                  color: context.warningFill,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.schedule_outlined,
-                  color: Color(0xFFD97706),
+                  color: context.warningInk,
                   size: 20,
                 ),
               ),
@@ -665,13 +660,13 @@ class _PendingBannerCard extends StatelessWidget {
                       style: textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                         fontSize: 14.5,
-                        color: const Color(0xFF92400E),
+                        color: context.warningInk,
                       ),
                     ),
                     Text(
                       'Mulai berlaku: ${pending.effectiveDateFormatted ?? pending.effectiveDate}',
                       style: textTheme.bodySmall?.copyWith(
-                        color: const Color(0xFFB45309),
+                        color: context.warningInk,
                         fontSize: 12,
                       ),
                     ),
@@ -686,7 +681,7 @@ class _PendingBannerCard extends StatelessWidget {
               'Gaji Baru: ${pending.pendingMonthlyIncomeFormatted ?? 'Rp ${RupiahInputFormatter.format(pending.pendingMonthlyIncome!)}'}',
               style: textTheme.bodyMedium?.copyWith(
                 fontWeight: FontWeight.w600,
-                color: const Color(0xFF78350F),
+                color: context.warningInk,
               ),
             ),
           ],
@@ -696,7 +691,7 @@ class _PendingBannerCard extends StatelessWidget {
               'Tanggal Gajian Baru: Tanggal ${pending.pendingSalaryDay}',
               style: textTheme.bodyMedium?.copyWith(
                 fontWeight: FontWeight.w600,
-                color: const Color(0xFF78350F),
+                color: context.warningInk,
               ),
             ),
           ],
@@ -706,7 +701,7 @@ class _PendingBannerCard extends StatelessWidget {
               'Batas Anggaran Transisi: ${pending.transitionBudgetFormatted ?? 'Rp ${RupiahInputFormatter.format(pending.transitionBudget!)}'}',
               style: textTheme.bodyMedium?.copyWith(
                 fontWeight: FontWeight.w600,
-                color: const Color(0xFF78350F),
+                color: context.warningInk,
               ),
             ),
           ],
@@ -716,14 +711,14 @@ class _PendingBannerCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.8),
+                color: context.palette.surface.withValues(alpha: 0.8),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFFDE68A)),
+                border: Border.all(color: context.warningFill),
               ),
               child: Text(
                 pending.transitionInfo!.note,
                 style: textTheme.bodySmall?.copyWith(
-                  color: const Color(0xFF92400E),
+                  color: context.warningInk,
                   fontSize: 12,
                 ),
               ),
@@ -734,8 +729,8 @@ class _PendingBannerCard extends StatelessWidget {
             alignment: Alignment.centerRight,
             child: OutlinedButton.icon(
               style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.error,
-                side: const BorderSide(color: AppColors.error),
+                foregroundColor: context.palette.error,
+                side: BorderSide(color: context.palette.error),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -775,9 +770,9 @@ class _ChangeScheduleCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.palette.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.fieldBorder),
+        border: Border.all(color: context.palette.outlineVariant),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
@@ -802,7 +797,7 @@ class _ChangeScheduleCard extends StatelessWidget {
             Text(
               'Atur penghasilan bulanan terencana dan tanggal gajian untuk siklus periode berikutnya.',
               style: textTheme.bodySmall?.copyWith(
-                color: AppColors.textSecondary,
+                color: context.palette.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 16),
@@ -828,22 +823,22 @@ class _ChangeScheduleCard extends StatelessWidget {
               'Tanggal Gajian Baru',
               style: textTheme.bodyMedium?.copyWith(
                 fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+                color: context.palette.onSurface,
               ),
             ),
             const SizedBox(height: 6),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
               decoration: BoxDecoration(
-                color: AppColors.fieldFill,
+                color: context.palette.surface,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppColors.fieldBorder),
+                border: Border.all(color: context.palette.outlineVariant),
               ),
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<int>(
                   value: selectedSalaryDay,
                   isExpanded: true,
-                  icon: const Icon(Icons.arrow_drop_down, color: AppColors.textSecondary),
+                  icon: Icon(Icons.arrow_drop_down, color: context.palette.onSurfaceVariant),
                   items: List.generate(31, (index) {
                     final day = index + 1;
                     return DropdownMenuItem<int>(
@@ -851,7 +846,7 @@ class _ChangeScheduleCard extends StatelessWidget {
                       child: Text(
                         'Tanggal $day',
                         style: textTheme.bodyMedium?.copyWith(
-                          color: AppColors.textPrimary,
+                          color: context.palette.onSurface,
                         ),
                       ),
                     );
@@ -864,16 +859,16 @@ class _ChangeScheduleCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
+                color: context.canvasColor,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
+                border: Border.all(color: context.palette.outlineVariant),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.info_outline,
-                    color: AppColors.secondary,
+                    color: context.palette.secondary,
                     size: 18,
                   ),
                   const SizedBox(width: 8),
@@ -881,7 +876,7 @@ class _ChangeScheduleCard extends StatelessWidget {
                     child: Text(
                       'Perubahan ini tidak membuat transaksi pemasukan baru dan tidak memodifikasi saldo rekening Anda. Rencana baru aktif otomatis pada periode berikutnya.',
                       style: textTheme.bodySmall?.copyWith(
-                        color: AppColors.textSecondary,
+                        color: context.palette.onSurfaceVariant,
                         fontSize: 12,
                       ),
                     ),
@@ -923,7 +918,7 @@ class _DetailRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 18, color: AppColors.textSecondary),
+        Icon(icon, size: 18, color: context.palette.onSurfaceVariant),
         const SizedBox(width: 8),
         Expanded(
           child: Column(
@@ -932,7 +927,7 @@ class _DetailRow extends StatelessWidget {
               Text(
                 label,
                 style: textTheme.bodySmall?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: context.palette.onSurfaceVariant,
                   fontSize: 12,
                 ),
               ),
@@ -941,7 +936,7 @@ class _DetailRow extends StatelessWidget {
                 value,
                 style: textTheme.bodyMedium?.copyWith(
                   fontWeight: valueBold ? FontWeight.w700 : FontWeight.w500,
-                  color: valueColor ?? AppColors.textPrimary,
+                  color: valueColor ?? context.palette.onSurface,
                 ),
               ),
             ],
@@ -974,14 +969,14 @@ class _PreviewRow extends StatelessWidget {
         Text(
           label,
           style: textTheme.bodySmall?.copyWith(
-            color: AppColors.textSecondary,
+            color: context.palette.onSurfaceVariant,
           ),
         ),
         Text(
           value,
           style: textTheme.bodyMedium?.copyWith(
             fontWeight: highlight ? FontWeight.w700 : FontWeight.w500,
-            color: valueColor ?? AppColors.textPrimary,
+            color: valueColor ?? context.palette.onSurface,
           ),
         ),
       ],

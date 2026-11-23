@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../presentation/providers/onboarding_status_provider.dart';
 
@@ -109,7 +110,7 @@ class _OnboardingInvitationDialog extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return AlertDialog(
-      backgroundColor: AppColors.surface,
+      backgroundColor: context.palette.surface,
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(24),
@@ -117,14 +118,14 @@ class _OnboardingInvitationDialog extends StatelessWidget {
       icon: Container(
         width: 64,
         height: 64,
-        decoration: const BoxDecoration(
-          color: AppColors.primarySoft,
+        decoration: BoxDecoration(
+          color: context.palette.primaryContainer,
           shape: BoxShape.circle,
         ),
-        child: const Icon(
+        child: Icon(
           Icons.account_balance_wallet_outlined,
           size: 32,
-          color: AppColors.primary,
+          color: context.palette.primary,
         ),
       ),
       title: Text(
@@ -132,14 +133,14 @@ class _OnboardingInvitationDialog extends StatelessWidget {
         textAlign: TextAlign.center,
         style: textTheme.headlineSmall?.copyWith(
           fontWeight: FontWeight.w800,
-          color: AppColors.textPrimary,
+          color: context.palette.onSurface,
         ),
       ),
       content: Text(
         AppStrings.onboardingPopupDescription,
         textAlign: TextAlign.center,
         style: textTheme.bodyMedium?.copyWith(
-          color: AppColors.textSecondary,
+          color: context.palette.onSurfaceVariant,
           height: 1.5,
         ),
       ),

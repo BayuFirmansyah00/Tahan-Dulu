@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_image_icon.dart';
 import '../utils/account_security_dialogs.dart';
 import '../utils/profile_ui.dart';
@@ -15,13 +16,13 @@ class PrivacyScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundWarm,
+      backgroundColor: context.canvasColor,
       appBar: AppBar(
         leading: const AppBackButton(),
         title: const Text(AppStrings.privacyTitle),
         flexibleSpace: const AppBarMintCorner(),
       ),
-      body: SafeArea(
+      body: GlassBackdrop(child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
@@ -41,8 +42,8 @@ class PrivacyScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 8),
                   SettingsMenuRow(
-                    iconForeground: AppColors.secondary,
-                    iconBackground: AppColors.secondarySoft,
+                    iconForeground: context.palette.secondary,
+                    iconBackground: context.palette.secondaryContainer,
                     asset: AppAssets.setPrivacyPolicy,
                     title: AppStrings.privacyPolicy,
                     description: AppStrings.privacyPolicyDesc,
@@ -54,8 +55,8 @@ class PrivacyScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 8),
                   SettingsMenuRow(
-                    iconForeground: AppColors.error,
-                    iconBackground: const Color(0xFFFEE2E2),
+                    iconForeground: context.palette.error,
+                    iconBackground: context.palette.errorContainer,
                     asset: AppAssets.setDataUsage,
                     title: AppStrings.privacyDataUsage,
                     description: AppStrings.privacyDataUsageDesc,
@@ -67,11 +68,11 @@ class PrivacyScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 8),
                   SettingsMenuRow(
-                    iconForeground: AppColors.error,
-                    iconBackground: const Color(0xFFFEE2E2),
+                    iconForeground: context.palette.error,
+                    iconBackground: context.palette.errorContainer,
                     asset: AppAssets.setDeleteAccount,
                     title: AppStrings.privacyDelete,
-                    titleColor: AppColors.error,
+                    titleColor: context.palette.error,
                     description: AppStrings.privacyDeleteDesc,
                     onTap: () => showDeleteAccountFlow(context, ref),
                   ),
@@ -86,7 +87,7 @@ class PrivacyScreen extends ConsumerWidget {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 }

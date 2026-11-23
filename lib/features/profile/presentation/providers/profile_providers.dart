@@ -145,8 +145,12 @@ class AppPreferencesController extends Notifier<AppPreferences> {
   Future<void> setTheme(AppThemeChoice theme) async {
     final key = _scopedKey('app_prefs_theme');
     state = state.copyWith(theme: theme);
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(key, theme.name);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(key, theme.name);
+    } on Exception {
+      // Pilihan tetap aktif untuk sesi ini bila penyimpanan lokal tidak tersedia.
+    }
   }
 
   Future<void> setReduceMotion(bool value) async {

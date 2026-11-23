@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
@@ -204,7 +206,7 @@ class _GoalEditScreenState extends ConsumerState<GoalEditScreen> {
         currentIndex: 3,
         onTap: (i) => goalsBottomNavTap(context, i),
       ),
-      body: SafeArea(
+      body: GlassBackdrop(child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
@@ -379,7 +381,7 @@ class _GoalEditScreenState extends ConsumerState<GoalEditScreen> {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 }

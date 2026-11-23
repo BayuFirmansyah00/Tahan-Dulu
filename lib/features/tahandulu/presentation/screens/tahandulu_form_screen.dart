@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/rupiah_input_formatter.dart';
@@ -102,12 +104,9 @@ class _TahanDuluFormScreenState extends ConsumerState<TahanDuluFormScreen> {
   }
 
   void _showPhotoOptions() {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+      scrollContent: true,
       builder: (ctx) => SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
@@ -120,17 +119,17 @@ class _TahanDuluFormScreenState extends ConsumerState<TahanDuluFormScreen> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE2E8F0),
+                    color: context.palette.outlineVariant,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 'Foto Produk',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: Color(0xFF102A43),
+                  color: context.palette.onSurface,
                   fontSize: 17,
                   fontWeight: FontWeight.w700,
                 ),
@@ -140,10 +139,10 @@ class _TahanDuluFormScreenState extends ConsumerState<TahanDuluFormScreen> {
                 leading: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEFF6FF),
+                    color: context.palette.secondaryContainer,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.camera_alt_outlined, color: Color(0xFF2563EB)),
+                  child: Icon(Icons.camera_alt_outlined, color: context.palette.secondary),
                 ),
                 title: const Text('Ambil Foto Baru (Kamera)', style: TextStyle(fontWeight: FontWeight.w600)),
                 onTap: () {
@@ -156,10 +155,10 @@ class _TahanDuluFormScreenState extends ConsumerState<TahanDuluFormScreen> {
                 leading: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF3E8FF),
+                    color: context.palette.tertiaryContainer,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.photo_library_outlined, color: Color(0xFF9333EA)),
+                  child: Icon(Icons.photo_library_outlined, color: context.palette.tertiary),
                 ),
                 title: const Text('Pilih dari Galeri', style: TextStyle(fontWeight: FontWeight.w600)),
                 onTap: () {
@@ -173,7 +172,7 @@ class _TahanDuluFormScreenState extends ConsumerState<TahanDuluFormScreen> {
                   leading: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFEE2E2),
+                      color: context.palette.errorContainer,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Icon(Icons.delete_outline, color: Colors.redAccent),
@@ -232,8 +231,8 @@ class _TahanDuluFormScreenState extends ConsumerState<TahanDuluFormScreen> {
       title: AppStrings.addItemTitle,
       bottomButton: AppButton(
         label: AppStrings.analyzeAction,
-        backgroundColor: TdColors.primary,
-        foregroundColor: TdColors.navy,
+        backgroundColor: context.palette.tertiaryContainer,
+        foregroundColor: context.palette.onSurface,
         isLoading: _saving,
         onPressed: _saving ? null : _analyze,
       ),
@@ -251,7 +250,7 @@ class _TahanDuluFormScreenState extends ConsumerState<TahanDuluFormScreen> {
                     width: double.infinity,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: TdColors.border),
+                      border: Border.all(color: context.palette.outlineVariant),
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(16),
@@ -269,17 +268,17 @@ class _TahanDuluFormScreenState extends ConsumerState<TahanDuluFormScreen> {
                     child: Row(
                       children: [
                         Material(
-                          color: Colors.white.withValues(alpha: 0.9),
+                          color: context.palette.surface.withValues(alpha: 0.9),
                           shape: const CircleBorder(),
                           child: IconButton(
                             tooltip: 'Ganti Foto',
-                            icon: const Icon(Icons.edit_outlined, size: 20, color: Color(0xFF102A43)),
+                            icon: Icon(Icons.edit_outlined, size: 20, color: context.palette.onSurface),
                             onPressed: _showPhotoOptions,
                           ),
                         ),
                         const SizedBox(width: 6),
                         Material(
-                          color: Colors.white.withValues(alpha: 0.9),
+                          color: context.palette.surface.withValues(alpha: 0.9),
                           shape: const CircleBorder(),
                           child: IconButton(
                             tooltip: 'Hapus Foto',
@@ -301,21 +300,21 @@ class _TahanDuluFormScreenState extends ConsumerState<TahanDuluFormScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: context.palette.surface,
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                    border: Border.all(color: context.palette.outlineVariant),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.add_a_photo_outlined, size: 20, color: Color(0xFF2563EB)),
+                      Icon(Icons.add_a_photo_outlined, size: 20, color: context.palette.secondary),
                       SizedBox(width: 8),
                       Flexible(
                         child: Text(
                           'Tambah Foto Produk (Opsional)',
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            color: Color(0xFF2563EB),
+                            color: context.palette.secondary,
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
                           ),
@@ -335,13 +334,13 @@ class _TahanDuluFormScreenState extends ConsumerState<TahanDuluFormScreen> {
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: draft.priceRequiresConfirmation
-                      ? const Color(0xFFFFFBEB)
-                      : const Color(0xFFEFF6FF),
+                      ? context.warningFill
+                      : context.palette.secondaryContainer,
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
                     color: draft.priceRequiresConfirmation
-                        ? const Color(0xFFFDE68A)
-                        : const Color(0xFFBFDBFE),
+                        ? context.warningFill
+                        : context.palette.secondaryContainer,
                   ),
                 ),
                 child: Row(
@@ -353,8 +352,8 @@ class _TahanDuluFormScreenState extends ConsumerState<TahanDuluFormScreen> {
                           : Icons.verified_outlined,
                       size: 20,
                       color: draft.priceRequiresConfirmation
-                          ? const Color(0xFFD97706)
-                          : const Color(0xFF2563EB),
+                          ? context.warningInk
+                          : context.palette.secondary,
                     ),
                     const SizedBox(width: 10),
                     Expanded(
@@ -366,16 +365,16 @@ class _TahanDuluFormScreenState extends ConsumerState<TahanDuluFormScreen> {
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                               margin: const EdgeInsets.only(bottom: 4),
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: context.palette.surface,
                                 borderRadius: BorderRadius.circular(6),
-                                border: Border.all(color: const Color(0xFFE2E8F0)),
+                                border: Border.all(color: context.palette.outlineVariant),
                               ),
                               child: Text(
                                 draft.marketplace!,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,
-                                  color: Color(0xFF102A43),
+                                  color: context.palette.onSurface,
                                 ),
                               ),
                             ),
@@ -385,8 +384,8 @@ class _TahanDuluFormScreenState extends ConsumerState<TahanDuluFormScreen> {
                               style: TextStyle(
                                 fontSize: 12.5,
                                 color: draft.priceRequiresConfirmation
-                                    ? const Color(0xFF92400E)
-                                    : const Color(0xFF1E40AF),
+                                    ? context.warningInk
+                                    : context.palette.secondary,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -395,9 +394,9 @@ class _TahanDuluFormScreenState extends ConsumerState<TahanDuluFormScreen> {
                               padding: const EdgeInsets.only(top: 2),
                               child: Text(
                                 'Harga Asli: Rp ${RupiahInputFormatter.format(draft.originalPrice!)} (Diskon Terdeteksi)',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 11.5,
-                                  color: Color(0xFF64748B),
+                                  color: context.palette.onSurfaceVariant,
                                   decoration: TextDecoration.lineThrough,
                                 ),
                               ),
@@ -436,7 +435,7 @@ class _TahanDuluFormScreenState extends ConsumerState<TahanDuluFormScreen> {
             Text(
               AppStrings.productCategoryLabel,
               style: textTheme.titleMedium?.copyWith(
-                color: TdColors.navy,
+                color: context.palette.onSurface,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -504,10 +503,10 @@ class _CategoryTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
-          color: selected ? TdColors.highlight : TdColors.card,
+          color: selected ? context.palette.tertiaryContainer : context.palette.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: selected ? TdColors.primary : TdColors.border,
+            color: selected ? context.palette.tertiaryContainer : context.palette.outlineVariant,
             width: selected ? 2 : 1,
           ),
         ),
@@ -521,7 +520,7 @@ class _CategoryTile extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: selected ? TdColors.navy : TdColors.slate,
+                  color: selected ? context.palette.onSurface : context.palette.onSurfaceVariant,
                   fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                 ),
               ),

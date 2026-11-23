@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/utils/rupiah_input_formatter.dart';
@@ -174,7 +175,7 @@ class _TransactionFormScreenState
         leading: const AppBackButton(),
         title: const Text(AppStrings.addTransaction),
       ),
-      body: SafeArea(
+      body: GlassBackdrop(child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
@@ -337,7 +338,7 @@ class _TransactionFormScreenState
                         Text(
                           AppStrings.txFeeHelper,
                           style: textTheme.bodySmall?.copyWith(
-                            color: AppColors.textSecondary,
+                            color: context.palette.onSurfaceVariant,
                           ),
                         ),
                         if (_attempted && !draft.isNetValid) ...[
@@ -369,7 +370,7 @@ class _TransactionFormScreenState
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 }
@@ -395,10 +396,10 @@ class _TypeChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 10),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary : Colors.transparent,
+          color: selected ? context.palette.primary : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: selected ? AppColors.primary : AppColors.border,
+            color: selected ? context.palette.primary : context.palette.outlineVariant,
           ),
         ),
         child: Row(
@@ -413,8 +414,8 @@ class _TypeChip extends StatelessWidget {
                 style:
                     Theme.of(context).textTheme.titleMedium?.copyWith(
                           color: selected
-                              ? Colors.white
-                              : AppColors.textPrimary,
+                              ? context.palette.onPrimary
+                              : context.palette.onSurface,
                         ),
               ),
             ),
@@ -445,11 +446,11 @@ class _CategoryTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
           color: selected
-              ? AppColors.primarySoft
+              ? context.palette.primaryContainer
               : Colors.transparent,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: selected ? AppColors.primary : AppColors.border,
+            color: selected ? context.palette.primary : context.palette.outlineVariant,
             width: selected ? 1.5 : 1,
           ),
         ),
@@ -479,8 +480,8 @@ class _CategoryTile extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.labelLarge?.copyWith(
                     color: selected
-                        ? AppColors.primary
-                        : AppColors.textPrimary,
+                        ? context.palette.primary
+                        : context.palette.onSurface,
                   ),
             ),
           ],
@@ -504,9 +505,9 @@ class _DateBox extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: AppColors.inputFill,
+          color: context.palette.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: context.palette.outlineVariant),
         ),
         child: Row(
           children: [
@@ -585,15 +586,11 @@ class _TotalPreview extends StatelessWidget {
     final isIncome = draft.type == TransactionType.income;
     final label =
         isIncome ? AppStrings.feeTotalIn : AppStrings.feeTotalOut;
-    final color = isIncome ? AppColors.primary : AppColors.error;
+    final color = isIncome ? context.palette.primary : context.palette.error;
     final sign = isIncome ? '+' : '-';
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
+      decoration: Glass.panel(context, radius: BorderRadius.circular(16)),
       child: Row(
         children: [
           Expanded(
@@ -642,11 +639,11 @@ class _SourceInfoBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final isVoice = draft.source == TransactionInputSource.voice;
     final accentColor =
-        isVoice ? const Color(0xFF8B5CF6) : const Color(0xFFF59E0B);
+        isVoice ? context.palette.tertiary : const Color(0xFFF59E0B);
     final bgColor =
-        isVoice ? const Color(0xFFF5F3FF) : const Color(0xFFFFFBEB);
+        isVoice ? context.palette.tertiaryContainer : context.warningFill;
     final borderColor =
-        isVoice ? const Color(0xFFDDD6FE) : const Color(0xFFFDE68A);
+        isVoice ? context.palette.tertiaryContainer : context.warningFill;
     final title =
         isVoice ? 'Data Terisi dari Input Suara' : 'Data Terisi dari Scan Struk';
     final icon = isVoice ? Icons.mic_rounded : Icons.receipt_long_rounded;
@@ -664,7 +661,7 @@ class _SourceInfoBanner extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: context.palette.surface,
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
@@ -685,8 +682,8 @@ class _SourceInfoBanner extends StatelessWidget {
                   title,
                   style: TextStyle(
                     color: isVoice
-                        ? const Color(0xFF5B21B6)
-                        : const Color(0xFF92400E),
+                        ? context.palette.tertiary
+                        : context.warningInk,
                     fontWeight: FontWeight.w700,
                     fontSize: 13.5,
                   ),
@@ -697,8 +694,8 @@ class _SourceInfoBanner extends StatelessWidget {
                       'Pastikan nominal, kategori, dan rekening sesuai sebelum menekan Periksa Transaksi.',
                   style: TextStyle(
                     color: isVoice
-                        ? const Color(0xFF6D28D9)
-                        : const Color(0xFFB45309),
+                        ? context.palette.tertiary
+                        : context.warningInk,
                     fontSize: 12,
                     height: 1.35,
                   ),

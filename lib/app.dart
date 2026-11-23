@@ -8,6 +8,7 @@ import 'core/constants/app_constants.dart';
 import 'core/routing/app_router.dart';
 import 'core/services/fcm_service.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/glass.dart';
 import 'features/auth/presentation/providers/auth_controller.dart';
 import 'features/profile/presentation/providers/profile_providers.dart';
 
@@ -56,18 +57,24 @@ class _TahanDuluAppState extends ConsumerState<TahanDuluApp> {
     });
 
     final router = ref.watch(goRouterProvider);
-    final reduceMotion = ref.watch(appPreferencesProvider.select((p) => p.reduceMotion));
+    final reduceMotion = ref.watch(
+      appPreferencesProvider.select((p) => p.reduceMotion),
+    );
     return MaterialApp.router(
       title: AppConstants.appName,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
-      themeAnimationDuration: reduceMotion ? Duration.zero : kThemeAnimationDuration,
+      themeAnimationDuration: reduceMotion
+          ? Duration.zero
+          : kThemeAnimationDuration,
       builder: (context, child) {
         final media = MediaQuery.of(context);
         return MediaQuery(
-          data: media.copyWith(disableAnimations: media.disableAnimations || reduceMotion),
-          child: child!,
+          data: media.copyWith(
+            disableAnimations: media.disableAnimations || reduceMotion,
+          ),
+          child: GlassQualityController(child: child!),
         );
       },
       themeMode: ref.watch(themeModeProvider),

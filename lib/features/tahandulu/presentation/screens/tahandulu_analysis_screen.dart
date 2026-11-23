@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
@@ -33,8 +35,8 @@ class TahanDuluAnalysisScreen extends ConsumerWidget {
       title: AppStrings.reviewFirstTitle,
       bottomButton: AppButton(
         label: AppStrings.simulateImpactAction,
-        backgroundColor: TdColors.primary,
-        foregroundColor: TdColors.navy,
+        backgroundColor: context.palette.tertiaryContainer,
+        foregroundColor: context.palette.onSurface,
         onPressed: () =>
             context.push('${AppRoutes.tahanDulu}/$itemId/simulate'),
       ),
@@ -51,7 +53,7 @@ class TahanDuluAnalysisScreen extends ConsumerWidget {
               children: [
                 Text(
                   AppStrings.reviewFirstSubtitle,
-                  style: textTheme.bodyMedium?.copyWith(color: TdColors.slate),
+                  style: textTheme.bodyMedium?.copyWith(color: context.palette.onSurfaceVariant),
                 ),
                 const SizedBox(height: 12),
                 if (a.isBridgeMode) ...[
@@ -62,16 +64,16 @@ class TahanDuluAnalysisScreen extends ConsumerWidget {
                       vertical: 10,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEFF6FF),
+                      color: context.palette.secondaryContainer,
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: const Color(0xFFBFDBFE)),
+                      border: Border.all(color: context.palette.secondaryContainer),
                     ),
                     child: Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.info_outline,
                           size: 20,
-                          color: Color(0xFF1D4ED8),
+                          color: context.palette.secondary,
                         ),
                         const SizedBox(width: 8),
                         Expanded(
@@ -79,7 +81,7 @@ class TahanDuluAnalysisScreen extends ConsumerWidget {
                             a.bridgeModeNotice ??
                                 'Periode Transisi (Bridge Mode) aktif dengan plafon anggaran transisi.',
                             style: textTheme.bodySmall?.copyWith(
-                              color: const Color(0xFF1E40AF),
+                              color: context.palette.secondary,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -105,7 +107,7 @@ class TahanDuluAnalysisScreen extends ConsumerWidget {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: textTheme.titleMedium?.copyWith(
-                                color: TdColors.navy,
+                                color: context.palette.onSurface,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
@@ -113,7 +115,7 @@ class TahanDuluAnalysisScreen extends ConsumerWidget {
                               CurrencyFormatter.formatCompact(a.item.price),
                               style: textTheme.headlineMedium?.copyWith(
                                 fontSize: 22,
-                                color: TdColors.navy,
+                                color: context.palette.onSurface,
                                 fontWeight: FontWeight.w800,
                               ),
                             ),
@@ -124,13 +126,13 @@ class TahanDuluAnalysisScreen extends ConsumerWidget {
                                 vertical: 2,
                               ),
                               decoration: BoxDecoration(
-                                color: TdColors.highlight,
+                                color: context.palette.tertiaryContainer,
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Text(
                                 productCategoryLabel(a.item.category),
                                 style: textTheme.labelSmall?.copyWith(
-                                  color: TdColors.navy,
+                                  color: context.palette.onSurface,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -146,9 +148,9 @@ class TahanDuluAnalysisScreen extends ConsumerWidget {
                   width: double.infinity,
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: TdColors.creamCard,
+                    color: context.palette.tertiaryContainer,
                     borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: TdColors.border),
+                    border: Border.all(color: context.palette.outlineVariant),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -172,7 +174,7 @@ class TahanDuluAnalysisScreen extends ConsumerWidget {
                                       child: Text(
                                         AppStrings.flexibleBudgetLabel,
                                         style: textTheme.bodySmall?.copyWith(
-                                          color: TdColors.slate,
+                                          color: context.palette.onSurfaceVariant,
                                         ),
                                       ),
                                     ),
@@ -182,7 +184,7 @@ class TahanDuluAnalysisScreen extends ConsumerWidget {
                                 Text(
                                   CurrencyFormatter.formatCompact(a.flexible),
                                   style: textTheme.titleLarge?.copyWith(
-                                    color: TdColors.navy,
+                                    color: context.palette.onSurface,
                                     fontWeight: FontWeight.w800,
                                   ),
                                 ),
@@ -192,7 +194,7 @@ class TahanDuluAnalysisScreen extends ConsumerWidget {
                           Container(
                             width: 1,
                             height: 38,
-                            color: TdColors.border,
+                            color: context.palette.outlineVariant,
                           ),
                           const SizedBox(width: 12),
                           Expanded(
@@ -211,7 +213,7 @@ class TahanDuluAnalysisScreen extends ConsumerWidget {
                                       child: Text(
                                         a.hasCashLegacy ? 'Saldo Siap Pakai' : 'Total Saldo Rekening',
                                         style: textTheme.bodySmall?.copyWith(
-                                          color: TdColors.slate,
+                                          color: context.palette.onSurfaceVariant,
                                         ),
                                       ),
                                     ),
@@ -226,8 +228,8 @@ class TahanDuluAnalysisScreen extends ConsumerWidget {
                                       : 'Belum Ada',
                                   style: textTheme.titleLarge?.copyWith(
                                     color: a.hasAccounts
-                                        ? TdColors.navy
-                                        : TdColors.slate,
+                                        ? context.palette.onSurface
+                                        : context.palette.onSurfaceVariant,
                                     fontWeight: FontWeight.w800,
                                   ),
                                 ),
@@ -242,7 +244,7 @@ class TahanDuluAnalysisScreen extends ConsumerWidget {
                           '${AppStrings.usesBudgetPrefix} $percent% '
                           '${AppStrings.budgetSuffixNote}',
                           style: textTheme.bodyMedium?.copyWith(
-                            color: TdColors.navy,
+                            color: context.palette.onSurface,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -252,7 +254,7 @@ class TahanDuluAnalysisScreen extends ConsumerWidget {
                         Text(
                           AppStrings.safeEstimateDisclaimer,
                           style: textTheme.bodyMedium?.copyWith(
-                            color: TdColors.slate,
+                            color: context.palette.onSurfaceVariant,
                           ),
                         ),
                       if (a.monthlyAdminFees > 0 || a.recurringExpenses > 0) ...[
@@ -264,16 +266,16 @@ class TahanDuluAnalysisScreen extends ConsumerWidget {
                             vertical: 8,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.7),
+                            color: context.palette.surface.withValues(alpha: 0.7),
                             borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: TdColors.border),
+                            border: Border.all(color: context.palette.outlineVariant),
                           ),
                           child: Row(
                             children: [
-                              const Icon(
+                              Icon(
                                 Icons.event_note_outlined,
                                 size: 16,
-                                color: TdColors.slate,
+                                color: context.palette.onSurfaceVariant,
                               ),
                               const SizedBox(width: 6),
                               Expanded(
@@ -283,7 +285,7 @@ class TahanDuluAnalysisScreen extends ConsumerWidget {
                                   '${a.recurringExpenses > 0 ? "Rutin (${CurrencyFormatter.formatCompact(a.recurringExpenses)}) " : ""}'
                                   'tercatat terpisah & tidak memotong saldo langsung.',
                                   style: textTheme.labelSmall?.copyWith(
-                                    color: TdColors.slate,
+                                    color: context.palette.onSurfaceVariant,
                                     fontSize: 11,
                                   ),
                                 ),
@@ -303,24 +305,24 @@ class TahanDuluAnalysisScreen extends ConsumerWidget {
                             vertical: 8,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFFF3CD),
+                            color: context.warningFill,
                             borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: const Color(0xFFFFEEBA)),
+                            border: Border.all(color: context.warningFill),
                           ),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Icon(
+                              Icon(
                                 Icons.warning_amber_rounded,
                                 size: 16,
-                                color: Color(0xFF856404),
+                                color: context.warningInk,
                               ),
                               const SizedBox(width: 6),
                               Expanded(
                                 child: Text(
                                   'Saldo mencukupi di total aset, namun ${CurrencyFormatter.formatCompact(a.cashLegacyBalance)} berada di akun Uang Tunai lama. Rekonsiliasi ke rekening bank/e-wallet untuk siap transaksi.',
                                   style: textTheme.labelSmall?.copyWith(
-                                    color: const Color(0xFF856404),
+                                    color: context.warningInk,
                                     fontSize: 11,
                                     height: 1.3,
                                   ),
@@ -363,21 +365,21 @@ class _RecommendationBanner extends StatelessWidget {
     final IconData icon;
 
     if (analysis.isReady) {
-      bg = TdColors.successBg;
-      border = TdColors.success.withValues(alpha: 0.35);
-      textColor = const Color(0xFF166534);
+      bg = context.palette.primaryContainer;
+      border = context.palette.primary.withValues(alpha: 0.35);
+      textColor = context.palette.primary;
       assetPath = AppAssets.statusSuccess;
       icon = Icons.check_circle_outline;
     } else if (analysis.isPostpone) {
-      bg = TdColors.dangerBg;
-      border = TdColors.danger.withValues(alpha: 0.35);
-      textColor = const Color(0xFF991B1B);
+      bg = context.palette.errorContainer;
+      border = context.palette.error.withValues(alpha: 0.35);
+      textColor = context.palette.error;
       assetPath = AppAssets.statusError;
       icon = Icons.error_outline;
     } else {
-      bg = TdColors.warningBg;
-      border = TdColors.warning.withValues(alpha: 0.35);
-      textColor = const Color(0xFF854D0E);
+      bg = context.warningFill;
+      border = context.warningInk.withValues(alpha: 0.35);
+      textColor = context.warningInk;
       assetPath = AppAssets.statusWarning;
       icon = Icons.warning_amber_outlined;
     }
@@ -418,7 +420,7 @@ class _RecommendationBanner extends StatelessWidget {
                           ? 'Budget dan saldo mencukupi untuk pembelian ini.'
                           : 'Pertimbangkan kembali sebelum memutuskan membeli.'),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: TdColors.navy,
+                        color: context.palette.onSurface,
                         height: 1.3,
                       ),
                 ),
@@ -442,11 +444,11 @@ class _BurdenBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final Color color;
     if (share < 0.3) {
-      color = TdColors.success;
+      color = context.palette.primary;
     } else if (share < 0.7) {
-      color = TdColors.warning;
+      color = context.warningInk;
     } else {
-      color = TdColors.danger;
+      color = context.palette.error;
     }
     return ClipRRect(
       borderRadius: BorderRadius.circular(8),
@@ -476,7 +478,7 @@ class _SafeRow extends StatelessWidget {
           Text(
             AppStrings.afterBuyTitle,
             style: textTheme.titleMedium?.copyWith(
-              color: TdColors.navy,
+              color: context.palette.onSurface,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -497,7 +499,7 @@ class _SafeRow extends StatelessWidget {
                       child: Text(
                         AppStrings.safeTodayShort,
                         style: textTheme.bodyMedium?.copyWith(
-                          color: TdColors.slate,
+                          color: context.palette.onSurfaceVariant,
                         ),
                       ),
                     ),
@@ -512,7 +514,7 @@ class _SafeRow extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
-                    color: TdColors.navy,
+                    color: context.palette.onSurface,
                   ),
                 ),
               ),
@@ -535,7 +537,7 @@ class _SafeRow extends StatelessWidget {
                       child: Text(
                         AppStrings.remainingBudgetAfter,
                         style: textTheme.bodyMedium?.copyWith(
-                          color: TdColors.slate,
+                          color: context.palette.onSurfaceVariant,
                         ),
                       ),
                     ),
@@ -550,7 +552,7 @@ class _SafeRow extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
-                    color: TdColors.navy,
+                    color: context.palette.onSurface,
                   ),
                 ),
               ),

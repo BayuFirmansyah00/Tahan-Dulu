@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/constants/app_strings.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_image_icon.dart';
 import '../utils/profile_ui.dart';
 
@@ -16,12 +17,12 @@ class AboutScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final textTheme = Theme.of(context).textTheme;
     return Scaffold(
-      backgroundColor: AppColors.backgroundWarm,
+      backgroundColor: context.canvasColor,
       appBar: AppBar(
         leading: const AppBackButton(),
         title: const Text(AppStrings.aboutTitle),
       ),
-      body: SafeArea(
+      body: GlassBackdrop(child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
@@ -34,7 +35,7 @@ class AboutScreen extends ConsumerWidget {
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE1F5EC),
+                      color: context.palette.primaryContainer,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Image.asset(
@@ -59,10 +60,10 @@ class AboutScreen extends ConsumerWidget {
                           height: 72,
                           fit: BoxFit.contain,
                           errorBuilder: (context, error, stackTrace) =>
-                              const Icon(
+                              Icon(
                             Icons.account_balance_wallet_outlined,
                             size: 64,
-                            color: AppColors.primary,
+                            color: context.palette.primary,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -84,14 +85,14 @@ class AboutScreen extends ConsumerWidget {
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFE1F5EC),
+                            color: context.palette.primaryContainer,
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text(
                             '${AppStrings.aboutVersionPrefix} '
                             '${AppConstants.appVersion}',
                             style: textTheme.labelLarge?.copyWith(
-                              color: AppColors.primary,
+                              color: context.palette.primary,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
@@ -103,12 +104,12 @@ class AboutScreen extends ConsumerWidget {
                   Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: AppColors.surface,
+                      color: context.palette.surface,
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: AppColors.border),
+                      border: Border.all(color: context.palette.outlineVariant),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.textPrimary
+                          color: context.palette.onSurface
                               .withValues(alpha: 0.06),
                           blurRadius: 16,
                           offset: const Offset(0, 4),
@@ -123,8 +124,8 @@ class AboutScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 12),
                   SettingsMenuRow(
-                    iconForeground: AppColors.secondary,
-                    iconBackground: AppColors.secondarySoft,
+                    iconForeground: context.palette.secondary,
+                    iconBackground: context.palette.secondaryContainer,
                     asset: AppAssets.setPrivacyPolicy,
                     title: AppStrings.privacyPolicy,
                     description: AppStrings.privacyPolicyDesc,
@@ -136,8 +137,8 @@ class AboutScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 8),
                   SettingsMenuRow(
-                    iconForeground: AppColors.secondary,
-                    iconBackground: AppColors.secondarySoft,
+                    iconForeground: context.palette.secondary,
+                    iconBackground: context.palette.secondaryContainer,
                     asset: AppAssets.setTerms,
                     title: AppStrings.aboutTerms,
                     description: AppStrings.privacyPolicyDesc,
@@ -149,8 +150,8 @@ class AboutScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 8),
                   SettingsMenuRow(
-                    iconForeground: AppColors.primary,
-                    iconBackground: AppColors.primarySoft,
+                    iconForeground: context.palette.primary,
+                    iconBackground: context.palette.primaryContainer,
                     asset: AppAssets.setOpenSource,
                     title: AppStrings.aboutLicenses,
                     description: AppStrings.aboutLicensesDesc,
@@ -165,7 +166,7 @@ class AboutScreen extends ConsumerWidget {
                     '${AppStrings.aboutCopyright}\nSemua hak dilindungi.',
                     textAlign: TextAlign.center,
                     style: textTheme.bodySmall?.copyWith(
-                      color: AppColors.textSecondary,
+                      color: context.palette.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -173,7 +174,7 @@ class AboutScreen extends ConsumerWidget {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 }

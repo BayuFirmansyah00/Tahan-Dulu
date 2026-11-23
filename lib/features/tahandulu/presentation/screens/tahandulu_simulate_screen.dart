@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
@@ -11,7 +13,6 @@ import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_icons.dart';
 import '../../../../core/widgets/app_states.dart';
 import '../providers/tahandulu_controller.dart';
-import '../utils/tahandulu_ui.dart';
 import '../widgets/tahandulu_widgets.dart';
 
 /// Simulasi "Kalau saya beli?": kini vs sesudah (read-only).
@@ -34,8 +35,8 @@ class TahanDuluSimulateScreen extends ConsumerWidget {
       title: AppStrings.tahanDuluSimulateTitle,
       bottomButton: AppButton(
         label: AppStrings.waitDurationLabel,
-        backgroundColor: TdColors.primary,
-        foregroundColor: TdColors.navy,
+        backgroundColor: context.palette.tertiaryContainer,
+        foregroundColor: context.palette.onSurface,
         onPressed: () => context.push('${AppRoutes.tahanDulu}/$itemId/wait'),
       ),
       child: analysis.when(
@@ -63,13 +64,13 @@ class TahanDuluSimulateScreen extends ConsumerWidget {
                 const SizedBox(height: 8),
                 Text(
                   AppStrings.simulateSubtitle,
-                  style: textTheme.bodyMedium?.copyWith(color: TdColors.slate),
+                  style: textTheme.bodyMedium?.copyWith(color: context.palette.onSurfaceVariant),
                 ),
                 const SizedBox(height: 12),
                 Text(
                   AppStrings.currentStateTitle,
                   style: textTheme.titleMedium?.copyWith(
-                    color: TdColors.navy,
+                    color: context.palette.onSurface,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -86,7 +87,7 @@ class TahanDuluSimulateScreen extends ConsumerWidget {
                 Text(
                   AppStrings.afterBuyStateTitle,
                   style: textTheme.titleMedium?.copyWith(
-                    color: TdColors.navy,
+                    color: context.palette.onSurface,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -104,9 +105,9 @@ class TahanDuluSimulateScreen extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: TdColors.creamCard,
+                    color: context.palette.tertiaryContainer,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: TdColors.border),
+                    border: Border.all(color: context.palette.outlineVariant),
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -121,7 +122,7 @@ class TahanDuluSimulateScreen extends ConsumerWidget {
                         child: Text(
                           AppStrings.safeEstimateDisclaimer,
                           style: textTheme.bodyMedium?.copyWith(
-                            color: TdColors.slate,
+                            color: context.palette.onSurfaceVariant,
                           ),
                         ),
                       ),
@@ -163,7 +164,7 @@ class _StateCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TdCard(
-      color: highlightDelta ? TdColors.creamCard : TdColors.card,
+      color: highlightDelta ? context.palette.tertiaryContainer : context.palette.surface,
       child: Column(
         children: [
           _Row(
@@ -242,13 +243,13 @@ class _Row extends StatelessWidget {
                     fallbackIcon: icon ?? Icons.category_outlined,
                   )
                 else
-                  Icon(icon, size: 18, color: TdColors.slate),
+                  Icon(icon, size: 18, color: context.palette.onSurfaceVariant),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
                     label,
                     style: textTheme.bodyMedium?.copyWith(
-                      color: TdColors.slate,
+                      color: context.palette.onSurfaceVariant,
                     ),
                   ),
                 ),
@@ -263,7 +264,7 @@ class _Row extends StatelessWidget {
                   : EdgeInsets.zero,
               decoration: emphasize
                   ? BoxDecoration(
-                      color: alert ? TdColors.dangerBg : TdColors.highlight,
+                      color: alert ? context.palette.errorContainer : context.palette.tertiaryContainer,
                       borderRadius: BorderRadius.circular(20),
                     )
                   : null,
@@ -273,7 +274,7 @@ class _Row extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w700,
-                  color: alert ? TdColors.danger : TdColors.navy,
+                  color: alert ? context.palette.error : context.palette.onSurface,
                 ),
               ),
             ),

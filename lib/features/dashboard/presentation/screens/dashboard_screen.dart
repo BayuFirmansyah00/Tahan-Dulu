@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/widgets/app_icons.dart';
@@ -84,12 +85,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         );
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundWarm,
+      backgroundColor: context.canvasColor,
       bottomNavigationBar: DashboardBottomNav(
         currentIndex: 0,
         onTap: (i) => _onNav(i, context),
       ),
-      body: SafeArea(
+      body: GlassBackdrop(child: SafeArea(
         child: data.when(
           data: (d) => Stack(
             children: [
@@ -117,7 +118,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           loading: () => const AppLoading(),
           error: (error, _) => AppErrorState(onRetry: () => ref.invalidate(dashboardDataProvider)),
         ),
-      ),
+      )),
     );
   }
 }
@@ -180,8 +181,8 @@ class _Body extends StatelessWidget {
                   Expanded(
                     child: _ShortcutTile(
                       imageAsset: AppAssets.txArrowUp,
-                      foreground: AppColors.primary,
-                      background: AppColors.primarySoft,
+                      foreground: context.palette.primary,
+                      background: context.palette.primaryContainer,
                       label: AppStrings.typeIncome,
                       onTap: () =>
                           onRecord(TransactionType.income),
@@ -191,8 +192,8 @@ class _Body extends StatelessWidget {
                   Expanded(
                     child: _ShortcutTile(
                       imageAsset: AppAssets.txArrowDown,
-                      foreground: AppColors.error,
-                      background: AppColors.dangerSoft,
+                      foreground: context.palette.error,
+                      background: context.palette.errorContainer,
                       label: AppStrings.typeExpense,
                       onTap: () =>
                           onRecord(TransactionType.expense),
@@ -202,8 +203,8 @@ class _Body extends StatelessWidget {
                   Expanded(
                     child: _ShortcutTile(
                       imageAsset: AppAssets.dashChart,
-                      foreground: AppColors.secondary,
-                      background: AppColors.secondarySoft,
+                      foreground: context.palette.secondary,
+                      background: context.palette.secondaryContainer,
                       label: AppStrings.shortcutReport,
                       onTap: () => context.push(AppRoutes.reports),
                     ),
@@ -251,23 +252,23 @@ class _Body extends StatelessWidget {
               _SummaryRow(
                 icon: Icons.arrow_downward,
                 imageAsset: AppAssets.txArrowDown,
-                foreground: AppColors.error,
-                background: AppColors.dangerSoft,
+                foreground: context.palette.error,
+                background: context.palette.errorContainer,
                 label: AppStrings.expense,
                 value:
                     CurrencyFormatter.formatCompact(data.actualMonthExpense),
-                valueColor: AppColors.error,
+                valueColor: context.palette.error,
               ),
               const SizedBox(height: 8),
               _SummaryRow(
                 icon: Icons.arrow_upward,
                 imageAsset: AppAssets.txArrowUp,
-                foreground: AppColors.primary,
-                background: AppColors.primarySoft,
+                foreground: context.palette.primary,
+                background: context.palette.primaryContainer,
                 label: AppStrings.income,
                 value:
                     CurrencyFormatter.formatCompact(data.actualMonthIncome),
-                valueColor: AppColors.primary,
+                valueColor: context.palette.primary,
               ),
             ],
           ),
@@ -294,11 +295,11 @@ class _Header extends ConsumerWidget {
       children: [
         CircleAvatar(
           radius: 22,
-          backgroundColor: AppColors.primarySoft,
+          backgroundColor: context.palette.primaryContainer,
           child: Text(
             initial,
             style: textTheme.titleLarge?.copyWith(
-              color: AppColors.primary,
+              color: context.palette.primary,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -311,7 +312,7 @@ class _Header extends ConsumerWidget {
               Text(
                 AppStrings.dashboardGreeting,
                 style: textTheme.labelMedium?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: context.palette.onSurfaceVariant,
                 ),
               ),
               Text(
@@ -327,7 +328,7 @@ class _Header extends ConsumerWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: textTheme.bodySmall?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: context.palette.onSurfaceVariant,
                 ),
               ),
             ],
@@ -335,16 +336,16 @@ class _Header extends ConsumerWidget {
         ),
         Container(
           decoration: BoxDecoration(
-            color: AppColors.surface,
+            color: context.palette.surface,
             shape: BoxShape.circle,
-            border: Border.all(color: AppColors.border),
+            border: Border.all(color: context.palette.outlineVariant),
           ),
           child: Stack(
             children: [
               IconButton(
                 icon: const Icon(Icons.notifications_outlined),
                 tooltip: AppStrings.notificationsTitle,
-                color: AppColors.textPrimary,
+                color: context.palette.onSurface,
                 onPressed: () => context.push(AppRoutes.notifications),
               ),
               if (data.hasUnread && showInApp)
@@ -354,8 +355,8 @@ class _Header extends ConsumerWidget {
                   child: Container(
                     width: 8,
                     height: 8,
-                    decoration: const BoxDecoration(
-                      color: AppColors.error,
+                    decoration: BoxDecoration(
+                      color: context.palette.error,
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -367,7 +368,7 @@ class _Header extends ConsumerWidget {
         IconButton(
           icon: const Icon(Icons.settings_outlined),
           tooltip: AppStrings.profileMenuApp,
-          color: AppColors.textSecondary,
+          color: context.palette.onSurfaceVariant,
           onPressed: () => context.push(AppRoutes.settings),
         ),
       ],
@@ -385,7 +386,10 @@ class _HeroCard extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.primary,
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft, end: Alignment.bottomRight,
+          colors: [Color(0xff254958), Color(0xff1d5d5a), Color(0xff32685d)],
+        ),
         borderRadius: BorderRadius.circular(24),
       ),
       child: ClipRRect(
@@ -395,12 +399,12 @@ class _HeroCard extends StatelessWidget {
             Positioned.fill(
               child: Row(
                 children: [
-                  const Spacer(flex: 5),
+                  const Spacer(flex: 7),
                   Expanded(
-                    flex: 6,
+                    flex: 3,
                     child: Image.asset(
                       AppAssets.safeBudgetHero,
-                      fit: BoxFit.cover,
+                      fit: BoxFit.contain,
                       alignment: Alignment.center,
                       errorBuilder: (context, error, stackTrace) =>
                           const SizedBox.shrink(),
@@ -447,7 +451,7 @@ class _HeroCard extends StatelessWidget {
                                   vertical: 2,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.25),
+                                  color: context.palette.surface.withValues(alpha: 0.25),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(
@@ -526,7 +530,7 @@ class _HeroCard extends StatelessWidget {
                                 vertical: 5,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.18),
+                                color: context.palette.surface.withValues(alpha: 0.18),
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Text(
@@ -545,7 +549,7 @@ class _HeroCard extends StatelessWidget {
                                   vertical: 5,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.15),
+                                  color: context.palette.surface.withValues(alpha: 0.15),
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: Text(
@@ -562,7 +566,7 @@ class _HeroCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const Spacer(flex: 3),
                   const Icon(
                     Icons.chevron_right,
                     color: Colors.white,
@@ -589,22 +593,22 @@ class _BridgeModeBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.secondarySoft.withValues(alpha: 0.5),
+        color: context.palette.secondaryContainer.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.secondary.withValues(alpha: 0.3)),
+        border: Border.all(color: context.palette.secondary.withValues(alpha: 0.3)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             padding: const EdgeInsets.all(8),
-            decoration: const BoxDecoration(
-              color: AppColors.surface,
+            decoration: BoxDecoration(
+              color: context.palette.surface,
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.timelapse_rounded,
-              color: AppColors.secondary,
+              color: context.palette.secondary,
               size: 20,
             ),
           ),
@@ -618,7 +622,7 @@ class _BridgeModeBanner extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
-                        color: AppColors.secondary,
+                        color: context.palette.secondary,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -637,14 +641,14 @@ class _BridgeModeBanner extends StatelessWidget {
                   'Batas Transisi: ${CurrencyFormatter.formatCompact(data.periodBudgetCeiling ?? 0)}',
                   style: textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
+                    color: context.palette.onSurface,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   'Batas anggaran disesuaikan khusus untuk masa transisi hingga siklus baru dimulai.',
                   style: textTheme.bodySmall?.copyWith(
-                    color: AppColors.textSecondary,
+                    color: context.palette.onSurfaceVariant,
                     fontSize: 11,
                   ),
                 ),
@@ -675,23 +679,19 @@ class _BalanceCard extends StatelessWidget {
     if (!data.hasAccounts) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.border),
-        ),
+        decoration: Glass.panel(context, radius: BorderRadius.circular(20)),
         child: Row(
           children: [
             Container(
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: AppColors.surfaceVariant,
+                color: context.palette.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.account_balance_wallet_outlined,
-                color: AppColors.textSecondary,
+                color: context.palette.onSurfaceVariant,
                 size: 22,
               ),
             ),
@@ -710,7 +710,7 @@ class _BalanceCard extends StatelessWidget {
                   Text(
                     'Tambahkan rekening atau e-wallet untuk mulai mencatat saldo',
                     style: textTheme.bodySmall?.copyWith(
-                      color: AppColors.textSecondary,
+                      color: context.palette.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -720,13 +720,13 @@ class _BalanceCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: AppColors.primarySoft,
+                color: context.palette.primaryContainer,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
                 'Tambah',
                 style: textTheme.labelSmall?.copyWith(
-                  color: AppColors.primary,
+                  color: context.palette.primary,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -738,11 +738,7 @@ class _BalanceCard extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border),
-      ),
+      decoration: Glass.panel(context, radius: BorderRadius.circular(20)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -761,12 +757,12 @@ class _BalanceCard extends StatelessWidget {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: AppColors.secondarySoft,
+                      color: context.palette.secondaryContainer,
                       borderRadius: BorderRadius.circular(14),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.account_balance_wallet_outlined,
-                      color: AppColors.secondary,
+                      color: context.palette.secondary,
                       size: 22,
                     ),
                   ),
@@ -780,7 +776,7 @@ class _BalanceCard extends StatelessWidget {
                     Text(
                       AppStrings.totalBalanceTitle,
                       style: textTheme.labelMedium?.copyWith(
-                        color: AppColors.textSecondary,
+                        color: context.palette.onSurfaceVariant,
                         letterSpacing: 0.3,
                       ),
                     ),
@@ -800,7 +796,7 @@ class _BalanceCard extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: textTheme.bodySmall?.copyWith(
-                        color: AppColors.textSecondary,
+                        color: context.palette.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -813,7 +809,7 @@ class _BalanceCard extends StatelessWidget {
                 tooltip: obscured
                     ? AppStrings.showBalance
                     : AppStrings.hideBalance,
-                color: AppColors.textSecondary,
+                color: context.palette.onSurfaceVariant,
                 onPressed: onToggleObscure,
               ),
             ],
@@ -823,9 +819,9 @@ class _BalanceCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               decoration: BoxDecoration(
-                color: AppColors.backgroundWarm,
+                color: context.canvasColor,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.border),
+                border: Border.all(color: context.palette.outlineVariant),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -835,13 +831,13 @@ class _BalanceCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: AppColors.primarySoft,
+                          color: context.palette.primaryContainer,
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
                           'Siap Pakai: ${obscured ? 'Rp•••' : CurrencyFormatter.formatCompact(data.spendableBalance)}',
                           style: textTheme.labelSmall?.copyWith(
-                            color: AppColors.primary,
+                            color: context.palette.primary,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
@@ -850,13 +846,13 @@ class _BalanceCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFFF3CD),
+                          color: context.warningFill,
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
                           'Tunai Lama: ${obscured ? 'Rp•••' : CurrencyFormatter.formatCompact(data.cashLegacyBalance)}',
                           style: textTheme.labelSmall?.copyWith(
-                            color: const Color(0xFF856404),
+                            color: context.warningInk,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
@@ -867,7 +863,7 @@ class _BalanceCard extends StatelessWidget {
                   Text(
                     'Akun tunai lama dipertahankan. Rekonsiliasi ke rekening agar saldo tunai siap ditransaksikan.',
                     style: textTheme.bodySmall?.copyWith(
-                      color: AppColors.textSecondary,
+                      color: context.palette.onSurfaceVariant,
                       fontSize: 10,
                     ),
                   ),
@@ -972,7 +968,7 @@ class _SectionRow extends StatelessWidget {
               action,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.primary,
+                    color: context.palette.primary,
                     fontWeight: FontWeight.w600,
                   ),
             ),
@@ -1011,11 +1007,7 @@ class _GoalRow extends StatelessWidget {
       onTap: () => context.push('${AppRoutes.goals}/${goal.id}'),
       child: Container(
         padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
+      decoration: Glass.panel(context, radius: BorderRadius.circular(16)),
       child: Column(
         children: [
           Row(
@@ -1039,7 +1031,7 @@ class _GoalRow extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: textTheme.bodySmall?.copyWith(
-                        color: AppColors.textSecondary,
+                        color: context.palette.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -1052,7 +1044,7 @@ class _GoalRow extends StatelessWidget {
                     percent,
                     style: textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w800,
-                      color: AppColors.primary,
+                      color: context.palette.primary,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -1063,10 +1055,10 @@ class _GoalRow extends StatelessWidget {
                       child: LinearProgressIndicator(
                         value: progress,
                         minHeight: 5,
-                        backgroundColor: AppColors.primarySoft,
+                        backgroundColor: context.palette.primaryContainer,
                         valueColor:
-                            const AlwaysStoppedAnimation<Color>(
-                          AppColors.primary,
+                            AlwaysStoppedAnimation<Color>(
+                          context.palette.primary,
                         ),
                       ),
                     ),
@@ -1108,7 +1100,7 @@ class _TahanDuluCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
       decoration: BoxDecoration(
-        color: const Color(0xFFFEE179),
+        color: context.palette.tertiaryContainer,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
@@ -1140,14 +1132,14 @@ class _TahanDuluCard extends StatelessWidget {
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
                   style: textTheme.bodySmall?.copyWith(
-                    color: AppColors.textSecondary,
+                    color: context.palette.onSurfaceVariant,
                   ),
                 ),
                 const SizedBox(height: 10),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.warning,
-                    foregroundColor: Colors.white,
+                    backgroundColor: context.palette.tertiary,
+                    foregroundColor: context.palette.onTertiary,
                     minimumSize: const Size(0, 40),
                     padding:
                         const EdgeInsets.symmetric(horizontal: 20),
@@ -1183,9 +1175,9 @@ class _TahanDuluCard extends StatelessWidget {
               errorBuilder: (context, error, stackTrace) => Container(
                 height: 200,
                 alignment: Alignment.center,
-                child: const Icon(
+                child: Icon(
                   Icons.shopping_cart_outlined,
-                  color: AppColors.warning,
+                  color: context.warningInk,
                   size: 48,
                 ),
               ),
@@ -1206,18 +1198,14 @@ class _RecentTxRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final isIncome = item.type == TransactionType.income;
-    final color = isIncome ? AppColors.primary : AppColors.error;
+    final color = isIncome ? context.palette.primary : context.palette.error;
     final sign = isIncome ? '+' : '-';
     return GestureDetector(
       onTap: () => context.push(AppRoutes.transactions),
       child: Container(
         padding:
             const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
-        ),
+        decoration: Glass.panel(context, radius: BorderRadius.circular(16)),
         child: Row(
           children: [
             CategoryIcon.forLabel(item.category, item.type, size: 40),
@@ -1232,7 +1220,7 @@ class _RecentTxRow extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
+                      color: context.palette.onSurface,
                       fontSize: 15,
                     ),
                   ),
@@ -1241,7 +1229,7 @@ class _RecentTxRow extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: textTheme.bodySmall?.copyWith(
-                      color: AppColors.textSecondary,
+                      color: context.palette.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -1290,11 +1278,7 @@ class _SummaryRow extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
+      decoration: Glass.panel(context, radius: BorderRadius.circular(16)),
       child: Row(
         children: [
           if (imageAsset != null)

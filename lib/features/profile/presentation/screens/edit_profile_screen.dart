@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
@@ -113,12 +115,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundWarm,
+      backgroundColor: context.canvasColor,
       appBar: AppBar(
         leading: const AppBackButton(),
         title: const Text(AppStrings.editProfileTitle),
       ),
-      body: SafeArea(
+      body: GlassBackdrop(child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
@@ -145,17 +147,17 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                               child: Container(
                                 width: double.infinity,
                                 height: 150,
-                                color: const Color(0xFFE1F5EC),
+                                color: context.palette.primaryContainer,
                                 child: Image.asset(
                                   AppAssets.illEditProfileBg,
                                   height: 150,
                                   fit: BoxFit.cover,
                                   semanticLabel: 'Edit Profil',
                                   errorBuilder: (context, error, stackTrace) =>
-                                      const Icon(
+                                      Icon(
                                         Icons.person_outline,
                                         size: 72,
-                                        color: AppColors.primary,
+                                        color: context.palette.primary,
                                       ),
                                 ),
                               ),
@@ -189,10 +191,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                         width: 30,
                                         height: 30,
                                         decoration: BoxDecoration(
-                                          color: AppColors.surface,
+                                          color: context.palette.surface,
                                           shape: BoxShape.circle,
                                           border: Border.all(
-                                            color: AppColors.border,
+                                            color: context.palette.outlineVariant,
                                           ),
                                         ),
                                         child: ClipOval(
@@ -274,7 +276,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       Text(
                         AppStrings.editProfileEmailFrozen,
                         style: textTheme.bodySmall?.copyWith(
-                          color: AppColors.textSecondary,
+                          color: context.palette.onSurfaceVariant,
                         ),
                       ),
                       const SizedBox(height: 14),
@@ -295,7 +297,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         child: Text(
                           '${_bioController.text.length}/120',
                           style: textTheme.bodySmall?.copyWith(
-                            color: AppColors.textSecondary,
+                            color: context.palette.onSurfaceVariant,
                           ),
                         ),
                       ),
@@ -303,10 +305,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       Container(
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: AppColors.primarySoft,
+                          color: context.palette.primaryContainer,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: AppColors.primary.withValues(alpha: 0.2),
+                            color: context.palette.primary.withValues(alpha: 0.2),
                           ),
                         ),
                         child: Column(
@@ -314,34 +316,34 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                           children: [
                             Row(
                               children: [
-                                const Icon(
+                                Icon(
                                   Icons.account_balance_wallet_outlined,
-                                  color: AppColors.primary,
+                                  color: context.palette.primary,
                                   size: 20,
                                 ),
                                 const SizedBox(width: 8),
-                                Text(
+                                Flexible(child: Text(
                                   'Gaji & Siklus Anggaran',
                                   style: textTheme.titleSmall?.copyWith(
                                     fontWeight: FontWeight.w700,
-                                    color: AppColors.primaryDark,
+                                    color: context.palette.primary,
                                   ),
-                                ),
+                                )),
                               ],
                             ),
                             const SizedBox(height: 6),
                             Text(
                               'Kelola perubahan penghasilan dan tanggal gajian agar siklus budget dan batas belanja harian tetap konsisten.',
                               style: textTheme.bodySmall?.copyWith(
-                                color: AppColors.textPrimary,
+                                color: context.palette.onSurface,
                                 fontSize: 12,
                               ),
                             ),
                             const SizedBox(height: 10),
                             OutlinedButton.icon(
                               style: OutlinedButton.styleFrom(
-                                foregroundColor: AppColors.primaryDark,
-                                side: const BorderSide(color: AppColors.primary),
+                                foregroundColor: context.palette.primary,
+                                side: BorderSide(color: context.palette.primary),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(10),
                                 ),
@@ -376,7 +378,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 }

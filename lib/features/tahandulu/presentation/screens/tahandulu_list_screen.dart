@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
@@ -66,16 +68,16 @@ class _TahanDuluListScreenState extends ConsumerState<TahanDuluListScreen> {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      backgroundColor: TdColors.background,
+      backgroundColor: context.canvasColor,
       appBar: AppBar(
         leading: const AppBackButton(),
         title: const Text(AppStrings.tahanDuluPageTitle),
-        backgroundColor: TdColors.background,
+        backgroundColor: context.canvasColor,
       ),
       bottomNavigationBar: DashboardBottomNav(
         onTap: (i) => tahanDuluBottomNavTap(context, i),
       ),
-      body: SafeArea(
+      body: GlassBackdrop(child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
@@ -102,7 +104,7 @@ class _TahanDuluListScreenState extends ConsumerState<TahanDuluListScreen> {
                       Text(
                         AppStrings.tahanDuluPageSubtitle,
                         style: textTheme.bodyMedium?.copyWith(
-                          color: TdColors.slate,
+                          color: context.palette.onSurfaceVariant,
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -155,8 +157,8 @@ class _TahanDuluListScreenState extends ConsumerState<TahanDuluListScreen> {
                         label: AppStrings.addItemAction,
                         assetPath: AppAssets.actionAddMoney,
                         icon: Icons.add,
-                        backgroundColor: TdColors.primary,
-                        foregroundColor: TdColors.navy,
+                        backgroundColor: context.palette.tertiaryContainer,
+                        foregroundColor: context.palette.onSurface,
                         onPressed: () {
                           ref
                               .read(tahanDuluControllerProvider.notifier)
@@ -177,7 +179,7 @@ class _TahanDuluListScreenState extends ConsumerState<TahanDuluListScreen> {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 }
@@ -195,9 +197,9 @@ class _HeroCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 14, 8, 14),
       decoration: BoxDecoration(
-        color: TdColors.highlight,
+        color: context.palette.tertiaryContainer,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: TdColors.border),
+        border: Border.all(color: context.palette.outlineVariant),
       ),
       child: Row(
         children: [
@@ -209,13 +211,13 @@ class _HeroCard extends StatelessWidget {
                   '$waiting ${AppStrings.pendingSuffix}',
                   style: textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w800,
-                    color: TdColors.navy,
+                    color: context.palette.onSurface,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   AppStrings.tahanDuluBannerHint,
-                  style: textTheme.bodySmall?.copyWith(color: TdColors.slate),
+                  style: textTheme.bodySmall?.copyWith(color: context.palette.onSurfaceVariant),
                 ),
                 const SizedBox(height: 10),
                 GestureDetector(
@@ -226,7 +228,7 @@ class _HeroCard extends StatelessWidget {
                       vertical: 8,
                     ),
                     decoration: BoxDecoration(
-                      color: TdColors.primary,
+                      color: context.palette.tertiaryContainer,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
@@ -235,7 +237,7 @@ class _HeroCard extends StatelessWidget {
                         Text(
                           AppStrings.tahanDuluSee,
                           style: textTheme.labelLarge?.copyWith(
-                            color: TdColors.navy,
+                            color: context.palette.onSurface,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
@@ -285,10 +287,10 @@ class _Tab extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 10),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: selected ? TdColors.primary : TdColors.card,
+          color: selected ? context.palette.tertiaryContainer : context.palette.surface,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: selected ? TdColors.primary : TdColors.border,
+            color: selected ? context.palette.tertiaryContainer : context.palette.outlineVariant,
           ),
         ),
         child: Text(
@@ -296,7 +298,7 @@ class _Tab extends StatelessWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: Theme.of(context).textTheme.labelLarge?.copyWith(
-            color: selected ? TdColors.navy : TdColors.slate,
+            color: selected ? context.palette.onSurface : context.palette.onSurfaceVariant,
             fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
             fontSize: 12,
           ),
@@ -328,9 +330,9 @@ class _ItemCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: TdColors.card,
+          color: context.palette.surface,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: TdColors.border),
+          border: Border.all(color: context.palette.outlineVariant),
           boxShadow: const [
             BoxShadow(
               color: Color(0x0F102A43),
@@ -358,14 +360,14 @@ class _ItemCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: textTheme.titleMedium?.copyWith(
-                      color: TdColors.navy,
+                      color: context.palette.onSurface,
                     ),
                   ),
                   Text(
                     CurrencyFormatter.formatCompact(item.price),
                     style: textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
-                      color: TdColors.navy,
+                      color: context.palette.onSurface,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -402,7 +404,7 @@ class _ItemCard extends StatelessWidget {
                               : formatWaitShort(item.waitEndsAt!, now),
                           overflow: TextOverflow.ellipsis,
                           style: textTheme.labelSmall?.copyWith(
-                            color: TdColors.slate,
+                            color: context.palette.onSurfaceVariant,
                           ),
                         ),
                       ),
@@ -412,7 +414,7 @@ class _ItemCard extends StatelessWidget {
                     Text(
                       '≈${(share * 100).round()}% budget fleksibel',
                       style: textTheme.labelSmall?.copyWith(
-                        color: TdColors.slate,
+                        color: context.palette.onSurfaceVariant,
                       ),
                     ),
                 ],
@@ -439,9 +441,9 @@ class _EduCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: TdColors.creamCard,
+        color: context.palette.tertiaryContainer,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: TdColors.border),
+        border: Border.all(color: context.palette.outlineVariant),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -449,8 +451,8 @@ class _EduCard extends StatelessWidget {
           Container(
             width: 40,
             height: 40,
-            decoration: const BoxDecoration(
-              color: TdColors.highlight,
+            decoration: BoxDecoration(
+              color: context.palette.tertiaryContainer,
               shape: BoxShape.circle,
             ),
             child: const Center(
@@ -468,12 +470,12 @@ class _EduCard extends StatelessWidget {
               children: [
                 Text(
                   AppStrings.tahanDuluEduTitle,
-                  style: textTheme.titleMedium?.copyWith(color: TdColors.navy),
+                  style: textTheme.titleMedium?.copyWith(color: context.palette.onSurface),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   AppStrings.tahanDuluEduBody,
-                  style: textTheme.bodyMedium?.copyWith(color: TdColors.slate),
+                  style: textTheme.bodyMedium?.copyWith(color: context.palette.onSurfaceVariant),
                 ),
               ],
             ),

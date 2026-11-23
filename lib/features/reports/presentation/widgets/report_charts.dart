@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
@@ -71,7 +73,7 @@ class IncomeExpenseBars extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          bar(income, AppColors.primary, 'Pemasukan'),
+          bar(income, context.palette.primary, 'Pemasukan'),
           const SizedBox(width: 32),
           bar(expense, const Color(0xFFF87171), 'Pengeluaran'),
         ],
@@ -113,7 +115,7 @@ class ExpenseDonut extends StatelessWidget {
                       for (var i = 0; i < values.length; i++)
                         reportPalette[i % reportPalette.length],
                     ]
-                  : const [Color(0xFFE5E7EB)],
+                  : [context.palette.outlineVariant],
             ),
           ),
           Column(
@@ -224,14 +226,14 @@ class SavingsBars extends StatelessWidget {
                             value: savings[i],
                             max: maxValue,
                             height: height - 20,
-                            color: AppColors.primary,
+                            color: context.palette.primary,
                           ),
                           const SizedBox(width: 3),
                           _MiniBar(
                             value: investments[i],
                             max: maxValue,
                             height: height - 20,
-                            color: AppColors.secondary,
+                            color: context.palette.secondary,
                           ),
                         ],
                       ),
@@ -303,9 +305,9 @@ class HealthRing extends StatelessWidget {
             child: CircularProgressIndicator(
               value: score == null ? 0 : score! / 100,
               strokeWidth: 14,
-              backgroundColor: const Color(0xFFEEF1F4),
-              valueColor: const AlwaysStoppedAnimation<Color>(
-                AppColors.primary,
+              backgroundColor: context.palette.surfaceContainerHighest,
+              valueColor: AlwaysStoppedAnimation<Color>(
+                context.palette.primary,
               ),
             ),
           ),
@@ -321,7 +323,7 @@ class HealthRing extends StatelessWidget {
               Text(
                 levelLabel,
                 style: textTheme.titleMedium?.copyWith(
-                  color: AppColors.primary,
+                  color: context.palette.primary,
                   fontWeight: FontWeight.w700,
                 ),
               ),

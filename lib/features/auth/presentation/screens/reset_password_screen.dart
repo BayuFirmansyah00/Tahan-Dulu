@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/validators.dart';
@@ -194,10 +196,10 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
       mainAxisSize: MainAxisSize.min,
       children: [
         const SizedBox(height: 24),
-        const Icon(
+        Icon(
           Icons.check_circle_outline,
           size: 68,
-          color: Color(0xFF10B981),
+          color: context.palette.primary,
         ),
         const SizedBox(height: 18),
         Text(

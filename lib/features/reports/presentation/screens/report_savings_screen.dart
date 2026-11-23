@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/app_states.dart';
 import '../../../../data/models/monthly_report.dart';
@@ -44,7 +45,7 @@ class ReportSavingsScreen extends ConsumerWidget {
       bottomNavigationBar: DashboardBottomNav(
         onTap: (i) => _onNav(i, context),
       ),
-      body: SafeArea(
+      body: GlassBackdrop(child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
@@ -60,7 +61,7 @@ class ReportSavingsScreen extends ConsumerWidget {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 }
@@ -102,8 +103,8 @@ class _Body extends StatelessWidget {
           _PlanCard(
             asset: AppAssets.txSavings,
             fallbackIcon: Icons.savings_outlined,
-            foreground: AppColors.primary,
-            background: AppColors.primarySoft,
+            foreground: context.palette.primary,
+            background: context.palette.primaryContainer,
             title: AppStrings.legendSavings,
             subtitle: AppStrings.savedThisMonth,
             monthAmount: report.savingsMonth,
@@ -115,8 +116,8 @@ class _Body extends StatelessWidget {
           _PlanCard(
             asset: AppAssets.txInvestment,
             fallbackIcon: Icons.show_chart_outlined,
-            foreground: AppColors.secondary,
-            background: AppColors.secondarySoft,
+            foreground: context.palette.secondary,
+            background: context.palette.secondaryContainer,
             title: AppStrings.legendInvestment,
             subtitle: AppStrings.investedThisMonth,
             monthAmount: report.investmentMonth,
@@ -132,23 +133,19 @@ class _Body extends StatelessWidget {
           const SizedBox(height: 8),
           Container(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.border),
-            ),
+            decoration: Glass.panel(context, radius: BorderRadius.circular(16)),
             child: Column(
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
+                  children: [
                     _LegendDot(
-                      color: AppColors.primary,
+                      color: context.palette.primary,
                       label: AppStrings.legendSavings,
                     ),
                     SizedBox(width: 16),
                     _LegendDot(
-                      color: AppColors.secondary,
+                      color: context.palette.secondary,
                       label: AppStrings.legendInvestment,
                     ),
                   ],
@@ -182,8 +179,8 @@ class _Body extends StatelessWidget {
           const SizedBox(height: 12),
           InsightCard(
             icon: Icons.trending_up_outlined,
-            iconColor: AppColors.primary,
-            iconBackground: AppColors.primarySoft,
+            iconColor: context.palette.primary,
+            iconBackground: context.palette.primaryContainer,
             title: AppStrings.savingsInvestTitle,
             body: allocated > 0
                 ? '${AppStrings.allocationInsightPrefix} '
@@ -198,7 +195,7 @@ class _Body extends StatelessWidget {
               child: Text(
                 '${AppStrings.healthTitle} >',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.primary,
+                      color: context.palette.primary,
                       fontWeight: FontWeight.w600,
                     ),
               ),
@@ -242,11 +239,7 @@ class _PlanCard extends StatelessWidget {
       onTap: () => context.push(AppRoutes.goals),
       child: Container(
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
-        ),
+        decoration: Glass.panel(context, radius: BorderRadius.circular(16)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -312,7 +305,7 @@ class _PlanCard extends StatelessWidget {
               child: LinearProgressIndicator(
                 value: progress,
                 minHeight: 8,
-                backgroundColor: const Color(0xFFEEF1F4),
+                backgroundColor: context.palette.surfaceContainerHighest,
                 valueColor: AlwaysStoppedAnimation<Color>(foreground),
               ),
             ),
@@ -329,9 +322,9 @@ class _PlanCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                const Icon(
+                Icon(
                   Icons.chevron_right,
-                  color: AppColors.textSecondary,
+                  color: context.palette.onSurfaceVariant,
                 ),
               ],
             ),

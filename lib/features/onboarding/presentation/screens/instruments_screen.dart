@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
@@ -104,10 +106,9 @@ class _InstrumentsScreenState extends ConsumerState<InstrumentsScreen> {
   }
 
   Future<void> _addInstrument() async {
-    final instrument = await showModalBottomSheet<FinancialInstrument>(
+    final instrument = await showGlassSheet<FinancialInstrument>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
       builder: (context) => const _AddInstrumentSheet(),
     );
     if (instrument != null && mounted) {
@@ -139,7 +140,7 @@ class _InstrumentsScreenState extends ConsumerState<InstrumentsScreen> {
 
     return Scaffold(
       appBar: AppBar(),
-      body: SafeArea(
+      body: GlassBackdrop(child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
@@ -161,12 +162,12 @@ class _InstrumentsScreenState extends ConsumerState<InstrumentsScreen> {
                             Expanded(
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(8),
-                                child: const LinearProgressIndicator(
+                                child: LinearProgressIndicator(
                                   value: 0.5,
                                   minHeight: 8,
-                                  backgroundColor: AppColors.primarySoft,
+                                  backgroundColor: context.palette.primaryContainer,
                                   valueColor: AlwaysStoppedAnimation<Color>(
-                                    AppColors.primary,
+                                    context.palette.primary,
                                   ),
                                 ),
                               ),
@@ -245,7 +246,7 @@ class _InstrumentsScreenState extends ConsumerState<InstrumentsScreen> {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 }
@@ -268,10 +269,10 @@ class _InstrumentCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: context.palette.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: selected ? AppColors.primary : AppColors.border,
+            color: selected ? context.palette.primary : context.palette.outlineVariant,
             width: selected ? 1.5 : 1,
           ),
         ),
@@ -322,8 +323,8 @@ class _InstrumentCard extends StatelessWidget {
                           : 'Bebas biaya admin',
                       style: textTheme.bodySmall?.copyWith(
                         color: instrument.adminFeeEnabled && instrument.monthlyAdminFee > 0
-                            ? AppColors.primary
-                            : AppColors.textSecondary,
+                            ? context.palette.primary
+                            : context.palette.onSurfaceVariant,
                         fontSize: 11,
                       ),
                     ),
@@ -335,16 +336,16 @@ class _InstrumentCard extends StatelessWidget {
               Container(
                 width: 24,
                 height: 24,
-                decoration: const BoxDecoration(
-                  color: AppColors.primary,
+                decoration: BoxDecoration(
+                  color: context.palette.primary,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.check, color: Colors.white, size: 16),
               )
             else
-              const Icon(
+              Icon(
                 Icons.chevron_right,
-                color: AppColors.textSecondary,
+                color: context.palette.onSurfaceVariant,
               ),
           ],
         ),
@@ -597,7 +598,7 @@ class _AddInstrumentSheetState extends ConsumerState<_AddInstrumentSheet> {
     final bottomInset = mediaQuery.viewInsets.bottom;
 
     return Material(
-      color: AppColors.surface,
+      color: context.palette.surface,
       borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       clipBehavior: Clip.antiAlias,
       child: ConstrainedBox(
@@ -615,7 +616,7 @@ class _AddInstrumentSheetState extends ConsumerState<_AddInstrumentSheet> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.border,
+                  color: context.palette.outlineVariant,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -648,7 +649,7 @@ class _AddInstrumentSheetState extends ConsumerState<_AddInstrumentSheet> {
                                     : _typeLabel(_selectedCategory!)),
                             style: textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.w700,
-                              color: AppColors.textPrimary,
+                              color: context.palette.onSurface,
                             ),
                           ),
                           const SizedBox(height: 2),
@@ -657,7 +658,7 @@ class _AddInstrumentSheetState extends ConsumerState<_AddInstrumentSheet> {
                                 ? 'Pilih jenis instrumen keuangan kamu'
                                 : 'Lengkapi detail saldo dan informasi rekening',
                             style: textTheme.bodySmall?.copyWith(
-                              color: AppColors.textSecondary,
+                              color: context.palette.onSurfaceVariant,
                             ),
                           ),
                         ],
@@ -671,7 +672,7 @@ class _AddInstrumentSheetState extends ConsumerState<_AddInstrumentSheet> {
                 ),
               ),
 
-              const Divider(height: 1, color: AppColors.divider),
+              Divider(height: 1, color: context.palette.outlineVariant),
 
               // Konten: Langkah 1 (Kategori) atau Langkah 2 (Detail)
               Flexible(
@@ -731,14 +732,14 @@ class _AddInstrumentSheetState extends ConsumerState<_AddInstrumentSheet> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFFD1FAE5),
+              color: context.palette.primaryContainer,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.payments_outlined,
-                  color: Color(0xFF10B981),
+                  color: context.palette.primary,
                   size: 24,
                 ),
                 const SizedBox(width: 10),
@@ -746,7 +747,7 @@ class _AddInstrumentSheetState extends ConsumerState<_AddInstrumentSheet> {
                   child: Text(
                     'Uang tunai dicatat sebagai kas fisik tanpa biaya admin bulanan.',
                     style: textTheme.bodySmall?.copyWith(
-                      color: const Color(0xFF065F46),
+                      color: context.palette.primary,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -770,30 +771,30 @@ class _AddInstrumentSheetState extends ConsumerState<_AddInstrumentSheet> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 decoration: BoxDecoration(
-                  color: AppColors.inputFill,
+                  color: context.palette.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
                     color: showProviderError
                         ? Theme.of(context).colorScheme.error
-                        : AppColors.border,
+                        : context.palette.outlineVariant,
                   ),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.search, color: AppColors.textSecondary),
+                    Icon(Icons.search, color: context.palette.onSurfaceVariant),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
                         AppStrings.searchProviderHint,
                         style: textTheme.bodyMedium?.copyWith(
-                          color: AppColors.textDisabled,
+                          color: context.palette.onSurfaceVariant,
                         ),
                       ),
                     ),
-                    const Icon(
+                    Icon(
                       Icons.arrow_forward_ios,
                       size: 14,
-                      color: AppColors.textSecondary,
+                      color: context.palette.onSurfaceVariant,
                     ),
                   ],
                 ),
@@ -802,11 +803,7 @@ class _AddInstrumentSheetState extends ConsumerState<_AddInstrumentSheet> {
           else
             Container(
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppColors.border),
-              ),
+              decoration: Glass.panel(context, radius: BorderRadius.circular(14)),
               child: Row(
                 children: [
                   BankLogoBadge(
@@ -830,7 +827,7 @@ class _AddInstrumentSheetState extends ConsumerState<_AddInstrumentSheet> {
                           Text(
                             _selectedBank!.aliases.join(' • '),
                             style: textTheme.bodySmall?.copyWith(
-                              color: AppColors.textSecondary,
+                              color: context.palette.onSurfaceVariant,
                             ),
                           ),
                       ],
@@ -907,11 +904,7 @@ class _CategoryOptionTile extends StatelessWidget {
       borderRadius: BorderRadius.circular(16),
       child: Container(
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
-        ),
+        decoration: Glass.panel(context, radius: BorderRadius.circular(16)),
         child: Row(
           children: [
             Container(
@@ -942,22 +935,22 @@ class _CategoryOptionTile extends StatelessWidget {
                     title,
                     style: textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
+                      color: context.palette.onSurface,
                     ),
                   ),
                   const SizedBox(height: 3),
                   Text(
                     subtitle,
                     style: textTheme.bodySmall?.copyWith(
-                      color: AppColors.textSecondary,
+                      color: context.palette.onSurfaceVariant,
                     ),
                   ),
                 ],
               ),
             ),
-            const Icon(
+            Icon(
               Icons.chevron_right,
-              color: AppColors.textSecondary,
+              color: context.palette.onSurfaceVariant,
               size: 20,
             ),
           ],

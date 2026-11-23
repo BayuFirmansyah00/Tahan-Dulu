@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/constants/app_strings.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_states.dart';
@@ -44,7 +45,7 @@ class _RecurringExpensesScreenState extends ConsumerState<RecurringExpensesScree
     return Scaffold(
       appBar: AppBar(title: const Text(AppStrings.recurringExpensesTitle)),
       bottomNavigationBar: DashboardBottomNav(onTap: _onNav),
-      body: SafeArea(
+      body: GlassBackdrop(child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
@@ -57,7 +58,7 @@ class _RecurringExpensesScreenState extends ConsumerState<RecurringExpensesScree
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 }
@@ -122,11 +123,7 @@ class _RecurringItem extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
+      decoration: Glass.panel(context, radius: BorderRadius.circular(16)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -151,7 +148,7 @@ class _RecurringItem extends StatelessWidget {
                 CurrencyFormatter.formatCompact(item.amount.toDouble()),
                 style: textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w700,
-                  color: AppColors.error,
+                  color: context.palette.error,
                 ),
               ),
             ],
@@ -159,7 +156,7 @@ class _RecurringItem extends StatelessWidget {
           const SizedBox(height: 8),
           Row(
             children: [
-              const Icon(Icons.calendar_today_outlined, size: 16, color: AppColors.textSecondary),
+              Icon(Icons.calendar_today_outlined, size: 16, color: context.palette.onSurfaceVariant),
               const SizedBox(width: 6),
               Text(
                 item.nextDueDate ?? '-',
@@ -169,7 +166,7 @@ class _RecurringItem extends StatelessWidget {
               Text(
                 item.isActive ? AppStrings.active : AppStrings.inactive,
                 style: textTheme.bodySmall?.copyWith(
-                  color: item.isActive ? AppColors.primary : AppColors.textSecondary,
+                  color: item.isActive ? context.palette.primary : context.palette.onSurfaceVariant,
                 ),
               ),
             ],

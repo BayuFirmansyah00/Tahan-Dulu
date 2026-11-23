@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_strings.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../data/models/financial_account.dart';
@@ -124,7 +125,7 @@ class _AddRecurringExpenseScreenState
 
     return Scaffold(
       appBar: AppBar(title: const Text(AppStrings.addRecurringExpenseTitle)),
-      body: SafeArea(
+      body: GlassBackdrop(child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
@@ -148,7 +149,7 @@ class _AddRecurringExpenseScreenState
                     Text(
                       AppStrings.recurringExpenseNameRequired,
                       style: textTheme.bodyMedium?.copyWith(
-                        color: AppColors.error,
+                        color: context.palette.error,
                       ),
                     ),
                   ],
@@ -163,7 +164,7 @@ class _AddRecurringExpenseScreenState
                     Text(
                       AppStrings.recurringExpenseCategoryRequired,
                       style: textTheme.bodyMedium?.copyWith(
-                        color: AppColors.error,
+                        color: context.palette.error,
                       ),
                     ),
                   ],
@@ -181,7 +182,7 @@ class _AddRecurringExpenseScreenState
                     Text(
                       AppStrings.recurringExpenseAmountRequired,
                       style: textTheme.bodyMedium?.copyWith(
-                        color: AppColors.error,
+                        color: context.palette.error,
                       ),
                     ),
                   ],
@@ -224,7 +225,7 @@ class _AddRecurringExpenseScreenState
                     Text(
                       AppStrings.recurringExpenseNextDueDateRequired,
                       style: textTheme.bodyMedium?.copyWith(
-                        color: AppColors.error,
+                        color: context.palette.error,
                       ),
                     ),
                   ],
@@ -249,7 +250,7 @@ class _AddRecurringExpenseScreenState
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: AppColors.secondarySoft,
+                        color: context.palette.secondaryContainer,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -285,7 +286,7 @@ class _AddRecurringExpenseScreenState
             ),
           ),
         ),
-      ),
+      )),
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.all(20),
         child: AppButton(

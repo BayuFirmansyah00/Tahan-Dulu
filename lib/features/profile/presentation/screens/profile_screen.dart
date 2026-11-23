@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
@@ -23,8 +25,8 @@ class ProfileScreen extends ConsumerWidget {
       context: context,
       assetPath: AppAssets.setLogoutIcon,
       icon: Icons.logout_outlined,
-      iconForeground: AppColors.error,
-      iconBackground: const Color(0xFFFEE2E2),
+      iconForeground: context.palette.error,
+      iconBackground: context.palette.errorContainer,
       title: AppStrings.logoutDialogTitle,
       message: AppStrings.logoutDialogBody,
       cancelLabel: AppStrings.logoutCancel,
@@ -41,12 +43,12 @@ class ProfileScreen extends ConsumerWidget {
     final prefs = ref.watch(appPreferencesProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundWarm,
+      backgroundColor: context.canvasColor,
       bottomNavigationBar: DashboardBottomNav(
         currentIndex: 4,
         onTap: (i) => profileOnNav(i, context),
       ),
-      body: SafeArea(
+      body: GlassBackdrop(child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
@@ -63,7 +65,7 @@ class ProfileScreen extends ConsumerWidget {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 }
@@ -139,10 +141,10 @@ class _Body extends StatelessWidget {
                 vertical: 10,
               ),
               decoration: BoxDecoration(
-                color: const Color(0xFFE8EFFE),
+                color: context.palette.secondaryContainer,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: AppColors.secondary.withValues(alpha: 0.18),
+                  color: context.palette.secondary.withValues(alpha: 0.18),
                 ),
               ),
               child: Row(
@@ -182,8 +184,8 @@ class _Body extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           SettingsMenuRow(
-            iconForeground: AppColors.primary,
-            iconBackground: AppColors.primarySoft,
+            iconForeground: context.palette.primary,
+            iconBackground: context.palette.primaryContainer,
             asset: AppAssets.ntfBudget,
             title: 'Pengaturan Keuangan',
             description: 'Ubah penghasilan, tanggal gajian, dan siklus budget',
@@ -191,8 +193,8 @@ class _Body extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           SettingsMenuRow(
-            iconForeground: AppColors.secondary,
-            iconBackground: AppColors.secondarySoft,
+            iconForeground: context.palette.secondary,
+            iconBackground: context.palette.secondaryContainer,
             asset: AppAssets.setProfile,
             title: AppStrings.profileMenuInfo,
             description: AppStrings.profileMenuInfoDesc,
@@ -200,8 +202,8 @@ class _Body extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           SettingsMenuRow(
-            iconForeground: AppColors.primary,
-            iconBackground: AppColors.primarySoft,
+            iconForeground: context.palette.primary,
+            iconBackground: context.palette.primaryContainer,
             asset: AppAssets.setApp,
             title: AppStrings.profileMenuApp,
             description: AppStrings.profileMenuAppDesc,
@@ -209,8 +211,8 @@ class _Body extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           SettingsMenuRow(
-            iconForeground: AppColors.warning,
-            iconBackground: const Color(0xFFFEF3C7),
+            iconForeground: context.warningInk,
+            iconBackground: context.warningFill,
             asset: AppAssets.setNotif,
             title: AppStrings.profileMenuNotif,
             description: AppStrings.profileMenuNotifDesc,
@@ -219,8 +221,8 @@ class _Body extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           SettingsMenuRow(
-            iconForeground: AppColors.secondary,
-            iconBackground: AppColors.secondarySoft,
+            iconForeground: context.palette.secondary,
+            iconBackground: context.palette.secondaryContainer,
             asset: AppAssets.setSecurity,
             title: AppStrings.profileMenuSecurity,
             description: AppStrings.profileMenuSecurityDesc,
@@ -228,8 +230,8 @@ class _Body extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           SettingsMenuRow(
-            iconForeground: AppColors.primary,
-            iconBackground: AppColors.primarySoft,
+            iconForeground: context.palette.primary,
+            iconBackground: context.palette.primaryContainer,
             asset: AppAssets.setPrivacy,
             title: AppStrings.profileMenuPrivacy,
             description: AppStrings.profileMenuPrivacyDesc,
@@ -237,8 +239,8 @@ class _Body extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           SettingsMenuRow(
-            iconForeground: AppColors.warning,
-            iconBackground: const Color(0xFFFEF3C7),
+            iconForeground: context.warningInk,
+            iconBackground: context.warningFill,
             asset: AppAssets.setHelp,
             title: AppStrings.profileMenuHelp,
             description: AppStrings.profileMenuHelpDesc,
@@ -246,8 +248,8 @@ class _Body extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           SettingsMenuRow(
-            iconForeground: AppColors.secondary,
-            iconBackground: AppColors.secondarySoft,
+            iconForeground: context.palette.secondary,
+            iconBackground: context.palette.secondaryContainer,
             asset: AppAssets.setAbout,
             title: AppStrings.profileMenuAbout,
             description: AppStrings.profileMenuAboutDesc,
@@ -258,8 +260,8 @@ class _Body extends StatelessWidget {
             width: double.infinity,
             child: OutlinedButton(
               style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.error,
-                side: const BorderSide(color: AppColors.error),
+                foregroundColor: context.palette.error,
+                side: BorderSide(color: context.palette.error),
               ),
               onPressed: onLogout,
               child: const Row(
@@ -295,11 +297,7 @@ class _ProfileCard extends StatelessWidget {
         : user.name.trim()[0].toUpperCase();
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border),
-      ),
+      decoration: Glass.panel(context, radius: BorderRadius.circular(20)),
       child: Row(
         children: [
           CircleAvatar(
@@ -336,7 +334,7 @@ class _ProfileCard extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: textTheme.bodySmall?.copyWith(
-                      color: AppColors.textSecondary,
+                      color: context.palette.onSurfaceVariant,
                       fontSize: 12,
                     ),
                   ),
@@ -348,7 +346,7 @@ class _ProfileCard extends StatelessWidget {
                     vertical: 3,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE1F5EC),
+                    color: context.palette.primaryContainer,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
@@ -365,7 +363,7 @@ class _ProfileCard extends StatelessWidget {
                           AppStrings.profileBadge,
                           overflow: TextOverflow.ellipsis,
                           style: textTheme.labelSmall?.copyWith(
-                            color: AppColors.primary,
+                            color: context.palette.primary,
                             fontWeight: FontWeight.w700,
                           ),
                         ),

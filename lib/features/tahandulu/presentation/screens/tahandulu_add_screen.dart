@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
@@ -24,17 +26,17 @@ class TahanDuluAddScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FC),
+      backgroundColor: context.canvasColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF7F9FC),
+        backgroundColor: context.canvasColor,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: true,
         leading: const AppBackButton(),
-        title: const Text(
+        title: Text(
           'Tambah Barang',
           style: TextStyle(
-            color: Color(0xFF102A43),
+            color: context.palette.onSurface,
             fontSize: 17.5,
             fontWeight: FontWeight.w600,
           ),
@@ -43,7 +45,7 @@ class TahanDuluAddScreen extends ConsumerWidget {
       bottomNavigationBar: DashboardBottomNav(
         onTap: (i) => tahanDuluBottomNavTap(context, i),
       ),
-      body: SafeArea(
+      body: GlassBackdrop(child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
@@ -62,7 +64,7 @@ class TahanDuluAddScreen extends ConsumerWidget {
                     title: AppStrings.methodManual,
                     subtitle: 'Isi detail barang sendiri',
                     assetPath: AppAssets.tambahBarangManual,
-                    accent: const Color(0xFFFFF5DB),
+                    accent: context.warningInk,
                     onTap: () {
                       ref.read(tahanDuluControllerProvider.notifier).reset();
                       context.push(AppRoutes.tahanDuluForm);
@@ -75,7 +77,7 @@ class TahanDuluAddScreen extends ConsumerWidget {
                     title: AppStrings.methodLink,
                     subtitle: 'Tempel tautan barang dari toko online',
                     assetPath: AppAssets.tambahBarangLink,
-                    accent: const Color(0xFFEAF8F1),
+                    accent: context.palette.primary,
                     onTap: () {
                       ref.read(tahanDuluControllerProvider.notifier).reset();
                       context.push(AppRoutes.tahanDuluLink);
@@ -88,7 +90,7 @@ class TahanDuluAddScreen extends ConsumerWidget {
                     title: AppStrings.methodPhoto,
                     subtitle: 'Tambahkan barang melalui foto',
                     assetPath: AppAssets.tambahBarangFoto,
-                    accent: const Color(0xFFF2ECFF),
+                    accent: context.palette.tertiary,
                     onTap: () => _showImageSourcePicker(context, ref),
                   ),
                   const SizedBox(height: 20),
@@ -100,17 +102,14 @@ class TahanDuluAddScreen extends ConsumerWidget {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 
   Future<void> _showImageSourcePicker(BuildContext context, WidgetRef ref) async {
-    final source = await showModalBottomSheet<ImageSource>(
+    final source = await showGlassSheet<ImageSource>(
       context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+      scrollContent: true,
       builder: (ctx) => SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
@@ -123,27 +122,27 @@ class TahanDuluAddScreen extends ConsumerWidget {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE2E8F0),
+                    color: context.palette.outlineVariant,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 'Pilih Sumber Foto',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: Color(0xFF102A43),
+                  color: context.palette.onSurface,
                   fontSize: 17,
                   fontWeight: FontWeight.w700,
                 ),
               ),
               const SizedBox(height: 6),
-              const Text(
+              Text(
                 'Gunakan kamera atau pilih foto produk dari galeri HP.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: Color(0xFF718096),
+                  color: context.palette.onSurfaceVariant,
                   fontSize: 13,
                 ),
               ),
@@ -152,19 +151,19 @@ class TahanDuluAddScreen extends ConsumerWidget {
                 leading: Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEFF6FF),
+                    color: context.palette.secondaryContainer,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.camera_alt_outlined, color: Color(0xFF2563EB)),
+                  child: Icon(Icons.camera_alt_outlined, color: context.palette.secondary),
                 ),
-                title: const Text(
+                title: Text(
                   'Ambil Foto (Kamera)',
-                  style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF102A43)),
+                  style: TextStyle(fontWeight: FontWeight.w600, color: context.palette.onSurface),
                 ),
                 subtitle: const Text('Buka kamera untuk memotret barang langsung'),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
-                  side: const BorderSide(color: Color(0xFFE8EDF3)),
+                  side: BorderSide(color: context.palette.outlineVariant),
                 ),
                 onTap: () => Navigator.pop(ctx, ImageSource.camera),
               ),
@@ -173,19 +172,19 @@ class TahanDuluAddScreen extends ConsumerWidget {
                 leading: Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF3E8FF),
+                    color: context.palette.tertiaryContainer,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.photo_library_outlined, color: Color(0xFF9333EA)),
+                  child: Icon(Icons.photo_library_outlined, color: context.palette.tertiary),
                 ),
-                title: const Text(
+                title: Text(
                   'Pilih dari Galeri',
-                  style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF102A43)),
+                  style: TextStyle(fontWeight: FontWeight.w600, color: context.palette.onSurface),
                 ),
                 subtitle: const Text('Ambil foto dari galeri perangkat'),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
-                  side: const BorderSide(color: Color(0xFFE8EDF3)),
+                  side: BorderSide(color: context.palette.outlineVariant),
                 ),
                 onTap: () => Navigator.pop(ctx, ImageSource.gallery),
               ),
@@ -267,12 +266,12 @@ class _AddHeroSection extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.palette.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE8EDF3)),
+        border: Border.all(color: context.palette.outlineVariant),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF102A43).withValues(alpha: 0.03),
+            color: context.palette.onSurface.withValues(alpha: 0.03),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -281,7 +280,7 @@ class _AddHeroSection extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const Expanded(
+          Expanded(
             flex: 3,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -290,7 +289,7 @@ class _AddHeroSection extends StatelessWidget {
                 Text(
                   'Tambah barang impianmu',
                   style: TextStyle(
-                    color: Color(0xFF102A43),
+                    color: context.palette.onSurface,
                     fontWeight: FontWeight.w800,
                     fontSize: 18,
                     height: 1.25,
@@ -300,7 +299,7 @@ class _AddHeroSection extends StatelessWidget {
                 Text(
                   'Simpan barang yang ingin dibeli dan lihat dampaknya pada keuanganmu.',
                   style: TextStyle(
-                    color: Color(0xFF718096),
+                    color: context.palette.onSurfaceVariant,
                     fontSize: 12.5,
                     height: 1.35,
                   ),
@@ -317,13 +316,13 @@ class _AddHeroSection extends StatelessWidget {
                 AppAssets.tambahBarangHero,
                 height: 110,
                 fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) => const SizedBox(
+                errorBuilder: (context, error, stackTrace) => SizedBox(
                   height: 110,
                   width: 110,
                   child: Icon(
                     Icons.shopping_bag_outlined,
                     size: 48,
-                    color: Color(0xFF10B981),
+                    color: context.palette.primary,
                   ),
                 ),
               ),
@@ -344,9 +343,9 @@ class _InfoReminderCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF9E8),
+        color: context.warningFill,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFFDE68A), width: 1.0),
+        border: Border.all(color: context.warningFill, width: 1.0),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -356,18 +355,18 @@ class _InfoReminderCard extends StatelessWidget {
             width: 32,
             height: 32,
             fit: BoxFit.contain,
-            errorBuilder: (context, error, stackTrace) => const Icon(
+            errorBuilder: (context, error, stackTrace) => Icon(
               Icons.info_outline_rounded,
               size: 24,
-              color: Color(0xFF92400E),
+              color: context.warningInk,
             ),
           ),
           const SizedBox(width: 12),
-          const Expanded(
+          Expanded(
             child: Text(
               'Tahan Dulu membantu melihat dampak pembelian terhadap kondisi keuanganmu, bukan memberikan saran finansial.',
               style: TextStyle(
-                color: Color(0xFF78350F),
+                color: context.warningInk,
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
                 height: 1.35,

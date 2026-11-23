@@ -3,9 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:printing/printing.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_states.dart';
 import '../../../../data/providers/app_providers.dart';
@@ -137,7 +138,7 @@ class _ReportExportScreenState extends ConsumerState<ReportExportScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text(AppStrings.exportPreviewTitle)),
-      body: SafeArea(
+      body: GlassBackdrop(child: SafeArea(
         child: report.when(
           data: (r) => goals.when(
             data: (g) {
@@ -187,8 +188,8 @@ class _ReportExportScreenState extends ConsumerState<ReportExportScreen> {
                             child: AppButton(
                               label: 'Unduh Excel',
                               icon: Icons.table_chart_outlined,
-                              backgroundColor: AppColors.primarySoft,
-                              foregroundColor: AppColors.primaryDark,
+                              backgroundColor: context.palette.primaryContainer,
+                              foregroundColor: context.palette.primary,
                               isLoading: _exportingExcel,
                               onPressed: (_exporting || _exportingExcel)
                                   ? null
@@ -207,7 +208,7 @@ class _ReportExportScreenState extends ConsumerState<ReportExportScreen> {
           loading: () => const AppLoading(),
           error: (error, _) => AppErrorState(onRetry: () => ref.invalidate(monthlyReportProvider(month))),
         ),
-      ),
+      )),
     );
   }
 }
@@ -236,10 +237,10 @@ class _NoPreview extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
+            Icon(
               Icons.assessment_outlined,
               size: 64,
-              color: AppColors.textSecondary,
+              color: context.palette.onSurfaceVariant,
             ),
             const SizedBox(height: 12),
             Text(
@@ -268,8 +269,8 @@ class _NoPreview extends StatelessWidget {
                   child: AppButton(
                     label: 'Unduh Excel',
                     icon: Icons.table_chart_outlined,
-                    backgroundColor: AppColors.primarySoft,
-                    foregroundColor: AppColors.primaryDark,
+                    backgroundColor: context.palette.primaryContainer,
+                    foregroundColor: context.palette.primary,
                     isLoading: exportingExcel,
                     onPressed: (exportingPdf || exportingExcel) ? null : onExportExcel,
                   ),

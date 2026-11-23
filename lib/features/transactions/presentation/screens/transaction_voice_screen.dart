@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/routing/app_routes.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
@@ -330,7 +331,7 @@ class _TransactionVoiceScreenState
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundWarm,
+      backgroundColor: context.canvasColor,
       appBar: AppBar(
         title: const Text('Input Suara'),
         leading: AppBackButton(onPressed: () => context.pop()),
@@ -347,7 +348,7 @@ class _TransactionVoiceScreenState
             ),
         ],
       ),
-      body: SafeArea(
+      body: GlassBackdrop(child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
@@ -362,7 +363,7 @@ class _TransactionVoiceScreenState
                   Text(
                     'Sebutkan transaksimu',
                     style: textTheme.headlineSmall?.copyWith(
-                      color: AppColors.textPrimary,
+                      color: context.palette.onSurface,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -370,7 +371,7 @@ class _TransactionVoiceScreenState
                   Text(
                     'Ucapkan detail transaksi seperti nominal, kebutuhan, dan akun pembayaran dalam bahasa Indonesia.',
                     style: textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textSecondary,
+                      color: context.palette.onSurfaceVariant,
                       height: 1.4,
                     ),
                   ),
@@ -381,10 +382,10 @@ class _TransactionVoiceScreenState
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: AppColors.error.withValues(alpha: 0.1),
+                        color: context.palette.error.withValues(alpha: 0.1),
                         borderRadius: AppRadius.card,
                         border: Border.all(
-                          color: AppColors.error.withValues(alpha: 0.3),
+                          color: context.palette.error.withValues(alpha: 0.3),
                         ),
                       ),
                       child: Row(
@@ -399,7 +400,7 @@ class _TransactionVoiceScreenState
                             child: Text(
                               _errorMessage!,
                               style: textTheme.bodySmall?.copyWith(
-                                color: AppColors.error,
+                                color: context.palette.error,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -417,19 +418,19 @@ class _TransactionVoiceScreenState
                         GestureDetector(
                           onTap: _isRecording ? _stopRecording : _startRecording,
                           child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 300),
+                            duration: Glass.motion(context),
                             width: 96,
                             height: 96,
                             decoration: BoxDecoration(
                               color: _isRecording
-                                  ? AppColors.error
-                                  : AppColors.secondary,
+                                  ? context.palette.error
+                                  : context.palette.secondary,
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
                                   color: (_isRecording
-                                          ? AppColors.error
-                                          : AppColors.secondary)
+                                          ? context.palette.error
+                                          : context.palette.secondary)
                                       .withValues(alpha: 0.35),
                                   blurRadius: _isRecording ? 24 : 14,
                                   spreadRadius: _isRecording ? 6 : 0,
@@ -454,8 +455,8 @@ class _TransactionVoiceScreenState
                                   : 'Tekan tombol mikrofon untuk mulai'),
                           style: textTheme.bodySmall?.copyWith(
                             color: _isRecording
-                                ? AppColors.error
-                                : AppColors.textSecondary,
+                                ? context.palette.error
+                                : context.palette.onSurfaceVariant,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -468,7 +469,7 @@ class _TransactionVoiceScreenState
                   Text(
                     'Atau coba contoh ucapan berikut:',
                     style: textTheme.labelMedium?.copyWith(
-                      color: AppColors.textPrimary,
+                      color: context.palette.onSurface,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -481,11 +482,11 @@ class _TransactionVoiceScreenState
                         label: Text(
                           phrase,
                           style: textTheme.bodySmall?.copyWith(
-                            color: AppColors.textPrimary,
+                            color: context.palette.onSurface,
                           ),
                         ),
-                        backgroundColor: AppColors.surface,
-                        side: const BorderSide(color: AppColors.border),
+                        backgroundColor: context.palette.surface,
+                        side: BorderSide(color: context.palette.outlineVariant),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
@@ -507,16 +508,16 @@ class _TransactionVoiceScreenState
                             children: [
                               Row(
                                 children: [
-                                  const Icon(
+                                  Icon(
                                     Icons.record_voice_over_outlined,
                                     size: 18,
-                                    color: AppColors.secondary,
+                                    color: context.palette.secondary,
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
                                     'Hasil Ucapan Terdeteksi',
                                     style: textTheme.titleSmall?.copyWith(
-                                      color: AppColors.textPrimary,
+                                      color: context.palette.onSurface,
                                       fontWeight: FontWeight.w700,
                                     ),
                                   ),
@@ -563,7 +564,7 @@ class _TransactionVoiceScreenState
                             Text(
                               '"$_transcription"',
                               style: textTheme.bodyMedium?.copyWith(
-                                color: AppColors.textPrimary,
+                                color: context.palette.onSurface,
                                 fontStyle: FontStyle.italic,
                               ),
                             ),
@@ -583,7 +584,7 @@ class _TransactionVoiceScreenState
                           Text(
                             'Informasi Transaksi yang Dikenali',
                             style: textTheme.titleSmall?.copyWith(
-                              color: AppColors.textPrimary,
+                              color: context.palette.onSurface,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
@@ -597,8 +598,8 @@ class _TransactionVoiceScreenState
                             isHighlight: true,
                             highlightColor: _parsedResult!.type ==
                                     TransactionType.income
-                                ? AppColors.success
-                                : AppColors.warning,
+                                ? context.palette.primary
+                                : context.warningInk,
                           ),
                           const Divider(height: 16),
                           _DetailRow(
@@ -657,13 +658,13 @@ class _TransactionVoiceScreenState
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: AppColors.infoSoft,
+                      color: context.palette.secondaryContainer,
                       borderRadius: AppRadius.card,
                     ),
                     child: Text(
                       'Catatan: Fitur speech-to-text mengubah ucapan menjadi teks. Seluruh detail selalu ditinjau kembali di formulir transaksi sebelum disimpan ke sistem.',
                       style: textTheme.bodySmall?.copyWith(
-                        color: AppColors.secondary,
+                        color: context.palette.secondary,
                         fontSize: 11,
                       ),
                     ),
@@ -673,7 +674,7 @@ class _TransactionVoiceScreenState
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 }
@@ -702,7 +703,7 @@ class _DetailRow extends StatelessWidget {
         Text(
           label,
           style: textTheme.bodySmall?.copyWith(
-            color: AppColors.textSecondary,
+            color: context.palette.onSurfaceVariant,
           ),
         ),
         const SizedBox(width: 12),
@@ -712,8 +713,8 @@ class _DetailRow extends StatelessWidget {
             textAlign: TextAlign.end,
             style: textTheme.bodyMedium?.copyWith(
               color: isHighlight
-                  ? (highlightColor ?? AppColors.textPrimary)
-                  : AppColors.textPrimary,
+                  ? (highlightColor ?? context.palette.onSurface)
+                  : context.palette.onSurface,
               fontWeight: isHighlight ? FontWeight.w700 : FontWeight.w600,
             ),
           ),

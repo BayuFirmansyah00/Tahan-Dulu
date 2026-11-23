@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_states.dart';
@@ -44,7 +45,7 @@ class ReportsScreen extends ConsumerWidget {
       bottomNavigationBar: DashboardBottomNav(
         onTap: (i) => _onNav(i, context),
       ),
-      body: SafeArea(
+      body: GlassBackdrop(child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
@@ -60,7 +61,7 @@ class ReportsScreen extends ConsumerWidget {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 }
@@ -99,8 +100,8 @@ class _Body extends ConsumerWidget {
               Expanded(
                 child: _SummaryCard(
                   icon: Icons.arrow_downward,
-                  foreground: AppColors.primary,
-                  background: AppColors.primarySoft,
+                  foreground: context.palette.primary,
+                  background: context.palette.primaryContainer,
                   label: AppStrings.reportsIncomeLabel,
                   value: report.income,
                   previous: report.prevIncome,
@@ -111,8 +112,8 @@ class _Body extends ConsumerWidget {
               Expanded(
                 child: _SummaryCard(
                   icon: Icons.arrow_upward,
-                  foreground: AppColors.error,
-                  background: AppColors.dangerSoft,
+                  foreground: context.palette.error,
+                  background: context.palette.errorContainer,
                   label: AppStrings.reportsExpenseLabel,
                   value: report.expense,
                   previous: report.prevExpense,
@@ -127,8 +128,8 @@ class _Body extends ConsumerWidget {
               Expanded(
                 child: _PlainCard(
                   icon: Icons.savings_outlined,
-                  foreground: AppColors.warning,
-                  background: AppColors.warningSoft,
+                  foreground: context.warningInk,
+                  background: context.warningFill,
                   label: AppStrings.reportsSavedLabel,
                   value: report.savingsMonth,
                 ),
@@ -137,8 +138,8 @@ class _Body extends ConsumerWidget {
               Expanded(
                 child: _PlainCard(
                   icon: Icons.show_chart_outlined,
-                  foreground: AppColors.secondary,
-                  background: AppColors.secondarySoft,
+                  foreground: context.palette.secondary,
+                  background: context.palette.secondaryContainer,
                   label: AppStrings.reportsInvestedLabel,
                   value: report.investmentMonth,
                 ),
@@ -159,11 +160,7 @@ class _Body extends ConsumerWidget {
           const SizedBox(height: 8),
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.border),
-            ),
+            decoration: Glass.panel(context, radius: BorderRadius.circular(16)),
             child: IncomeExpenseBars(
               income: report.income,
               expense: report.expense,
@@ -172,8 +169,8 @@ class _Body extends ConsumerWidget {
           const SizedBox(height: 16),
           InsightCard(
             icon: Icons.spa_outlined,
-            iconColor: AppColors.primary,
-            iconBackground: AppColors.primarySoft,
+            iconColor: context.palette.primary,
+            iconBackground: context.palette.primaryContainer,
             title: apiReport != null && apiReport.summary.healthScore > 0
                 ? 'Skor Kesehatan: ${apiReport.summary.healthScore}/100'
                 : AppStrings.reportsMonthSummary,
@@ -182,9 +179,9 @@ class _Body extends ConsumerWidget {
                 : (report.expense <= report.income
                     ? AppStrings.reportsWithinBudget
                     : AppStrings.reportsOverBudget),
-            trailing: const Icon(
+            trailing: Icon(
               Icons.chevron_right,
-              color: AppColors.textSecondary,
+              color: context.palette.onSurfaceVariant,
             ),
             onTap: () => context.push(AppRoutes.reportsHealth),
           ),
@@ -235,11 +232,7 @@ class _SummaryCard extends StatelessWidget {
         change == null ? null : (goodWhenUp ? change >= 0 : change <= 0);
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
+      decoration: Glass.panel(context, radius: BorderRadius.circular(16)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -274,7 +267,7 @@ class _SummaryCard extends StatelessWidget {
               '${change >= 0 ? '+' : ''}${(change * 100).round()}% '
               '${AppStrings.fromLastMonth}',
               style: textTheme.labelSmall?.copyWith(
-                color: good! ? AppColors.primary : AppColors.error,
+                color: good! ? context.palette.primary : context.palette.error,
               ),
             ),
           ],
@@ -304,11 +297,7 @@ class _PlainCard extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
+      decoration: Glass.panel(context, radius: BorderRadius.circular(16)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -353,23 +342,19 @@ class _RemainingCard extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
+      decoration: Glass.panel(context, radius: BorderRadius.circular(16)),
       child: Row(
         children: [
           Container(
             width: 32,
             height: 32,
-            decoration: const BoxDecoration(
-              color: AppColors.secondarySoft,
+            decoration: BoxDecoration(
+              color: context.palette.secondaryContainer,
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.account_balance_wallet_outlined,
-              color: AppColors.secondary,
+              color: context.palette.secondary,
               size: 18,
             ),
           ),
@@ -385,7 +370,7 @@ class _RemainingCard extends StatelessWidget {
             style: textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w800,
               fontSize: 22,
-              color: AppColors.primary,
+              color: context.palette.primary,
             ),
           ),
         ],
@@ -409,22 +394,22 @@ class _SavedImpulseCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.primarySoft.withValues(alpha: 0.4),
+        color: context.palette.primaryContainer.withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+        border: Border.all(color: context.palette.primary.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
           Container(
             width: 36,
             height: 36,
-            decoration: const BoxDecoration(
-              color: AppColors.primarySoft,
+            decoration: BoxDecoration(
+              color: context.palette.primaryContainer,
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.shield_outlined,
-              color: AppColors.primary,
+              color: context.palette.primary,
               size: 20,
             ),
           ),
@@ -436,14 +421,14 @@ class _SavedImpulseCard extends StatelessWidget {
                 Text(
                   'Dana Terselamatkan (Tahan Dulu)',
                   style: textTheme.bodySmall?.copyWith(
-                    color: AppColors.textSecondary,
+                    color: context.palette.onSurfaceVariant,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 Text(
                   '$count godaan impulsif ditahan (estimasi hemat)',
                   style: textTheme.labelSmall?.copyWith(
-                    color: AppColors.primaryDark,
+                    color: context.palette.primary,
                     fontSize: 11,
                   ),
                 ),
@@ -455,7 +440,7 @@ class _SavedImpulseCard extends StatelessWidget {
             style: textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w800,
               fontSize: 15,
-              color: AppColors.primaryDark,
+              color: context.palette.primary,
             ),
           ),
         ],

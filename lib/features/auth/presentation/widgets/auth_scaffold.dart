@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/glass.dart';
+
 /// Layout auth bersama: aman (SafeArea), scroll saat keyboard muncul,
 /// dan konten dibatasi 480px agar nyaman di web.
 class AuthScaffold extends StatelessWidget {
@@ -12,7 +14,7 @@ class AuthScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: appBar,
-      body: SafeArea(
+      body: GlassBackdrop(child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
@@ -22,7 +24,7 @@ class AuthScaffold extends StatelessWidget {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 }

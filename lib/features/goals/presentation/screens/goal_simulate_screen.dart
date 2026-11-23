@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/utils/finance_math.dart';
@@ -84,7 +85,7 @@ class _GoalSimulateScreenState
         currentIndex: 3,
         onTap: (i) => goalsBottomNavTap(context, i),
       ),
-      body: SafeArea(
+      body: GlassBackdrop(child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
@@ -199,7 +200,7 @@ class _GoalSimulateScreenState
                               Text(
                                 AppStrings.simulateReached,
                                 style: textTheme.bodyMedium?.copyWith(
-                                  color: AppColors.primary,
+                                  color: context.palette.primary,
                                   fontWeight: FontWeight.w600,
                                 ),
                               )
@@ -232,7 +233,7 @@ class _GoalSimulateScreenState
                                 width: double.infinity,
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: AppColors.surface,
+                                  color: context.palette.surface,
                                   borderRadius:
                                       BorderRadius.circular(16),
                                   border: Border.all(
@@ -305,7 +306,7 @@ class _GoalSimulateScreenState
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 }

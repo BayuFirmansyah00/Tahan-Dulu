@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -110,12 +112,7 @@ class SettingsMenuRow extends StatelessWidget {
       borderRadius: AppRadius.cardLarge,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: AppRadius.cardLarge,
-          border: Border.all(color: AppColors.border),
-          boxShadow: AppShadows.card,
-        ),
+        decoration: Glass.panel(context, radius: AppRadius.cardLarge),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -257,13 +254,13 @@ class SettingsBanner extends StatelessWidget {
           height: height ?? 132,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: AppColors.primarySoft,
+            color: context.palette.primaryContainer,
             borderRadius: AppRadius.cardLarge,
-            border: Border.all(color: AppColors.border),
+            border: Border.all(color: context.palette.outlineVariant),
           ),
           child: ProfileIconContainer(
             icon: fallbackIcon,
-            foreground: AppColors.primary,
+            foreground: context.palette.primary,
             background: Colors.white,
             size: 56,
             iconSize: 28,
@@ -328,10 +325,12 @@ class ConfirmDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     return AlertDialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-      ),
-      content: Column(
+      scrollable: true,
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      contentPadding: EdgeInsets.zero,
+      content: FloatingGlass(radius: AppRadius.cardLarge,
+        child: Padding(padding: const EdgeInsets.all(20), child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (assetPath != null && assetPath!.isNotEmpty)
@@ -368,8 +367,8 @@ class ConfirmDialog extends StatelessWidget {
               Expanded(
                 child: OutlinedButton(
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.textPrimary,
-                    side: const BorderSide(color: AppColors.border),
+                    foregroundColor: context.palette.onSurface,
+                    side: BorderSide(color: context.palette.outlineVariant),
                     minimumSize: const Size.fromHeight(48),
                   ),
                   onPressed: () => Navigator.of(context).pop(false),
@@ -390,10 +389,11 @@ class ConfirmDialog extends StatelessWidget {
             ],
           ),
         ],
-      ),
+      ))),
     );
   }
 }
+
 
 Future<bool> showConfirmDialog({
   required BuildContext context,

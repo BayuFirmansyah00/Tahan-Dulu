@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/routing/app_routes.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_icons.dart';
 import '../../../../core/widgets/app_method_tile.dart';
 import '../providers/transactions_controller.dart';
@@ -39,22 +40,22 @@ class TransactionRecordMethodScreen extends ConsumerWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FC),
+      backgroundColor: context.canvasColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF7F9FC),
+        backgroundColor: context.canvasColor,
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: AppBackButton(onPressed: () => context.pop()),
         title: Text(
           'Pilih Metode Catat',
           style: textTheme.titleMedium?.copyWith(
-            color: const Color(0xFF102A43),
+            color: context.palette.onSurface,
             fontWeight: FontWeight.w700,
             fontSize: 17,
           ),
         ),
       ),
-      body: SafeArea(
+      body: GlassBackdrop(child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
@@ -83,7 +84,7 @@ class TransactionRecordMethodScreen extends ConsumerWidget {
                     title: 'Input Suara',
                     subtitle: 'Cukup ucapkan transaksimu',
                     assetPath: AppAssets.txMethodVoice,
-                    accent: const Color(0xFF8B5CF6),
+                    accent: context.palette.tertiary,
                     onTap: () => _onVoiceSelected(context, ref),
                   ),
                   const SizedBox(height: 12),
@@ -105,7 +106,7 @@ class TransactionRecordMethodScreen extends ConsumerWidget {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 }
@@ -121,12 +122,12 @@ class _HeroSection extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.palette.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE8EDF3)),
+        border: Border.all(color: context.palette.outlineVariant),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF102A43).withValues(alpha: 0.03),
+            color: context.palette.onSurface.withValues(alpha: 0.03),
             blurRadius: 14,
             offset: const Offset(0, 4),
           ),
@@ -144,7 +145,7 @@ class _HeroSection extends StatelessWidget {
                 Text(
                   'Catat Transaksi',
                   style: textTheme.titleLarge?.copyWith(
-                    color: const Color(0xFF102A43),
+                    color: context.palette.onSurface,
                     fontWeight: FontWeight.w800,
                     fontSize: 18,
                     height: 1.2,
@@ -153,7 +154,7 @@ class _HeroSection extends StatelessWidget {
                 Text(
                   'Lebih Mudah',
                   style: textTheme.titleLarge?.copyWith(
-                    color: AppColors.primary,
+                    color: context.palette.primary,
                     fontWeight: FontWeight.w800,
                     fontSize: 18,
                     height: 1.2,
@@ -163,7 +164,7 @@ class _HeroSection extends StatelessWidget {
                 Text(
                   'Pilih cara mencatat yang paling nyaman buatmu.',
                   style: textTheme.bodySmall?.copyWith(
-                    color: const Color(0xFF718096),
+                    color: context.palette.onSurfaceVariant,
                     fontSize: 12,
                     height: 1.35,
                   ),
@@ -200,9 +201,9 @@ class _InfoBox extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF0FDF4),
+        color: context.palette.primaryContainer,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFDCFCE7), width: 1.0),
+        border: Border.all(color: context.palette.primaryContainer, width: 1.0),
       ),
       child: Row(
         children: [
@@ -217,7 +218,7 @@ class _InfoBox extends StatelessWidget {
             child: Text(
               'Semua transaksi bisa diperiksa dan diedit sebelum disimpan.',
               style: textTheme.bodySmall?.copyWith(
-                color: const Color(0xFF166534),
+                color: context.palette.primary,
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
                 height: 1.35,

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/rupiah_input_formatter.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_image_icon.dart';
@@ -254,7 +255,7 @@ class _AddAccountScreenState extends ConsumerState<AddAccountScreen> {
         leading: const AppBackButton(),
         title: const Text(AppStrings.addAccountTitle),
       ),
-      body: SafeArea(
+      body: GlassBackdrop(child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
@@ -286,7 +287,7 @@ class _AddAccountScreenState extends ConsumerState<AddAccountScreen> {
                           Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: AppColors.secondarySoft,
+                              color: context.palette.secondaryContainer,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
@@ -350,12 +351,12 @@ class _AddAccountScreenState extends ConsumerState<AddAccountScreen> {
                           child: Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: AppColors.surface,
+                              color: context.palette.surface,
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
                                 color: _selectedBank != null
-                                    ? AppColors.primary
-                                    : AppColors.border,
+                                    ? context.palette.primary
+                                    : context.palette.outlineVariant,
                                 width: _selectedBank != null ? 1.5 : 1.0,
                               ),
                             ),
@@ -385,7 +386,7 @@ class _AddAccountScreenState extends ConsumerState<AddAccountScreen> {
                                               ? _selectedBank!.aliases.join(' • ')
                                               : _selectedBank!.slug.toUpperCase(),
                                           style: textTheme.bodySmall?.copyWith(
-                                            color: AppColors.textSecondary,
+                                            color: context.palette.onSurfaceVariant,
                                           ),
                                         ),
                                       ],
@@ -408,7 +409,7 @@ class _AddAccountScreenState extends ConsumerState<AddAccountScreen> {
                                     width: 40,
                                     height: 40,
                                     decoration: BoxDecoration(
-                                      color: AppColors.secondarySoft,
+                                      color: context.palette.secondaryContainer,
                                       borderRadius: BorderRadius.circular(10),
                                     ),
                                     child: Center(
@@ -418,7 +419,7 @@ class _AddAccountScreenState extends ConsumerState<AddAccountScreen> {
                                             : (_selectedCategoryFilter == 'digitalBank'
                                                 ? Icons.smartphone_outlined
                                                 : Icons.account_balance_outlined),
-                                        color: AppColors.primary,
+                                        color: context.palette.primary,
                                         size: 22,
                                       ),
                                     ),
@@ -442,7 +443,7 @@ class _AddAccountScreenState extends ConsumerState<AddAccountScreen> {
                                                   ? '16 bank digital terverifikasi OJK'
                                                   : '140+ bank resmi Indonesia'),
                                           style: textTheme.bodySmall?.copyWith(
-                                            color: AppColors.textSecondary,
+                                            color: context.palette.onSurfaceVariant,
                                           ),
                                         ),
                                       ],
@@ -536,7 +537,7 @@ class _AddAccountScreenState extends ConsumerState<AddAccountScreen> {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 }
@@ -551,7 +552,7 @@ class _InfoBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.secondarySoft,
+        color: context.palette.secondaryContainer,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(

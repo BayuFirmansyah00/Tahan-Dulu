@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -16,14 +18,10 @@ Future<void> showChangePasswordBottomSheet(
   BuildContext context,
   WidgetRef ref,
 ) async {
-  await showModalBottomSheet<void>(
+  await showGlassSheet<void>(
     context: context,
     isScrollControlled: true,
-    backgroundColor: Colors.white,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-    ),
-    builder: (ctx) => const _ChangePasswordSheet(),
+      builder: (ctx) => const _ChangePasswordSheet(),
   );
 }
 
@@ -113,7 +111,7 @@ class _ChangePasswordSheetState extends ConsumerState<_ChangePasswordSheet> {
                   width: 44,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: AppColors.border,
+                    color: context.palette.outlineVariant,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -129,7 +127,7 @@ class _ChangePasswordSheetState extends ConsumerState<_ChangePasswordSheet> {
               Text(
                 'Masukkan kata sandi saat ini dan kata sandi baru minimal 8 karakter.',
                 style: textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: context.palette.onSurfaceVariant,
                 ),
               ),
               const SizedBox(height: 16),
@@ -240,14 +238,14 @@ Future<void> showDeleteAccountFlow(
       context: context,
       assetPath: AppAssets.setDeleteAccount,
       icon: Icons.delete_forever_outlined,
-      iconForeground: AppColors.error,
-      iconBackground: const Color(0xFFFEE2E2),
+      iconForeground: context.palette.error,
+      iconBackground: context.palette.errorContainer,
       title: 'Hapus Akun Permanen?',
       message:
           'Seluruh data transaksi, anggaran, dan target keuangan kamu akan dihapus secara permanen. Autentikasi ulang akun Google diperlukan untuk konfirmasi.',
       cancelLabel: 'Batal',
       confirmLabel: 'Lanjut Hapus Akun',
-      confirmColor: AppColors.error,
+      confirmColor: context.palette.error,
     );
     if (!confirmed || !context.mounted) return;
 
@@ -370,12 +368,12 @@ class _DeleteAccountPasswordDialogState
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: const Color(0xFFFEE2E2),
+              color: context.palette.errorContainer,
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.warning_amber_rounded,
-              color: AppColors.error,
+              color: context.palette.error,
               size: 24,
             ),
           ),
@@ -385,7 +383,7 @@ class _DeleteAccountPasswordDialogState
               'Hapus Akun',
               style: textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w800,
-                color: AppColors.error,
+                color: context.palette.error,
               ),
             ),
           ),
@@ -428,7 +426,7 @@ class _DeleteAccountPasswordDialogState
                 Text(
                   _error!,
                   style: textTheme.bodySmall?.copyWith(
-                    color: AppColors.error,
+                    color: context.palette.error,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -443,18 +441,15 @@ class _DeleteAccountPasswordDialogState
           child: const Text('Batal'),
         ),
         ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.error,
-            foregroundColor: Colors.white,
-          ),
+          style: destructiveButtonStyle(context),
           onPressed: _loading ? null : _handleConfirm,
           child: _loading
-              ? const SizedBox(
+              ? SizedBox(
                   width: 16,
                   height: 16,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    valueColor: AlwaysStoppedAnimation<Color>(context.palette.onError),
                   ),
                 )
               : const Text('Ya, Hapus Akun'),

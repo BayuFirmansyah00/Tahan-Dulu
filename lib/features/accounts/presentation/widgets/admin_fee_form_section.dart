@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/utils/rupiah_input_formatter.dart';
 import '../../../../core/widgets/app_text_field.dart';
 
@@ -75,7 +76,7 @@ class AdminFeeFormSection extends StatelessWidget {
             const SizedBox(height: 6),
             Text(
               fieldError!,
-              style: textTheme.bodySmall?.copyWith(color: AppColors.error),
+              style: textTheme.bodySmall?.copyWith(color: context.palette.error),
             ),
           ],
           const SizedBox(height: 12),
@@ -88,11 +89,11 @@ class AdminFeeFormSection extends StatelessWidget {
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppColors.border),
+                borderSide: BorderSide(color: context.palette.outlineVariant),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppColors.border),
+                borderSide: BorderSide(color: context.palette.outlineVariant),
               ),
             ),
             items: [
@@ -114,10 +115,10 @@ class AdminFeeFormSection extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(
+              Icon(
                 Icons.info_outline,
                 size: 16,
-                color: AppColors.textSecondary,
+                color: context.palette.onSurfaceVariant,
               ),
               const SizedBox(width: 6),
               Expanded(
@@ -125,7 +126,7 @@ class AdminFeeFormSection extends StatelessWidget {
                   'Jika tanggal tidak tersedia pada bulan tertentu (cth. tgl 31 di Februari), '
                   'pemotongan diestimasi pada hari terakhir bulan tersebut. Biaya ini tidak otomatis memotong saldo.',
                   style: textTheme.bodySmall?.copyWith(
-                    color: AppColors.textSecondary,
+                    color: context.palette.onSurfaceVariant,
                     fontSize: 11,
                   ),
                 ),
@@ -161,10 +162,10 @@ class _AdminFeeOptionTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primarySoft : AppColors.surface,
+          color: isSelected ? context.palette.primaryContainer : context.palette.surface,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: isSelected ? AppColors.primary : AppColors.border,
+            color: isSelected ? context.palette.primary : context.palette.outlineVariant,
             width: isSelected ? 1.5 : 1,
           ),
         ),
@@ -173,7 +174,7 @@ class _AdminFeeOptionTile extends StatelessWidget {
             Icon(
               icon,
               size: 20,
-              color: isSelected ? AppColors.primary : AppColors.textSecondary,
+              color: isSelected ? context.palette.primary : context.palette.onSurfaceVariant,
             ),
             const SizedBox(width: 8),
             Expanded(
@@ -187,8 +188,8 @@ class _AdminFeeOptionTile extends StatelessWidget {
                           fontWeight:
                               isSelected ? FontWeight.w700 : FontWeight.w500,
                           color: isSelected
-                              ? AppColors.primary
-                              : AppColors.textPrimary,
+                              ? context.palette.primary
+                              : context.palette.onSurface,
                         ),
                   ),
                   Text(
@@ -196,8 +197,8 @@ class _AdminFeeOptionTile extends StatelessWidget {
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           fontSize: 10,
                           color: isSelected
-                              ? AppColors.primary
-                              : AppColors.textSecondary,
+                              ? context.palette.primary
+                              : context.palette.onSurfaceVariant,
                         ),
                   ),
                 ],

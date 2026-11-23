@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_strings.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../data/models/financial_account.dart';
@@ -128,7 +129,7 @@ class _AddRecurringIncomeScreenState
 
     return Scaffold(
       appBar: AppBar(title: const Text(AppStrings.addRecurringIncomeTitle)),
-      body: SafeArea(
+      body: GlassBackdrop(child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
@@ -152,7 +153,7 @@ class _AddRecurringIncomeScreenState
                     Text(
                       AppStrings.recurringIncomeNameRequired,
                       style: textTheme.bodyMedium?.copyWith(
-                        color: AppColors.error,
+                        color: context.palette.error,
                       ),
                     ),
                   ],
@@ -167,7 +168,7 @@ class _AddRecurringIncomeScreenState
                     Text(
                       AppStrings.recurringIncomeCategoryRequired,
                       style: textTheme.bodyMedium?.copyWith(
-                        color: AppColors.error,
+                        color: context.palette.error,
                       ),
                     ),
                   ],
@@ -185,7 +186,7 @@ class _AddRecurringIncomeScreenState
                     Text(
                       AppStrings.recurringIncomeAmountRequired,
                       style: textTheme.bodyMedium?.copyWith(
-                        color: AppColors.error,
+                        color: context.palette.error,
                       ),
                     ),
                   ],
@@ -228,7 +229,7 @@ class _AddRecurringIncomeScreenState
                     Text(
                       AppStrings.recurringIncomeNextDueDateRequired,
                       style: textTheme.bodyMedium?.copyWith(
-                        color: AppColors.error,
+                        color: context.palette.error,
                       ),
                     ),
                   ],
@@ -253,7 +254,7 @@ class _AddRecurringIncomeScreenState
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: AppColors.secondarySoft,
+                        color: context.palette.secondaryContainer,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -285,7 +286,7 @@ class _AddRecurringIncomeScreenState
                     Text(
                       AppStrings.recurringIncomeInstrumentRequired,
                       style: textTheme.bodyMedium?.copyWith(
-                        color: AppColors.error,
+                        color: context.palette.error,
                       ),
                     ),
                   ],
@@ -294,7 +295,7 @@ class _AddRecurringIncomeScreenState
             ),
           ),
         ),
-      ),
+      )),
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.all(20),
         child: AppButton(

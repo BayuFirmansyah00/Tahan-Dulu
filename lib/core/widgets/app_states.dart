@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../theme/glass.dart';
+
 import '../constants/app_strings.dart';
-import '../theme/app_colors.dart';
 import 'app_image_icon.dart';
 
 /// State kosong generik (dipakai semua fitur).
@@ -86,13 +87,13 @@ class AppErrorState extends StatelessWidget {
             Container(
               width: 56,
               height: 56,
-              decoration: const BoxDecoration(
-                color: AppColors.dangerSoft,
+              decoration: BoxDecoration(
+                color: context.palette.errorContainer,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.cloud_off_outlined,
-                color: AppColors.error,
+                color: context.palette.error,
                 size: 28,
               ),
             ),

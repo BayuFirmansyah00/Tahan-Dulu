@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_strings.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/widgets/app_icons.dart';
@@ -35,7 +36,7 @@ class GoalHistoryScreen extends ConsumerWidget {
         currentIndex: 3,
         onTap: (i) => goalsBottomNavTap(context, i),
       ),
-      body: SafeArea(
+      body: GlassBackdrop(child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
@@ -62,7 +63,7 @@ class GoalHistoryScreen extends ConsumerWidget {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 }
@@ -201,20 +202,18 @@ class _ProgressChart extends StatelessWidget {
       height: 150,
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(8, 12, 12, 8),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
+      decoration: Glass.panel(context, radius: BorderRadius.circular(16)),
       child: CustomPaint(
-        painter: _LinePainter(points: points, labels: labels),
+        painter: _LinePainter(points: points, labels: labels, scheme: context.palette),
       ),
     );
   }
 }
 
 class _LinePainter extends CustomPainter {
-  _LinePainter({required this.points, required this.labels});
+  _LinePainter({required this.points, required this.labels, required this.scheme});
+
+  final ColorScheme scheme;
 
   final List<double> points;
   final List<String> labels;
@@ -238,7 +237,7 @@ class _LinePainter extends CustomPainter {
     }
 
     final linePaint = Paint()
-      ..color = AppColors.primary
+      ..color = scheme.primary
       ..strokeWidth = 2.5
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
@@ -248,7 +247,7 @@ class _LinePainter extends CustomPainter {
     }
     canvas.drawPath(path, linePaint);
 
-    final dotPaint = Paint()..color = AppColors.primary;
+    final dotPaint = Paint()..color = scheme.primary;
     for (var i = 0; i < points.length; i++) {
       canvas.drawCircle(at(i), 3, dotPaint);
     }
@@ -261,7 +260,7 @@ class _LinePainter extends CustomPainter {
     for (var i = 0; i < points.length; i += step) {
       textPainter.text = TextSpan(
         text: labels[i],
-        style: const TextStyle(fontSize: 10, color: AppColors.textSecondary),
+        style: TextStyle(fontSize: 10, color: scheme.onSurfaceVariant),
       );
       textPainter.layout();
       textPainter.paint(
@@ -273,7 +272,7 @@ class _LinePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _LinePainter oldDelegate) =>
-      oldDelegate.points != points;
+      oldDelegate.points != points || oldDelegate.labels != labels || oldDelegate.scheme != scheme;
 }
 
 class _DepositRow extends StatelessWidget {
@@ -287,11 +286,7 @@ class _DepositRow extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
+      decoration: Glass.panel(context, radius: BorderRadius.circular(16)),
       child: Row(
         children: [
           Expanded(
@@ -328,7 +323,7 @@ class _DepositRow extends StatelessWidget {
             '+${CurrencyFormatter.formatCompact(deposit.amount)}',
             style: textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w700,
-              color: AppColors.primary,
+              color: context.palette.primary,
             ),
           ),
         ],

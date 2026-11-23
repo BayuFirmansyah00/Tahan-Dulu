@@ -4,9 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/routing/app_routes.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/widgets/app_button.dart';
@@ -233,23 +234,23 @@ class _TransactionScanScreenState extends ConsumerState<TransactionScanScreen> {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FC),
+      backgroundColor: context.canvasColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF7F9FC),
+        backgroundColor: context.canvasColor,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: true,
         leading: AppBackButton(onPressed: () => context.pop()),
-        title: const Text(
+        title: Text(
           'Scan Struk',
           style: TextStyle(
-            color: Color(0xFF102A43),
+            color: context.palette.onSurface,
             fontSize: 17.5,
             fontWeight: FontWeight.w600,
           ),
         ),
       ),
-      body: SafeArea(
+      body: GlassBackdrop(child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
@@ -270,23 +271,23 @@ class _TransactionScanScreenState extends ConsumerState<TransactionScanScreen> {
                         vertical: 12,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFEE2E2),
+                        color: context.palette.errorContainer,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFFFECACA)),
+                        border: Border.all(color: context.palette.errorContainer),
                       ),
                       child: Row(
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.error_outline_rounded,
                             size: 20,
-                            color: Color(0xFFDC2626),
+                            color: context.palette.error,
                           ),
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
                               _errorMessage!,
-                              style: const TextStyle(
-                                color: Color(0xFFDC2626),
+                              style: TextStyle(
+                                color: context.palette.error,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -302,30 +303,26 @@ class _TransactionScanScreenState extends ConsumerState<TransactionScanScreen> {
                   if (_isProcessingOcr) ...[
                     Container(
                       padding: const EdgeInsets.all(18),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: const Color(0xFFE8EDF3)),
-                      ),
+                      decoration: Glass.panel(context, radius: BorderRadius.circular(20)),
                       child: Row(
                         children: [
-                          const SizedBox(
+                          SizedBox(
                             width: 24,
                             height: 24,
                             child: CircularProgressIndicator(
                               strokeWidth: 2.5,
-                              color: Color(0xFF10B981),
+                              color: context.palette.primary,
                             ),
                           ),
                           const SizedBox(width: 16),
-                          const Expanded(
+                          Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
                                   'Membaca Teks Struk...',
                                   style: TextStyle(
-                                    color: Color(0xFF102A43),
+                                    color: context.palette.onSurface,
                                     fontWeight: FontWeight.w700,
                                     fontSize: 14,
                                   ),
@@ -334,7 +331,7 @@ class _TransactionScanScreenState extends ConsumerState<TransactionScanScreen> {
                                 Text(
                                   'Menjalankan Google ML Kit OCR on-device',
                                   style: TextStyle(
-                                    color: Color(0xFF718096),
+                                    color: context.palette.onSurfaceVariant,
                                     fontSize: 12,
                                   ),
                                 ),
@@ -351,11 +348,7 @@ class _TransactionScanScreenState extends ConsumerState<TransactionScanScreen> {
                   if (_imagePath != null) ...[
                     Container(
                       padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: const Color(0xFFE8EDF3)),
-                      ),
+                      decoration: Glass.panel(context, radius: BorderRadius.circular(20)),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -367,11 +360,11 @@ class _TransactionScanScreenState extends ConsumerState<TransactionScanScreen> {
                                 color: Color(0xFF3B82F6),
                               ),
                               const SizedBox(width: 6),
-                              const Expanded(
+                              Expanded(
                                 child: Text(
                                   'Foto Struk Terpilih',
                                   style: TextStyle(
-                                    color: Color(0xFF102A43),
+                                    color: context.palette.onSurface,
                                     fontWeight: FontWeight.w700,
                                     fontSize: 13.5,
                                   ),
@@ -403,23 +396,23 @@ class _TransactionScanScreenState extends ConsumerState<TransactionScanScreen> {
                                       fit: BoxFit.cover,
                                     )
                                   : Container(
-                                      color: const Color(0xFFF7F9FC),
+                                      color: context.canvasColor,
                                       alignment: Alignment.center,
                                       padding: const EdgeInsets.all(12),
                                       child: Row(
                                         mainAxisAlignment:
                                             MainAxisAlignment.center,
                                         children: [
-                                          const Icon(
+                                          Icon(
                                             Icons.image,
-                                            color: Color(0xFF718096),
+                                            color: context.palette.onSurfaceVariant,
                                           ),
                                           const SizedBox(width: 8),
                                           Flexible(
                                             child: Text(
                                               'Berkas: ${_imagePath!.split(Platform.pathSeparator).last}',
-                                              style: const TextStyle(
-                                                color: Color(0xFF718096),
+                                              style: TextStyle(
+                                                color: context.palette.onSurfaceVariant,
                                                 fontSize: 12,
                                               ),
                                               overflow: TextOverflow.ellipsis,
@@ -437,10 +430,10 @@ class _TransactionScanScreenState extends ConsumerState<TransactionScanScreen> {
                   ],
 
                   // --- Section: Pilihan Sumber Struk ---
-                  const Text(
+                  Text(
                     'Pilih sumber struk',
                     style: TextStyle(
-                      color: Color(0xFF102A43),
+                      color: context.palette.onSurface,
                       fontWeight: FontWeight.w700,
                       fontSize: 15,
                     ),
@@ -454,9 +447,9 @@ class _TransactionScanScreenState extends ConsumerState<TransactionScanScreen> {
                           title: 'Kamera',
                           subtitle: 'Ambil foto struk',
                           assetPath: AppAssets.scanCamera3d,
-                          accentColor: const Color(0xFF10B981),
-                          bgColor: const Color(0xFFEAF8F1),
-                          borderColor: const Color(0xFFDCFCE7),
+                          accentColor: context.palette.primary,
+                          bgColor: context.palette.primaryContainer,
+                          borderColor: context.palette.primaryContainer,
                           onTap: _isProcessingOcr ? null : _captureFromCamera,
                         ),
                       ),
@@ -468,8 +461,8 @@ class _TransactionScanScreenState extends ConsumerState<TransactionScanScreen> {
                           subtitle: 'Pilih dari galeri',
                           assetPath: AppAssets.scanGallery3d,
                           accentColor: const Color(0xFF3B82F6),
-                          bgColor: const Color(0xFFEDF4FF),
-                          borderColor: const Color(0xFFDBEAFE),
+                          bgColor: context.palette.secondaryContainer,
+                          borderColor: context.palette.secondaryContainer,
                           onTap: _isProcessingOcr ? null : _pickFromGallery,
                         ),
                       ),
@@ -478,10 +471,10 @@ class _TransactionScanScreenState extends ConsumerState<TransactionScanScreen> {
                   const SizedBox(height: 20),
 
                   // --- Section: Cara Kerja ---
-                  const Text(
+                  Text(
                     'Cara Kerja',
                     style: TextStyle(
-                      color: Color(0xFF102A43),
+                      color: context.palette.onSurface,
                       fontWeight: FontWeight.w700,
                       fontSize: 15,
                     ),
@@ -503,7 +496,7 @@ class _TransactionScanScreenState extends ConsumerState<TransactionScanScreen> {
                               Text(
                                 'Teks Hasil OCR Struk',
                                 style: textTheme.titleSmall?.copyWith(
-                                  color: AppColors.textPrimary,
+                                  color: context.palette.onSurface,
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
@@ -549,10 +542,10 @@ class _TransactionScanScreenState extends ConsumerState<TransactionScanScreen> {
                               width: double.infinity,
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF7F9FC),
+                                color: context.canvasColor,
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
-                                  color: const Color(0xFFE8EDF3),
+                                  color: context.palette.outlineVariant,
                                 ),
                               ),
                               child: Text(
@@ -580,7 +573,7 @@ class _TransactionScanScreenState extends ConsumerState<TransactionScanScreen> {
                           Text(
                             'Informasi Struk yang Dikenali',
                             style: textTheme.titleSmall?.copyWith(
-                              color: AppColors.textPrimary,
+                              color: context.palette.onSurface,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
@@ -623,7 +616,7 @@ class _TransactionScanScreenState extends ConsumerState<TransactionScanScreen> {
                               label: 'Diskon Terbaca',
                               value:
                                   '- ${CurrencyFormatter.format(_parsedReceipt!.discount!)}',
-                              highlightColor: AppColors.success,
+                              highlightColor: context.palette.primary,
                             ),
                           ],
                           if (_parsedReceipt!.tax != null &&
@@ -655,32 +648,32 @@ class _TransactionScanScreenState extends ConsumerState<TransactionScanScreen> {
                                   )
                                 : 'Belum terbaca (isi manual)',
                             isHighlight: true,
-                            highlightColor: AppColors.primary,
+                            highlightColor: context.palette.primary,
                           ),
                           if (_parsedReceipt!.hasMultipleTotals) ...[
                             const SizedBox(height: 10),
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFFFFBEB),
+                                color: context.warningFill,
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
-                                  color: const Color(0xFFFDE68A),
+                                  color: context.warningFill,
                                 ),
                               ),
                               child: Row(
                                 children: [
-                                  const Icon(
+                                  Icon(
                                     Icons.info_outline,
                                     size: 16,
-                                    color: Color(0xFFD97706),
+                                    color: context.warningInk,
                                   ),
                                   const SizedBox(width: 6),
                                   Expanded(
                                     child: Text(
                                       'Terdapat beberapa kandidat total pada struk. Periksa kembali total akhir di form.',
                                       style: textTheme.bodySmall?.copyWith(
-                                        color: const Color(0xFF92400E),
+                                        color: context.warningInk,
                                         fontSize: 11,
                                       ),
                                     ),
@@ -694,7 +687,7 @@ class _TransactionScanScreenState extends ConsumerState<TransactionScanScreen> {
                             Text(
                               'Item Belanja Terbaca (${_parsedReceipt!.items.length}):',
                               style: textTheme.labelMedium?.copyWith(
-                                color: AppColors.textSecondary,
+                                color: context.palette.onSurfaceVariant,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -711,7 +704,7 @@ class _TransactionScanScreenState extends ConsumerState<TransactionScanScreen> {
                                       child: Text(
                                         '• ${item.name}',
                                         style: textTheme.bodySmall?.copyWith(
-                                          color: AppColors.textPrimary,
+                                          color: context.palette.onSurface,
                                         ),
                                         overflow: TextOverflow.ellipsis,
                                       ),
@@ -720,7 +713,7 @@ class _TransactionScanScreenState extends ConsumerState<TransactionScanScreen> {
                                       CurrencyFormatter.format(item.price),
                                       style: textTheme.bodySmall?.copyWith(
                                         fontWeight: FontWeight.w600,
-                                        color: AppColors.textSecondary,
+                                        color: context.palette.onSurfaceVariant,
                                       ),
                                     ),
                                   ],
@@ -750,7 +743,7 @@ class _TransactionScanScreenState extends ConsumerState<TransactionScanScreen> {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 }
@@ -764,12 +757,12 @@ class _ScanHeroSection extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.palette.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE8EDF3)),
+        border: Border.all(color: context.palette.outlineVariant),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF102A43).withValues(alpha: 0.03),
+            color: context.palette.onSurface.withValues(alpha: 0.03),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -778,7 +771,7 @@ class _ScanHeroSection extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const Expanded(
+          Expanded(
             flex: 3,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -787,7 +780,7 @@ class _ScanHeroSection extends StatelessWidget {
                 Text(
                   'Catat dari struk,',
                   style: TextStyle(
-                    color: Color(0xFF102A43),
+                    color: context.palette.onSurface,
                     fontWeight: FontWeight.w800,
                     fontSize: 18,
                     height: 1.2,
@@ -796,7 +789,7 @@ class _ScanHeroSection extends StatelessWidget {
                 Text(
                   'lebih praktis.',
                   style: TextStyle(
-                    color: Color(0xFF10B981),
+                    color: context.palette.primary,
                     fontWeight: FontWeight.w800,
                     fontSize: 18,
                     height: 1.2,
@@ -806,7 +799,7 @@ class _ScanHeroSection extends StatelessWidget {
                 Text(
                   'Foto struk belanja dan biarkan aplikasi membaca transaksimu secara otomatis.',
                   style: TextStyle(
-                    color: Color(0xFF718096),
+                    color: context.palette.onSurfaceVariant,
                     fontSize: 12,
                     height: 1.35,
                   ),
@@ -870,7 +863,7 @@ class _ActionCard extends StatelessWidget {
             border: Border.all(color: borderColor, width: 1.2),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF102A43).withValues(alpha: 0.03),
+                color: context.palette.onSurface.withValues(alpha: 0.03),
                 blurRadius: 10,
                 offset: const Offset(0, 3),
               ),
@@ -897,8 +890,8 @@ class _ActionCard extends StatelessWidget {
                       children: [
                         Text(
                           title,
-                          style: const TextStyle(
-                            color: Color(0xFF102A43),
+                          style: TextStyle(
+                            color: context.palette.onSurface,
                             fontWeight: FontWeight.w700,
                             fontSize: 16,
                           ),
@@ -906,8 +899,8 @@ class _ActionCard extends StatelessWidget {
                         const SizedBox(height: 2),
                         Text(
                           subtitle,
-                          style: const TextStyle(
-                            color: Color(0xFF718096),
+                          style: TextStyle(
+                            color: context.palette.onSurfaceVariant,
                             fontSize: 11.5,
                           ),
                           maxLines: 1,
@@ -920,7 +913,7 @@ class _ActionCard extends StatelessWidget {
                     width: 26,
                     height: 26,
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: context.palette.surface,
                       shape: BoxShape.circle,
                       border: Border.all(color: borderColor),
                     ),
@@ -949,12 +942,12 @@ class _HowItWorksCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.palette.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE8EDF3)),
+        border: Border.all(color: context.palette.outlineVariant),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF102A43).withValues(alpha: 0.03),
+            color: context.palette.onSurface.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),
@@ -963,25 +956,25 @@ class _HowItWorksCard extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildStep(
+          _buildStep(context,
             asset: AppAssets.scanStepCamera,
             label: 'Ambil foto',
           ),
-          const Icon(
+          Icon(
             Icons.arrow_forward_ios_rounded,
             size: 13,
-            color: Color(0xFFCBD5E1),
+            color: context.palette.outlineVariant,
           ),
-          _buildStep(
+          _buildStep(context,
             asset: AppAssets.scanStepRead,
             label: 'Baca data',
           ),
-          const Icon(
+          Icon(
             Icons.arrow_forward_ios_rounded,
             size: 13,
-            color: Color(0xFFCBD5E1),
+            color: context.palette.outlineVariant,
           ),
-          _buildStep(
+          _buildStep(context,
             asset: AppAssets.scanStepReview,
             label: 'Periksa hasil',
           ),
@@ -990,7 +983,7 @@ class _HowItWorksCard extends StatelessWidget {
     );
   }
 
-  Widget _buildStep({required String asset, required String label}) {
+  Widget _buildStep(BuildContext context, {required String asset, required String label}) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -1003,8 +996,8 @@ class _HowItWorksCard extends StatelessWidget {
         const SizedBox(height: 6),
         Text(
           label,
-          style: const TextStyle(
-            color: Color(0xFF102A43),
+          style: TextStyle(
+            color: context.palette.onSurface,
             fontSize: 11.5,
             fontWeight: FontWeight.w600,
           ),
@@ -1023,9 +1016,9 @@ class _PrivacyInfoCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFEAF8F1),
+        color: context.palette.primaryContainer,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFDCFCE7), width: 1.0),
+        border: Border.all(color: context.palette.primaryContainer, width: 1.0),
       ),
       child: Row(
         children: [
@@ -1036,11 +1029,11 @@ class _PrivacyInfoCard extends StatelessWidget {
             fit: BoxFit.contain,
           ),
           const SizedBox(width: 12),
-          const Expanded(
+          Expanded(
             child: Text(
               'Struk diproses di perangkat. Hasil dapat diperiksa sebelum disimpan.',
               style: TextStyle(
-                color: Color(0xFF166534),
+                color: context.palette.primary,
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
                 height: 1.35,
@@ -1077,7 +1070,7 @@ class _ReceiptRow extends StatelessWidget {
         Text(
           label,
           style: textTheme.bodySmall?.copyWith(
-            color: AppColors.textSecondary,
+            color: context.palette.onSurfaceVariant,
           ),
         ),
         const SizedBox(width: 12),
@@ -1087,8 +1080,8 @@ class _ReceiptRow extends StatelessWidget {
             textAlign: TextAlign.end,
             style: textTheme.bodyMedium?.copyWith(
               color: isHighlight
-                  ? (highlightColor ?? AppColors.textPrimary)
-                  : AppColors.textPrimary,
+                  ? (highlightColor ?? context.palette.onSurface)
+                  : context.palette.onSurface,
               fontWeight: isHighlight ? FontWeight.w700 : FontWeight.w600,
             ),
           ),

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
@@ -65,8 +67,8 @@ class _TahanDuluWaitScreenState extends ConsumerState<TahanDuluWaitScreen> {
       title: AppStrings.waitDurationLabel,
       bottomButton: AppButton(
         label: AppStrings.saveAndWaitAction,
-        backgroundColor: TdColors.primary,
-        foregroundColor: TdColors.navy,
+        backgroundColor: context.palette.tertiaryContainer,
+        foregroundColor: context.palette.onSurface,
         isLoading: _saving,
         onPressed: _saving || !exists ? null : () => _save(widget.itemId),
       ),
@@ -98,14 +100,14 @@ class _TahanDuluWaitScreenState extends ConsumerState<TahanDuluWaitScreen> {
                   AppStrings.waitTitle,
                   style: textTheme.headlineMedium?.copyWith(
                     fontSize: 22,
-                    color: TdColors.navy,
+                    color: context.palette.onSurface,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   AppStrings.waitSubtitle,
-                  style: textTheme.bodyMedium?.copyWith(color: TdColors.slate),
+                  style: textTheme.bodyMedium?.copyWith(color: context.palette.onSurfaceVariant),
                 ),
                 const SizedBox(height: 12),
                 TdCard(
@@ -122,7 +124,7 @@ class _TahanDuluWaitScreenState extends ConsumerState<TahanDuluWaitScreen> {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: textTheme.titleMedium?.copyWith(
-                                color: TdColors.navy,
+                                color: context.palette.onSurface,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
@@ -130,7 +132,7 @@ class _TahanDuluWaitScreenState extends ConsumerState<TahanDuluWaitScreen> {
                               CurrencyFormatter.formatCompact(item.price),
                               style: textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.w800,
-                                color: TdColors.navy,
+                                color: context.palette.onSurface,
                               ),
                             ),
                             Container(
@@ -140,13 +142,13 @@ class _TahanDuluWaitScreenState extends ConsumerState<TahanDuluWaitScreen> {
                                 vertical: 2,
                               ),
                               decoration: BoxDecoration(
-                                color: TdColors.highlight,
+                                color: context.palette.tertiaryContainer,
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Text(
                                 productCategoryLabel(item.category),
                                 style: textTheme.labelSmall?.copyWith(
-                                  color: TdColors.navy,
+                                  color: context.palette.onSurface,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -161,7 +163,7 @@ class _TahanDuluWaitScreenState extends ConsumerState<TahanDuluWaitScreen> {
                 Text(
                   'Pilih periode masa tunggu',
                   style: textTheme.titleMedium?.copyWith(
-                    color: TdColors.navy,
+                    color: context.palette.onSurface,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -190,7 +192,7 @@ class _TahanDuluWaitScreenState extends ConsumerState<TahanDuluWaitScreen> {
                 Text(
                   AppStrings.waitReflectTitle,
                   style: textTheme.titleMedium?.copyWith(
-                    color: TdColors.navy,
+                    color: context.palette.onSurface,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -227,7 +229,7 @@ class _TahanDuluWaitScreenState extends ConsumerState<TahanDuluWaitScreen> {
                             child: Text(
                               AppStrings.waitFrequencyLabel,
                               style: textTheme.bodyMedium?.copyWith(
-                                color: TdColors.navy,
+                                color: context.palette.onSurface,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -271,7 +273,7 @@ class _TahanDuluWaitScreenState extends ConsumerState<TahanDuluWaitScreen> {
                       child: Text(
                         AppStrings.waitNotifyNote,
                         style: textTheme.bodyMedium?.copyWith(
-                          color: TdColors.slate,
+                          color: context.palette.onSurfaceVariant,
                         ),
                       ),
                     ),
@@ -309,17 +311,17 @@ class _DurationChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 12),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: selected ? TdColors.primary : TdColors.card,
+          color: selected ? context.palette.tertiaryContainer : context.palette.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: selected ? TdColors.primary : TdColors.border,
+            color: selected ? context.palette.tertiaryContainer : context.palette.outlineVariant,
             width: selected ? 2 : 1,
           ),
         ),
         child: Text(
           label,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            color: TdColors.navy,
+            color: context.palette.onSurface,
             fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
           ),
         ),
@@ -340,9 +342,9 @@ class _CountdownCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: TdColors.highlight,
+        color: context.palette.tertiaryContainer,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: TdColors.border),
+        border: Border.all(color: context.palette.outlineVariant),
       ),
       child: Column(
         children: [
@@ -358,7 +360,7 @@ class _CountdownCard extends StatelessWidget {
               Text(
                 AppStrings.waitCountdownTitle,
                 style: textTheme.titleMedium?.copyWith(
-                  color: TdColors.navy,
+                  color: context.palette.onSurface,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -368,7 +370,7 @@ class _CountdownCard extends StatelessWidget {
           Text(
             formatWaitRemaining(endsAt, DateTime.now()),
             style: textTheme.headlineMedium?.copyWith(
-              color: TdColors.navy,
+              color: context.palette.onSurface,
               fontSize: 28,
               fontWeight: FontWeight.w800,
             ),
@@ -405,17 +407,17 @@ class _ReflectCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: picked ? TdColors.primary : TdColors.card,
+              color: picked ? context.palette.tertiaryContainer : context.palette.surface,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: picked ? TdColors.primary : TdColors.border,
+                color: picked ? context.palette.tertiaryContainer : context.palette.outlineVariant,
                 width: picked ? 2 : 1,
               ),
             ),
             child: Text(
               label,
               style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                color: TdColors.navy,
+                color: context.palette.onSurface,
                 fontWeight: picked ? FontWeight.w700 : FontWeight.w500,
               ),
             ),
@@ -432,7 +434,7 @@ class _ReflectCard extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: TdColors.successBg,
+              color: context.palette.primaryContainer,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Center(
@@ -442,7 +444,7 @@ class _ReflectCard extends StatelessWidget {
                       size: 22,
                       fallbackIcon: icon ?? Icons.eco_outlined,
                     )
-                  : Icon(icon, color: TdColors.success, size: 22),
+                  : Icon(icon, color: context.palette.primary, size: 22),
             ),
           ),
           const SizedBox(width: 10),
@@ -453,7 +455,7 @@ class _ReflectCard extends StatelessWidget {
                 Text(
                   question,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: TdColors.navy,
+                    color: context.palette.onSurface,
                     fontWeight: FontWeight.w600,
                   ),
                 ),

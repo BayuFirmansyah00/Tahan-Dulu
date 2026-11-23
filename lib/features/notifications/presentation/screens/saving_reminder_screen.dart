@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/rupiah_input_formatter.dart';
 import '../../../../core/widgets/app_button.dart';
@@ -144,7 +145,7 @@ class _SavingReminderScreenState extends ConsumerState<SavingReminderScreen> {
         title: const Text(AppStrings.savingReminderTitle),
       ),
       bottomNavigationBar: DashboardBottomNav(onTap: _onNav),
-      body: SafeArea(
+      body: GlassBackdrop(child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
@@ -165,7 +166,7 @@ class _SavingReminderScreenState extends ConsumerState<SavingReminderScreen> {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 }
@@ -255,7 +256,7 @@ class _Form extends ConsumerWidget {
             Text(
               AppStrings.savingAmountHint,
               style: textTheme.bodySmall?.copyWith(
-                color: AppColors.textSecondary,
+                color: context.palette.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 14),
@@ -319,14 +320,14 @@ class _Form extends ConsumerWidget {
               Text(
                 AppStrings.savingShortMonthHint,
                 style: textTheme.bodySmall?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: context.palette.onSurfaceVariant,
                 ),
               ),
             ] else ...[
               Text(
                 AppStrings.savingDailyHint,
                 style: textTheme.bodySmall?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: context.palette.onSurfaceVariant,
                 ),
               ),
             ],
@@ -342,15 +343,15 @@ class _Form extends ConsumerWidget {
                   vertical: 14,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.inputFill,
+                  color: context.palette.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.border),
+                  border: Border.all(color: context.palette.outlineVariant),
                 ),
                 child: Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.schedule_outlined,
-                      color: AppColors.textSecondary,
+                      color: context.palette.onSurfaceVariant,
                     ),
                     const SizedBox(width: 10),
                     Expanded(
@@ -378,8 +379,8 @@ class _Form extends ConsumerWidget {
             OutlinedButton(
               onPressed: saving ? null : onDeactivate,
               style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.error,
-                side: const BorderSide(color: AppColors.error),
+                foregroundColor: context.palette.error,
+                side: BorderSide(color: context.palette.error),
               ),
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -411,11 +412,7 @@ class _IntroCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
+      decoration: Glass.panel(context, radius: BorderRadius.circular(16)),
       child: Row(
         children: [
           const AppImageIcon(
@@ -485,7 +482,7 @@ class _StatusRow extends StatelessWidget {
             const SizedBox(width: 8),
             Switch(
               value: draft.enabled,
-              activeTrackColor: AppColors.primary,
+              activeTrackColor: context.palette.primary,
               onChanged: onChanged,
             ),
           ],
@@ -493,7 +490,7 @@ class _StatusRow extends StatelessWidget {
         Text(
           AppStrings.savingStatusHint,
           style: textTheme.bodySmall?.copyWith(
-            color: AppColors.textSecondary,
+            color: context.palette.onSurfaceVariant,
           ),
         ),
       ],
@@ -525,11 +522,7 @@ class _EmptyGoalCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
-      ),
+      decoration: Glass.panel(context, radius: BorderRadius.circular(12)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

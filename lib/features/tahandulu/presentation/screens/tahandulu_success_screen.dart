@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
@@ -30,11 +32,11 @@ class TahanDuluSuccessScreen extends ConsumerWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      backgroundColor: TdColors.background,
+      backgroundColor: context.canvasColor,
       bottomNavigationBar: DashboardBottomNav(
         onTap: (i) => tahanDuluBottomNavTap(context, i),
       ),
-      body: SafeArea(
+      body: GlassBackdrop(child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
@@ -54,8 +56,8 @@ class TahanDuluSuccessScreen extends ConsumerWidget {
                       Container(
                         width: 88,
                         height: 88,
-                        decoration: const BoxDecoration(
-                          color: TdColors.primary,
+                        decoration: BoxDecoration(
+                          color: context.palette.tertiaryContainer,
                           shape: BoxShape.circle,
                         ),
                         child: const Center(
@@ -70,7 +72,7 @@ class TahanDuluSuccessScreen extends ConsumerWidget {
                       Text(
                         AppStrings.successBuyTitle,
                         style: textTheme.headlineMedium?.copyWith(
-                          color: TdColors.navy,
+                          color: context.palette.onSurface,
                           fontWeight: FontWeight.w800,
                         ),
                         textAlign: TextAlign.center,
@@ -79,7 +81,7 @@ class TahanDuluSuccessScreen extends ConsumerWidget {
                       Text(
                         AppStrings.successBuySubtitle,
                         style: textTheme.bodyMedium?.copyWith(
-                          color: TdColors.slate,
+                          color: context.palette.onSurfaceVariant,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -96,7 +98,7 @@ class TahanDuluSuccessScreen extends ConsumerWidget {
                                   Text(
                                     item.itemName,
                                     style: textTheme.titleMedium?.copyWith(
-                                      color: TdColors.navy,
+                                      color: context.palette.onSurface,
                                       fontWeight: FontWeight.w700,
                                     ),
                                   ),
@@ -104,14 +106,14 @@ class TahanDuluSuccessScreen extends ConsumerWidget {
                                     CurrencyFormatter.formatCompact(item.price),
                                     style: textTheme.titleMedium?.copyWith(
                                       fontWeight: FontWeight.w800,
-                                      color: TdColors.navy,
+                                      color: context.palette.onSurface,
                                     ),
                                   ),
                                   Text(
                                     '${productCategoryLabel(item.category)}'
                                     ' • ${DateFormatter.dayMonthYear(DateTime.now())}',
                                     style: textTheme.bodyMedium?.copyWith(
-                                      color: TdColors.slate,
+                                      color: context.palette.onSurfaceVariant,
                                     ),
                                   ),
                                 ],
@@ -123,8 +125,8 @@ class TahanDuluSuccessScreen extends ConsumerWidget {
                       const SizedBox(height: 24),
                       AppButton(
                         label: AppStrings.seeTransactionsAction,
-                        backgroundColor: TdColors.primary,
-                        foregroundColor: TdColors.navy,
+                        backgroundColor: context.palette.tertiaryContainer,
+                        foregroundColor: context.palette.onSurface,
                         onPressed: () => context.go(AppRoutes.transactions),
                       ),
                       const SizedBox(height: 12),
@@ -143,7 +145,7 @@ class TahanDuluSuccessScreen extends ConsumerWidget {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 }

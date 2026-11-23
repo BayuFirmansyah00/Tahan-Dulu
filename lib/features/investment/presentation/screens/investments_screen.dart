@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/constants/app_strings.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_states.dart';
@@ -43,7 +44,7 @@ class _InvestmentsScreenState extends ConsumerState<InvestmentsScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text(AppStrings.investmentsTitle)),
       bottomNavigationBar: DashboardBottomNav(onTap: _onNav),
-      body: SafeArea(
+      body: GlassBackdrop(child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
@@ -56,7 +57,7 @@ class _InvestmentsScreenState extends ConsumerState<InvestmentsScreen> {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 }
@@ -120,16 +121,12 @@ class _InvestmentCard extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
+      decoration: Glass.panel(context, radius: BorderRadius.circular(16)),
       child: Row(
         children: [
-          const Icon(
+          Icon(
             Icons.account_balance_wallet_outlined,
-            color: AppColors.primary,
+            color: context.palette.primary,
             size: 44,
           ),
           const SizedBox(width: 12),
@@ -154,9 +151,9 @@ class _InvestmentCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 4),
-          const Icon(
+          Icon(
             Icons.chevron_right,
-            color: AppColors.textSecondary,
+            color: context.palette.onSurfaceVariant,
           ),
         ],
       ),

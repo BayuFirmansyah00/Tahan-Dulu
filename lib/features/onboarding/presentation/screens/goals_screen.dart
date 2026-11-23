@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/utils/rupiah_input_formatter.dart';
@@ -107,7 +108,7 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
 
     return Scaffold(
       appBar: AppBar(),
-      body: SafeArea(
+      body: GlassBackdrop(child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
@@ -129,12 +130,12 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
                             Expanded(
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(8),
-                                child: const LinearProgressIndicator(
+                                child: LinearProgressIndicator(
                                   value: 1.0,
                                   minHeight: 8,
-                                  backgroundColor: AppColors.primarySoft,
+                                  backgroundColor: context.palette.primaryContainer,
                                   valueColor: AlwaysStoppedAnimation<Color>(
-                                    AppColors.primary,
+                                    context.palette.primary,
                                   ),
                                 ),
                               ),
@@ -230,15 +231,15 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
                               vertical: 14,
                             ),
                             decoration: BoxDecoration(
-                              color: AppColors.inputFill,
+                              color: context.palette.surfaceContainerHighest,
                               borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: AppColors.border),
+                              border: Border.all(color: context.palette.outlineVariant),
                             ),
                             child: Row(
                               children: [
-                                const Icon(
+                                Icon(
                                   Icons.calendar_month_outlined,
-                                  color: AppColors.textSecondary,
+                                  color: context.palette.onSurfaceVariant,
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
@@ -247,9 +248,9 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
                                     style: textTheme.bodyLarge,
                                   ),
                                 ),
-                                const Icon(
+                                Icon(
                                   Icons.chevron_right,
-                                  color: AppColors.textSecondary,
+                                  color: context.palette.onSurfaceVariant,
                                 ),
                               ],
                             ),
@@ -293,7 +294,7 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 }
@@ -343,7 +344,7 @@ class _SummaryCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
-                    color: AppColors.primary,
+                    color: context.palette.primary,
                   ),
                 ),
               ),
@@ -376,10 +377,10 @@ class _GoalChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary : Colors.transparent,
+          color: selected ? context.palette.primary : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: selected ? AppColors.primary : AppColors.border,
+            color: selected ? context.palette.primary : context.palette.outlineVariant,
           ),
         ),
         child: Row(
@@ -399,7 +400,7 @@ class _GoalChip extends StatelessWidget {
             Text(
               label,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: selected ? Colors.white : AppColors.textPrimary,
+                color: selected ? context.palette.onPrimary : context.palette.onSurface,
               ),
             ),
           ],

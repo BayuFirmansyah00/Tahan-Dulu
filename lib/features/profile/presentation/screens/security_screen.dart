@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/glass.dart';
+
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/widgets/app_image_icon.dart';
 import '../../../auth/presentation/providers/auth_controller.dart';
@@ -21,8 +22,8 @@ class SecurityScreen extends ConsumerWidget {
       context: context,
       assetPath: AppAssets.setLogoutIcon,
       icon: Icons.logout_outlined,
-      iconForeground: AppColors.error,
-      iconBackground: const Color(0xFFFEE2E2),
+      iconForeground: context.palette.error,
+      iconBackground: context.palette.errorContainer,
       title: AppStrings.logoutDialogTitle,
       message: AppStrings.logoutDialogBody,
       cancelLabel: AppStrings.logoutCancel,
@@ -41,13 +42,13 @@ class SecurityScreen extends ConsumerWidget {
     final email = auth.user?.email;
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundWarm,
+      backgroundColor: context.canvasColor,
       appBar: AppBar(
         leading: const AppBackButton(),
         title: const Text(AppStrings.securityTitle),
         flexibleSpace: const AppBarMintCorner(),
       ),
-      body: SafeArea(
+      body: GlassBackdrop(child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
@@ -69,12 +70,7 @@ class SecurityScreen extends ConsumerWidget {
                   if (method == null) ...[
                     Container(
                       padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: AppColors.surface,
-                        borderRadius: AppRadius.cardLarge,
-                        border: Border.all(color: AppColors.border),
-                        boxShadow: AppShadows.card,
-                      ),
+                      decoration: Glass.panel(context, radius: AppRadius.cardLarge),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
@@ -104,15 +100,15 @@ class SecurityScreen extends ConsumerWidget {
                       icon: method == 'google'
                           ? Icons.g_mobiledata_outlined
                           : Icons.email_outlined,
-                      iconForeground: AppColors.secondary,
-                      iconBackground: AppColors.secondarySoft,
+                      iconForeground: context.palette.secondary,
+                      iconBackground: context.palette.secondaryContainer,
                       asset: method == 'google' ? AppAssets.setGoogle : null,
                       title: method == 'google'
                           ? AppStrings.securityLoginGoogle
                           : AppStrings.securityLoginEmail,
                       description: email ?? AppStrings.profileEmailUnavailable,
                       badge: AppStrings.securityActiveBadge,
-                      badgeColor: AppColors.primary,
+                      badgeColor: context.palette.primary,
                       onTap: () => showInfoDialog(
                         context: context,
                         title: method == 'google'
@@ -126,8 +122,8 @@ class SecurityScreen extends ConsumerWidget {
                       SettingsMenuRow(
                         asset: AppAssets.setSecurity,
                         icon: Icons.lock_outline,
-                        iconForeground: AppColors.warning,
-                        iconBackground: const Color(0xFFFEF3C7),
+                        iconForeground: context.warningInk,
+                        iconBackground: context.warningFill,
                         title: AppStrings.securityChangePassword,
                         description: AppStrings.securityChangePasswordDesc,
                         onTap: () => showChangePasswordBottomSheet(context, ref),
@@ -135,12 +131,7 @@ class SecurityScreen extends ConsumerWidget {
                     else
                       Container(
                         padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: AppColors.surface,
-                          borderRadius: AppRadius.cardLarge,
-                          border: Border.all(color: AppColors.border),
-                          boxShadow: AppShadows.card,
-                        ),
+                        decoration: Glass.panel(context, radius: AppRadius.cardLarge),
                         child: Text(
                           AppStrings.securityGooglePasswordNote,
                           style: textTheme.bodyMedium,
@@ -150,8 +141,8 @@ class SecurityScreen extends ConsumerWidget {
                     SettingsMenuRow(
                       asset: AppAssets.setSession,
                       icon: Icons.devices_outlined,
-                      iconForeground: AppColors.secondary,
-                      iconBackground: AppColors.secondarySoft,
+                      iconForeground: context.palette.secondary,
+                      iconBackground: context.palette.secondaryContainer,
                       title: AppStrings.securitySessions,
                       description: AppStrings.securitySessionsDesc,
                       badge: AppStrings.appSettingsSoonBadge,
@@ -170,21 +161,21 @@ class SecurityScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 8),
                   SettingsMenuRow(
-                    iconForeground: AppColors.error,
-                    iconBackground: const Color(0xFFFEE2E2),
+                    iconForeground: context.palette.error,
+                    iconBackground: context.palette.errorContainer,
                     asset: AppAssets.setLogoutIcon,
                     title: AppStrings.securityLogout,
-                    titleColor: AppColors.error,
+                    titleColor: context.palette.error,
                     description: AppStrings.securityLogoutDesc,
                     onTap: () => _confirmLogout(context, ref),
                   ),
                   const SizedBox(height: 8),
                   SettingsMenuRow(
-                    iconForeground: AppColors.error,
-                    iconBackground: const Color(0xFFFEE2E2),
+                    iconForeground: context.palette.error,
+                    iconBackground: context.palette.errorContainer,
                     asset: AppAssets.setDeleteAccount,
                     title: AppStrings.privacyDelete,
-                    titleColor: AppColors.error,
+                    titleColor: context.palette.error,
                     description: AppStrings.privacyDeleteDesc,
                     onTap: () => showDeleteAccountFlow(context, ref),
                   ),
@@ -199,7 +190,7 @@ class SecurityScreen extends ConsumerWidget {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 }
