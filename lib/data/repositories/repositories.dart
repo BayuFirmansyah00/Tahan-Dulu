@@ -85,6 +85,24 @@ class TransactionPaginationResult {
   final bool hasNextPage;
 }
 
+class NotificationPaginationResult {
+  const NotificationPaginationResult({
+    required this.items,
+    required this.currentPage,
+    required this.lastPage,
+    required this.perPage,
+    required this.total,
+    required this.hasNextPage,
+  });
+
+  final List<AppNotification> items;
+  final int currentPage;
+  final int lastPage;
+  final int perPage;
+  final int total;
+  final bool hasNextPage;
+}
+
 abstract class TransactionRepository {
   Future<List<AppTransaction>> getRecentTransactions();
   Future<AppTransaction> addTransaction(AppTransaction transaction);
@@ -263,6 +281,29 @@ abstract class PurchaseDecisionRepository {
 
 abstract class NotificationRepository {
   Future<List<AppNotification>> getNotifications([dynamic filter]);
+  Future<NotificationPaginationResult> getPaginatedNotifications({
+    dynamic filter,
+    int? page,
+    int? perPage,
+  }) async {
+    final list = await getNotifications(filter);
+    final effectivePerPage = perPage ?? 15;
+    final effectivePage = page ?? 1;
+    final total = list.length;
+    final lastPage = (total / (effectivePerPage <= 0 ? 1 : effectivePerPage)).ceil() == 0
+        ? 1
+        : (total / (effectivePerPage <= 0 ? 1 : effectivePerPage)).ceil();
+    final startIndex = (effectivePage - 1) * effectivePerPage;
+    final paged = list.skip(startIndex).take(effectivePerPage).toList();
+    return NotificationPaginationResult(
+      items: paged,
+      currentPage: effectivePage,
+      lastPage: lastPage,
+      perPage: effectivePerPage,
+      total: total,
+      hasNextPage: effectivePage < lastPage,
+    );
+  }
   Future<int> getUnreadCount();
   Future<void> markAsRead(String id);
   Future<void> markAllAsRead();
@@ -963,6 +1004,31 @@ class MockNotificationRepository implements NotificationRepository {
       }
     }
     return mockDelay(result);
+  }
+
+  @override
+  Future<NotificationPaginationResult> getPaginatedNotifications({
+    dynamic filter,
+    int? page,
+    int? perPage,
+  }) async {
+    final list = await getNotifications(filter);
+    final effectivePerPage = perPage ?? 15;
+    final effectivePage = page ?? 1;
+    final total = list.length;
+    final lastPage = (total / (effectivePerPage <= 0 ? 1 : effectivePerPage)).ceil() == 0
+        ? 1
+        : (total / (effectivePerPage <= 0 ? 1 : effectivePerPage)).ceil();
+    final startIndex = (effectivePage - 1) * effectivePerPage;
+    final paged = list.skip(startIndex).take(effectivePerPage).toList();
+    return NotificationPaginationResult(
+      items: paged,
+      currentPage: effectivePage,
+      lastPage: lastPage,
+      perPage: effectivePerPage,
+      total: total,
+      hasNextPage: effectivePage < lastPage,
+    );
   }
 
   @override

@@ -76,13 +76,46 @@ class ApiClient {
     }
 
     if (res.statusCode >= 400) {
-      String message = body is Map && body['message'] is String
-          ? body['message'] as String
-          : 'Permintaan gagal (${res.statusCode}).';
+      final rawMessage = body is Map && body['message'] is String
+          ? (body['message'] as String).trim()
+          : null;
+
+      String message;
+      if (res.statusCode == 403) {
+        message = rawMessage?.isNotEmpty == true
+            ? rawMessage!
+            : 'Akses ditolak. Anda tidak memiliki izin untuk tindakan ini.';
+      } else if (res.statusCode == 404) {
+        message = rawMessage?.isNotEmpty == true
+            ? rawMessage!
+            : 'Data atau sumber daya tidak ditemukan.';
+      } else if (res.statusCode == 409) {
+        message = rawMessage?.isNotEmpty == true
+            ? rawMessage!
+            : 'Terjadi konflik data atau duplikasi operasi. Silakan muat ulang.';
+      } else if (res.statusCode == 422) {
+        message = rawMessage?.isNotEmpty == true
+            ? rawMessage!
+            : 'Data yang dikirim tidak valid. Periksa kembali isian Anda.';
+      } else if (res.statusCode == 429) {
+        message = rawMessage?.isNotEmpty == true
+            ? rawMessage!
+            : 'Terlalu banyak permintaan. Silakan tunggu beberapa saat dan coba lagi.';
+      } else if (res.statusCode == 503) {
+        // Pertahankan pesan fail-closed khusus (mis. gembok investasi) bila ada
+        message = rawMessage?.isNotEmpty == true
+            ? rawMessage!
+            : 'Layanan sedang dalam pemeliharaan atau ditutup sementara demi keamanan.';
+      } else if (res.statusCode >= 500) {
+        message = 'Terjadi kesalahan pada server. Silakan coba lagi.';
+      } else {
+        message = rawMessage?.isNotEmpty == true
+            ? rawMessage!
+            : 'Permintaan gagal (${res.statusCode}).';
+      }
 
       // Keamanan Production: Cegah SQL query mentah atau exception stack trace bocor ke UI pengguna
-      if (res.statusCode >= 500 ||
-          message.contains('SQLSTATE') ||
+      if (message.contains('SQLSTATE') ||
           message.contains('SQL:') ||
           message.contains('syntax for type') ||
           message.contains('PDOException') ||

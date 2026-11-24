@@ -4,18 +4,20 @@ import '../../../../core/theme/glass.dart';
 
 import '../../../../core/utils/date_formatter.dart';
 
-/// Pemilih periode: chevron kiri/kanan + label bulan Indonesia.
+/// Pemilih periode: chevron kiri/kanan + label bulan Indonesia + date picker.
 class PeriodSelector extends StatelessWidget {
   const PeriodSelector({
     super.key,
     required this.month,
     required this.onPrevious,
     required this.onNext,
+    this.onSelectPeriod,
   });
 
   final DateTime month;
   final VoidCallback onPrevious;
   final VoidCallback onNext;
+  final ValueChanged<DateTime>? onSelectPeriod;
 
   @override
   Widget build(BuildContext context) {
@@ -31,13 +33,47 @@ class PeriodSelector extends StatelessWidget {
             onPressed: onPrevious,
           ),
           Flexible(
-            child: Text(
-              DateFormatter.monthYear(month),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+            child: InkWell(
+              onTap: onSelectPeriod == null
+                  ? null
+                  : () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: month,
+                        firstDate: DateTime(2020),
+                        lastDate: DateTime(2035),
+                        initialDatePickerMode: DatePickerMode.year,
+                      );
+                      if (picked != null) {
+                        onSelectPeriod!(picked);
+                      }
+                    },
+              borderRadius: BorderRadius.circular(8),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        DateFormatter.monthYear(month),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      Icons.calendar_today_outlined,
+                      size: 16,
+                      color: context.palette.onSurfaceVariant,
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
           IconButton(

@@ -22,8 +22,38 @@ import '../utils/notification_ui.dart';
 /// Tahap 47: redesign premium emerald lokal ([NotifColors]) tanpa
 /// mengubah tema global. Filter, status baca, pengelompokan,
 /// navigasi item, dan bottom nav global dipertahankan.
-class NotificationsScreen extends ConsumerWidget {
+/// Phase 5: Paginasi multi-halaman dengan infinite scroll & deduplikasi ID.
+class NotificationsScreen extends ConsumerStatefulWidget {
   const NotificationsScreen({super.key});
+
+  @override
+  ConsumerState<NotificationsScreen> createState() =>
+      _NotificationsScreenState();
+}
+
+class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.hasClients &&
+        _scrollController.position.pixels >=
+            _scrollController.position.maxScrollExtent - 200) {
+      ref.read(paginatedNotificationsProvider.notifier).loadNextPage();
+    }
+  }
 
   void _onNav(int index, BuildContext context) {
     switch (index) {
@@ -41,6 +71,7 @@ class NotificationsScreen extends ConsumerWidget {
   }
 
   Future<void> _markAll(BuildContext context, WidgetRef ref) async {
+    ref.read(paginatedNotificationsProvider.notifier).markAllReadLocally();
     final ok = await ref
         .read(notificationsControllerProvider.notifier)
         .markAllAsRead();
@@ -60,6 +91,9 @@ class NotificationsScreen extends ConsumerWidget {
     AppNotification item,
   ) async {
     if (!item.isRead) {
+      ref
+          .read(paginatedNotificationsProvider.notifier)
+          .markItemReadLocally(item.id);
       await ref
           .read(notificationsControllerProvider.notifier)
           .markAsRead(item.id);
@@ -80,9 +114,9 @@ class NotificationsScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final filter = ref.watch(notificationFilterProvider);
-    final list = ref.watch(notificationsListProvider);
+    final paginated = ref.watch(paginatedNotificationsProvider);
 
     return Scaffold(
       backgroundColor: context.canvasColor,
@@ -122,52 +156,87 @@ class NotificationsScreen extends ConsumerWidget {
         ],
       ),
       bottomNavigationBar: DashboardBottomNav(onTap: (i) => _onNav(i, context)),
-      body: GlassBackdrop(child: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: Column(
-              children: [
-                const _HeroBanner(),
-                _FilterTabs(
-                  filter: filter,
-                  onSelect: (f) =>
-                      ref.read(notificationFilterProvider.notifier).set(f),
-                ),
-                _MarkAllRow(onTap: () => _markAll(context, ref)),
-                Expanded(
-                  child: RefreshIndicator(
-                    onRefresh: () async {
-                      ref.invalidate(notificationsListProvider);
-                      ref.invalidate(unreadCountProvider);
-                      ref.invalidate(notificationsProvider);
-                      try {
-                        await ref.read(notificationsListProvider.future);
-                      } catch (_) {}
+      body: GlassBackdrop(
+        child: SafeArea(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 480),
+              child: Column(
+                children: [
+                  const _HeroBanner(),
+                  _FilterTabs(
+                    filter: filter,
+                    onSelect: (f) {
+                      if (_scrollController.hasClients) {
+                        _scrollController.jumpTo(0);
+                      }
+                      ref.read(notificationFilterProvider.notifier).set(f);
                     },
-                    child: SingleChildScrollView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      child: list.when(
-                        data: (items) => items.isEmpty
-                            ? _EmptyFor(filter: filter)
-                            : _GroupedList(
-                                items: items,
-                                onTap: (item) => _openItem(context, ref, item),
-                              ),
-                        loading: () => const AppLoading(),
-                        error: (error, _) => AppErrorState(
-                          onRetry: () =>
-                              ref.invalidate(notificationsListProvider),
+                  ),
+                  _MarkAllRow(onTap: () => _markAll(context, ref)),
+                  Expanded(
+                    child: RefreshIndicator(
+                      onRefresh: () async {
+                        ref.invalidate(unreadCountProvider);
+                        ref.invalidate(notificationsProvider);
+                        await ref
+                            .read(paginatedNotificationsProvider.notifier)
+                            .refresh();
+                      },
+                      child: SingleChildScrollView(
+                        controller: _scrollController,
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: Builder(
+                          builder: (context) {
+                            if (paginated.isLoadingFirst) {
+                              return const AppLoading();
+                            }
+                            if (paginated.error != null &&
+                                paginated.items.isEmpty) {
+                              return AppErrorState(
+                                onRetry: () => ref
+                                    .read(
+                                        paginatedNotificationsProvider.notifier)
+                                    .refresh(),
+                              );
+                            }
+                            if (paginated.items.isEmpty) {
+                              return _EmptyFor(filter: filter);
+                            }
+                            return Column(
+                              children: [
+                                _GroupedList(
+                                  items: paginated.items,
+                                  onTap: (item) =>
+                                      _openItem(context, ref, item),
+                                ),
+                                if (paginated.isLoadingMore)
+                                  const Padding(
+                                    padding:
+                                        EdgeInsets.symmetric(vertical: 16.0),
+                                    child: Center(
+                                      child: SizedBox(
+                                        width: 24,
+                                        height: 24,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2.5,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            );
+                          },
                         ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
-      )),
+      ),
     );
   }
 }

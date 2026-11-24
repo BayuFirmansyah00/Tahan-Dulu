@@ -14,6 +14,8 @@ final apiFinancialReportProvider =
   final repo = ref.watch(reportRepositoryProvider);
   final now = DateTime.now();
   final isCurrentMonth = month.year == now.year && month.month == now.month;
+  final isLastMonth = month.year == (now.month == 1 ? now.year - 1 : now.year) &&
+      month.month == (now.month == 1 ? 12 : now.month - 1);
   final lastDay = DateTime(month.year, month.month + 1, 0).day;
 
   final startDate =
@@ -21,10 +23,14 @@ final apiFinancialReportProvider =
   final endDate =
       '${month.year}-${month.month.toString().padLeft(2, '0')}-${lastDay.toString().padLeft(2, '0')}';
 
+  final period = isCurrentMonth
+      ? 'this_month'
+      : (isLastMonth ? 'last_month' : 'custom');
+
   return await repo.getFinancialReport(
-    period: isCurrentMonth ? 'this_month' : 'custom',
-    startDate: isCurrentMonth ? null : startDate,
-    endDate: isCurrentMonth ? null : endDate,
+    period: period,
+    startDate: (isCurrentMonth || isLastMonth) ? null : startDate,
+    endDate: (isCurrentMonth || isLastMonth) ? null : endDate,
   );
 });
 
@@ -43,6 +49,20 @@ class ReportPeriodController extends Notifier<DateTime> {
 
   void next() {
     state = DateTime(state.year, state.month + 1);
+  }
+
+  void setMonth(DateTime month) {
+    state = DateTime(month.year, month.month);
+  }
+
+  void setThisMonth() {
+    final now = DateTime.now();
+    state = DateTime(now.year, now.month);
+  }
+
+  void setLastMonth() {
+    final now = DateTime.now();
+    state = DateTime(now.year, now.month - 1);
   }
 }
 
@@ -69,17 +89,14 @@ double _monthSum(
 ///
 /// Jika [ApiConfig.useRemoteApi] aktif, data diambil langsung dari endpoint
 /// Laravel `GET /api/reports/financial` dan dikonversi ke [MonthlyReport].
-/// Jika offline atau mode mock, fallback ke kalkulasi transaksi lokal.
+/// Kegagalan jaringan atau server pada mode remote TIDAK disamarkan dengan
+/// kalkulasi parsial 15 transaksi lokal demi menjaga integritas data keuangan.
 final monthlyReportProvider =
     FutureProvider.family<MonthlyReport, DateTime>((ref, month) async {
   if (ApiConfig.useRemoteApi) {
-    try {
-      final apiReport =
-          await ref.watch(apiFinancialReportProvider(month).future);
-      return apiReport.toMonthlyReport(month);
-    } catch (_) {
-      // Fallback ke kalkulasi transaksi lokal bila koneksi API belum siap
-    }
+    final apiReport =
+        await ref.watch(apiFinancialReportProvider(month).future);
+    return apiReport.toMonthlyReport(month);
   }
 
   final transactions =

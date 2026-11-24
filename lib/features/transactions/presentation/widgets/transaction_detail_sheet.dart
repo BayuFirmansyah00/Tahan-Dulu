@@ -212,7 +212,9 @@ class TransactionDetailSheet extends ConsumerWidget {
                   runSpacing: 8,
                   children: item.attachments.map((url) {
                     return InkWell(
-                      onTap: () {
+                      onTap: () async {
+                        final token = await ref.read(tokenStoreProvider).readToken();
+                        if (!context.mounted) return;
                         showDialog(
                           context: context,
                           builder: (dCtx) => Dialog(
@@ -228,6 +230,7 @@ class TransactionDetailSheet extends ConsumerWidget {
                                 ),
                                 Image.network(
                                   url,
+                                  headers: token != null ? {'Authorization': 'Bearer $token'} : null,
                                   fit: BoxFit.contain,
                                   errorBuilder: (_, _, _) => const Padding(
                                     padding: EdgeInsets.all(32),

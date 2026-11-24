@@ -249,6 +249,7 @@ class FcmService {
     // Segarkan daftar notifikasi, badge unread, dan ringkasan dashboard.
     container.invalidate(unreadCountProvider);
     container.invalidate(notificationsListProvider);
+    container.invalidate(paginatedNotificationsProvider);
     container.invalidate(notificationsProvider);
     container.invalidate(dashboardDataProvider);
 

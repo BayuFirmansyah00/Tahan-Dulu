@@ -71,6 +71,64 @@ class RemoteNotificationRepository implements NotificationRepository {
   }
 
   @override
+  Future<NotificationPaginationResult> getPaginatedNotifications({
+    dynamic filter,
+    int? page,
+    int? perPage,
+  }) async {
+    final token = await _requireToken();
+    final filterName = filter != null
+        ? (filter is Enum ? filter.name : filter.toString())
+        : null;
+
+    final queryParams = <String>[];
+    if (filterName != null && filterName != 'all') {
+      queryParams.add('filter=$filterName');
+    }
+    if (page != null) {
+      queryParams.add('page=$page');
+    }
+    if (perPage != null) {
+      queryParams.add('per_page=$perPage');
+    }
+
+    final query = queryParams.isNotEmpty ? '?${queryParams.join('&')}' : '';
+    final body = await client.get('/notifications$query', token: token);
+    final data = body['data'];
+    final items = (data is List)
+        ? data
+            .whereType<Map<String, dynamic>>()
+            .map((e) => AppNotification(
+                  id: e['id']?.toString() ?? '',
+                  title: e['title']?.toString() ?? '',
+                  message: e['message']?.toString() ?? '',
+                  createdAt: DateTime.tryParse(e['created_at']?.toString() ?? '') ??
+                      DateTime.now(),
+                  isRead: e['is_read'] == true,
+                  isReminder: e['is_reminder'] == true,
+                  targetRoute: e['target_route'] as String?,
+                  category: _parseCategory(e['category']),
+                ))
+            .toList()
+        : <AppNotification>[];
+
+    final pagination = body['pagination'] as Map<String, dynamic>?;
+    final currentPage = (pagination?['current_page'] as num?)?.toInt() ?? (page ?? 1);
+    final lastPage = (pagination?['last_page'] as num?)?.toInt() ?? 1;
+    final effectivePerPage = (pagination?['per_page'] as num?)?.toInt() ?? (perPage ?? 15);
+    final total = (pagination?['total'] as num?)?.toInt() ?? items.length;
+
+    return NotificationPaginationResult(
+      items: items,
+      currentPage: currentPage,
+      lastPage: lastPage,
+      perPage: effectivePerPage,
+      total: total,
+      hasNextPage: currentPage < lastPage,
+    );
+  }
+
+  @override
   Future<int> getUnreadCount() async {
     final token = await _requireToken();
     final body = await client.get('/notifications/unread-count', token: token);

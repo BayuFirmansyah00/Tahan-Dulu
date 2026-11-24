@@ -48,13 +48,13 @@ const List<HelpCategory> helpCategories = [
   ),
   HelpCategory(
     id: 'transactions',
-    title: 'Transaksi',
+    title: 'Transaksi & Lampiran',
     icon: Icons.receipt_long_outlined,
     asset: AppAssets.navTransaction,
   ),
   HelpCategory(
     id: 'accounts',
-    title: 'Akun Keuangan',
+    title: 'Akun Keuangan & Transfer',
     icon: Icons.account_balance_wallet_outlined,
     asset: AppAssets.txWallet,
   ),
@@ -65,6 +65,12 @@ const List<HelpCategory> helpCategories = [
     asset: AppAssets.navTarget,
   ),
   HelpCategory(
+    id: 'investments',
+    title: 'Portofolio Investasi',
+    icon: Icons.trending_up_outlined,
+    asset: AppAssets.dashChart,
+  ),
+  HelpCategory(
     id: 'tahandulu',
     title: 'TahanDulu',
     icon: Icons.shopping_bag_outlined,
@@ -72,7 +78,7 @@ const List<HelpCategory> helpCategories = [
   ),
   HelpCategory(
     id: 'reports',
-    title: 'Laporan Keuangan',
+    title: 'Laporan Keuangan & Ekspor',
     icon: Icons.bar_chart_outlined,
     asset: AppAssets.dashChart,
   ),
@@ -90,26 +96,26 @@ const List<HelpArticle> helpArticles = [
     categoryId: 'account',
     question: 'Bagaimana cara mengubah nama profil?',
     answer:
-        'Buka Profil, ketuk Edit Profil, ubah Nama Lengkap, lalu ketuk '
-        'Simpan Perubahan. Perubahan tersimpan selama sesi ini dan akan '
-        'diatur ulang saat aplikasi dimulai ulang.',
+        'Buka Pengaturan, ketuk Edit Profil, ubah Nama Lengkap, lalu ketuk '
+        'Simpan Perubahan. Nama akan langsung diperbarui di sesi aktif '
+        'dan disinkronkan ke server.',
   ),
   HelpArticle(
     id: 'account-2',
     categoryId: 'account',
     question: 'Mengapa email tidak dapat diubah?',
     answer:
-        'Email terikat pada akun masuk dan belum didukung untuk diubah '
-        'melalui aplikasi pada versi ini. Field email tampil sebagai '
-        'read-only.',
+        'Email terikat pada akun masuk dan identitas autentikasi Sanctum '
+        'demi keamanan data keuangan. Field email ditampilkan secara read-only.',
   ),
   HelpArticle(
     id: 'account-3',
     categoryId: 'account',
     question: 'Apakah keluar akun menghapus data keuanganku?',
     answer:
-        'Tidak. Keluar akun hanya mengakhiri sesi. Data transaksi, target, '
-        'dan akun keuangan tetap tersimpan di aplikasi.',
+        'Tidak. Keluar akun hanya mengakhiri sesi autentikasi dan '
+        'membersihkan cache lokal pada perangkat. Seluruh saldo, transaksi, '
+        'dan target tetap aman tersimpan di cloud database.',
   ),
   HelpArticle(
     id: 'transactions-1',
@@ -123,94 +129,119 @@ const List<HelpArticle> helpArticles = [
   HelpArticle(
     id: 'transactions-2',
     categoryId: 'transactions',
-    question: 'Bisakah transaksi yang sudah disimpan diubah?',
+    question: 'Bisakah transaksi yang sudah disimpan diubah atau dilampirkan struk?',
     answer:
-        'Riwayat transaksi menampilkan data yang tercatat. Pengubahan '
-        'transaksi tersimpan belum tersedia pada versi ini.',
+        'Ya. Anda dapat membuka rincian transaksi untuk memperbarui nominal, '
+        'kategori, atau catatan, serta mengunggah foto struk sebagai bukti '
+        'pembayaran yang tersimpan privat dan aman.',
   ),
   HelpArticle(
     id: 'accounts-1',
     categoryId: 'accounts',
     question: 'Apa itu saldo tercatat?',
     answer:
-        'Saldo tercatat adalah saldo awal akun ditambah transaksi yang '
-        'tercatat pada akun tersebut. Semua perhitungan memakai sumber '
-        'yang sama agar konsisten.',
+        'Saldo tercatat adalah akumulasi saldo riil pada instrumen keuangan '
+        '(Bank, Bank Digital, E-Wallet, atau Tunai) yang diperbarui secara '
+        'otomatis oleh ledger transaksi backend.',
   ),
   HelpArticle(
     id: 'accounts-2',
     categoryId: 'accounts',
-    question: 'Mengapa akun tidak dapat dihapus?',
+    question: 'Bagaimana cara melakukan transfer antar rekening?',
     answer:
-        'Akun yang memiliki transaksi tercatat tidak dapat dihapus agar '
-        'riwayat tetap utuh. Transfer antar akun juga belum tersedia.',
+        'Pilih jenis transaksi Transfer pada formulir pencatatan transaksi, '
+        'lalu tentukan Akun Asal dan Akun Tujuan. Ledger akan secara atomik '
+        'memotong saldo akun asal dan menambah saldo akun tujuan.',
   ),
   HelpArticle(
     id: 'goals-1',
     categoryId: 'goals',
     question: 'Bagaimana progres target dihitung?',
     answer:
-        'Progres dihitung dari dana terkumpul dibagi target nominal. Dana '
-        'terkumpul hanya bertambah melalui setoran yang tercatat pada '
-        'halaman target.',
+        'Progres dihitung dari akumulasi setoran riil dibagi target nominal. '
+        'Setiap setoran target terhubung dengan mutasi pengeluaran pada akun '
+        'keuangan Anda.',
   ),
   HelpArticle(
     id: 'goals-2',
     categoryId: 'goals',
     question: 'Apa fungsi prioritas target?',
     answer:
-        'Prioritas menentukan urutan target dari Tinggi hingga Rendah. Atur '
-        'melalui halaman Prioritas Target lalu simpan urutannya.',
+        'Prioritas menentukan urutan alokasi dana dan target yang paling utama. '
+        'Anda dapat mengatur urutan prioritas melalui halaman Target Keuangan.',
+  ),
+  HelpArticle(
+    id: 'investments-1',
+    categoryId: 'investments',
+    question: 'Mengapa transaksi investasi saya tidak dapat disimpan?',
+    answer:
+        'Demi menjaga integritas dan keamanan portofolio, penulisan transaksi '
+        'investasi dapat dilindungi oleh fail-closed safety gate di server. '
+        'Jika fitur sedang digembok, Anda tetap dapat memantau portofolio '
+        'secara read-only.',
+  ),
+  HelpArticle(
+    id: 'investments-2',
+    categoryId: 'investments',
+    question: 'Bagaimana mutasi investasi mempengaruhi saldo akun?',
+    answer:
+        'Setoran investasi akan mengurangi saldo akun pembayaran dan menambah '
+        'nilai pokok investasi. Sebaliknya, penarikan investasi akan menambah '
+        'saldo akun tujuan dan mengurangi pokok investasi.',
   ),
   HelpArticle(
     id: 'tahandulu-1',
     categoryId: 'tahandulu',
     question: 'Apa itu TahanDulu?',
     answer:
-        'TahanDulu membantumu berpikir sebelum membeli. Masukkan barang, '
-        'lihat dampaknya pada budget, lalu tunggu masa tunggu sebelum '
-        'memutuskan membeli atau tidak.',
+        'TahanDulu membantumu berpikir sebelum membeli keinginan impulsif. '
+        'Masukkan barang yang ingin dibeli, lihat dampaknya pada batas '
+        'belanja harian dan tabungan, lalu tahan selama masa tunggu.',
   ),
   HelpArticle(
     id: 'tahandulu-2',
     categoryId: 'tahandulu',
     question: 'Apakah keputusan membeli otomatis mencatat transaksi?',
     answer:
-        'Tidak. Keputusan membeli hanya disimpan sebagai keputusan. Catat '
-        'transaksinya secara manual agar saldo ikut tercatat.',
+        'Ketika Anda memutuskan untuk membeli setelah masa tunggu berakhir, '
+        'aplikasi akan mengarahkan Anda ke formulir pencatatan transaksi '
+        'dengan data barang yang sudah terisi otomatis.',
   ),
   HelpArticle(
     id: 'reports-1',
     categoryId: 'reports',
-    question: 'Dari mana angka laporan berasal?',
+    question: 'Bagaimana cara melihat laporan periode selain bulan ini?',
     answer:
-        'Laporan dihitung dari transaksi yang tercatat pada bulan berjalan '
-        'dan setoran target. Tanpa transaksi tercatat, laporan akan kosong.',
+        'Pada halaman Laporan Keuangan, Anda dapat berpindah periode antara '
+        'Bulan Ini, Bulan Lalu, Kuartal Ini, atau memilih Rentang Tanggal '
+        'Kustom melalui pemilih periode di bagian atas.',
   ),
   HelpArticle(
     id: 'reports-2',
     categoryId: 'reports',
-    question: 'Apa arti rekomendasi pada kesehatan keuangan?',
+    question: 'Format berkas apa saja yang didukung untuk ekspor laporan?',
     answer:
-        'Rekomendasi adalah saran umum berbasis aturan dari datamu, bukan '
-        'nasihat finansial profesional.',
+        'Anda dapat mengunduh laporan keuangan dalam format PDF berstandar '
+        'cetak atau berkas spreadsheet Excel (.xlsx) lengkap dengan rincian '
+        'analisis alokasi kebutuhan dan tabungan.',
   ),
   HelpArticle(
     id: 'notifications-1',
     categoryId: 'notifications',
-    question: 'Dari mana notifikasi berasal?',
+    question: 'Bagaimana sistem notifikasi dan pengingat bekerja?',
     answer:
-        'Notifikasi dibuat berdasarkan data yang kamu masukkan di aplikasi, '
-        'seperti tanggal gajian, target, dan budget. Belum ada push '
-        'notification lintas perangkat.',
+        'Notifikasi pengingat menabung, jadwal tagihan berulang, dan evaluasi '
+        'budget dikirim secara tepat waktu melalui integrasi Firebase Cloud '
+        'Messaging dan kotak masuk yang mendukung sinkronisasi status baca.',
   ),
   HelpArticle(
     id: 'notifications-2',
     categoryId: 'notifications',
     question: 'Bagaimana cara mengatur pengingat menabung?',
     answer:
-        'Buka Pengingat & Notifikasi, ketuk Pengingat Menabung, pilih '
-        'target, nominal, frekuensi, dan waktu, lalu simpan pengaturan.',
+        'Buka Pengaturan Notifikasi, ketuk Pengingat Menabung, pilih target '
+        'yang ingin dicapai, tentukan nominal, frekuensi (mingguan/bulanan), '
+        'serta jam pengingat.',
   ),
 ];
 

@@ -48,6 +48,8 @@ void _handleUnauthorized(Ref ref) {
   } catch (_) {}
 }
 
+final tokenStoreProvider = Provider<TokenStore>((ref) => TokenStorage());
+
 // ---------------------------------------------------------------------------
 // Repository providers — Default sekarang REMOTE (Laravel API).
 // Gunakan --dart-define=USE_REMOTE_API=false atau USE_REMOTE_AUTH=false

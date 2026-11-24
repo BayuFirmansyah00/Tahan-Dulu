@@ -22,6 +22,20 @@ class _EmptyNotifications implements NotificationRepository {
   @override
   Future<List<AppNotification>> getNotifications([dynamic filter]) async => [];
   @override
+  Future<NotificationPaginationResult> getPaginatedNotifications({
+    dynamic filter,
+    int? page,
+    int? perPage,
+  }) async =>
+      const NotificationPaginationResult(
+        items: [],
+        currentPage: 1,
+        lastPage: 1,
+        perPage: 20,
+        total: 0,
+        hasNextPage: false,
+      );
+  @override
   Future<int> getUnreadCount() async => 0;
   @override
   Future<void> markAsRead(String id) async {}

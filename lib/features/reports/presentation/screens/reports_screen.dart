@@ -93,6 +93,57 @@ class _Body extends ConsumerWidget {
             month: month,
             onPrevious: onPrevious,
             onNext: onNext,
+            onSelectPeriod: (picked) =>
+                ref.read(reportMonthProvider.notifier).setMonth(picked),
+          ),
+          const SizedBox(height: 8),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _PeriodChip(
+                  label: 'Bulan Ini',
+                  isSelected: month.year == DateTime.now().year &&
+                      month.month == DateTime.now().month,
+                  onTap: () =>
+                      ref.read(reportMonthProvider.notifier).setThisMonth(),
+                ),
+                const SizedBox(width: 8),
+                _PeriodChip(
+                  label: 'Bulan Lalu',
+                  isSelected: month.year ==
+                          (DateTime.now().month == 1
+                              ? DateTime.now().year - 1
+                              : DateTime.now().year) &&
+                      month.month ==
+                          (DateTime.now().month == 1
+                              ? 12
+                              : DateTime.now().month - 1),
+                  onTap: () =>
+                      ref.read(reportMonthProvider.notifier).setLastMonth(),
+                ),
+                const SizedBox(width: 8),
+                _PeriodChip(
+                  label: 'Pilih Tanggal',
+                  isSelected: false,
+                  icon: Icons.calendar_month_outlined,
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: month,
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime(2035),
+                      initialDatePickerMode: DatePickerMode.year,
+                    );
+                    if (picked != null) {
+                      ref
+                          .read(reportMonthProvider.notifier)
+                          .setMonth(picked);
+                    }
+                  },
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 12),
           Row(
@@ -444,6 +495,66 @@ class _SavedImpulseCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _PeriodChip extends StatelessWidget {
+  const _PeriodChip({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+    this.icon,
+  });
+
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final IconData? icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? context.palette.primaryContainer
+              : context.palette.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected
+                ? context.palette.primary
+                : context.palette.outlineVariant,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(
+                icon,
+                size: 14,
+                color: isSelected
+                    ? context.palette.primary
+                    : context.palette.onSurfaceVariant,
+              ),
+              const SizedBox(width: 4),
+            ],
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                color: isSelected
+                    ? context.palette.primary
+                    : context.palette.onSurface,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

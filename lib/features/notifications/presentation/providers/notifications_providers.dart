@@ -95,6 +95,180 @@ final notificationsControllerProvider =
   NotificationsController.new,
 );
 
+/// Status paginasi notifikasi (multi-page, infinite scroll, deduplikasi, dan sinkronisasi status baca).
+class PaginatedNotificationsState extends Equatable {
+  const PaginatedNotificationsState({
+    this.items = const [],
+    this.page = 1,
+    this.perPage = 20,
+    this.total = 0,
+    this.hasNextPage = true,
+    this.isLoadingFirst = false,
+    this.isLoadingMore = false,
+    this.error,
+  });
+
+  final List<AppNotification> items;
+  final int page;
+  final int perPage;
+  final int total;
+  final bool hasNextPage;
+  final bool isLoadingFirst;
+  final bool isLoadingMore;
+  final Object? error;
+
+  PaginatedNotificationsState copyWith({
+    List<AppNotification>? items,
+    int? page,
+    int? perPage,
+    int? total,
+    bool? hasNextPage,
+    bool? isLoadingFirst,
+    bool? isLoadingMore,
+    Object? Function()? error,
+  }) {
+    return PaginatedNotificationsState(
+      items: items ?? this.items,
+      page: page ?? this.page,
+      perPage: perPage ?? this.perPage,
+      total: total ?? this.total,
+      hasNextPage: hasNextPage ?? this.hasNextPage,
+      isLoadingFirst: isLoadingFirst ?? this.isLoadingFirst,
+      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
+      error: error != null ? error() : this.error,
+    );
+  }
+
+  @override
+  List<Object?> get props => [
+        items,
+        page,
+        perPage,
+        total,
+        hasNextPage,
+        isLoadingFirst,
+        isLoadingMore,
+        error,
+      ];
+}
+
+class PaginatedNotificationsNotifier
+    extends Notifier<PaginatedNotificationsState> {
+  bool _disposed = false;
+
+  @override
+  PaginatedNotificationsState build() {
+    _disposed = false;
+    ref.onDispose(() {
+      _disposed = true;
+    });
+    final filter = ref.watch(notificationFilterProvider);
+    Future.microtask(() {
+      if (!_disposed) {
+        loadFirstPage(filter: filter);
+      }
+    });
+    return const PaginatedNotificationsState(isLoadingFirst: true);
+  }
+
+  Future<void> loadFirstPage({NotificationFilter? filter}) async {
+    if (_disposed) return;
+    final activeFilter = filter ?? ref.read(notificationFilterProvider);
+    state = state.copyWith(isLoadingFirst: true, error: () => null);
+    try {
+      final repo = ref.read(notificationRepositoryProvider);
+      final result = await repo.getPaginatedNotifications(
+        filter: activeFilter,
+        page: 1,
+        perPage: 20,
+      );
+      if (_disposed) return;
+      state = PaginatedNotificationsState(
+        items: result.items,
+        page: result.currentPage,
+        perPage: result.perPage,
+        total: result.total,
+        hasNextPage: result.hasNextPage,
+        isLoadingFirst: false,
+        isLoadingMore: false,
+      );
+    } catch (e) {
+      if (_disposed) return;
+      state = state.copyWith(
+        isLoadingFirst: false,
+        isLoadingMore: false,
+        error: () => e,
+      );
+    }
+  }
+
+  Future<void> loadNextPage() async {
+    if (_disposed ||
+        state.isLoadingFirst ||
+        state.isLoadingMore ||
+        !state.hasNextPage) {
+      return;
+    }
+    state = state.copyWith(isLoadingMore: true);
+    final nextPage = state.page + 1;
+    final activeFilter = ref.read(notificationFilterProvider);
+    try {
+      final repo = ref.read(notificationRepositoryProvider);
+      final result = await repo.getPaginatedNotifications(
+        filter: activeFilter,
+        page: nextPage,
+        perPage: state.perPage,
+      );
+      if (_disposed) return;
+
+      final existingIds = state.items.map((e) => e.id).toSet();
+      final newUniqueItems =
+          result.items.where((e) => !existingIds.contains(e.id)).toList();
+      final mergedItems = [...state.items, ...newUniqueItems];
+
+      state = state.copyWith(
+        items: mergedItems,
+        page: result.currentPage,
+        total: result.total,
+        hasNextPage: result.hasNextPage,
+        isLoadingMore: false,
+      );
+    } catch (e) {
+      if (_disposed) return;
+      state = state.copyWith(
+        isLoadingMore: false,
+        error: () => e,
+      );
+    }
+  }
+
+  Future<void> refresh() async {
+    final activeFilter = ref.read(notificationFilterProvider);
+    await loadFirstPage(filter: activeFilter);
+  }
+
+  void markItemReadLocally(String id) {
+    final updated = state.items.map((item) {
+      if (item.id == id) {
+        return item.copyWith(isRead: true);
+      }
+      return item;
+    }).toList();
+    state = state.copyWith(items: updated);
+  }
+
+  void markAllReadLocally() {
+    final updated =
+        state.items.map((item) => item.copyWith(isRead: true)).toList();
+    state = state.copyWith(items: updated);
+  }
+}
+
+final paginatedNotificationsProvider = NotifierProvider<
+    PaginatedNotificationsNotifier, PaginatedNotificationsState>(
+  PaginatedNotificationsNotifier.new,
+);
+
 /// Daftar preferensi pengingat (6 jenis).
 final reminderPreferencesProvider =
     FutureProvider<List<ReminderPreference>>((ref) {

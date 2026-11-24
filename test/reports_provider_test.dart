@@ -4,9 +4,57 @@ import 'package:tahan_dulu/data/models/goal_deposit.dart';
 import 'package:tahan_dulu/data/models/transaction_model.dart';
 import 'package:tahan_dulu/data/providers/app_providers.dart';
 import 'package:tahan_dulu/data/providers/reports_providers.dart';
+import 'package:tahan_dulu/data/repositories/repositories.dart';
+
+class _OctoberTransactionRepo extends MockTransactionRepository {
+  final List<AppTransaction> _octoberItems = [
+    AppTransaction(
+      id: 'trx-1',
+      title: 'Gaji Bulanan',
+      amount: 5000000,
+      type: TransactionType.income,
+      date: DateTime(2026, 10, 1),
+      category: 'Pemasukan',
+      accountId: 'acc-bca',
+    ),
+    AppTransaction(
+      id: 'trx-2',
+      title: 'Belanja Bulanan',
+      amount: 850000,
+      type: TransactionType.expense,
+      date: DateTime(2026, 10, 3),
+      category: 'Kebutuhan',
+      accountId: 'acc-dana',
+    ),
+    AppTransaction(
+      id: 'trx-3',
+      title: 'Top Up Investasi',
+      amount: 500000,
+      type: TransactionType.expense,
+      date: DateTime(2026, 10, 5),
+      category: 'Investasi',
+      accountId: 'acc-bibit',
+    ),
+  ];
+
+  @override
+  Future<List<AppTransaction>> getRecentTransactions() async =>
+      List.of(_octoberItems);
+
+  @override
+  Future<AppTransaction> addTransaction(AppTransaction transaction) async {
+    _octoberItems.add(transaction);
+    return transaction;
+  }
+}
 
 ProviderContainer _container() {
-  final container = ProviderContainer();
+  final container = ProviderContainer(
+    overrides: [
+      transactionRepositoryProvider
+          .overrideWithValue(_OctoberTransactionRepo()),
+    ],
+  );
   addTearDown(container.dispose);
   return container;
 }

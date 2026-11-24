@@ -22,6 +22,7 @@ abstract final class NotificationDeepLink {
     AppRoutes.reportsExpenses,
     AppRoutes.reportsSavings,
     AppRoutes.reportsHealth,
+    AppRoutes.investments,
     AppRoutes.recurringIncomes,
     AppRoutes.recurringExpenses,
     AppRoutes.accounts,
@@ -61,6 +62,14 @@ abstract final class NotificationDeepLink {
             : AppRoutes.notificationSavings;
       case 'salary':
         return AppRoutes.transactions;
+      case 'investment':
+      case 'investments':
+        return AppRoutes.investments;
+      case 'recurringIncome':
+      case 'recurring_income':
+        return AppRoutes.recurringIncomes;
+      case 'recurringExpense':
+      case 'recurring_expense':
       case 'bill':
         return AppRoutes.recurringExpenses;
       case 'budget':
