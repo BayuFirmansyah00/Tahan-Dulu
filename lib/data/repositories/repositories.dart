@@ -10,6 +10,7 @@ import '../models/financial_summary.dart';
 import '../models/purchase_consideration.dart';
 import '../models/reminder_settings.dart';
 import '../models/transaction_model.dart';
+import '../models/transfer_model.dart';
 import '../models/user_model.dart';
 import 'onboarding_repository.dart';
 
@@ -49,6 +50,12 @@ abstract class AccountRepository {
     String? notes,
     String? idempotencyKey,
   });
+
+  /// Riwayat transaksi transfer antar-akun.
+  Future<List<TransferItem>> getTransfers();
+
+  /// Batalkan transaksi transfer dengan pembalikan saldo ledger atomik.
+  Future<void> cancelTransfer(String transferId);
 }
 
 /// Repository untuk data master tipe instrumen (dari instrument_types).
@@ -429,6 +436,18 @@ class MockAccountRepository implements AccountRepository {
       toAcc.copyWith(initialBalance: toAcc.initialBalance + amount),
     );
   }
+
+  final List<TransferItem> _mockTransfers = [];
+
+  @override
+  Future<List<TransferItem>> getTransfers() async {
+    return List.unmodifiable(_mockTransfers);
+  }
+
+  @override
+  Future<void> cancelTransfer(String transferId) async {
+    _mockTransfers.removeWhere((t) => t.id == transferId);
+  }
 }
 
 /// Mock data master tipe instrumen (untuk development tanpa backend).
@@ -604,9 +623,9 @@ class MockGoalRepository implements GoalRepository {
     _deposits.add(deposit);
     final index = _goals.indexWhere((e) => e.id == deposit.goalId);
     if (index != -1) {
-      // Satu-satunya penulis currentAmount: akumulasi setoran tercatat.
+      final delta = deposit.isWithdraw ? -deposit.amount : deposit.amount;
       _goals[index] = _goals[index].copyWith(
-        currentAmount: _goals[index].currentAmount + deposit.amount,
+        currentAmount: (_goals[index].currentAmount + delta).clamp(0.0, double.infinity),
       );
     }
     return mockDelay(deposit);
@@ -648,13 +667,32 @@ class MockGoalRepository implements GoalRepository {
   Future<GoalDeposit> updateDeposit(GoalDeposit deposit) async {
     final index = _deposits.indexWhere((e) => e.id == deposit.id);
     if (index == -1) throw StateError('Setoran tidak ditemukan');
+    final oldDeposit = _deposits[index];
     _deposits[index] = deposit;
+    final goalIndex = _goals.indexWhere((e) => e.id == deposit.goalId);
+    if (goalIndex != -1) {
+      final oldDelta = oldDeposit.isWithdraw ? -oldDeposit.amount : oldDeposit.amount;
+      final newDelta = deposit.isWithdraw ? -deposit.amount : deposit.amount;
+      _goals[goalIndex] = _goals[goalIndex].copyWith(
+        currentAmount: (_goals[goalIndex].currentAmount - oldDelta + newDelta).clamp(0.0, double.infinity),
+      );
+    }
     return mockDelay(deposit);
   }
 
   @override
   Future<void> deleteDeposit(String id) async {
-    _deposits.removeWhere((e) => e.id == id);
+    final index = _deposits.indexWhere((e) => e.id == id);
+    if (index != -1) {
+      final oldDeposit = _deposits.removeAt(index);
+      final goalIndex = _goals.indexWhere((e) => e.id == oldDeposit.goalId);
+      if (goalIndex != -1) {
+        final oldDelta = oldDeposit.isWithdraw ? -oldDeposit.amount : oldDeposit.amount;
+        _goals[goalIndex] = _goals[goalIndex].copyWith(
+          currentAmount: (_goals[goalIndex].currentAmount - oldDelta).clamp(0.0, double.infinity),
+        );
+      }
+    }
     return mockDelay(null);
   }
 }

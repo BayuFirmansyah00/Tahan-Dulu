@@ -130,11 +130,11 @@ final dashboardDataProvider = FutureProvider<DashboardData>((ref) async {
   final bool hasCashLegacy = cashLegacyBalance > 0 || cashAccounts.isNotEmpty;
   final int spendableAccountsCount = spendableAccounts.length;
 
-  double calculateExpensesTotal() {
+  Future<double> calculateExpensesTotal() async {
     if (ApiConfig.useRemoteApi) {
       try {
-        final apiExpenses = ref.watch(recurringExpensesProvider).asData?.value;
-        if (apiExpenses != null && apiExpenses.isNotEmpty) {
+        final apiExpenses = await ref.watch(recurringExpensesProvider.future);
+        if (apiExpenses.isNotEmpty) {
           return apiExpenses
               .where((e) => e.type.toLowerCase() == 'expense' && e.isActive)
               .fold<double>(0.0, (sum, e) => sum + e.amount);
@@ -144,7 +144,7 @@ final dashboardDataProvider = FutureProvider<DashboardData>((ref) async {
     return totalExpensesOf(expenses.map((e) => e.monthlyAmount));
   }
 
-  final expensesTotal = calculateExpensesTotal();
+  final expensesTotal = await calculateExpensesTotal();
 
   final effectiveGoal = (goal?.deadline != null)
       ? goal

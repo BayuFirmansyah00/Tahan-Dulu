@@ -15,6 +15,7 @@ class GoalDeposit extends Equatable {
     required this.date,
     this.accountId,
     this.note,
+    this.type = 'deposit',
   });
 
   final String id;
@@ -23,7 +24,36 @@ class GoalDeposit extends Equatable {
   final DateTime date;
   final String? accountId;
   final String? note;
+  final String type; // 'deposit' | 'withdraw'
+
+  bool get isWithdraw => type == 'withdraw';
+  bool get isDeposit => type != 'withdraw';
+
+  /// Nilai bertanda untuk visualisasi riwayat:
+  /// Positif (+) untuk setoran (alokasi masuk),
+  /// Negatif (-) untuk penarikan/pencairan (alokasi keluar).
+  double get signedAmount => isWithdraw ? -amount.abs() : amount.abs();
+
+  GoalDeposit copyWith({
+    String? id,
+    String? goalId,
+    double? amount,
+    DateTime? date,
+    String? accountId,
+    String? note,
+    String? type,
+  }) {
+    return GoalDeposit(
+      id: id ?? this.id,
+      goalId: goalId ?? this.goalId,
+      amount: amount ?? this.amount,
+      date: date ?? this.date,
+      accountId: accountId ?? this.accountId,
+      note: note ?? this.note,
+      type: type ?? this.type,
+    );
+  }
 
   @override
-  List<Object?> get props => [id, goalId, amount, date, accountId, note];
+  List<Object?> get props => [id, goalId, amount, date, accountId, note, type];
 }

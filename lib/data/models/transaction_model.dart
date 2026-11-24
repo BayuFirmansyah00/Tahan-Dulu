@@ -54,6 +54,32 @@ class AppTransaction extends Equatable {
   /// Kunci idempotensi opsional (UUID v4) untuk mencegah transaksi duplikat saat retry/timeout.
   final String? idempotencyKey;
 
+  AppTransaction copyWith({
+    String? id,
+    String? title,
+    double? amount,
+    TransactionType? type,
+    DateTime? date,
+    String? category,
+    String? accountId,
+    String? note,
+    double? fee,
+    String? idempotencyKey,
+  }) {
+    return AppTransaction(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      amount: amount ?? this.amount,
+      type: type ?? this.type,
+      date: date ?? this.date,
+      category: category ?? this.category,
+      accountId: accountId ?? this.accountId,
+      note: note ?? this.note,
+      fee: fee ?? this.fee,
+      idempotencyKey: idempotencyKey ?? this.idempotencyKey,
+    );
+  }
+
   @override
   List<Object?> get props =>
       [id, title, amount, type, date, category, accountId, note, fee, idempotencyKey];

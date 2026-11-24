@@ -307,6 +307,7 @@ class GoalsController extends Notifier<GoalDraft> {
     required String goalId,
     required double amount,
     required String? accountId,
+    String? note,
   }) async {
     if (_saving || amount <= 0) return null;
     _saving = true;
@@ -319,7 +320,8 @@ class GoalsController extends Notifier<GoalDraft> {
                   amount: amount,
                   date: DateTime.now(),
                   accountId: accountId,
-                  note: null,
+                  note: note,
+                  type: 'deposit',
                 ),
               );
       _refreshGoals();
@@ -334,12 +336,89 @@ class GoalsController extends Notifier<GoalDraft> {
     }
   }
 
+  /// Tarik dana dari target keuangan (F08). Guard ganda bawaan.
+  Future<GoalDeposit?> withdrawGoal({
+    required String goalId,
+    required double amount,
+    required String? accountId,
+    String? note,
+  }) async {
+    if (_saving || amount <= 0) return null;
+    _saving = true;
+    try {
+      final saved =
+          await ref.read(goalRepositoryProvider).addDeposit(
+                GoalDeposit(
+                  id: 'wd-${DateTime.now().millisecondsSinceEpoch}',
+                  goalId: goalId,
+                  amount: amount,
+                  date: DateTime.now(),
+                  accountId: accountId,
+                  note: note,
+                  type: 'withdraw',
+                ),
+              );
+      _refreshGoals();
+      ref.invalidate(goalDepositsProvider(goalId));
+      return saved;
+    } on ApiException {
+      rethrow;
+    } catch (_) {
+      return null;
+    } finally {
+      _saving = false;
+    }
+  }
+
+  /// Koreksi transaksi target (nominal, catatan, instrumen) (F08).
+  Future<GoalDeposit?> updateGoalTransaction({
+    required GoalDeposit deposit,
+  }) async {
+    if (_saving || deposit.amount <= 0) return null;
+    _saving = true;
+    try {
+      final saved =
+          await ref.read(goalRepositoryProvider).updateDeposit(deposit);
+      _refreshGoals();
+      ref.invalidate(goalDepositsProvider(deposit.goalId));
+      return saved;
+    } on ApiException {
+      rethrow;
+    } catch (_) {
+      return null;
+    } finally {
+      _saving = false;
+    }
+  }
+
+  /// Hapus transaksi target (F08).
+  Future<bool> deleteGoalTransaction({
+    required String goalId,
+    required String depositId,
+  }) async {
+    if (_saving) return false;
+    _saving = true;
+    try {
+      await ref.read(goalRepositoryProvider).deleteDeposit(depositId);
+      _refreshGoals();
+      ref.invalidate(goalDepositsProvider(goalId));
+      return true;
+    } on ApiException {
+      rethrow;
+    } catch (_) {
+      return false;
+    } finally {
+      _saving = false;
+    }
+  }
+
   /// Simpan rencana simulasi sebagai rencana target (setelah konfirmasi).
   /// [frequency] opsional agar kompatibel dengan pemanggil lama.
   Future<bool> applyPlan({
     required String goalId,
     required double recurringAmount,
     DepositFrequency? frequency,
+    String? sourceAccountId,
   }) async {
     if (_saving || recurringAmount <= 0) return false;
     _saving = true;
@@ -350,6 +429,7 @@ class GoalsController extends Notifier<GoalDraft> {
             existing.copyWith(
               recurringAmount: recurringAmount,
               frequency: frequency ?? existing.frequency,
+              sourceAccountId: sourceAccountId ?? existing.sourceAccountId,
             ),
           );
       _refreshGoals();
@@ -386,6 +466,8 @@ class GoalsController extends Notifier<GoalDraft> {
     ref.invalidate(accountsProvider);
     ref.invalidate(dashboardDataProvider);
     ref.invalidate(monthlyReportProvider);
+    ref.invalidate(transactionsProvider);
+    ref.invalidate(recentTransactionsProvider);
   }
 }
 

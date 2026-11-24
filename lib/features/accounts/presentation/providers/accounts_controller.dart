@@ -25,6 +25,7 @@ class AccountsController {
     _ref.invalidate(transactionsProvider);
     _ref.invalidate(monthlyReportProvider);
     _ref.invalidate(apiFinancialReportProvider);
+    _ref.invalidate(transfersProvider);
   }
 
   /// Validasi form transfer. Null bila valid.
@@ -203,6 +204,19 @@ class AccountsController {
       return false;
     } finally {
       _saving = false;
+    }
+  }
+
+  /// Batalkan transaksi transfer dengan pembalikan saldo ledger atomik.
+  Future<bool> cancelTransfer(String transferId) async {
+    try {
+      await _ref.read(accountRepositoryProvider).cancelTransfer(transferId);
+      await _refresh();
+      return true;
+    } on ApiException {
+      rethrow;
+    } catch (_) {
+      return false;
     }
   }
 

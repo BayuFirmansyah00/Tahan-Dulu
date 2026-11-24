@@ -50,6 +50,7 @@ abstract final class AppRoutes {
   static const String accounts = '/accounts';
   static const String accountAdd = '/accounts/add';
   static const String accountTransfer = '/accounts/transfer';
+  static const String transferHistory = '/accounts/transfers/history';
   static const String notifications = '/notifications';
   static const String notificationSettings = '/notifications/settings';
   static const String notificationSavings = '/notifications/savings';

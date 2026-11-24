@@ -1,5 +1,6 @@
 import '../../../data/models/api_financial_instrument.dart';
 import '../../../data/models/financial_account.dart';
+import '../../../data/models/transfer_model.dart';
 import '../../../data/repositories/repositories.dart';
 import 'api_client.dart';
 import 'token_storage.dart';
@@ -237,5 +238,24 @@ class RemoteAccountRepository implements AccountRepository {
       },
       token: token,
     );
+  }
+
+  @override
+  Future<List<TransferItem>> getTransfers() async {
+    final token = await _requireToken();
+    final res = await _client.get('/transfers', token: token);
+    final data = res['data'];
+    if (data is List) {
+      return data
+          .map((e) => TransferItem.fromJson(e as Map<String, dynamic>))
+          .toList();
+    }
+    return [];
+  }
+
+  @override
+  Future<void> cancelTransfer(String transferId) async {
+    final token = await _requireToken();
+    await _client.delete('/transfers/$transferId', token: token);
   }
 }

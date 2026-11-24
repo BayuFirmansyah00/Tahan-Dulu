@@ -162,6 +162,13 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
         leading: const AppBackButton(),
         title: const Text(AppStrings.transferTitle),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.history_rounded),
+            tooltip: 'Riwayat Transfer',
+            onPressed: () => context.push(AppRoutes.transferHistory),
+          ),
+        ],
       ),
       body: accountsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),

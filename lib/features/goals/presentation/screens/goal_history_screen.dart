@@ -101,7 +101,7 @@ class _Body extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final total =
-        deposits.fold<double>(0, (sum, e) => sum + e.amount);
+        deposits.fold<double>(0, (sum, e) => sum + e.signedAmount);
     final months = _spanMonths(deposits);
     final average = months <= 0 ? total : total / months;
     final grouped = groupDepositsByMonth(deposits);
@@ -275,56 +275,315 @@ class _LinePainter extends CustomPainter {
       oldDelegate.points != points || oldDelegate.labels != labels || oldDelegate.scheme != scheme;
 }
 
-class _DepositRow extends StatelessWidget {
+class _DepositRow extends ConsumerWidget {
   const _DepositRow({required this.deposit});
 
   final GoalDeposit deposit;
 
+  void _showDetailSheet(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => Container(
+        padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+        decoration: BoxDecoration(
+          color: Theme.of(sheetContext).scaffoldBackgroundColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 20),
+                  decoration: BoxDecoration(
+                    color: Theme.of(sheetContext).colorScheme.outlineVariant,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              Row(
+                children: [
+                  Icon(
+                    deposit.isWithdraw ? Icons.outbox_rounded : Icons.move_to_inbox_rounded,
+                    color: deposit.isWithdraw
+                        ? Theme.of(sheetContext).colorScheme.error
+                        : sheetContext.palette.primary,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    deposit.isWithdraw ? 'Pencairan Target' : 'Setoran Target',
+                    style: Theme.of(sheetContext).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _DetailItem(
+                label: 'Nominal',
+                value: '${deposit.isWithdraw ? '-' : '+'}${CurrencyFormatter.format(deposit.amount)}',
+                valueColor: deposit.isWithdraw
+                    ? Theme.of(sheetContext).colorScheme.error
+                    : sheetContext.palette.primary,
+              ),
+              _DetailItem(
+                label: 'Tanggal',
+                value: DateFormatter.dayMonthYear(deposit.date),
+              ),
+              Consumer(
+                builder: (context, cRef, _) {
+                  final data = cRef.watch(onboardingRepositoryProvider).getOnboardingData();
+                  final names = {
+                    for (final e in data?.financialInstruments ?? const []) e.id: e.name,
+                  };
+                  final source = deposit.accountId == null ? null : names[deposit.accountId];
+                  if (source == null) return const SizedBox.shrink();
+                  return _DetailItem(
+                    label: deposit.isWithdraw ? 'Tujuan Pencairan' : 'Sumber Rekening',
+                    value: source,
+                  );
+                },
+              ),
+              if (deposit.note != null && deposit.note!.isNotEmpty)
+                _DetailItem(
+                  label: 'Catatan',
+                  value: deposit.note!,
+                ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      icon: const Icon(Icons.edit_note, size: 20),
+                      label: const Text('Edit Catatan'),
+                      onPressed: () async {
+                        Navigator.of(sheetContext).pop();
+                        final noteController = TextEditingController(text: deposit.note ?? '');
+                        final newNote = await showDialog<String>(
+                          context: context,
+                          builder: (dlgContext) => AlertDialog(
+                            title: const Text('Ubah Catatan'),
+                            content: TextField(
+                              controller: noteController,
+                              decoration: const InputDecoration(
+                                hintText: 'Masukkan catatan transaksi...',
+                              ),
+                              autofocus: true,
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.of(dlgContext).pop(),
+                                child: const Text(AppStrings.cancel),
+                              ),
+                              ElevatedButton(
+                                onPressed: () => Navigator.of(dlgContext).pop(noteController.text.trim()),
+                                child: const Text('Simpan'),
+                              ),
+                            ],
+                          ),
+                        );
+                        if (newNote != null && context.mounted) {
+                          try {
+                            await ref.read(goalsControllerProvider.notifier).updateGoalTransaction(
+                                  deposit: deposit.copyWith(note: newNote),
+                                );
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Catatan berhasil diperbarui.')),
+                              );
+                            }
+                          } catch (_) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Gagal memperbarui catatan.')),
+                              );
+                            }
+                          }
+                        }
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(sheetContext).colorScheme.error,
+                        foregroundColor: Theme.of(sheetContext).colorScheme.onError,
+                      ),
+                      icon: const Icon(Icons.delete_outline, size: 20),
+                      label: const Text('Hapus'),
+                      onPressed: () async {
+                        Navigator.of(sheetContext).pop();
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (dlgContext) => AlertDialog(
+                            title: const Text('Hapus Transaksi?'),
+                            content: Text(
+                              deposit.isWithdraw
+                                  ? 'Penarikan sebesar ${CurrencyFormatter.format(deposit.amount)} akan dibatalkan dan saldo target akan bertambah kembali.'
+                                  : 'Setoran sebesar ${CurrencyFormatter.format(deposit.amount)} akan dihapus dan akumulasi target akan berkurang.',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.of(dlgContext).pop(false),
+                                child: const Text(AppStrings.cancel),
+                              ),
+                              ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Theme.of(dlgContext).colorScheme.error,
+                                  foregroundColor: Theme.of(dlgContext).colorScheme.onError,
+                                ),
+                                onPressed: () => Navigator.of(dlgContext).pop(true),
+                                child: const Text('Hapus'),
+                              ),
+                            ],
+                          ),
+                        );
+                        if (confirm == true && context.mounted) {
+                          try {
+                            final ok = await ref.read(goalsControllerProvider.notifier).deleteGoalTransaction(
+                                  goalId: deposit.goalId,
+                                  depositId: deposit.id,
+                                );
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(ok
+                                      ? 'Transaksi target berhasil dihapus.'
+                                      : 'Gagal menghapus transaksi.'),
+                                ),
+                              );
+                            }
+                          } catch (_) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Gagal menghapus transaksi.')),
+                              );
+                            }
+                          }
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final textTheme = Theme.of(context).textTheme;
+    final isWithdraw = deposit.isWithdraw;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
       decoration: Glass.panel(context, radius: BorderRadius.circular(16)),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => _showDetailSheet(context, ref),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
               children: [
-                Text(
-                  DateFormatter.dayMonthYear(deposit.date),
-                  style: textTheme.titleMedium,
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: isWithdraw
+                        ? Theme.of(context).colorScheme.errorContainer.withValues(alpha: 0.5)
+                        : context.palette.primaryContainer.withValues(alpha: 0.5),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    isWithdraw ? Icons.outbox_rounded : Icons.move_to_inbox_rounded,
+                    size: 18,
+                    color: isWithdraw ? Theme.of(context).colorScheme.error : context.palette.primary,
+                  ),
                 ),
-                Consumer(
-                  builder: (context, ref, _) {
-                    final data = ref
-                        .watch(onboardingRepositoryProvider)
-                        .getOnboardingData();
-                    final names = {
-                      for (final e
-                          in data?.financialInstruments ?? const [])
-                        e.id: e.name,
-                    };
-                    final source = deposit.accountId == null
-                        ? null
-                        : names[deposit.accountId];
-                    if (source == null) {
-                      return const SizedBox.shrink();
-                    }
-                    return Text(source, style: textTheme.bodyMedium);
-                  },
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        DateFormatter.dayMonthYear(deposit.date),
+                        style: textTheme.titleMedium,
+                      ),
+                      Consumer(
+                        builder: (context, cRef, _) {
+                          final data = cRef
+                              .watch(onboardingRepositoryProvider)
+                              .getOnboardingData();
+                          final names = {
+                            for (final e
+                                in data?.financialInstruments ?? const [])
+                              e.id: e.name,
+                          };
+                          final source = deposit.accountId == null
+                              ? null
+                              : names[deposit.accountId];
+                          final label = isWithdraw ? 'Pencairan' : 'Setoran';
+                          final details = source != null ? '$label • $source' : label;
+                          return Text(details, style: textTheme.bodyMedium);
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                Text(
+                  '${isWithdraw ? '-' : '+'}${CurrencyFormatter.formatCompact(deposit.amount)}',
+                  style: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: isWithdraw
+                        ? Theme.of(context).colorScheme.error
+                        : context.palette.primary,
+                  ),
                 ),
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DetailItem extends StatelessWidget {
+  const _DetailItem({
+    required this.label,
+    required this.value,
+    this.valueColor,
+  });
+
+  final String label;
+  final String value;
+  final Color? valueColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: Theme.of(context).textTheme.bodyMedium),
           Text(
-            '+${CurrencyFormatter.formatCompact(deposit.amount)}',
-            style: textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: context.palette.primary,
-            ),
+            value,
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: valueColor,
+                ),
           ),
         ],
       ),

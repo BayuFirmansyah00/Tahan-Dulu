@@ -6,6 +6,7 @@ import 'package:tahan_dulu/core/constants/app_strings.dart';
 import 'package:tahan_dulu/core/routing/app_routes.dart';
 import 'package:tahan_dulu/data/models/financial_account.dart';
 import 'package:tahan_dulu/data/models/purchase_consideration.dart';
+import 'package:tahan_dulu/data/models/transfer_model.dart';
 import 'package:tahan_dulu/data/providers/app_providers.dart';
 import 'package:tahan_dulu/data/repositories/repositories.dart';
 import 'package:tahan_dulu/features/tahandulu/presentation/screens/tahandulu_decide_screen.dart';
@@ -126,6 +127,12 @@ class _MockAccountRepo implements AccountRepository {
   Future<void> removeAccount(String id) async {
     accounts.removeWhere((a) => a.id == id);
   }
+
+  @override
+  Future<List<TransferItem>> getTransfers() async => [];
+
+  @override
+  Future<void> cancelTransfer(String transferId) async {}
 
   Future<void> syncAccounts(List<FinancialAccount> accounts) async {}
 

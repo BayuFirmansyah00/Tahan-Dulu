@@ -5,6 +5,7 @@ import '../../core/utils/finance_math.dart';
 import '../datasources/remote/api_config.dart';
 import '../models/financial_account.dart';
 import '../models/transaction_model.dart';
+import '../models/transfer_model.dart';
 import 'app_providers.dart';
 
 /// Satu akun + saldo saat ini (engine) + jumlah transaksi terkait.
@@ -65,4 +66,9 @@ final accountsOverviewProvider =
 final accountsTotalProvider = FutureProvider<double>((ref) async {
   final overviews = await ref.watch(accountsOverviewProvider.future);
   return totalBalanceOf(overviews.map((e) => e.currentBalance));
+});
+
+/// Daftar riwayat transfer dari endpoint `/api/transfers`.
+final transfersProvider = FutureProvider<List<TransferItem>>((ref) async {
+  return ref.watch(accountRepositoryProvider).getTransfers();
 });

@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tahan_dulu/core/constants/app_strings.dart';
 import 'package:tahan_dulu/core/widgets/app_button.dart';
 import 'package:tahan_dulu/data/models/financial_account.dart';
+import 'package:tahan_dulu/data/models/transfer_model.dart';
 import 'package:tahan_dulu/data/providers/account_providers.dart';
 import 'package:tahan_dulu/data/providers/app_providers.dart';
 import 'package:tahan_dulu/data/repositories/repositories.dart';
@@ -101,6 +102,12 @@ class FakeAccountRepository implements AccountRepository {
       idempotencyKey: idempotencyKey,
     );
   }
+
+  @override
+  Future<List<TransferItem>> getTransfers() async => [];
+
+  @override
+  Future<void> cancelTransfer(String transferId) async {}
 }
 
 void main() {

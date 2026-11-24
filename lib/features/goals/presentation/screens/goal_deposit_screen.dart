@@ -26,9 +26,14 @@ const List<double> _quickAmounts = [100000, 250000, 500000, 1000000];
 /// Setoran = alokasi (tidak mengurangi saldo akun, tidak tercatat
 /// sebagai pengeluaran). Guard ganda bawaan.
 class GoalDepositScreen extends ConsumerStatefulWidget {
-  const GoalDepositScreen({super.key, required this.goalId});
+  const GoalDepositScreen({
+    super.key,
+    required this.goalId,
+    this.isWithdraw = false,
+  });
 
   final String goalId;
+  final bool isWithdraw;
 
   @override
   ConsumerState<GoalDepositScreen> createState() => _GoalDepositScreenState();
@@ -59,18 +64,37 @@ class _GoalDepositScreenState extends ConsumerState<GoalDepositScreen> {
 
   Future<void> _confirm(FinancialGoal goal) async {
     if (_amount <= 0) return;
+    if (widget.isWithdraw && _amount > goal.currentAmount) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Nominal penarikan melebihi dana terkumpul (${CurrencyFormatter.formatCompact(goal.currentAmount)}).',
+          ),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+      return;
+    }
     setState(() {
       _submitting = true;
       _saveFailed = false;
     });
     try {
-      final saved = await ref
-          .read(goalsControllerProvider.notifier)
-          .addDeposit(
-            goalId: goal.id,
-            amount: _amount,
-            accountId: _accountId,
-          );
+      final saved = widget.isWithdraw
+          ? await ref
+              .read(goalsControllerProvider.notifier)
+              .withdrawGoal(
+                goalId: goal.id,
+                amount: _amount,
+                accountId: _accountId,
+              )
+          : await ref
+              .read(goalsControllerProvider.notifier)
+              .addDeposit(
+                goalId: goal.id,
+                amount: _amount,
+                accountId: _accountId,
+              );
       if (!mounted) return;
       if (saved == null) {
         setState(() => _saveFailed = true);
@@ -79,19 +103,23 @@ class _GoalDepositScreenState extends ConsumerState<GoalDepositScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Setoran sebesar ${CurrencyFormatter.formatCompact(_amount)} berhasil dicatat.',
+            widget.isWithdraw
+                ? 'Penarikan sebesar ${CurrencyFormatter.formatCompact(_amount)} berhasil dicatat.'
+                : 'Setoran sebesar ${CurrencyFormatter.formatCompact(_amount)} berhasil dicatat.',
           ),
           backgroundColor: context.palette.primary,
         ),
       );
-      final updated = goal.copyWith(
-        currentAmount: goal.currentAmount + _amount,
-      );
-      if (updated.isReached) {
-        context.push('${AppRoutes.goals}/${goal.id}/achieved');
-      } else {
-        context.pop();
+      if (!widget.isWithdraw) {
+        final updated = goal.copyWith(
+          currentAmount: goal.currentAmount + _amount,
+        );
+        if (updated.isReached) {
+          context.push('${AppRoutes.goals}/${goal.id}/achieved');
+          return;
+        }
       }
+      context.pop();
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _saveFailed = true);
@@ -119,7 +147,7 @@ class _GoalDepositScreenState extends ConsumerState<GoalDepositScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: const AppBackButton(),
-        title: const Text(AppStrings.depositTitle),
+        title: Text(widget.isWithdraw ? 'Tarik Dana Target' : AppStrings.depositTitle),
       ),
       bottomNavigationBar: DashboardBottomNav(
         currentIndex: 3,
@@ -140,6 +168,7 @@ class _GoalDepositScreenState extends ConsumerState<GoalDepositScreen> {
                 }
                 return _Body(
                   goal: matches.first,
+                  isWithdraw: widget.isWithdraw,
                   amountController: _amountController,
                   amount: _amount,
                   accountId: _accountId,
@@ -168,6 +197,7 @@ class _GoalDepositScreenState extends ConsumerState<GoalDepositScreen> {
 class _Body extends StatelessWidget {
   const _Body({
     required this.goal,
+    required this.isWithdraw,
     required this.amountController,
     required this.amount,
     required this.accountId,
@@ -180,6 +210,7 @@ class _Body extends StatelessWidget {
   });
 
   final FinancialGoal goal;
+  final bool isWithdraw;
   final TextEditingController amountController;
   final double amount;
   final String? accountId;
@@ -193,12 +224,16 @@ class _Body extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final after = goal.currentAmount + (amount > 0 ? amount : 0);
+    final after = isWithdraw
+        ? (goal.currentAmount - (amount > 0 ? amount : 0)).clamp(0.0, double.infinity)
+        : goal.currentAmount + (amount > 0 ? amount : 0);
     final beforeProgress = goal.progress.clamp(0.0, 1.0);
     final afterProgress = (goal.targetAmount <= 0
             ? 0.0
             : after / goal.targetAmount)
         .clamp(0.0, 1.0);
+
+    final isOverdraft = isWithdraw && amount > goal.currentAmount;
 
     return Column(
       children: [
@@ -209,7 +244,7 @@ class _Body extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  AppStrings.depositTo,
+                  isWithdraw ? 'Tarik Dana dari' : AppStrings.depositTo,
                   style: textTheme.bodyMedium,
                 ),
                 Text(
@@ -217,7 +252,9 @@ class _Body extends StatelessWidget {
                   style: textTheme.headlineMedium?.copyWith(fontSize: 22),
                 ),
                 Text(
-                  AppStrings.depositHelp,
+                  isWithdraw
+                      ? 'Pencairan dana alokasi target ke akun keuangan kamu.'
+                      : AppStrings.depositHelp,
                   style: textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 16),
@@ -225,7 +262,7 @@ class _Body extends StatelessWidget {
                 const SizedBox(height: 16),
                 AppTextField(
                   controller: amountController,
-                  label: AppStrings.periodicSaving,
+                  label: isWithdraw ? 'Nominal Penarikan' : AppStrings.periodicSaving,
                   hint: '0',
                   prefixText: 'Rp ',
                   keyboardType: TextInputType.number,
@@ -233,9 +270,19 @@ class _Body extends StatelessWidget {
                   onChanged: (v) =>
                       onAmount(RupiahInputFormatter.parse(v)),
                 ),
+                if (isOverdraft) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    'Nominal melebihi dana terkumpul (${CurrencyFormatter.formatCompact(goal.currentAmount)})',
+                    style: textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.error,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 12),
                 Text(
-                  AppStrings.quickAmounts,
+                  isWithdraw ? 'Pilihan Cepat' : AppStrings.quickAmounts,
                   style: textTheme.titleMedium,
                 ),
                 const SizedBox(height: 8),
@@ -244,17 +291,24 @@ class _Body extends StatelessWidget {
                   runSpacing: 8,
                   children: [
                     for (final quick in _quickAmounts)
+                      if (!isWithdraw || quick <= goal.currentAmount)
+                        _QuickChip(
+                          label:
+                              '${isWithdraw ? '-' : '+'}${CurrencyFormatter.formatCompact(quick)}',
+                          selected: amount == quick,
+                          onTap: () => onQuick(quick),
+                        ),
+                    if (isWithdraw && goal.currentAmount > 0)
                       _QuickChip(
-                        label:
-                            '+${CurrencyFormatter.formatCompact(quick)}',
-                        selected: amount == quick,
-                        onTap: () => onQuick(quick),
+                        label: 'Semua (${CurrencyFormatter.formatCompact(goal.currentAmount)})',
+                        selected: amount == goal.currentAmount,
+                        onTap: () => onQuick(goal.currentAmount),
                       ),
                   ],
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  AppStrings.fundingSource,
+                  isWithdraw ? 'Akun Tujuan Pencairan' : AppStrings.fundingSource,
                   style: textTheme.titleMedium,
                 ),
                 const SizedBox(height: 8),
@@ -264,7 +318,7 @@ class _Body extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  AppStrings.depositPreview,
+                  isWithdraw ? 'Pratinjau Saldo Target' : AppStrings.depositPreview,
                   style: textTheme.titleMedium,
                 ),
                 const SizedBox(height: 8),
@@ -308,7 +362,9 @@ class _Body extends StatelessWidget {
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
-                        AppStrings.depositImpactNote,
+                        isWithdraw
+                            ? 'Pencairan ini akan mengurangi dana target yang terkumpul dan mengembalikan alokasi ke akun tujuan.'
+                            : AppStrings.depositImpactNote,
                         style: textTheme.bodyMedium,
                       ),
                     ),
@@ -330,9 +386,9 @@ class _Body extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
           child: AppButton(
-            label: AppStrings.confirmDepositAction,
+            label: isWithdraw ? 'Konfirmasi Penarikan' : AppStrings.confirmDepositAction,
             isLoading: submitting,
-            onPressed: submitting || amount <= 0 ? null : onConfirm,
+            onPressed: submitting || amount <= 0 || isOverdraft ? null : onConfirm,
           ),
         ),
       ],

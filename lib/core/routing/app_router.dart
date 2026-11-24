@@ -25,6 +25,7 @@ import 'package:tahan_dulu/features/accounts/presentation/screens/account_detail
 import 'package:tahan_dulu/features/accounts/presentation/screens/accounts_screen.dart';
 import 'package:tahan_dulu/features/accounts/presentation/screens/add_account_screen.dart';
 import 'package:tahan_dulu/features/accounts/presentation/screens/edit_account_screen.dart';
+import 'package:tahan_dulu/features/accounts/presentation/screens/transfer_history_screen.dart';
 import 'package:tahan_dulu/features/accounts/presentation/screens/transfer_screen.dart';
 import 'package:tahan_dulu/features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'package:tahan_dulu/features/goals/presentation/screens/goal_achieved_screen.dart';
@@ -61,6 +62,10 @@ import 'package:tahan_dulu/features/reports/presentation/screens/report_export_s
 import 'package:tahan_dulu/features/reports/presentation/screens/report_health_screen.dart';
 import 'package:tahan_dulu/features/reports/presentation/screens/report_savings_screen.dart';
 import 'package:tahan_dulu/features/reports/presentation/screens/reports_screen.dart';
+import 'package:tahan_dulu/features/recurring/presentation/screens/recurring_incomes_screen.dart';
+import 'package:tahan_dulu/features/recurring/presentation/screens/add_recurring_income_screen.dart';
+import 'package:tahan_dulu/features/recurring/presentation/screens/recurring_expenses_screen.dart';
+import 'package:tahan_dulu/features/recurring/presentation/screens/add_recurring_expense_screen.dart';
 import 'package:tahan_dulu/features/onboarding/presentation/screens/budget_screen.dart';
 import 'package:tahan_dulu/features/onboarding/presentation/screens/instruments_screen.dart';
 import 'package:tahan_dulu/features/onboarding/presentation/screens/salary_screen.dart';
@@ -354,6 +359,11 @@ GoRouter createAppRouter({AuthRouteNotifier? authNotifier}) {
                     GoalDepositScreen(goalId: state.pathParameters['id']!),
               ),
               GoRoute(
+                path: 'withdraw',
+                builder: (context, state) =>
+                    GoalDepositScreen(goalId: state.pathParameters['id']!, isWithdraw: true),
+              ),
+              GoRoute(
                 path: 'history',
                 builder: (context, state) =>
                     GoalHistoryScreen(goalId: state.pathParameters['id']!),
@@ -451,6 +461,10 @@ GoRouter createAppRouter({AuthRouteNotifier? authNotifier}) {
             ),
           ),
           GoRoute(
+            path: 'transfers/history',
+            builder: (context, state) => const TransferHistoryScreen(),
+          ),
+          GoRoute(
             path: 'add',
             builder: (context, state) => const AddAccountScreen(),
           ),
@@ -479,6 +493,26 @@ GoRouter createAppRouter({AuthRouteNotifier? authNotifier}) {
           GoRoute(
             path: 'savings',
             builder: (context, state) => const SavingReminderScreen(),
+          ),
+        ],
+      ),
+      GoRoute(
+        path: AppRoutes.recurringIncomes,
+        builder: (context, state) => const RecurringIncomesScreen(),
+        routes: [
+          GoRoute(
+            path: 'add',
+            builder: (context, state) => const AddRecurringIncomeScreen(),
+          ),
+        ],
+      ),
+      GoRoute(
+        path: AppRoutes.recurringExpenses,
+        builder: (context, state) => const RecurringExpensesScreen(),
+        routes: [
+          GoRoute(
+            path: 'add',
+            builder: (context, state) => const AddRecurringExpenseScreen(),
           ),
         ],
       ),

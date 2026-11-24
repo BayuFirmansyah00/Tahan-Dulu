@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tahan_dulu/core/constants/app_strings.dart';
 import 'package:tahan_dulu/data/models/api_financial_instrument.dart';
 import 'package:tahan_dulu/data/models/financial_account.dart';
+import 'package:tahan_dulu/data/models/transfer_model.dart';
 import 'package:tahan_dulu/data/providers/app_providers.dart';
 import 'package:tahan_dulu/data/repositories/repositories.dart';
 import 'package:tahan_dulu/features/accounts/presentation/providers/accounts_controller.dart';
@@ -67,6 +68,12 @@ class _FakeAccountRepository implements AccountRepository {
       );
     }
   }
+
+  @override
+  Future<List<TransferItem>> getTransfers() async => [];
+
+  @override
+  Future<void> cancelTransfer(String transferId) async {}
 }
 
 class _FakeInstrumentTypeRepository implements InstrumentTypeRepository {

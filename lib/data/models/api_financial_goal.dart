@@ -17,6 +17,8 @@ class ApiFinancialGoal extends Equatable {
     required this.frequency,
     required this.isActive,
     this.priority,
+    this.recurringAmount,
+    this.sourceAccountId,
     this.isReached,
     this.remainingAmount,
     this.createdAt,
@@ -37,6 +39,8 @@ class ApiFinancialGoal extends Equatable {
   final String frequency; // daily | weekly | monthly | yearly
   final bool isActive;
   final String? priority;
+  final int? recurringAmount;
+  final String? sourceAccountId;
   final bool? isReached;
   final int? remainingAmount;
   final String? createdAt;
@@ -64,6 +68,10 @@ class ApiFinancialGoal extends Equatable {
       frequency: '${json['frequency'] ?? 'monthly'}',
       isActive: json['is_active'] as bool? ?? false,
       priority: json['priority'] != null ? '${json['priority']}' : null,
+      recurringAmount: json['recurring_amount'] is int
+          ? json['recurring_amount'] as int
+          : int.tryParse('${json['recurring_amount']}'),
+      sourceAccountId: json['source_account_id'] as String?,
       isReached: json['is_reached'] as bool?,
       remainingAmount: json['remaining_amount'] is int
           ? json['remaining_amount'] as int
@@ -79,6 +87,8 @@ class ApiFinancialGoal extends Equatable {
       'title': title,
       'type': type,
       'target_amount': targetAmount,
+      'recurring_amount': recurringAmount,
+      'source_account_id': sourceAccountId,
       'current_amount': currentAmount,
       'progress_percentage': progressPercentage,
       'target_amount_formatted': targetAmountFormatted,
@@ -129,6 +139,8 @@ class ApiFinancialGoal extends Equatable {
     String? frequency,
     bool? isActive,
     String? priority,
+    int? recurringAmount,
+    String? sourceAccountId,
     bool? isReached,
     int? remainingAmount,
     String? Function()? createdAt,
@@ -151,6 +163,8 @@ class ApiFinancialGoal extends Equatable {
       frequency: frequency ?? this.frequency,
       isActive: isActive ?? this.isActive,
       priority: priority ?? this.priority,
+      recurringAmount: recurringAmount ?? this.recurringAmount,
+      sourceAccountId: sourceAccountId ?? this.sourceAccountId,
       isReached: isReached ?? this.isReached,
       remainingAmount: remainingAmount ?? this.remainingAmount,
       createdAt: createdAt != null ? createdAt() : this.createdAt,
@@ -164,6 +178,8 @@ class ApiFinancialGoal extends Equatable {
         title,
         type,
         targetAmount,
+        recurringAmount,
+        sourceAccountId,
         currentAmount,
         progressPercentage,
         targetAmountFormatted,

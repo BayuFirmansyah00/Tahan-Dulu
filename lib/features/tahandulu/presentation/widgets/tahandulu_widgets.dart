@@ -39,11 +39,13 @@ class TahanDuluScaffold extends StatelessWidget {
     required this.title,
     required this.child,
     this.bottomButton,
+    this.actions,
   });
 
   final String title;
   final Widget child;
   final Widget? bottomButton;
+  final List<Widget>? actions;
 
   @override
   Widget build(BuildContext context) {
@@ -53,6 +55,7 @@ class TahanDuluScaffold extends StatelessWidget {
         leading: const AppBackButton(),
         title: Text(title),
         backgroundColor: context.canvasColor,
+        actions: actions,
       ),
       bottomNavigationBar: DashboardBottomNav(
         onTap: (i) => tahanDuluBottomNavTap(context, i),

@@ -1,7 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tahan_dulu/data/models/financial_account.dart';
+import 'package:tahan_dulu/data/models/financial_summary.dart';
+import 'package:tahan_dulu/data/models/monthly_report.dart';
 import 'package:tahan_dulu/data/models/transaction_model.dart';
+import 'package:tahan_dulu/data/models/transfer_model.dart';
 import 'package:tahan_dulu/data/providers/app_providers.dart';
 import 'package:tahan_dulu/data/providers/dashboard_providers.dart';
 import 'package:tahan_dulu/data/providers/onboarding_providers.dart';
@@ -93,6 +96,12 @@ class ScenarioAccountRepository implements AccountRepository {
       idempotencyKey: idempotencyKey,
     );
   }
+
+  @override
+  Future<List<TransferItem>> getTransfers() async => [];
+
+  @override
+  Future<void> cancelTransfer(String transferId) async {}
 }
 
 class ScenarioTransactionRepository implements TransactionRepository {
@@ -171,6 +180,8 @@ class ScenarioTransactionRepository implements TransactionRepository {
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   test('Integrated Scenario: BCA & Mandiri, Transfer, Expense, Income, and Cashflow Isolation', () async {
     final now = DateTime.now();
 
@@ -206,6 +217,38 @@ void main() {
         onboardingRepositoryProvider.overrideWithValue(InMemoryOnboardingRepository()),
         currentBudgetProvider.overrideWith((ref) async => null),
         recurringExpensesProvider.overrideWith((ref) async => []),
+        summaryProvider.overrideWith((ref) async => const FinancialSummary(
+          income: 100000,
+          expense: 150000,
+          saving: 0,
+          investment: 0,
+          remaining: 0,
+          flexibleBudget: 0,
+          safeSpendingToday: 0,
+        )),
+        monthlyReportProvider.overrideWith((ref, month) async {
+          final txs = await txRepo.getRecentTransactions();
+          final reportTxs = txs.where((t) => t.category?.toLowerCase() != 'transfer').toList();
+          final inc = reportTxs.where((t) => t.type == TransactionType.income).fold(0.0, (s, t) => s + t.amount);
+          final exp = reportTxs.where((t) => t.type == TransactionType.expense).fold(0.0, (s, t) => s + t.amount);
+          return MonthlyReport(
+            month: month,
+            income: inc,
+            expense: exp,
+            prevIncome: null,
+            prevExpense: null,
+            categories: [
+              const CategoryTotal(label: 'makanan', amount: 150000, share: 1.0),
+            ],
+            savingsMonth: 0,
+            investmentMonth: 0,
+            savingsTarget: 0,
+            savingsSaved: 0,
+            investmentTarget: 0,
+            investmentSaved: 0,
+            lastSix: [],
+          );
+        }),
       ],
     );
     addTearDown(container.dispose);

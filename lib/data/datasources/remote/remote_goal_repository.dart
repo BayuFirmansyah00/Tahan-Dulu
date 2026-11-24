@@ -76,7 +76,8 @@ class RemoteGoalRepository implements GoalRepository {
       deadline: api.parsedTargetDate,
       category: _toGoalCategory(api.type),
       frequency: _toDepositFrequency(api.frequency),
-      sourceAccountId: null,
+      recurringAmount: (api.recurringAmount ?? 0).toDouble(),
+      sourceAccountId: api.sourceAccountId,
       priority: _toPriority(api.priority),
     );
   }
@@ -89,6 +90,7 @@ class RemoteGoalRepository implements GoalRepository {
       date: api.parsedCreatedAt ?? DateTime.now(),
       accountId: api.instrument?.id.toString(),
       note: api.notes,
+      type: api.type.isNotEmpty ? api.type : 'deposit',
     );
   }
 
@@ -120,6 +122,8 @@ class RemoteGoalRepository implements GoalRepository {
         'type': goal.category.name,
         'target_amount': goal.targetAmount.round(),
         'current_amount': goal.currentAmount.round(),
+        'recurring_amount': goal.recurringAmount > 0 ? goal.recurringAmount.round() : null,
+        'source_account_id': goal.sourceAccountId,
         'target_date': goal.deadline?.toIso8601String(),
         'reminder_date': null,
         'frequency':
@@ -142,6 +146,8 @@ class RemoteGoalRepository implements GoalRepository {
         'title': goal.name,
         'type': goal.category.name,
         'target_amount': goal.targetAmount.round(),
+        'recurring_amount': goal.recurringAmount > 0 ? goal.recurringAmount.round() : null,
+        'source_account_id': goal.sourceAccountId,
         // Catatan Arsitektur F07: current_amount sengaja tidak dikirimkan agar
         // mutasi ledger/deposito tidak tertimpa oleh snapshot klien yang basi.
         // is_active dan reminder_date juga tidak ditimpa sembarangan.
@@ -184,7 +190,7 @@ class RemoteGoalRepository implements GoalRepository {
     final body = await _client.post(
       '/goals/${deposit.goalId}/transactions',
       {
-        'type': 'deposit',
+        'type': deposit.type,
         'amount': deposit.amount.round(),
         'notes': deposit.note,
         'instrument_id': deposit.accountId,
@@ -200,6 +206,7 @@ class RemoteGoalRepository implements GoalRepository {
       date: mapped.date,
       accountId: mapped.accountId ?? deposit.accountId,
       note: mapped.note,
+      type: mapped.type,
     );
   }
 
@@ -212,7 +219,7 @@ class RemoteGoalRepository implements GoalRepository {
     final body = await _client.put(
       '/goals/${deposit.goalId}/transactions/$transactionId',
       {
-        'type': 'deposit',
+        'type': deposit.type,
         'amount': deposit.amount.round(),
         'notes': deposit.note,
         'instrument_id': deposit.accountId,
@@ -228,6 +235,7 @@ class RemoteGoalRepository implements GoalRepository {
       date: mapped.date,
       accountId: mapped.accountId ?? deposit.accountId,
       note: mapped.note,
+      type: mapped.type,
     );
   }
 

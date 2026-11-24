@@ -228,13 +228,32 @@ class _Body extends StatelessWidget {
             isWarning: !goal.isReached && eta == null,
           ),
           const SizedBox(height: 20),
-          AppButton(
-            label: AppStrings.addFundsAction,
-            assetPath: AppAssets.actionAddMoney,
-            icon: Icons.add,
-            onPressed: () => context.push(
-              '${AppRoutes.goals}/${goal.id}/deposit',
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: AppButton(
+                  label: AppStrings.addFundsAction,
+                  assetPath: AppAssets.actionAddMoney,
+                  icon: Icons.add,
+                  onPressed: () => context.push(
+                    '${AppRoutes.goals}/${goal.id}/deposit',
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: AppOutlineButton(
+                  label: 'Tarik Dana',
+                  assetPath: AppAssets.actionHistory,
+                  icon: Icons.outbox_rounded,
+                  onPressed: goal.currentAmount <= 0
+                      ? null
+                      : () => context.push(
+                          '${AppRoutes.goals}/${goal.id}/withdraw',
+                        ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           Row(

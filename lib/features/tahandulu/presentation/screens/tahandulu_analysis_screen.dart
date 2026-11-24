@@ -33,6 +33,49 @@ class TahanDuluAnalysisScreen extends ConsumerWidget {
 
     return TahanDuluScaffold(
       title: AppStrings.reviewFirstTitle,
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.delete_outline),
+          tooltip: 'Hapus Item',
+          onPressed: () async {
+            final confirmed = await showDialog<bool>(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                title: const Text('Hapus barang ini?'),
+                content: const Text(
+                  'Item ini akan dihapus dari daftar Tahan Dulu. Jika barang sudah pernah dibeli, transaksi di buku kas tetap aman dan tidak akan terhapus.',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(ctx).pop(false),
+                    child: const Text(AppStrings.cancel),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.of(ctx).pop(true),
+                    style: TextButton.styleFrom(
+                      foregroundColor: Theme.of(ctx).colorScheme.error,
+                    ),
+                    child: const Text('Hapus'),
+                  ),
+                ],
+              ),
+            );
+            if (confirmed != true || !context.mounted) return;
+            final ok = await ref.read(tahanDuluControllerProvider.notifier).deleteItem(itemId);
+            if (!context.mounted) return;
+            if (ok) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Item berhasil dihapus')),
+              );
+              context.go(AppRoutes.tahanDulu);
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text(AppStrings.saveFailed)),
+              );
+            }
+          },
+        ),
+      ],
       bottomButton: AppButton(
         label: AppStrings.simulateImpactAction,
         backgroundColor: context.palette.tertiaryContainer,

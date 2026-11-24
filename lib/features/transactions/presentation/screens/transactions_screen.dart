@@ -14,6 +14,7 @@ import '../../../../core/widgets/app_icons.dart';
 import '../../../../core/widgets/app_states.dart';
 import '../../../../data/models/transaction_model.dart';
 import '../providers/transactions_controller.dart';
+import '../widgets/transaction_detail_sheet.dart';
 import '../../../../data/providers/onboarding_providers.dart';
 import '../../../dashboard/presentation/widgets/dashboard_bottom_nav.dart';
 
@@ -593,50 +594,63 @@ class _TransactionRow extends StatelessWidget {
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-      padding: const EdgeInsets.all(12),
       decoration: Glass.panel(context, radius: BorderRadius.circular(16)),
-      child: Row(
-        children: [
-          CategoryIcon.forLabel(item.category, item.type, size: 44),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => showTransactionDetailSheet(
+            context,
+            item,
+            accountName: accountName,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
               children: [
-                Text(
-                  item.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: context.palette.onSurface,
+                CategoryIcon.forLabel(item.category, item.type, size: 44),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: context.palette.onSurface,
+                        ),
+                      ),
+                      if (detail.isNotEmpty)
+                        Text(
+                          detail,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: textTheme.bodySmall?.copyWith(
+                            color: context.palette.onSurfaceVariant,
+                          ),
+                        ),
+                    ],
                   ),
                 ),
-                if (detail.isNotEmpty)
-                  Text(
-                    detail,
-                    maxLines: 1,
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    '$sign${CurrencyFormatter.formatCompact(item.amount)}',
+                    textAlign: TextAlign.end,
                     overflow: TextOverflow.ellipsis,
-                    style: textTheme.bodySmall?.copyWith(
-                      color: context.palette.onSurfaceVariant,
+                    style: textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: color,
                     ),
                   ),
+                ),
               ],
             ),
           ),
-          const SizedBox(width: 8),
-          Flexible(
-            child: Text(
-              '$sign${CurrencyFormatter.formatCompact(item.amount)}',
-              textAlign: TextAlign.end,
-              overflow: TextOverflow.ellipsis,
-              style: textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: color,
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
