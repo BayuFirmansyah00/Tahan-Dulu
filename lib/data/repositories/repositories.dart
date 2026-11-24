@@ -68,8 +68,9 @@ abstract class TransactionRepository {
   Future<List<AppTransaction>> getTransactions({
     String? type,
     String? category,
-    int? instrumentId,
+    dynamic instrumentId,
     int? perPage,
+    int? page,
   });
 
   /// Perbarui transaksi yang ada.
@@ -426,8 +427,9 @@ class MockTransactionRepository implements TransactionRepository {
   Future<List<AppTransaction>> getTransactions({
     String? type,
     String? category,
-    int? instrumentId,
+    dynamic instrumentId,
     int? perPage,
+    int? page,
   }) async {
     await mockDelay(null);
     var result = List.of(_items);
@@ -437,8 +439,12 @@ class MockTransactionRepository implements TransactionRepository {
     if (category != null) {
       result = result.where((e) => e.category == category).toList();
     }
+    if (instrumentId != null) {
+      result = result.where((e) => e.accountId == instrumentId.toString()).toList();
+    }
     if (perPage != null) {
-      result = result.take(perPage).toList();
+      final startIndex = page != null && page > 1 ? (page - 1) * perPage : 0;
+      result = result.skip(startIndex).take(perPage).toList();
     }
     return result;
   }

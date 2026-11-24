@@ -67,8 +67,9 @@ class _SeedTxRepo implements TransactionRepository {
   Future<List<AppTransaction>> getTransactions({
     String? type,
     String? category,
-    int? instrumentId,
+    dynamic instrumentId,
     int? perPage,
+    int? page,
   }) async {
     var result = List.of(items);
     if (type != null) {

@@ -121,8 +121,9 @@ class _InMemoryTransactionRepo implements TransactionRepository {
   Future<List<AppTransaction>> getTransactions({
     String? type,
     String? category,
-    int? instrumentId,
+    dynamic instrumentId,
     int? perPage,
+    int? page,
   }) async =>
       List.of(items);
 

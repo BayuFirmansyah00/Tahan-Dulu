@@ -118,8 +118,9 @@ class ScenarioTransactionRepository implements TransactionRepository {
   Future<List<AppTransaction>> getTransactions({
     String? type,
     String? category,
-    int? instrumentId,
+    dynamic instrumentId,
     int? perPage,
+    int? page,
   }) async {
     var filtered = txs.where((t) => true);
     if (instrumentId != null) {

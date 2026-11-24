@@ -142,13 +142,13 @@ class RemoteGoalRepository implements GoalRepository {
         'title': goal.name,
         'type': goal.category.name,
         'target_amount': goal.targetAmount.round(),
-        'current_amount': goal.currentAmount.round(),
+        // Catatan Arsitektur F07: current_amount sengaja tidak dikirimkan agar
+        // mutasi ledger/deposito tidak tertimpa oleh snapshot klien yang basi.
+        // is_active dan reminder_date juga tidak ditimpa sembarangan.
         'target_date': goal.deadline?.toIso8601String(),
-        'reminder_date': null,
         'frequency':
             goal.frequency == DepositFrequency.weekly ? 'weekly' : 'monthly',
         'priority': goal.priority.toString(),
-        'is_active': true,
       },
       token: token,
     );

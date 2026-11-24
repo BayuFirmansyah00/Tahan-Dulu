@@ -253,16 +253,25 @@ class _EditAccountScreenState extends ConsumerState<EditAccountScreen> {
       ),
     );
     if (confirmed != true || !context.mounted) return;
-    final ok = await ref
-        .read(accountsControllerProvider)
-        .deleteAccount(account.id);
-    if (!context.mounted) return;
-    if (ok) {
-      context.go(AppRoutes.accounts);
-    } else {
+    try {
+      final ok = await ref
+          .read(accountsControllerProvider)
+          .deleteAccount(account.id);
+      if (!context.mounted) return;
+      if (ok) {
+        context.go(AppRoutes.accounts);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(AppStrings.deleteAccountBlocked),
+          ),
+        );
+      }
+    } on ApiException catch (e) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(AppStrings.deleteAccountBlocked),
+        SnackBar(
+          content: Text(e.message.isNotEmpty ? e.message : AppStrings.deleteAccountBlocked),
         ),
       );
     }

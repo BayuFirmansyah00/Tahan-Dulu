@@ -28,8 +28,9 @@ class _FailingTransactionRepo implements TransactionRepository {
   Future<List<AppTransaction>> getTransactions({
     String? type,
     String? category,
-    int? instrumentId,
+    dynamic instrumentId,
     int? perPage,
+    int? page,
   }) =>
       Future.error(StateError('offline'));
 

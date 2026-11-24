@@ -55,7 +55,7 @@ class RemoteTransactionRepository implements TransactionRepository {
   @override
   Future<List<AppTransaction>> getRecentTransactions() async {
     final token = await _requireToken();
-    final body = await _client.get('/transactions', token: token);
+    final body = await _client.get('/transactions?per_page=50', token: token);
     final resp = ApiTransactionsResponse.fromJson(body);
     return resp.data.map(_toAppTransaction).toList();
   }
@@ -95,8 +95,9 @@ class RemoteTransactionRepository implements TransactionRepository {
   Future<List<AppTransaction>> getTransactions({
     String? type,
     String? category,
-    int? instrumentId,
+    dynamic instrumentId,
     int? perPage,
+    int? page,
   }) async {
     final token = await _requireToken();
     final query = <String, String>{};
@@ -104,6 +105,7 @@ class RemoteTransactionRepository implements TransactionRepository {
     if (category != null) query['category'] = category;
     if (instrumentId != null) query['instrument_id'] = instrumentId.toString();
     if (perPage != null) query['per_page'] = perPage.toString();
+    if (page != null) query['page'] = page.toString();
 
     final path = query.isNotEmpty
         ? '/transactions?${query.entries.map((e) => '${e.key}=${e.value}').join('&')}'
