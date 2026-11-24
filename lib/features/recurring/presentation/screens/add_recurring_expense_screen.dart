@@ -27,7 +27,7 @@ class _AddRecurringExpenseScreenState
   final _amountController = TextEditingController();
   final _nextDueDateController = TextEditingController();
   String _frequency = 'monthly';
-  int? _instrumentId;
+  String? _instrumentId;
   List<FinancialAccount> _instruments = [];
   bool _loadingInstruments = true;
   bool _attempted = false;
@@ -259,15 +259,15 @@ class _AddRecurringExpenseScreenState
                       ),
                     )
                   else
-                    DropdownButtonFormField<int?>(
+                    DropdownButtonFormField<String?>(
                       initialValue: _instrumentId,
                       items: [
-                        const DropdownMenuItem<int?>(
+                        const DropdownMenuItem<String?>(
                           value: null,
                           child: Text(AppStrings.recurringExpenseInstrumentNone),
                         ),
-                        ..._instruments.map((acc) => DropdownMenuItem<int?>(
-                              value: int.tryParse(acc.id),
+                        ..._instruments.map((acc) => DropdownMenuItem<String?>(
+                              value: acc.id,
                               child: Text(
                                 '${acc.name} (${acc.institutionName ?? '-'})',
                                 overflow: TextOverflow.ellipsis,

@@ -16,6 +16,11 @@ import 'package:tahan_dulu/features/onboarding/presentation/screens/salary_scree
 void main() {
   Widget createTestWidget({required Widget child}) {
     return ProviderScope(
+      overrides: [
+        onboardingRepositoryProvider.overrideWithValue(
+          InMemoryOnboardingRepository(),
+        ),
+      ],
       child: MaterialApp(theme: AppTheme.light, home: child),
     );
   }

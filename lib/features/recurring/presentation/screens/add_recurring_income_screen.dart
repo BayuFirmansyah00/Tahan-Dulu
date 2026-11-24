@@ -27,7 +27,7 @@ class _AddRecurringIncomeScreenState
   final _amountController = TextEditingController();
   final _nextDueDateController = TextEditingController();
   String _frequency = 'monthly';
-  int? _instrumentId;
+  String? _instrumentId;
   List<FinancialAccount> _instruments = [];
   bool _loadingInstruments = true;
   bool _attempted = false;
@@ -263,11 +263,11 @@ class _AddRecurringIncomeScreenState
                       ),
                     )
                   else
-                    DropdownButtonFormField<int>(
+                    DropdownButtonFormField<String>(
                       initialValue: _instrumentId,
                       items: _instruments
                           .map((acc) => DropdownMenuItem(
-                                value: int.tryParse(acc.id),
+                                value: acc.id,
                                 child: Text(
                                   '${acc.name} (${acc.institutionName ?? '-'})',
                                   overflow: TextOverflow.ellipsis,

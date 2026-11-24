@@ -20,7 +20,7 @@ class ApiRecurringTransaction extends Equatable {
     this.updatedAt,
   });
 
-  final int id;
+  final String id;
   final String title;
   final String type; // 'income' | 'expense'
   final String category;
@@ -36,7 +36,7 @@ class ApiRecurringTransaction extends Equatable {
 
   factory ApiRecurringTransaction.fromJson(Map<String, dynamic> json) {
     return ApiRecurringTransaction(
-      id: json['id'] is int ? json['id'] as int : int.tryParse('${json['id']}') ?? 0,
+      id: '${json['id'] ?? ''}',
       title: '${json['title'] ?? ''}',
       type: '${json['type'] ?? ''}',
       category: '${json['category'] ?? ''}',
@@ -84,7 +84,7 @@ class ApiRecurringTransaction extends Equatable {
   }
 
   ApiRecurringTransaction copyWith({
-    int? id,
+    String? id,
     String? title,
     String? type,
     String? category,

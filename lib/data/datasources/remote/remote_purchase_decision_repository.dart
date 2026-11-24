@@ -150,7 +150,7 @@ class RemotePurchaseDecisionRepository implements PurchaseDecisionRepository {
   @override
   Future<Map<String, dynamic>> recordPurchase(
     String id, {
-    required int accountId,
+    required String accountId,
     String? information,
     String? idempotencyKey,
   }) async {

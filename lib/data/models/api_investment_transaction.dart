@@ -17,8 +17,8 @@ class ApiInvestmentTransaction extends Equatable {
     this.createdAt,
   });
 
-  final int id;
-  final int investmentId;
+  final String id;
+  final String investmentId;
   final String type; // 'deposit' | 'withdraw'
   final int amount;
   final String? amountFormatted;
@@ -29,10 +29,8 @@ class ApiInvestmentTransaction extends Equatable {
 
   factory ApiInvestmentTransaction.fromJson(Map<String, dynamic> json) {
     return ApiInvestmentTransaction(
-      id: json['id'] is int ? json['id'] as int : int.tryParse('${json['id']}') ?? 0,
-      investmentId: json['investment_id'] is int
-          ? json['investment_id'] as int
-          : int.tryParse('${json['investment_id']}') ?? 0,
+      id: '${json['id'] ?? ''}',
+      investmentId: '${json['investment_id'] ?? ''}',
       type: '${json['type'] ?? ''}',
       amount: json['amount'] is int
           ? json['amount'] as int
@@ -73,8 +71,8 @@ class ApiInvestmentTransaction extends Equatable {
   }
 
   ApiInvestmentTransaction copyWith({
-    int? id,
-    int? investmentId,
+    String? id,
+    String? investmentId,
     String? type,
     int? amount,
     String? Function()? amountFormatted,

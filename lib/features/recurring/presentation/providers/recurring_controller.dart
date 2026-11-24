@@ -34,7 +34,7 @@ class RecurringController {
     required double amount,
     required String frequency,
     required String nextDueDate,
-    required int instrumentId,
+    required String instrumentId,
     bool isActive = true,
     bool makeAutomatic = false,
   }) async {
@@ -62,7 +62,7 @@ class RecurringController {
     required double amount,
     required String frequency,
     required String nextDueDate,
-    int? instrumentId,
+    String? instrumentId,
     bool isActive = true,
     bool makeAutomatic = false,
   }) async {

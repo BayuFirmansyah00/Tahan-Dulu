@@ -18,7 +18,7 @@ class ApiInvestment extends Equatable {
     this.updatedAt,
   });
 
-  final int id;
+  final String id;
   final String title;
   final String type;
   final int? target;
@@ -34,7 +34,7 @@ class ApiInvestment extends Equatable {
 
   factory ApiInvestment.fromJson(Map<String, dynamic> json) {
     return ApiInvestment(
-      id: json['id'] is int ? json['id'] as int : int.tryParse('${json['id']}') ?? 0,
+      id: '${json['id'] ?? ''}',
       title: '${json['title'] ?? ''}',
       type: '${json['type'] ?? ''}',
       target: json['target'] != null
@@ -77,7 +77,7 @@ class ApiInvestment extends Equatable {
   }
 
   ApiInvestment copyWith({
-    int? id,
+    String? id,
     String? title,
     String? type,
     int? target,

@@ -34,6 +34,10 @@ class RemoteOnboardingRepository implements OnboardingRepository {
   final List<RecurringExpense> _cachedExpenses = [];
   FinancialGoal? _cachedGoal;
 
+  final Set<String> _persistedInstrumentIds = <String>{};
+  final Set<String> _persistedExpenseIds = <String>{};
+  final Set<String> _persistedGoalIds = <String>{};
+
   static ExpenseCategory _mapExpenseCategory(String? category) {
     switch (category?.toLowerCase().trim()) {
       case 'needs':
@@ -211,6 +215,9 @@ class RemoteOnboardingRepository implements OnboardingRepository {
         _cachedInstruments
           ..clear()
           ..addAll(items);
+        _persistedInstrumentIds
+          ..clear()
+          ..addAll(items.map((e) => e.id));
       }
       return List.unmodifiable(_cachedInstruments);
     } catch (_) {
@@ -238,6 +245,9 @@ class RemoteOnboardingRepository implements OnboardingRepository {
         _cachedExpenses
           ..clear()
           ..addAll(items);
+        _persistedExpenseIds
+          ..clear()
+          ..addAll(items.map((e) => e.id));
       }
       return List.unmodifiable(_cachedExpenses);
     } catch (_) {
@@ -267,6 +277,7 @@ class RemoteOnboardingRepository implements OnboardingRepository {
               : DepositFrequency.monthly,
         );
         _cachedGoal = mapped;
+        _persistedGoalIds.add(mapped.id);
       }
       return _cachedGoal;
     } catch (_) {
@@ -292,54 +303,103 @@ class RemoteOnboardingRepository implements OnboardingRepository {
     final saved = <FinancialInstrument>[];
 
     for (final instrument in instruments) {
-      final payload = <String, dynamic>{
-        'name': instrument.name,
-        'balance': instrument.initialBalance.round(),
-        'monthly_admin_fee': instrument.adminFeeEnabled
-            ? instrument.monthlyAdminFee.round()
-            : 0,
-        'admin_fee_day':
-            instrument.adminFeeEnabled ? instrument.adminFeeDay : null,
-        'admin_fee_enabled': instrument.adminFeeEnabled,
-        'is_active': true,
-      };
-      if (instrument.typeId != null) payload['type_id'] = instrument.typeId;
-      if (instrument.bankId != null) payload['bank_id'] = instrument.bankId;
-      if (instrument.bankSlug != null && instrument.bankSlug!.isNotEmpty) {
-        payload['bank_slug'] = instrument.bankSlug;
-      }
+      final isPersisted = _persistedInstrumentIds.contains(instrument.id) ||
+          (_cachedInstruments.any((e) => e.id == instrument.id) && isBackendId(instrument.id));
 
-      final isExistingBackendId = isBackendId(instrument.id);
-      if (!isExistingBackendId) {
-        payload['idempotency_key'] = 'onboarding-${instrument.id}';
-      }
-      final Map<String, dynamic> body;
-      if (isExistingBackendId) {
-        // Hindari duplikasi: perbarui instrumen yang sudah memiliki ID backend
-        body = await _client.put(
+      if (isPersisted) {
+        // Delta check: Hindari request PUT redundan jika instrumen tidak berubah
+        final existingIdx = _cachedInstruments.indexWhere((e) => e.id == instrument.id);
+        if (existingIdx != -1) {
+          final existing = _cachedInstruments[existingIdx];
+          final isUnchanged = existing.name == instrument.name &&
+              existing.initialBalance.round() == instrument.initialBalance.round() &&
+              existing.typeId == instrument.typeId &&
+              existing.bankId == instrument.bankId &&
+              existing.bankSlug == instrument.bankSlug &&
+              existing.adminFeeEnabled == instrument.adminFeeEnabled &&
+              existing.monthlyAdminFee.round() == instrument.monthlyAdminFee.round() &&
+              existing.adminFeeDay == instrument.adminFeeDay;
+
+          if (isUnchanged) {
+            saved.add(existing);
+            continue;
+          }
+        }
+
+        final payload = <String, dynamic>{
+          'name': instrument.name,
+          'balance': instrument.initialBalance.round(),
+          'monthly_admin_fee': instrument.adminFeeEnabled
+              ? instrument.monthlyAdminFee.round()
+              : 0,
+          'admin_fee_day':
+              instrument.adminFeeEnabled ? instrument.adminFeeDay : null,
+          'admin_fee_enabled': instrument.adminFeeEnabled,
+          'is_active': true,
+        };
+        if (instrument.typeId != null) payload['type_id'] = instrument.typeId;
+        if (instrument.bankId != null) payload['bank_id'] = instrument.bankId;
+        if (instrument.bankSlug != null && instrument.bankSlug!.isNotEmpty) {
+          payload['bank_slug'] = instrument.bankSlug;
+        }
+
+        final body = await _client.put(
           '/financial-instruments/${instrument.id}',
           payload,
           token: token,
         );
+        final resp =
+            ApiFinancialInstrument.fromJson(body['data'] as Map<String, dynamic>);
+        final updated = instrument.copyWith(
+          id: resp.id.toString(),
+          typeId: resp.type?.id ?? instrument.typeId,
+          bankId: resp.bank?.id ?? instrument.bankId,
+          bankSlug: resp.bank?.slug ?? instrument.bankSlug,
+          monthlyAdminFee: resp.monthlyAdminFee.toDouble(),
+          adminFeeDay: resp.adminFeeDay ?? instrument.adminFeeDay,
+          adminFeeEnabled: resp.adminFeeEnabled,
+        );
+        saved.add(updated);
+        _persistedInstrumentIds.add(updated.id);
       } else {
-        body = await _client.post(
+        // Instrumen baru: buat via POST dengan idempotency key stabil
+        final payload = <String, dynamic>{
+          'name': instrument.name,
+          'balance': instrument.initialBalance.round(),
+          'monthly_admin_fee': instrument.adminFeeEnabled
+              ? instrument.monthlyAdminFee.round()
+              : 0,
+          'admin_fee_day':
+              instrument.adminFeeEnabled ? instrument.adminFeeDay : null,
+          'admin_fee_enabled': instrument.adminFeeEnabled,
+          'is_active': true,
+          'idempotency_key': 'onboarding-${instrument.id}',
+        };
+        if (instrument.typeId != null) payload['type_id'] = instrument.typeId;
+        if (instrument.bankId != null) payload['bank_id'] = instrument.bankId;
+        if (instrument.bankSlug != null && instrument.bankSlug!.isNotEmpty) {
+          payload['bank_slug'] = instrument.bankSlug;
+        }
+
+        final body = await _client.post(
           '/financial-instruments',
           payload,
           token: token,
         );
+        final resp =
+            ApiFinancialInstrument.fromJson(body['data'] as Map<String, dynamic>);
+        final created = instrument.copyWith(
+          id: resp.id.toString(),
+          typeId: resp.type?.id ?? instrument.typeId,
+          bankId: resp.bank?.id ?? instrument.bankId,
+          bankSlug: resp.bank?.slug ?? instrument.bankSlug,
+          monthlyAdminFee: resp.monthlyAdminFee.toDouble(),
+          adminFeeDay: resp.adminFeeDay ?? instrument.adminFeeDay,
+          adminFeeEnabled: resp.adminFeeEnabled,
+        );
+        saved.add(created);
+        _persistedInstrumentIds.add(created.id);
       }
-
-      final resp =
-          ApiFinancialInstrument.fromJson(body['data'] as Map<String, dynamic>);
-      saved.add(instrument.copyWith(
-        id: resp.id.toString(),
-        typeId: resp.type?.id ?? instrument.typeId,
-        bankId: resp.bank?.id ?? instrument.bankId,
-        bankSlug: resp.bank?.slug ?? instrument.bankSlug,
-        monthlyAdminFee: resp.monthlyAdminFee.toDouble(),
-        adminFeeDay: resp.adminFeeDay ?? instrument.adminFeeDay,
-        adminFeeEnabled: resp.adminFeeEnabled,
-      ));
     }
 
     _cachedInstruments
@@ -366,39 +426,67 @@ class RemoteOnboardingRepository implements OnboardingRepository {
         .substring(0, 10);
 
     for (final expense in expenses) {
-      final payload = <String, dynamic>{
-        'title': expense.name,
-        'category': expense.category.name,
-        'amount': expense.monthlyAmount.round(),
-        'frequency': 'monthly',
-        'next_due_date': nextDueDate,
-        'instrument_id': null,
-        'is_active': true,
-        'make_automatic': false,
-      };
+      final isPersisted = _persistedExpenseIds.contains(expense.id) ||
+          (_cachedExpenses.any((e) => e.id == expense.id) && isBackendId(expense.id));
 
-      final isExistingBackendId = isBackendId(expense.id);
-      final Map<String, dynamic> body;
-      if (isExistingBackendId) {
-        // Hindari duplikasi: perbarui pengeluaran rutin yang sudah tersimpan
-        body = await _client.put(
+      if (isPersisted) {
+        final existingIdx = _cachedExpenses.indexWhere((e) => e.id == expense.id);
+        if (existingIdx != -1) {
+          final existing = _cachedExpenses[existingIdx];
+          final isUnchanged = existing.name == expense.name &&
+              existing.category == expense.category &&
+              existing.monthlyAmount.round() == expense.monthlyAmount.round();
+          if (isUnchanged) {
+            saved.add(existing);
+            continue;
+          }
+        }
+
+        final payload = <String, dynamic>{
+          'title': expense.name,
+          'category': expense.category.name,
+          'amount': expense.monthlyAmount.round(),
+          'frequency': 'monthly',
+          'next_due_date': nextDueDate,
+          'instrument_id': null,
+          'is_active': true,
+          'make_automatic': false,
+        };
+
+        final body = await _client.put(
           '/recurring-expenses/${expense.id}',
           payload,
           token: token,
         );
+        final resp =
+            ApiRecurringTransaction.fromJson(body['data'] as Map<String, dynamic>);
+        final updated = expense.copyWith(id: resp.id.toString());
+        saved.add(updated);
+        _persistedExpenseIds.add(updated.id);
       } else {
-        body = await _client.post(
+        final payload = <String, dynamic>{
+          'title': expense.name,
+          'category': expense.category.name,
+          'amount': expense.monthlyAmount.round(),
+          'frequency': 'monthly',
+          'next_due_date': nextDueDate,
+          'instrument_id': null,
+          'is_active': true,
+          'make_automatic': false,
+          'idempotency_key': 'onboarding-exp-${expense.id}',
+        };
+
+        final body = await _client.post(
           '/recurring-expenses',
           payload,
           token: token,
         );
+        final resp =
+            ApiRecurringTransaction.fromJson(body['data'] as Map<String, dynamic>);
+        final created = expense.copyWith(id: resp.id.toString());
+        saved.add(created);
+        _persistedExpenseIds.add(created.id);
       }
-
-      final resp =
-          ApiRecurringTransaction.fromJson(body['data'] as Map<String, dynamic>);
-      saved.add(expense.copyWith(
-        id: resp.id.toString(),
-      ));
     }
 
     _cachedExpenses
@@ -417,6 +505,31 @@ class RemoteOnboardingRepository implements OnboardingRepository {
   @override
   Future<OnboardingData> saveGoal(FinancialGoal goal) async {
     final token = await _requireToken();
+    final isPersisted = _persistedGoalIds.contains(goal.id) ||
+        (isBackendId(goal.id) && _cachedGoal?.id == goal.id);
+
+    final existingId = isPersisted
+        ? goal.id
+        : (_cachedGoal != null && _persistedGoalIds.contains(_cachedGoal!.id) ? _cachedGoal!.id : null);
+
+    if (existingId != null && _cachedGoal != null && _cachedGoal!.id == existingId) {
+      final existing = _cachedGoal!;
+      final isUnchanged = existing.name == goal.name &&
+          existing.targetAmount.round() == goal.targetAmount.round() &&
+          existing.deadline == goal.deadline &&
+          existing.category == goal.category &&
+          existing.frequency == goal.frequency;
+      if (isUnchanged) {
+        return OnboardingData(
+          monthlyIncome: _cachedIncome,
+          salaryDay: _cachedSalaryDay,
+          financialInstruments: List.unmodifiable(_cachedInstruments),
+          recurringExpenses: List.unmodifiable(_cachedExpenses),
+          financialGoal: _cachedGoal,
+        );
+      }
+    }
+
     final payload = <String, dynamic>{
       'title': goal.name,
       'type': goal.category.name,
@@ -428,19 +541,15 @@ class RemoteOnboardingRepository implements OnboardingRepository {
       'is_active': true,
     };
 
-    final existingId = isBackendId(goal.id)
-        ? goal.id
-        : (isBackendId(_cachedGoal?.id) ? _cachedGoal!.id : null);
-
     final Map<String, dynamic> body;
     if (existingId != null) {
-      // Hindari duplikasi: perbarui target yang sudah tersimpan
       body = await _client.put(
         '/goals/$existingId',
         payload,
         token: token,
       );
     } else {
+      payload['idempotency_key'] = 'onboarding-goal-${goal.id}';
       body = await _client.post(
         '/goals',
         payload,
@@ -449,10 +558,11 @@ class RemoteOnboardingRepository implements OnboardingRepository {
     }
 
     final resp = ApiFinancialGoal.fromJson(body['data'] as Map<String, dynamic>);
-
-    _cachedGoal = goal.copyWith(
+    final savedGoal = goal.copyWith(
       id: resp.id.toString(),
     );
+    _cachedGoal = savedGoal;
+    _persistedGoalIds.add(savedGoal.id);
 
     return OnboardingData(
       monthlyIncome: _cachedIncome,
@@ -482,6 +592,7 @@ class RemoteOnboardingRepository implements OnboardingRepository {
           instrument.adminFeeEnabled ? instrument.adminFeeDay : null,
       'admin_fee_enabled': instrument.adminFeeEnabled,
       'is_active': true,
+      'idempotency_key': 'onboarding-${instrument.id}',
     };
     if (instrument.typeId != null) payload['type_id'] = instrument.typeId;
     if (instrument.bankId != null) payload['bank_id'] = instrument.bankId;
@@ -506,6 +617,7 @@ class RemoteOnboardingRepository implements OnboardingRepository {
       adminFeeEnabled: resp.adminFeeEnabled,
     );
     _cachedInstruments.add(saved);
+    _persistedInstrumentIds.add(saved.id);
     return saved;
   }
 
@@ -551,6 +663,7 @@ class RemoteOnboardingRepository implements OnboardingRepository {
     if (idx >= 0) {
       _cachedInstruments[idx] = updated;
     }
+    _persistedInstrumentIds.add(updated.id);
     return updated;
   }
 
@@ -559,6 +672,7 @@ class RemoteOnboardingRepository implements OnboardingRepository {
     final token = await _requireToken();
     await _client.delete('/financial-instruments/$id', token: token);
     _cachedInstruments.removeWhere((e) => e.id == id);
+    _persistedInstrumentIds.remove(id);
   }
 
   @override
@@ -568,5 +682,8 @@ class RemoteOnboardingRepository implements OnboardingRepository {
     _cachedInstruments.clear();
     _cachedExpenses.clear();
     _cachedGoal = null;
+    _persistedInstrumentIds.clear();
+    _persistedExpenseIds.clear();
+    _persistedGoalIds.clear();
   }
 }

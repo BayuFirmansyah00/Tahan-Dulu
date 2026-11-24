@@ -336,7 +336,7 @@ class _TahanDuluDecideScreenState extends ConsumerState<TahanDuluDecideScreen> {
                     separatorBuilder: (context, index) => const SizedBox(height: 8),
                     itemBuilder: (context, index) {
                       final acc = accounts[index];
-                      final accId = int.tryParse(acc.id) ?? 0;
+                      final accId = acc.id;
                       final isSufficient = acc.balance >= item.price;
 
                       return InkWell(

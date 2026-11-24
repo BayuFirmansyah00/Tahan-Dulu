@@ -30,7 +30,7 @@ bool isUuid(String? value) {
 }
 
 /// Memeriksa apakah suatu ID adalah ID persistent backend (integer legacy atau UUID PostgreSQL v4/v7).
-/// String ID lokal/draft sementara (seperti inst-..., acc-..., exp-..., goal-..., trx-...)
+/// String ID lokal/draft sementara (seperti inst-..., acc-..., exp-..., goal-..., trx-..., flt-..., draft-..., temp-..., local-..., mock-..., client-...)
 /// menghasilkan false sehingga repository tahu harus melakukan POST (create) alih-alih PUT (update).
 bool isBackendId(String? id) {
   if (id == null) return false;
@@ -41,7 +41,12 @@ bool isBackendId(String? id) {
       trimmed.startsWith('exp-') ||
       trimmed.startsWith('goal-') ||
       trimmed.startsWith('trx-') ||
-      trimmed.startsWith('flt-')) {
+      trimmed.startsWith('flt-') ||
+      trimmed.startsWith('draft-') ||
+      trimmed.startsWith('temp-') ||
+      trimmed.startsWith('local-') ||
+      trimmed.startsWith('mock-') ||
+      trimmed.startsWith('client-')) {
     return false;
   }
   if (int.tryParse(trimmed) != null) return true;

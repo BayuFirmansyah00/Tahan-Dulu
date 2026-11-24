@@ -18,7 +18,7 @@ class _MockFase4CPurchaseRepo implements PurchaseDecisionRepository {
   final List<PurchaseConsideration> items;
   Map<String, dynamic> analysisData = {};
   bool recordPurchaseCalled = false;
-  int? lastRecordedAccountId;
+  String? lastRecordedAccountId;
 
   @override
   Future<List<PurchaseConsideration>> getConsiderations() async => List.of(items);
@@ -53,7 +53,7 @@ class _MockFase4CPurchaseRepo implements PurchaseDecisionRepository {
   @override
   Future<Map<String, dynamic>> recordPurchase(
     String id, {
-    required int accountId,
+    required String accountId,
     String? information,
     String? idempotencyKey,
   }) async {
@@ -415,9 +415,9 @@ void main() {
       await tester.tap(find.text('Bank Jago'));
       await tester.pumpAndSettle();
 
-      // Pastikan recordPurchase dipanggil dengan accountId 10
+      // Pastikan recordPurchase dipanggil dengan accountId '10'
       expect(fakeRepo.recordPurchaseCalled, isTrue);
-      expect(fakeRepo.lastRecordedAccountId, 10);
+      expect(fakeRepo.lastRecordedAccountId, '10');
       expect(fakeRepo.items.first.status, ConsiderationStatus.bought);
     });
 

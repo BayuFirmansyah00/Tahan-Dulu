@@ -161,7 +161,7 @@ abstract class RecurringRepository {
     required double amount,
     required String frequency,
     required String nextDueDate,
-    required int instrumentId,
+    required String instrumentId,
     bool isActive,
     bool makeAutomatic,
   });
@@ -171,7 +171,7 @@ abstract class RecurringRepository {
     required double amount,
     required String frequency,
     required String nextDueDate,
-    int? instrumentId,
+    String? instrumentId,
     bool isActive,
     bool makeAutomatic,
   });
@@ -182,7 +182,7 @@ abstract class RecurringRepository {
     required double amount,
     required String frequency,
     required String nextDueDate,
-    int? instrumentId,
+    String? instrumentId,
     bool isActive,
     bool makeAutomatic,
   });
@@ -193,7 +193,7 @@ abstract class RecurringRepository {
     required double amount,
     required String frequency,
     required String nextDueDate,
-    int? instrumentId,
+    String? instrumentId,
     bool isActive,
     bool makeAutomatic,
   });
@@ -224,7 +224,7 @@ abstract class PurchaseDecisionRepository {
   /// Catat transaksi pembelian ke buku kas & potong saldo rekening (Fase 4C)
   Future<Map<String, dynamic>> recordPurchase(
     String id, {
-    required int accountId,
+    required String accountId,
     String? information,
     String? idempotencyKey,
   });
@@ -780,7 +780,7 @@ class MockPurchaseDecisionRepository
   @override
   Future<Map<String, dynamic>> recordPurchase(
     String id, {
-    required int accountId,
+    required String accountId,
     String? information,
     String? idempotencyKey,
   }) {

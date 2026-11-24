@@ -387,8 +387,9 @@ class TahanDuluController extends Notifier<ConsiderationDraft> {
   /// Catat transaksi pembelian ke buku kas & potong saldo rekening (Fase 4C).
   Future<bool> recordPurchase(
     String id, {
-    required int accountId,
+    required String accountId,
     String? information,
+    String? idempotencyKey,
   }) async {
     if (_saving) return false;
     _saving = true;
@@ -398,6 +399,7 @@ class TahanDuluController extends Notifier<ConsiderationDraft> {
         id,
         accountId: accountId,
         information: information,
+        idempotencyKey: idempotencyKey,
       );
       _refreshAll();
       ref.invalidate(accountsProvider);
