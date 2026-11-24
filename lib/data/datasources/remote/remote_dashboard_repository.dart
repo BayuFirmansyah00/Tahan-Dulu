@@ -2,8 +2,6 @@ import 'dart:async';
 
 import '../../../core/utils/finance_math.dart';
 import '../../models/api_financial_goal.dart';
-import '../../models/api_financial_instrument.dart';
-import '../../models/api_transaction.dart';
 import '../../models/financial_summary.dart';
 import '../../models/user_model.dart';
 import '../../repositories/repositories.dart';
@@ -29,6 +27,8 @@ class RemoteDashboardRepository implements DashboardRepository {
   final ApiClient _client;
   final TokenStore _tokens;
   final void Function()? onUnauthorized;
+
+  FinancialSummary? _cachedSummary;
 
   Future<String> _requireToken() async {
     final token = await _tokens.readToken();
@@ -110,7 +110,7 @@ class RemoteDashboardRepository implements DashboardRepository {
           ? (remaining / daysInMonth ~/ 1000) * 1000.0
           : 0.0;
 
-      return FinancialSummary(
+      final summary = FinancialSummary(
         income: actualMonthIncome,
         expense: actualMonthExpense,
         saving: saving,
@@ -118,77 +118,21 @@ class RemoteDashboardRepository implements DashboardRepository {
         remaining: remaining,
         flexibleBudget: flexibleBudget,
         safeSpendingToday: safeDaily,
+        isStale: false,
       );
-    } catch (_) {
-      // Fallback jika /dashboard/summary gagal
-      final results = await Future.wait([
-        _client.get('/transactions', token: token),
-        _client.get('/financial-instruments', token: token),
-        _client.get('/goals', token: token),
-      ]);
-
-      final transactionsResp = ApiTransactionsResponse.fromJson(results[0]);
-      final instrumentsResp = ApiFinancialInstrumentsResponse.fromJson(results[1]);
-      final goalsResp = ApiFinancialGoalsResponse.fromJson(results[2]);
-
-      final transactions = transactionsResp.data;
-      final instruments = instrumentsResp.data;
-      final goals = goalsResp.data;
-
-      final now = DateTime.now();
-
-      final totalBalance = instruments.fold<double>(
-        0,
-        (sum, e) => sum + e.balance.toDouble(),
-      );
-
-      double actualMonthIncome = 0;
-      double actualMonthExpense = 0;
-      for (final t in transactions) {
-        final date = t.parsedCreatedAt;
-        if (date != null && date.year == now.year && date.month == now.month) {
-          if (t.type == 'income') {
-            actualMonthIncome += t.amount.toDouble();
-          } else {
-            actualMonthExpense += t.amount.toDouble();
-          }
-        }
+      _cachedSummary = summary;
+      return summary;
+    } catch (e) {
+      // Kebijakan F06C: Jika server gagal memberikan /dashboard/summary otoritatif:
+      // 1. Jika ada cache dari panggilan sukses sebelumnya, kembalikan cache bertanda isStale = true.
+      if (_cachedSummary != null) {
+        return _cachedSummary!.copyWith(isStale: true);
       }
-
-      final saving = actualMonthIncome - actualMonthExpense;
-      double investment = totalBalance;
-      double goalContribution = 0;
-      for (final g in goals) {
-        if (g.type.toLowerCase() == 'investment') {
-          investment = g.currentAmount.toDouble();
-        }
-        final deadline = g.parsedTargetDate;
-        if (deadline != null) {
-          final rem = (g.targetAmount - g.currentAmount).toDouble();
-          if (rem > 0) {
-            final months = monthsUntil(deadline, now: now);
-            if (months > 0) {
-              goalContribution += rem / months;
-            }
-          }
-        }
-      }
-
-      final remaining = saving - goalContribution;
-      final flexibleBudget = remaining;
-      final daysInMonth = DateTime(now.year, now.month + 1, 0).day;
-      final safeDaily = daysInMonth > 0 && remaining > 0
-          ? (remaining / daysInMonth ~/ 1000) * 1000.0
-          : 0.0;
-
-      return FinancialSummary(
-        income: actualMonthIncome,
-        expense: actualMonthExpense,
-        saving: saving,
-        investment: investment,
-        remaining: remaining,
-        flexibleBudget: flexibleBudget,
-        safeSpendingToday: safeDaily,
+      // 2. JANGAN PERNAH menghitung sebagian dari 15 transaksi lokal secara diam-diam!
+      //    Lempar error agar UI menampilkan status gagal / tombol coba lagi yang jelas.
+      if (e is ApiException) rethrow;
+      throw ApiException(
+        'Gagal memuat ringkasan keuangan otoritatif dari server. Silakan coba lagi.',
       );
     }
   }

@@ -35,6 +35,16 @@ class _FailingTransactionRepo implements TransactionRepository {
       Future.error(StateError('offline'));
 
   @override
+  Future<TransactionPaginationResult> getPaginatedTransactions({
+    String? type,
+    String? category,
+    String? instrumentId,
+    int? perPage,
+    int? page,
+  }) =>
+      Future.error(StateError('offline'));
+
+  @override
   Future<AppTransaction> updateTransaction(AppTransaction transaction) =>
       Future.error(StateError('offline'));
 

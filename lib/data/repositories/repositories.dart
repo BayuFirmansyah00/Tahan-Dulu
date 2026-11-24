@@ -57,6 +57,25 @@ abstract class InstrumentTypeRepository {
   Future<List<ApiInstrumentType>> getInstrumentTypes();
 }
 
+/// Model hasil paginasi transaksi terstruktur untuk antarmuka UI dan repository (F06B).
+class TransactionPaginationResult {
+  const TransactionPaginationResult({
+    required this.items,
+    required this.currentPage,
+    required this.lastPage,
+    required this.perPage,
+    required this.total,
+    required this.hasNextPage,
+  });
+
+  final List<AppTransaction> items;
+  final int currentPage;
+  final int lastPage;
+  final int perPage;
+  final int total;
+  final bool hasNextPage;
+}
+
 abstract class TransactionRepository {
   Future<List<AppTransaction>> getRecentTransactions();
   Future<AppTransaction> addTransaction(AppTransaction transaction);
@@ -68,10 +87,42 @@ abstract class TransactionRepository {
   Future<List<AppTransaction>> getTransactions({
     String? type,
     String? category,
-    dynamic instrumentId,
+    String? instrumentId,
     int? perPage,
     int? page,
   });
+
+  /// Daftar transaksi terpaginasi dengan metadata lengkap (F06B).
+  Future<TransactionPaginationResult> getPaginatedTransactions({
+    String? type,
+    String? category,
+    String? instrumentId,
+    int? perPage,
+    int? page,
+  }) async {
+    final list = await getTransactions(
+      type: type,
+      category: category,
+      instrumentId: instrumentId,
+      perPage: perPage,
+      page: page,
+    );
+    final effectivePerPage = perPage ?? (list.isEmpty ? 15 : list.length);
+    final effectivePage = page ?? 1;
+    final total = list.length;
+    final lastPage = (total / (effectivePerPage <= 0 ? 1 : effectivePerPage)).ceil() == 0
+        ? 1
+        : (total / (effectivePerPage <= 0 ? 1 : effectivePerPage)).ceil();
+
+    return TransactionPaginationResult(
+      items: list,
+      currentPage: effectivePage,
+      lastPage: lastPage,
+      perPage: effectivePerPage,
+      total: total,
+      hasNextPage: effectivePage < lastPage,
+    );
+  }
 
   /// Perbarui transaksi yang ada.
   Future<AppTransaction> updateTransaction(AppTransaction transaction);
@@ -427,26 +478,64 @@ class MockTransactionRepository implements TransactionRepository {
   Future<List<AppTransaction>> getTransactions({
     String? type,
     String? category,
-    dynamic instrumentId,
+    String? instrumentId,
     int? perPage,
     int? page,
   }) async {
     await mockDelay(null);
     var result = List.of(_items);
     if (type != null) {
-      result = result.where((e) => e.type.toString() == 'TransactionType.$type').toList();
+      result = result.where((e) => e.type.toString() == 'TransactionType.$type' || e.type.name == type).toList();
     }
     if (category != null) {
       result = result.where((e) => e.category == category).toList();
     }
     if (instrumentId != null) {
-      result = result.where((e) => e.accountId == instrumentId.toString()).toList();
+      result = result.where((e) => e.accountId == instrumentId).toList();
     }
     if (perPage != null) {
       final startIndex = page != null && page > 1 ? (page - 1) * perPage : 0;
       result = result.skip(startIndex).take(perPage).toList();
     }
     return result;
+  }
+
+  @override
+  Future<TransactionPaginationResult> getPaginatedTransactions({
+    String? type,
+    String? category,
+    String? instrumentId,
+    int? perPage,
+    int? page,
+  }) async {
+    var filtered = List.of(_items);
+    filtered.sort((a, b) => b.date.compareTo(a.date));
+    if (type != null) {
+      filtered = filtered.where((e) => e.type.toString() == 'TransactionType.$type' || e.type.name == type).toList();
+    }
+    if (category != null) {
+      filtered = filtered.where((e) => e.category == category).toList();
+    }
+    if (instrumentId != null) {
+      filtered = filtered.where((e) => e.accountId == instrumentId).toList();
+    }
+    final effectivePerPage = perPage ?? 15;
+    final effectivePage = page ?? 1;
+    final total = filtered.length;
+    final lastPage = (total / (effectivePerPage <= 0 ? 1 : effectivePerPage)).ceil() == 0
+        ? 1
+        : (total / (effectivePerPage <= 0 ? 1 : effectivePerPage)).ceil();
+    final startIndex = (effectivePage - 1) * effectivePerPage;
+    final pagedItems = filtered.skip(startIndex).take(effectivePerPage).toList();
+
+    return TransactionPaginationResult(
+      items: pagedItems,
+      currentPage: effectivePage,
+      lastPage: lastPage,
+      perPage: effectivePerPage,
+      total: total,
+      hasNextPage: effectivePage < lastPage,
+    );
   }
 
   @override

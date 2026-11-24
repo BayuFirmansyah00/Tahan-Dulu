@@ -46,6 +46,24 @@ class FakeTransactionRepository implements TransactionRepository {
       savedTransactions;
 
   @override
+  Future<TransactionPaginationResult> getPaginatedTransactions({
+    String? type,
+    String? category,
+    String? instrumentId,
+    int? perPage,
+    int? page,
+  }) async {
+    return TransactionPaginationResult(
+      items: List.of(savedTransactions),
+      currentPage: 1,
+      lastPage: 1,
+      perPage: perPage ?? 20,
+      total: savedTransactions.length,
+      hasNextPage: false,
+    );
+  }
+
+  @override
   Future<AppTransaction> updateTransaction(AppTransaction transaction) async =>
       transaction;
 

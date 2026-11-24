@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/uuid_generator.dart';
 import '../../../../data/datasources/remote/api_client.dart';
+import '../../../../data/datasources/remote/api_config.dart';
 import '../../../../data/models/financial_account.dart';
 import '../../../../data/providers/account_providers.dart';
 import '../../../../data/providers/app_providers.dart';
@@ -205,13 +206,18 @@ class AccountsController {
     }
   }
 
-  /// Hapus hanya bila tak ada transaksi merujuk akun ini.
+  /// Hapus akun keuangan:
+  /// Pada mode remote, server adalah otoritas tunggal yang memvalidasi integritas buku besar
+  /// (riwayat transaksi, transfer, dan transaksi berulang).
+  /// Pada mode mock lokal, gunakan pengecekan transaksi in-memory.
   Future<bool> deleteAccount(String id) async {
     try {
-      final transactions = await _ref
-          .read(transactionRepositoryProvider)
-          .getRecentTransactions();
-      if (transactions.any((t) => t.accountId == id)) return false;
+      if (!ApiConfig.useRemoteApi) {
+        final transactions = await _ref
+            .read(transactionRepositoryProvider)
+            .getRecentTransactions();
+        if (transactions.any((t) => t.accountId == id)) return false;
+      }
       await _ref.read(accountRepositoryProvider).removeAccount(id);
       await _refresh();
       return true;

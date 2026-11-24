@@ -95,7 +95,25 @@ class RemoteTransactionRepository implements TransactionRepository {
   Future<List<AppTransaction>> getTransactions({
     String? type,
     String? category,
-    dynamic instrumentId,
+    String? instrumentId,
+    int? perPage,
+    int? page,
+  }) async {
+    final paginated = await getPaginatedTransactions(
+      type: type,
+      category: category,
+      instrumentId: instrumentId,
+      perPage: perPage,
+      page: page,
+    );
+    return paginated.items;
+  }
+
+  @override
+  Future<TransactionPaginationResult> getPaginatedTransactions({
+    String? type,
+    String? category,
+    String? instrumentId,
     int? perPage,
     int? page,
   }) async {
@@ -103,7 +121,7 @@ class RemoteTransactionRepository implements TransactionRepository {
     final query = <String, String>{};
     if (type != null) query['type'] = type;
     if (category != null) query['category'] = category;
-    if (instrumentId != null) query['instrument_id'] = instrumentId.toString();
+    if (instrumentId != null) query['instrument_id'] = instrumentId;
     if (perPage != null) query['per_page'] = perPage.toString();
     if (page != null) query['page'] = page.toString();
 
@@ -112,7 +130,22 @@ class RemoteTransactionRepository implements TransactionRepository {
         : '/transactions';
     final body = await _client.get(path, token: token);
     final resp = ApiTransactionsResponse.fromJson(body);
-    return resp.data.map(_toAppTransaction).toList();
+    final items = resp.data.map(_toAppTransaction).toList();
+    final pagination = resp.pagination;
+
+    final currentPage = pagination?.currentPage ?? page ?? 1;
+    final lastPage = pagination?.lastPage ?? 1;
+    final total = pagination?.total ?? items.length;
+    final effectivePerPage = pagination?.perPage ?? perPage ?? 15;
+
+    return TransactionPaginationResult(
+      items: items,
+      currentPage: currentPage,
+      lastPage: lastPage,
+      perPage: effectivePerPage,
+      total: total,
+      hasNextPage: currentPage < lastPage,
+    );
   }
 
   @override

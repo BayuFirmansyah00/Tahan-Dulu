@@ -47,6 +47,24 @@ class _MockTransactionRepository implements TransactionRepository {
     int? page,
   }) async =>
       [];
+
+  @override
+  Future<TransactionPaginationResult> getPaginatedTransactions({
+    String? type,
+    String? category,
+    String? instrumentId,
+    int? perPage,
+    int? page,
+  }) async {
+    return TransactionPaginationResult(
+      items: const [],
+      currentPage: 1,
+      lastPage: 1,
+      perPage: perPage ?? 20,
+      total: 0,
+      hasNextPage: false,
+    );
+  }
 }
 
 class MockSpeechRecognitionService implements SpeechRecognitionService {

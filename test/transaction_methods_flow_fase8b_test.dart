@@ -128,6 +128,24 @@ class _InMemoryTransactionRepo implements TransactionRepository {
       List.of(items);
 
   @override
+  Future<TransactionPaginationResult> getPaginatedTransactions({
+    String? type,
+    String? category,
+    String? instrumentId,
+    int? perPage,
+    int? page,
+  }) async {
+    return TransactionPaginationResult(
+      items: List.of(items),
+      currentPage: 1,
+      lastPage: 1,
+      perPage: perPage ?? 20,
+      total: items.length,
+      hasNextPage: false,
+    );
+  }
+
+  @override
   Future<AppTransaction> getTransactionById(String id) async =>
       items.firstWhere((e) => e.id == id);
 

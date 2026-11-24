@@ -307,6 +307,7 @@ class TransactionFormController extends Notifier<TransactionDraft> {
       _lastSaved = saved;
       // Invalidate semua provider yang bergantung pada transaksi dan saldo akun:
       ref.invalidate(transactionsProvider);
+      ref.invalidate(paginatedTransactionsProvider);
       ref.invalidate(recentTransactionsProvider);
       ref.invalidate(accountsProvider);
       ref.invalidate(accountsOverviewProvider);
@@ -331,4 +332,230 @@ class TransactionFormController extends Notifier<TransactionDraft> {
 final transactionFormProvider =
     NotifierProvider<TransactionFormController, TransactionDraft>(
   TransactionFormController.new,
+);
+
+/// State paginasi transaksi terstruktur (F06B).
+class PaginatedTransactionsState extends Equatable {
+  const PaginatedTransactionsState({
+    this.items = const [],
+    this.currentPage = 1,
+    this.lastPage = 1,
+    this.perPage = 20,
+    this.total = 0,
+    this.hasNextPage = false,
+    this.isLoadingInitial = false,
+    this.isLoadingMore = false,
+    this.errorMessage,
+    this.loadMoreErrorMessage,
+    this.typeFilter,
+    this.categoryFilter,
+    this.accountIdFilter,
+  });
+
+  final List<AppTransaction> items;
+  final int currentPage;
+  final int lastPage;
+  final int perPage;
+  final int total;
+  final bool hasNextPage;
+  final bool isLoadingInitial;
+  final bool isLoadingMore;
+  final String? errorMessage;
+  final String? loadMoreErrorMessage;
+  final String? typeFilter;
+  final String? categoryFilter;
+  final String? accountIdFilter;
+
+  PaginatedTransactionsState copyWith({
+    List<AppTransaction>? items,
+    int? currentPage,
+    int? lastPage,
+    int? perPage,
+    int? total,
+    bool? hasNextPage,
+    bool? isLoadingInitial,
+    bool? isLoadingMore,
+    String? errorMessage,
+    String? loadMoreErrorMessage,
+    String? typeFilter,
+    String? categoryFilter,
+    String? accountIdFilter,
+    bool clearError = false,
+    bool clearLoadMoreError = false,
+    bool clearAccountIdFilter = false,
+  }) {
+    return PaginatedTransactionsState(
+      items: items ?? this.items,
+      currentPage: currentPage ?? this.currentPage,
+      lastPage: lastPage ?? this.lastPage,
+      perPage: perPage ?? this.perPage,
+      total: total ?? this.total,
+      hasNextPage: hasNextPage ?? this.hasNextPage,
+      isLoadingInitial: isLoadingInitial ?? this.isLoadingInitial,
+      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
+      errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
+      loadMoreErrorMessage:
+          clearLoadMoreError ? null : (loadMoreErrorMessage ?? this.loadMoreErrorMessage),
+      typeFilter: typeFilter ?? this.typeFilter,
+      categoryFilter: categoryFilter ?? this.categoryFilter,
+      accountIdFilter:
+          clearAccountIdFilter ? null : (accountIdFilter ?? this.accountIdFilter),
+    );
+  }
+
+  @override
+  List<Object?> get props => [
+        items,
+        currentPage,
+        lastPage,
+        perPage,
+        total,
+        hasNextPage,
+        isLoadingInitial,
+        isLoadingMore,
+        errorMessage,
+        loadMoreErrorMessage,
+        typeFilter,
+        categoryFilter,
+        accountIdFilter,
+      ];
+}
+
+/// Notifier untuk paginasi riwayat transaksi end-to-end (F06B).
+class PaginatedTransactionsNotifier
+    extends Notifier<PaginatedTransactionsState> {
+  static const int defaultPerPage = 20;
+
+  @override
+  PaginatedTransactionsState build() {
+    final existing = ref.watch(transactionsProvider).value;
+    if (existing != null && existing.isNotEmpty) {
+      final sorted = List.of(existing)..sort((a, b) => b.date.compareTo(a.date));
+      return PaginatedTransactionsState(
+        items: sorted,
+        currentPage: 1,
+        lastPage: (sorted.length / defaultPerPage).ceil() == 0 ? 1 : (sorted.length / defaultPerPage).ceil(),
+        perPage: defaultPerPage,
+        total: sorted.length,
+        hasNextPage: sorted.length > defaultPerPage,
+        isLoadingInitial: false,
+      );
+    }
+    Future.microtask(() => loadInitial());
+    return const PaginatedTransactionsState(isLoadingInitial: true);
+  }
+
+  Future<void> loadInitial({
+    String? type,
+    String? category,
+    String? accountId,
+  }) async {
+    state = state.copyWith(
+      isLoadingInitial: true,
+      clearError: true,
+      typeFilter: type,
+      categoryFilter: category,
+      accountIdFilter: accountId,
+      clearAccountIdFilter: accountId == null,
+    );
+
+    try {
+      final repo = ref.read(transactionRepositoryProvider);
+      final result = await repo.getPaginatedTransactions(
+        type: state.typeFilter,
+        category: state.categoryFilter,
+        instrumentId: state.accountIdFilter,
+        page: 1,
+        perPage: defaultPerPage,
+      );
+
+      final seen = <String>{};
+      final uniqueItems = <AppTransaction>[];
+      for (final item in result.items) {
+        if (seen.add(item.id)) {
+          uniqueItems.add(item);
+        }
+      }
+
+      state = state.copyWith(
+        items: uniqueItems,
+        currentPage: result.currentPage,
+        lastPage: result.lastPage,
+        perPage: result.perPage,
+        total: result.total,
+        hasNextPage: result.hasNextPage,
+        isLoadingInitial: false,
+        clearError: true,
+      );
+    } catch (e) {
+      state = state.copyWith(
+        isLoadingInitial: false,
+        errorMessage: e.toString(),
+      );
+    }
+  }
+
+  Future<void> refresh() async {
+    await loadInitial(
+      type: state.typeFilter,
+      category: state.categoryFilter,
+      accountId: state.accountIdFilter,
+    );
+  }
+
+  Future<void> loadMore() async {
+    if (state.isLoadingInitial || state.isLoadingMore || !state.hasNextPage) {
+      return;
+    }
+
+    state = state.copyWith(
+      isLoadingMore: true,
+      clearLoadMoreError: true,
+    );
+
+    try {
+      final nextPage = state.currentPage + 1;
+      final repo = ref.read(transactionRepositoryProvider);
+      final result = await repo.getPaginatedTransactions(
+        type: state.typeFilter,
+        category: state.categoryFilter,
+        instrumentId: state.accountIdFilter,
+        page: nextPage,
+        perPage: defaultPerPage,
+      );
+
+      final seen = {for (final item in state.items) item.id};
+      final merged = List.of(state.items);
+      for (final item in result.items) {
+        if (seen.add(item.id)) {
+          merged.add(item);
+        }
+      }
+
+      state = state.copyWith(
+        items: merged,
+        currentPage: result.currentPage,
+        lastPage: result.lastPage,
+        perPage: result.perPage,
+        total: result.total,
+        hasNextPage: result.hasNextPage,
+        isLoadingMore: false,
+        clearLoadMoreError: true,
+      );
+    } catch (e) {
+      state = state.copyWith(
+        isLoadingMore: false,
+        loadMoreErrorMessage: e.toString(),
+      );
+    }
+  }
+
+  void setFilter({String? type, String? category, String? accountId}) {
+    loadInitial(type: type, category: category, accountId: accountId);
+  }
+}
+
+final paginatedTransactionsProvider =
+    NotifierProvider<PaginatedTransactionsNotifier, PaginatedTransactionsState>(
+  PaginatedTransactionsNotifier.new,
 );

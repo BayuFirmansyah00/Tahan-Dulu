@@ -10,6 +10,7 @@ class FinancialSummary extends Equatable {
     required this.remaining,
     required this.flexibleBudget,
     required this.safeSpendingToday,
+    this.isStale = false,
   });
 
   final double income;
@@ -19,6 +20,29 @@ class FinancialSummary extends Equatable {
   final double remaining;
   final double flexibleBudget;
   final double safeSpendingToday;
+  final bool isStale;
+
+  FinancialSummary copyWith({
+    double? income,
+    double? expense,
+    double? saving,
+    double? investment,
+    double? remaining,
+    double? flexibleBudget,
+    double? safeSpendingToday,
+    bool? isStale,
+  }) {
+    return FinancialSummary(
+      income: income ?? this.income,
+      expense: expense ?? this.expense,
+      saving: saving ?? this.saving,
+      investment: investment ?? this.investment,
+      remaining: remaining ?? this.remaining,
+      flexibleBudget: flexibleBudget ?? this.flexibleBudget,
+      safeSpendingToday: safeSpendingToday ?? this.safeSpendingToday,
+      isStale: isStale ?? this.isStale,
+    );
+  }
 
   @override
   List<Object?> get props => [
@@ -29,5 +53,6 @@ class FinancialSummary extends Equatable {
         remaining,
         flexibleBudget,
         safeSpendingToday,
+        isStale,
       ];
 }

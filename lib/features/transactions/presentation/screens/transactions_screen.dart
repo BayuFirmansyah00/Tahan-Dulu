@@ -13,7 +13,6 @@ import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_icons.dart';
 import '../../../../core/widgets/app_states.dart';
 import '../../../../data/models/transaction_model.dart';
-import '../../../../data/providers/app_providers.dart';
 import '../providers/transactions_controller.dart';
 import '../../../../data/providers/onboarding_providers.dart';
 import '../../../dashboard/presentation/widgets/dashboard_bottom_nav.dart';
@@ -42,6 +41,13 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
   void initState() {
     super.initState();
     _accountFilter = widget.accountId;
+    if (widget.accountId != null) {
+      Future.microtask(() {
+        ref.read(paginatedTransactionsProvider.notifier).setFilter(
+              accountId: widget.accountId,
+            );
+      });
+    }
   }
 
   @override
@@ -72,7 +78,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final transactions = ref.watch(transactionsProvider);
+    final paginated = ref.watch(paginatedTransactionsProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -89,34 +95,51 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
         currentIndex: 1,
         onTap: _onNav,
       ),
-      body: GlassBackdrop(child: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: transactions.when(
-              data: (items) => _List(
-                items: items,
-                filter: _filter,
-                accountFilter: _accountFilter,
-                query: _query,
-                searchController: _searchController,
-                onFilter: (f) => setState(() => _filter = f),
-                onQuery: (q) => setState(() => _query = q),
-                onClearAccount: () =>
-                    setState(() => _accountFilter = null),
-                onAdd: _openAdd,
-              ),
-              loading: () => const AppLoading(),
-              error: (error, _) => AppErrorState(onRetry: () => ref.invalidate(transactionsProvider)),
+      body: GlassBackdrop(
+        child: SafeArea(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 480),
+              child: paginated.isLoadingInitial && paginated.items.isEmpty
+                  ? const AppLoading()
+                  : paginated.errorMessage != null && paginated.items.isEmpty
+                      ? AppErrorState(
+                          onRetry: () => ref
+                              .read(paginatedTransactionsProvider.notifier)
+                              .loadInitial(),
+                        )
+                      : _List(
+                          items: paginated.items,
+                          filter: _filter,
+                          accountFilter: _accountFilter,
+                          query: _query,
+                          searchController: _searchController,
+                          onFilter: (f) => setState(() => _filter = f),
+                          onQuery: (q) => setState(() => _query = q),
+                          onClearAccount: () => setState(() => _accountFilter = null),
+                          onAdd: _openAdd,
+                          onRefresh: () => ref
+                              .read(paginatedTransactionsProvider.notifier)
+                              .refresh(),
+                          onLoadMore: () => ref
+                              .read(paginatedTransactionsProvider.notifier)
+                              .loadMore(),
+                          isLoadingMore: paginated.isLoadingMore,
+                          loadMoreErrorMessage: paginated.loadMoreErrorMessage,
+                          hasNextPage: paginated.hasNextPage,
+                          onRetryLoadMore: () => ref
+                              .read(paginatedTransactionsProvider.notifier)
+                              .loadMore(),
+                        ),
             ),
           ),
         ),
-      )),
+      ),
     );
   }
 }
 
-class _List extends StatelessWidget {
+class _List extends StatefulWidget {
   const _List({
     required this.items,
     required this.filter,
@@ -127,6 +150,12 @@ class _List extends StatelessWidget {
     required this.onQuery,
     required this.onClearAccount,
     required this.onAdd,
+    required this.onRefresh,
+    required this.onLoadMore,
+    required this.isLoadingMore,
+    required this.loadMoreErrorMessage,
+    required this.hasNextPage,
+    required this.onRetryLoadMore,
   });
 
   final List<AppTransaction> items;
@@ -138,12 +167,46 @@ class _List extends StatelessWidget {
   final ValueChanged<String> onQuery;
   final VoidCallback onClearAccount;
   final VoidCallback onAdd;
+  final Future<void> Function() onRefresh;
+  final VoidCallback onLoadMore;
+  final bool isLoadingMore;
+  final String? loadMoreErrorMessage;
+  final bool hasNextPage;
+  final VoidCallback onRetryLoadMore;
+
+  @override
+  State<_List> createState() => _ListState();
+}
+
+class _ListState extends State<_List> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.hasClients &&
+        _scrollController.position.pixels >=
+            _scrollController.position.maxScrollExtent - 200) {
+      widget.onLoadMore();
+    }
+  }
 
   List<AppTransaction> get _filtered {
-    final q = query.trim().toLowerCase();
-    final byAccount = accountFilter == null
-        ? items
-        : items.where((e) => e.accountId == accountFilter).toList();
+    final q = widget.query.trim().toLowerCase();
+    final byAccount = widget.accountFilter == null
+        ? widget.items
+        : widget.items.where((e) => e.accountId == widget.accountFilter).toList();
     final byQuery = q.isEmpty
         ? byAccount
         : byAccount.where((e) {
@@ -152,7 +215,7 @@ class _List extends StatelessWidget {
                     .toLowerCase();
             return haystack.contains(q);
           }).toList();
-    switch (filter) {
+    switch (widget.filter) {
       case _Filter.all:
         return byQuery;
       case _Filter.income:
@@ -176,23 +239,23 @@ class _List extends StatelessWidget {
           child: Column(
             children: [
               TextField(
-                controller: searchController,
+                controller: widget.searchController,
                 textInputAction: TextInputAction.search,
                 decoration: InputDecoration(
                   hintText: AppStrings.searchHint,
                   prefixIcon: const Icon(Icons.search_outlined),
-                  suffixIcon: query.isEmpty
+                  suffixIcon: widget.query.isEmpty
                       ? null
                       : IconButton(
                           icon: const Icon(Icons.close_outlined),
                           tooltip: AppStrings.searchClear,
                           onPressed: () {
-                            searchController.clear();
-                            onQuery('');
+                            widget.searchController.clear();
+                            widget.onQuery('');
                           },
                         ),
                 ),
-                onChanged: onQuery,
+                onChanged: widget.onQuery,
               ),
               const SizedBox(height: 8),
               SingleChildScrollView(
@@ -201,26 +264,26 @@ class _List extends StatelessWidget {
                   children: [
                     _FilterChip(
                       label: AppStrings.filterAll,
-                      selected: filter == _Filter.all,
-                      onTap: () => onFilter(_Filter.all),
+                      selected: widget.filter == _Filter.all,
+                      onTap: () => widget.onFilter(_Filter.all),
                     ),
                     const SizedBox(width: 8),
                     _FilterChip(
                       label: AppStrings.filterIncome,
-                      selected: filter == _Filter.income,
-                      onTap: () => onFilter(_Filter.income),
+                      selected: widget.filter == _Filter.income,
+                      onTap: () => widget.onFilter(_Filter.income),
                     ),
                     const SizedBox(width: 8),
                     _FilterChip(
                       label: AppStrings.filterExpense,
-                      selected: filter == _Filter.expense,
-                      onTap: () => onFilter(_Filter.expense),
+                      selected: widget.filter == _Filter.expense,
+                      onTap: () => widget.onFilter(_Filter.expense),
                     ),
-                    if (accountFilter != null) ...[
+                    if (widget.accountFilter != null) ...[
                       const SizedBox(width: 8),
                       _AccountChip(
-                        accountId: accountFilter!,
-                        onClear: onClearAccount,
+                        accountId: widget.accountFilter!,
+                        onClear: widget.onClearAccount,
                       ),
                     ],
                   ],
@@ -230,11 +293,24 @@ class _List extends StatelessWidget {
           ),
         ),
         Expanded(
-          child: items.isEmpty
-              ? _EmptyAll(onAdd: onAdd)
+          child: widget.items.isEmpty
+              ? _EmptyAll(onAdd: widget.onAdd)
               : filtered.isEmpty
-                  ? _EmptyFiltered(filter: filter, hasQuery: query.trim().isNotEmpty)
-                  : _GroupedList(items: filtered),
+                  ? _EmptyFiltered(
+                      filter: widget.filter,
+                      hasQuery: widget.query.trim().isNotEmpty,
+                    )
+                  : RefreshIndicator(
+                      onRefresh: widget.onRefresh,
+                      child: _GroupedList(
+                        items: filtered,
+                        scrollController: _scrollController,
+                        isLoadingMore: widget.isLoadingMore,
+                        loadMoreErrorMessage: widget.loadMoreErrorMessage,
+                        hasNextPage: widget.hasNextPage,
+                        onRetryLoadMore: widget.onRetryLoadMore,
+                      ),
+                    ),
         ),
       ],
     );
@@ -386,9 +462,21 @@ class _EmptyFiltered extends StatelessWidget {
 }
 
 class _GroupedList extends ConsumerWidget {
-  const _GroupedList({required this.items});
+  const _GroupedList({
+    required this.items,
+    required this.scrollController,
+    required this.isLoadingMore,
+    required this.loadMoreErrorMessage,
+    required this.hasNextPage,
+    required this.onRetryLoadMore,
+  });
 
   final List<AppTransaction> items;
+  final ScrollController scrollController;
+  final bool isLoadingMore;
+  final String? loadMoreErrorMessage;
+  final bool hasNextPage;
+  final VoidCallback onRetryLoadMore;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -425,7 +513,60 @@ class _GroupedList extends ConsumerWidget {
       );
     }
 
+    // Indikator status paginasi di akhir daftar (F06B)
+    if (isLoadingMore) {
+      children.add(
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 16),
+          child: Center(
+            child: SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          ),
+        ),
+      );
+    } else if (loadMoreErrorMessage != null) {
+      children.add(
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Column(
+            children: [
+              Text(
+                'Gagal memuat transaksi berikutnya',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: context.palette.error,
+                    ),
+              ),
+              const SizedBox(height: 4),
+              TextButton(
+                onPressed: onRetryLoadMore,
+                child: const Text('Coba Lagi'),
+              ),
+            ],
+          ),
+        ),
+      );
+    } else if (!hasNextPage && items.length >= 10) {
+      children.add(
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Center(
+            child: Text(
+              'Semua transaksi telah dimuat',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: context.palette.onSurfaceVariant.withValues(alpha: 0.6),
+                  ),
+            ),
+          ),
+        ),
+      );
+    }
+
     return ListView(
+      controller: scrollController,
+      physics: const AlwaysScrollableScrollPhysics(),
       key: const PageStorageKey('transactions_list_view'),
       padding: const EdgeInsets.only(bottom: 16),
       children: children,

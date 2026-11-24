@@ -86,6 +86,18 @@ final dashboardDataProvider = FutureProvider<DashboardData>((ref) async {
     }
   }
 
+  // F06C: Pada mode remote, ambil arus kas bulanan otoritatif dari backend
+  // agar tidak terpotong oleh limit 15 transaksi lokal.
+  if (ApiConfig.useRemoteApi) {
+    try {
+      final summary = await ref.watch(summaryProvider.future);
+      actualMonthIncome = summary.income;
+      actualMonthExpense = summary.expense;
+    } catch (_) {
+      // Pertahankan kalkulasi jika summaryProvider gagal dimuat
+    }
+  }
+
   // R2: jumlahkan saldo per akun.
   // Remote mode: backend sudah menghitung saldo → ambil langsung account.balance
   // agar tidak terjadi double-counting (transaksi sudah teraplikasi di backend).

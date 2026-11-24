@@ -133,6 +133,31 @@ class ScenarioTransactionRepository implements TransactionRepository {
   }
 
   @override
+  Future<TransactionPaginationResult> getPaginatedTransactions({
+    String? type,
+    String? category,
+    String? instrumentId,
+    int? perPage,
+    int? page,
+  }) async {
+    final list = await getTransactions(
+      type: type,
+      category: category,
+      instrumentId: instrumentId,
+      perPage: perPage,
+      page: page,
+    );
+    return TransactionPaginationResult(
+      items: list,
+      currentPage: 1,
+      lastPage: 1,
+      perPage: perPage ?? 20,
+      total: list.length,
+      hasNextPage: false,
+    );
+  }
+
+  @override
   Future<AppTransaction> updateTransaction(AppTransaction transaction) async {
     final idx = txs.indexWhere((t) => t.id == transaction.id);
     if (idx != -1) txs[idx] = transaction;
