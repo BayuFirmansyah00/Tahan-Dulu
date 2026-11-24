@@ -23,12 +23,14 @@
 | **F10** | Phase 3 | Hidden recurring and investment routes and broken notification deep links | RESOLVED (Phase 3) | Recurring GoRouter routes registered, Profile entry points, deep links |
 | **F12** | Phase 3 | Transaction detail, transaction correction/deletion, and wishlist editing/deletion | RESOLVED (Phase 3) | Detail sheet, atomic reversal, protected transfers/goals/opening balance |
 | **F13** | Phase 3 | Transfer history, detail, and reversal | RESOLVED (Phase 3) | History screen, detail modal, atomic rollback, destination overdraft check |
-| **F14** | Phase 4 | Complete investment domain, portfolio fields, and investment transaction features | PENDING (Phase 4) | Awaiting Phase 4 |
-| **F15** | Phase 4 | Persistent receipt attachments and storage contract | PENDING (Phase 4) | Awaiting Phase 4 |
-| **F18** | Phase 4 | Advanced account and goal fields | PENDING (Phase 4) | Awaiting Phase 4 |
+| **F14** | Phase 4 | Complete investment domain, portfolio fields, and investment transaction features | IN PROGRESS (Phase 4) | Target of Phase 4 |
+| **F15** | Phase 4 | Persistent receipt attachments and storage contract | IN PROGRESS (Phase 4) | Target of Phase 4 |
+| **F18** | Phase 4 | Advanced account and goal fields | IN PROGRESS (Phase 4) | Target of Phase 4 |
 | **F16** | Phase 5 | Notification pagination and legacy reminder bridge | PENDING (Phase 5) | Awaiting Phase 5 |
 | **F17** | Phase 5 | Error handling and financial fallback provenance | PENDING (Phase 5) | Awaiting Phase 5 |
 | **F19** | Phase 5 | Report date ranges, outdated help content, and legacy CTA cleanup | PENDING (Phase 5) | Awaiting Phase 5 |
+| **UI-5A**| Phase 5A | Flutter SDK Compatibility & Upgrade Evaluation (Owner-approved UI roadmap) | PENDING (Phase 5A) | Post-Phase 5 Evaluation |
+| **UI-5B**| Phase 5B | True Clear Liquid Glass Rendering (Owner-approved UI roadmap) | PENDING (Phase 5B) | Post-Phase 5 Shader & Visual Upgrade |
 | **F20** | Phase 6 | Release evidence, Android E2E, expired session handling, scheduler, FCM, and production readiness | PENDING (Phase 6) | Awaiting Phase 6 |
 
 ---
@@ -63,6 +65,12 @@
 - **F16**: Notification pagination and legacy reminder bridge.
 - **F17**: Error handling and financial fallback provenance.
 - **F19**: Report date ranges, outdated help content, and legacy CTA cleanup.
+
+### Phase 5A — Flutter SDK Compatibility & Upgrade Evaluation (Owner-Approved UI Track)
+- Evaluation and controlled migration plan for modern Flutter SDK, Gradle, and Kotlin dependencies without regressions.
+
+### Phase 5B — True Clear Liquid Glass Rendering (Owner-Approved UI Track)
+- Advanced backdrop filters, specular highlights, and real-time frosted glass shader pipeline across Tahan Dulu components.
 
 ### Phase 6 — Final E2E and Release Readiness
 - **F20**: Release evidence, Android E2E, expired session handling, scheduler, FCM, and production readiness.

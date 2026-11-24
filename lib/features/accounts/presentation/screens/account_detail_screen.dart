@@ -204,6 +204,29 @@ class _Body extends ConsumerWidget {
                   ),
                 ),
               ],
+              if (!account.isActive) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.withAlpha(40),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.amber),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.pause_circle_outline, color: Colors.amber, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Akun ini sedang dinonaktifkan. Saldo dan riwayat transaksi tetap tersimpan, namun akun tidak dapat digunakan untuk mutasi baru.',
+                          style: textTheme.bodySmall?.copyWith(color: Colors.amber[900]),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
               if (account.institutionName != null &&
                   account.institutionName!.isNotEmpty) ...[
                 const SizedBox(height: 4),
@@ -302,6 +325,10 @@ class _Body extends ConsumerWidget {
                   account.type == AccountType.digitalBank) ...[
                 const SizedBox(height: 16),
                 _AdminFeeCard(account: account),
+              ],
+              if (account.maxBudget != null && account.maxBudget! > 0) ...[
+                const SizedBox(height: 16),
+                _BudgetLimitCard(account: account),
               ],
               const SizedBox(height: 20),
               Row(
@@ -522,6 +549,85 @@ class _AdminFeeCard extends StatelessWidget {
               ),
             ),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+class _BudgetLimitCard extends StatelessWidget {
+  const _BudgetLimitCard({required this.account});
+
+  final FinancialAccount account;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final maxBudget = account.maxBudget ?? 0;
+    final frequency = account.budgetFrequency ?? 'monthly';
+    final freqLabel = frequency == 'weekly'
+        ? 'minggu'
+        : (frequency == 'yearly' ? 'tahun' : 'bulan');
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: context.palette.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: context.palette.outlineVariant,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: context.palette.primary.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.account_balance_wallet_outlined,
+                  color: context.palette.primary,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Batas Anggaran Akun',
+                      style: textTheme.bodySmall?.copyWith(
+                        color: context.palette.onSurfaceVariant,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    Text(
+                      '${CurrencyFormatter.format(maxBudget)} / $freqLabel',
+                      style: textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: context.palette.onSurface,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Batas anggaran maksimum yang dialokasikan untuk instrumen ini.',
+            style: textTheme.bodySmall?.copyWith(
+              color: context.palette.onSurfaceVariant,
+              fontSize: 11,
+            ),
+          ),
         ],
       ),
     );

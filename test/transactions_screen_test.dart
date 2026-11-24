@@ -70,6 +70,12 @@ class _EmptyTransactionRepo implements TransactionRepository {
   Future<void> deleteTransaction(String id) async {
     items.removeWhere((t) => t.id == id);
   }
+
+  @override
+  Future<String> uploadReceiptAttachment(String transactionId, String filePath) async => '';
+
+  @override
+  Future<void> deleteReceiptAttachment(String transactionId, String attachmentId) async {}
 }
 
 /// Onboarding tanpa instrumen untuk state akun-tidak-tersedia.

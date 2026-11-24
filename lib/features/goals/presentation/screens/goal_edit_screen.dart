@@ -33,6 +33,8 @@ class GoalEditScreen extends ConsumerStatefulWidget {
 class _GoalEditScreenState extends ConsumerState<GoalEditScreen> {
   final _nameController = TextEditingController();
   final _amountController = TextEditingController();
+  final _linkController = TextEditingController();
+  final _noteController = TextEditingController();
   GoalCategory? _category;
   DateTime? _date;
 
@@ -49,6 +51,8 @@ class _GoalEditScreenState extends ConsumerState<GoalEditScreen> {
   void dispose() {
     _nameController.dispose();
     _amountController.dispose();
+    _linkController.dispose();
+    _noteController.dispose();
     super.dispose();
   }
 
@@ -56,6 +60,8 @@ class _GoalEditScreenState extends ConsumerState<GoalEditScreen> {
     _nameController.text = goal.name;
     _amountController.text =
         RupiahInputFormatter.format(goal.targetAmount);
+    _linkController.text = goal.productLink ?? '';
+    _noteController.text = goal.note ?? '';
     _category = goal.category;
     _date = goal.deadline;
     // Muat nama kustom tersimpan: bila nama tersimpan bukan label
@@ -128,6 +134,8 @@ class _GoalEditScreenState extends ConsumerState<GoalEditScreen> {
             recurringAmount: goal.recurringAmount,
             frequency: goal.frequency,
             sourceAccountId: goal.sourceAccountId,
+            productLink: _linkController.text.trim().isEmpty ? null : _linkController.text.trim(),
+            note: _noteController.text.trim().isEmpty ? null : _noteController.text.trim(),
           );
       if (!mounted) return;
       if (ok) {
@@ -373,6 +381,20 @@ class _GoalEditScreenState extends ConsumerState<GoalEditScreen> {
                               _FieldError(
                                   text: _fieldErrors!['target_date']!.first),
                             ],
+                            const SizedBox(height: 12),
+                            AppTextField(
+                              controller: _linkController,
+                              label: 'Tautan Produk / Referensi (Opsional)',
+                              hint: 'https://...',
+                              keyboardType: TextInputType.url,
+                            ),
+                            const SizedBox(height: 12),
+                            AppTextField(
+                              controller: _noteController,
+                              label: 'Catatan (Opsional)',
+                              hint: 'Catatan tambahan untuk target ini',
+                              maxLines: 2,
+                            ),
                           ],
                         ),
                       ),

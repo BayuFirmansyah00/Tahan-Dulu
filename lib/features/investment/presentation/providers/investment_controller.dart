@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../data/models/api_investment.dart';
+import '../../../../data/models/api_investment_transaction.dart';
 import '../../../../data/models/financial_account.dart';
 import '../../../../data/providers/app_providers.dart';
 
@@ -13,10 +15,15 @@ class InvestmentController {
 
   Future<void> _refresh() async {
     _ref.invalidate(investmentsProvider);
+    _ref.invalidate(apiInvestmentsProvider);
   }
 
   Future<List<FinancialAccount>> loadInvestments() async {
     return _ref.read(investmentRepositoryProvider).getInvestments();
+  }
+
+  Future<List<ApiInvestment>> loadApiInvestments() async {
+    return _ref.read(investmentRepositoryProvider).getApiInvestments();
   }
 
   Future<bool> addInvestment({
@@ -76,6 +83,48 @@ class InvestmentController {
     }
   }
 
+  Future<bool> addInvestmentTransaction({
+    required String investmentId,
+    required String type,
+    required int amount,
+    required String instrumentId,
+    String? notes,
+  }) async {
+    try {
+      await _ref.read(investmentRepositoryProvider).addInvestmentTransaction(
+            investmentId: investmentId,
+            type: type,
+            amount: amount,
+            instrumentId: instrumentId,
+            notes: notes,
+          );
+      await _refresh();
+      _ref.invalidate(apiInvestmentTransactionsProvider(investmentId));
+      _ref.invalidate(accountsProvider);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> deleteInvestmentTransaction({
+    required String investmentId,
+    required String transactionId,
+  }) async {
+    try {
+      await _ref.read(investmentRepositoryProvider).deleteInvestmentTransaction(
+            investmentId: investmentId,
+            transactionId: transactionId,
+          );
+      await _refresh();
+      _ref.invalidate(apiInvestmentTransactionsProvider(investmentId));
+      _ref.invalidate(accountsProvider);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   String formatBalance(double value) =>
       CurrencyFormatter.formatCompact(value);
 }
@@ -86,4 +135,13 @@ final investmentControllerProvider =
 /// Provider daftar investasi (FutureProvider).
 final investmentsProvider = FutureProvider<List<FinancialAccount>>((ref) async {
   return ref.read(investmentRepositoryProvider).getInvestments();
+});
+
+final apiInvestmentsProvider = FutureProvider<List<ApiInvestment>>((ref) async {
+  return ref.read(investmentRepositoryProvider).getApiInvestments();
+});
+
+final apiInvestmentTransactionsProvider =
+    FutureProvider.family<List<ApiInvestmentTransaction>, String>((ref, investmentId) async {
+  return ref.read(investmentRepositoryProvider).getApiInvestmentTransactions(investmentId);
 });

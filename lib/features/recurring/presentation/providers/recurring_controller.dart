@@ -84,6 +84,94 @@ class RecurringController {
     }
   }
 
+  Future<bool> updateRecurringIncome({
+    required String id,
+    required String title,
+    required String category,
+    required double amount,
+    required String frequency,
+    required String nextDueDate,
+    String? instrumentId,
+    bool isActive = true,
+    bool makeAutomatic = false,
+  }) async {
+    try {
+      await _ref.read(recurringRepositoryProvider).updateRecurringIncome(
+            id: id,
+            title: title,
+            category: category,
+            amount: amount,
+            frequency: frequency,
+            nextDueDate: nextDueDate,
+            instrumentId: instrumentId,
+            isActive: isActive,
+            makeAutomatic: makeAutomatic,
+          );
+      await _refreshIncomes();
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> updateRecurringExpense({
+    required String id,
+    required String title,
+    required String category,
+    required double amount,
+    required String frequency,
+    required String nextDueDate,
+    String? instrumentId,
+    bool isActive = true,
+    bool makeAutomatic = false,
+  }) async {
+    try {
+      await _ref.read(recurringRepositoryProvider).updateRecurringExpense(
+            id: id,
+            title: title,
+            category: category,
+            amount: amount,
+            frequency: frequency,
+            nextDueDate: nextDueDate,
+            instrumentId: instrumentId,
+            isActive: isActive,
+            makeAutomatic: makeAutomatic,
+          );
+      await _refreshExpenses();
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> toggleRecurringIncomeStatus(ApiRecurringTransaction item) async {
+    return updateRecurringIncome(
+      id: item.id,
+      title: item.title,
+      category: item.category,
+      amount: item.amount.toDouble(),
+      frequency: item.frequency,
+      nextDueDate: item.nextDueDate ?? '',
+      instrumentId: item.instrumentId,
+      isActive: !item.isActive,
+      makeAutomatic: item.makeAutomatic,
+    );
+  }
+
+  Future<bool> toggleRecurringExpenseStatus(ApiRecurringTransaction item) async {
+    return updateRecurringExpense(
+      id: item.id,
+      title: item.title,
+      category: item.category,
+      amount: item.amount.toDouble(),
+      frequency: item.frequency,
+      nextDueDate: item.nextDueDate ?? '',
+      instrumentId: item.instrumentId,
+      isActive: !item.isActive,
+      makeAutomatic: item.makeAutomatic,
+    );
+  }
+
   Future<bool> removeRecurringIncome(String id) async {
     try {
       await _ref.read(recurringRepositoryProvider).removeRecurringIncome(id);

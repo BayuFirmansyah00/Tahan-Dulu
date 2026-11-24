@@ -217,6 +217,16 @@ class _Body extends StatelessWidget {
                     ' ${goal.frequency == DepositFrequency.monthly ? AppStrings.perMonth : AppStrings.perWeekSuffix}'
                 : '-',
           ),
+          if (goal.productLink != null && goal.productLink!.isNotEmpty)
+            _InfoRow(
+              label: 'Tautan Produk',
+              value: goal.productLink!,
+            ),
+          if (goal.note != null && goal.note!.isNotEmpty)
+            _InfoRow(
+              label: 'Catatan',
+              value: goal.note!,
+            ),
           _AdvisoryRow(
             label: AppStrings.goalRecommendLabel,
             value: recommendValue,

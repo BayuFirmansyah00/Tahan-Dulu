@@ -197,6 +197,76 @@ class TransactionDetailSheet extends ConsumerWidget {
                   label: 'Catatan',
                   value: item.note!,
                 ),
+              if (item.attachments.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Text(
+                  'Lampiran Struk',
+                  style: textTheme.labelMedium?.copyWith(
+                    color: context.palette.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: item.attachments.map((url) {
+                    return InkWell(
+                      onTap: () {
+                        showDialog(
+                          context: context,
+                          builder: (dCtx) => Dialog(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                AppBar(
+                                  title: const Text('Pratinjau Struk'),
+                                  leading: IconButton(
+                                    icon: const Icon(Icons.close),
+                                    onPressed: () => Navigator.pop(dCtx),
+                                  ),
+                                ),
+                                Image.network(
+                                  url,
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (_, _, _) => const Padding(
+                                    padding: EdgeInsets.all(32),
+                                    child: Column(
+                                      children: [
+                                        Icon(Icons.broken_image, size: 48, color: Colors.grey),
+                                        SizedBox(height: 8),
+                                        Text('Gagal memuat pratinjau gambar struk.'),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: context.palette.surfaceContainerHighest.withValues(alpha: 0.5),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: context.palette.outlineVariant),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.receipt_long, size: 18, color: context.palette.primary),
+                            const SizedBox(width: 6),
+                            const Text('Lihat Struk', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+                            const SizedBox(width: 4),
+                            Icon(Icons.open_in_new, size: 14, color: context.palette.onSurfaceVariant),
+                          ],
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ],
               const SizedBox(height: 16),
               if (isLinkedTransaction) ...[
                 Container(

@@ -237,6 +237,8 @@ class GoalsController extends Notifier<GoalDraft> {
     required double recurringAmount,
     required DepositFrequency frequency,
     required String? sourceAccountId,
+    String? productLink,
+    String? note,
   }) async {
     if (_saving) return false;
     if (name.trim().isEmpty || targetAmount <= 0) return false;
@@ -263,6 +265,8 @@ class GoalsController extends Notifier<GoalDraft> {
                 recurringAmount: recurringAmount,
                 frequency: frequency,
                 sourceAccountId: sourceAccountId,
+                productLink: productLink,
+                note: note,
               ))
           .copyWith(
         name: name.trim(),
@@ -272,6 +276,8 @@ class GoalsController extends Notifier<GoalDraft> {
         recurringAmount: recurringAmount,
         frequency: frequency,
         sourceAccountId: sourceAccountId,
+        productLink: productLink ?? existing?.productLink,
+        note: note ?? existing?.note,
       );
       await ref.read(goalRepositoryProvider).updateGoal(goalToUpdate);
       _refreshGoals();

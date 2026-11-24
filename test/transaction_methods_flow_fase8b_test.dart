@@ -160,6 +160,12 @@ class _InMemoryTransactionRepo implements TransactionRepository {
   Future<void> deleteTransaction(String id) async {
     items.removeWhere((e) => e.id == id);
   }
+
+  @override
+  Future<String> uploadReceiptAttachment(String transactionId, String filePath) async => '';
+
+  @override
+  Future<void> deleteReceiptAttachment(String transactionId, String attachmentId) async {}
 }
 
 GoRouter _createRouter() {

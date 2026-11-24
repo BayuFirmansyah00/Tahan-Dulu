@@ -79,6 +79,11 @@ class RemoteGoalRepository implements GoalRepository {
       recurringAmount: (api.recurringAmount ?? 0).toDouble(),
       sourceAccountId: api.sourceAccountId,
       priority: _toPriority(api.priority),
+      image: api.imageUrl,
+      productLink: api.productLink,
+      note: api.note,
+      reminderDate: api.parsedReminderDate,
+      isActive: api.isActive,
     );
   }
 
@@ -125,11 +130,14 @@ class RemoteGoalRepository implements GoalRepository {
         'recurring_amount': goal.recurringAmount > 0 ? goal.recurringAmount.round() : null,
         'source_account_id': goal.sourceAccountId,
         'target_date': goal.deadline?.toIso8601String(),
-        'reminder_date': null,
+        'reminder_date': goal.reminderDate?.toIso8601String(),
+        'link': goal.productLink,
+        'product_link': goal.productLink,
+        'note': goal.note,
         'frequency':
             goal.frequency == DepositFrequency.weekly ? 'weekly' : 'monthly',
         'priority': goal.priority.toString(),
-        'is_active': true,
+        'is_active': goal.isActive,
       },
       token: token,
     );
@@ -150,11 +158,15 @@ class RemoteGoalRepository implements GoalRepository {
         'source_account_id': goal.sourceAccountId,
         // Catatan Arsitektur F07: current_amount sengaja tidak dikirimkan agar
         // mutasi ledger/deposito tidak tertimpa oleh snapshot klien yang basi.
-        // is_active dan reminder_date juga tidak ditimpa sembarangan.
         'target_date': goal.deadline?.toIso8601String(),
+        'reminder_date': goal.reminderDate?.toIso8601String(),
+        'link': goal.productLink,
+        'product_link': goal.productLink,
+        'note': goal.note,
         'frequency':
             goal.frequency == DepositFrequency.weekly ? 'weekly' : 'monthly',
         'priority': goal.priority.toString(),
+        'is_active': goal.isActive,
       },
       token: token,
     );

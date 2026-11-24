@@ -113,13 +113,13 @@ class _List extends StatelessWidget {
   }
 }
 
-class _RecurringItem extends StatelessWidget {
+class _RecurringItem extends ConsumerWidget {
   const _RecurringItem({required this.item});
 
   final ApiRecurringTransaction item;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final textTheme = Theme.of(context).textTheme;
     return Container(
       padding: const EdgeInsets.all(14),
@@ -150,6 +150,58 @@ class _RecurringItem extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                   color: context.palette.error,
                 ),
+              ),
+              PopupMenuButton<String>(
+                icon: Icon(Icons.more_vert, size: 20, color: context.palette.onSurfaceVariant),
+                onSelected: (action) async {
+                  final controller = ref.read(recurringControllerProvider);
+                  if (action == 'toggle') {
+                    await controller.toggleRecurringExpenseStatus(item);
+                  } else if (action == 'delete') {
+                    final confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: const Text('Hapus Pengeluaran Rutin?'),
+                        content: Text('Apakah Anda yakin ingin menghapus "${item.title}"?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx, false),
+                            child: const Text('Batal'),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx, true),
+                            child: const Text('Hapus', style: TextStyle(color: Colors.red)),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (confirm == true) {
+                      await controller.removeRecurringExpense(item.id);
+                    }
+                  }
+                },
+                itemBuilder: (ctx) => [
+                  PopupMenuItem(
+                    value: 'toggle',
+                    child: Row(
+                      children: [
+                        Icon(item.isActive ? Icons.pause_circle_outline : Icons.play_circle_outline, size: 18),
+                        const SizedBox(width: 8),
+                        Text(item.isActive ? 'Jeda' : 'Aktifkan'),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuItem(
+                    value: 'delete',
+                    child: Row(
+                      children: [
+                        Icon(Icons.delete_outline, size: 18, color: Colors.red),
+                        SizedBox(width: 8),
+                        Text('Hapus', style: TextStyle(color: Colors.red)),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

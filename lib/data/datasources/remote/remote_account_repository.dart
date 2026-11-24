@@ -95,6 +95,9 @@ class RemoteAccountRepository implements AccountRepository {
               monthlyAdminFee: e.monthlyAdminFee.toDouble(),
               adminFeeDay: e.adminFeeDay,
               adminFeeEnabled: e.adminFeeEnabled,
+              isActive: e.isActive,
+              maxBudget: e.maxBudget?.toDouble(),
+              budgetFrequency: e.budgetFrequency,
             ))
         .toList();
   }
@@ -120,7 +123,9 @@ class RemoteAccountRepository implements AccountRepository {
         'admin_fee_day':
             account.adminFeeEnabled ? account.adminFeeDay : null,
         'admin_fee_enabled': account.adminFeeEnabled,
-        'is_active': true,
+        'is_active': account.isActive,
+        if (account.maxBudget != null) 'max_budget': account.maxBudget!.round(),
+        if (account.budgetFrequency != null) 'budget_frequency': account.budgetFrequency,
         if (account.bankId != null) 'bank_id': account.bankId,
         if (account.bankSlug != null) 'bank_slug': account.bankSlug,
         if (account.idempotencyKey != null)
@@ -144,6 +149,9 @@ class RemoteAccountRepository implements AccountRepository {
       monthlyAdminFee: resp.monthlyAdminFee.toDouble(),
       adminFeeDay: resp.adminFeeDay ?? account.adminFeeDay,
       adminFeeEnabled: resp.adminFeeEnabled,
+      isActive: resp.isActive,
+      maxBudget: resp.maxBudget?.toDouble(),
+      budgetFrequency: resp.budgetFrequency,
     );
   }
 
@@ -162,7 +170,9 @@ class RemoteAccountRepository implements AccountRepository {
         'admin_fee_day':
             account.adminFeeEnabled ? account.adminFeeDay : null,
         'admin_fee_enabled': account.adminFeeEnabled,
-        'is_active': true,
+        'is_active': account.isActive,
+        if (account.maxBudget != null) 'max_budget': account.maxBudget!.round(),
+        if (account.budgetFrequency != null) 'budget_frequency': account.budgetFrequency,
         'bank_id': account.bankId,
         'bank_slug': account.bankSlug,
       },
@@ -184,6 +194,9 @@ class RemoteAccountRepository implements AccountRepository {
       monthlyAdminFee: resp.monthlyAdminFee.toDouble(),
       adminFeeDay: resp.adminFeeDay ?? account.adminFeeDay,
       adminFeeEnabled: resp.adminFeeEnabled,
+      isActive: resp.isActive,
+      maxBudget: resp.maxBudget?.toDouble(),
+      budgetFrequency: resp.budgetFrequency,
     );
   }
 

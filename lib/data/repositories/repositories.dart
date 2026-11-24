@@ -1,5 +1,7 @@
 import '../datasources/mock/mock_data.dart';
 import '../models/api_financial_instrument.dart';
+import '../models/api_investment.dart';
+import '../models/api_investment_transaction.dart';
 import '../models/api_recurring_transaction.dart';
 import '../models/app_notification.dart';
 import '../models/financial_account.dart';
@@ -136,6 +138,12 @@ abstract class TransactionRepository {
 
   /// Hapus transaksi.
   Future<void> deleteTransaction(String id);
+
+  /// Unggah berkas lampiran struk ke transaksi.
+  Future<String> uploadReceiptAttachment(String transactionId, String filePath) async => '';
+
+  /// Hapus berkas lampiran struk dari transaksi.
+  Future<void> deleteReceiptAttachment(String transactionId, String attachmentId) async {}
 }
 
 abstract class GoalRepository {
@@ -157,6 +165,19 @@ abstract class InvestmentRepository {
   Future<FinancialAccount> updateInvestment(FinancialAccount investment);
   Future<void> removeInvestment(String id);
   Future<List<FinancialGoal>> getInvestmentTransactions(String investmentId);
+  Future<List<ApiInvestment>> getApiInvestments();
+  Future<List<ApiInvestmentTransaction>> getApiInvestmentTransactions(String investmentId);
+  Future<ApiInvestmentTransaction> addInvestmentTransaction({
+    required String investmentId,
+    required String type,
+    required int amount,
+    required String instrumentId,
+    String? notes,
+  });
+  Future<void> deleteInvestmentTransaction({
+    required String investmentId,
+    required String transactionId,
+  });
 }
 
 abstract class RecurringRepository {
@@ -570,6 +591,12 @@ class MockTransactionRepository implements TransactionRepository {
     _items.removeWhere((e) => e.id == id);
     return mockDelay(null);
   }
+
+  @override
+  Future<String> uploadReceiptAttachment(String transactionId, String filePath) async => 'mock-att-id';
+
+  @override
+  Future<void> deleteReceiptAttachment(String transactionId, String attachmentId) async {}
 }
 
 class MockGoalRepository implements GoalRepository {

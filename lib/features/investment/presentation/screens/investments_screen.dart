@@ -12,6 +12,7 @@ import '../../../../core/widgets/app_states.dart';
 import '../../../../data/models/financial_account.dart';
 import '../../../dashboard/presentation/widgets/dashboard_bottom_nav.dart';
 import '../providers/investment_controller.dart';
+import '../widgets/investment_detail_sheet.dart';
 
 /// Daftar portofolio investasi dengan opsi tambah baru.
 class InvestmentsScreen extends ConsumerStatefulWidget {
@@ -119,43 +120,47 @@ class _InvestmentCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: Glass.panel(context, radius: BorderRadius.circular(16)),
-      child: Row(
-        children: [
-          Icon(
-            Icons.account_balance_wallet_outlined,
-            color: context.palette.primary,
-            size: 44,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(item.name, style: textTheme.titleMedium),
-                if (item.institutionName != null &&
-                    item.institutionName!.isNotEmpty)
-                  Text(
-                    item.institutionName!,
-                    style: textTheme.bodyMedium,
-                  ),
-              ],
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: () => InvestmentDetailSheet.show(context, item),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: Glass.panel(context, radius: BorderRadius.circular(16)),
+        child: Row(
+          children: [
+            Icon(
+              Icons.account_balance_wallet_outlined,
+              color: context.palette.primary,
+              size: 44,
             ),
-          ),
-          Text(
-            CurrencyFormatter.formatCompact(item.balance),
-            style: textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(item.name, style: textTheme.titleMedium),
+                  if (item.institutionName != null &&
+                      item.institutionName!.isNotEmpty)
+                    Text(
+                      item.institutionName!,
+                      style: textTheme.bodyMedium,
+                    ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(width: 4),
-          Icon(
-            Icons.chevron_right,
-            color: context.palette.onSurfaceVariant,
-          ),
-        ],
+            Text(
+              CurrencyFormatter.formatCompact(item.balance),
+              style: textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(
+              Icons.chevron_right,
+              color: context.palette.onSurfaceVariant,
+            ),
+          ],
+        ),
       ),
     );
   }

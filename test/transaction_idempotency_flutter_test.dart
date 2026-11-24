@@ -71,6 +71,12 @@ class FakeTransactionRepository implements TransactionRepository {
   Future<void> deleteTransaction(String id) async {
     savedTransactions.removeWhere((t) => t.id == id);
   }
+
+  @override
+  Future<String> uploadReceiptAttachment(String transactionId, String filePath) async => '';
+
+  @override
+  Future<void> deleteReceiptAttachment(String transactionId, String attachmentId) async {}
 }
 
 void main() {

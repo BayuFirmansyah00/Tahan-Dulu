@@ -22,12 +22,24 @@ class FinancialAccount extends Equatable {
     this.monthlyAdminFee = 0,
     this.adminFeeDay,
     this.adminFeeEnabled = false,
+    this.isActive = true,
+    this.maxBudget,
+    this.budgetFrequency,
     this.idempotencyKey,
   });
 
   final String id;
   final String name;
   final AccountType type;
+
+  /// Status aktif akun. Akun nonaktif tidak dapat digunakan untuk transaksi baru.
+  final bool isActive;
+
+  /// Batas anggaran pengeluaran maksimal (opsional).
+  final double? maxBudget;
+
+  /// Frekuensi anggaran (daily, weekly, monthly).
+  final String? budgetFrequency;
 
   /// Kunci idempotensi untuk mencegah duplikasi create akun pada backend.
   final String? idempotencyKey;
@@ -108,6 +120,9 @@ class FinancialAccount extends Equatable {
     double? monthlyAdminFee,
     int? adminFeeDay,
     bool? adminFeeEnabled,
+    bool? isActive,
+    double? maxBudget,
+    String? budgetFrequency,
     String? idempotencyKey,
   }) {
     return FinancialAccount(
@@ -124,6 +139,9 @@ class FinancialAccount extends Equatable {
       monthlyAdminFee: monthlyAdminFee ?? this.monthlyAdminFee,
       adminFeeDay: adminFeeDay ?? this.adminFeeDay,
       adminFeeEnabled: adminFeeEnabled ?? this.adminFeeEnabled,
+      isActive: isActive ?? this.isActive,
+      maxBudget: maxBudget ?? this.maxBudget,
+      budgetFrequency: budgetFrequency ?? this.budgetFrequency,
       idempotencyKey: idempotencyKey ?? this.idempotencyKey,
     );
   }
@@ -143,6 +161,9 @@ class FinancialAccount extends Equatable {
         monthlyAdminFee,
         adminFeeDay,
         adminFeeEnabled,
+        isActive,
+        maxBudget,
+        budgetFrequency,
         idempotencyKey,
       ];
 }

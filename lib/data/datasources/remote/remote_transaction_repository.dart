@@ -39,6 +39,7 @@ class RemoteTransactionRepository implements TransactionRepository {
       accountId: api.instrument?.id.toString() ?? api.instrumentId ?? fallbackAccountId,
       note: api.information,
       fee: 0,
+      attachments: api.attachments,
     );
   }
 
@@ -172,5 +173,27 @@ class RemoteTransactionRepository implements TransactionRepository {
   Future<void> deleteTransaction(String id) async {
     final token = await _requireToken();
     await _client.delete('/transactions/$id', token: token);
+  }
+
+  @override
+  Future<String> uploadReceiptAttachment(String transactionId, String filePath) async {
+    final token = await _requireToken();
+    final body = await _client.postMultipart(
+      '/transactions/$transactionId/attachments',
+      fileField: 'attachment',
+      filePath: filePath,
+      token: token,
+    );
+    final data = body['data'];
+    if (data is Map<String, dynamic>) {
+      return (data['url'] ?? data['id'] ?? '') as String;
+    }
+    return '';
+  }
+
+  @override
+  Future<void> deleteReceiptAttachment(String transactionId, String attachmentId) async {
+    final token = await _requireToken();
+    await _client.delete('/transactions/$transactionId/attachments/$attachmentId', token: token);
   }
 }

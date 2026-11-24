@@ -30,6 +30,7 @@ class TransactionDraft extends Equatable {
     this.idempotencyKey = '',
     this.source = TransactionInputSource.manual,
     this.sourceNotice,
+    this.attachmentPath,
   });
 
   /// Judul transaksi (misal: nama merchant dari struk atau ringkasan suara).
@@ -41,6 +42,9 @@ class TransactionDraft extends Equatable {
   final String? accountId;
   final DateTime? date;
   final String note;
+
+  /// Path berkas lampiran struk lokal (jika ada).
+  final String? attachmentPath;
 
   /// Biaya tambahan opsional (default Rp0, tak negatif).
   final double fee;
@@ -89,6 +93,8 @@ class TransactionDraft extends Equatable {
     String? idempotencyKey,
     TransactionInputSource? source,
     String? sourceNotice,
+    String? attachmentPath,
+    bool clearAttachment = false,
   }) {
     return TransactionDraft(
       title: title ?? this.title,
@@ -102,6 +108,7 @@ class TransactionDraft extends Equatable {
       idempotencyKey: idempotencyKey ?? this.idempotencyKey,
       source: source ?? this.source,
       sourceNotice: sourceNotice ?? this.sourceNotice,
+      attachmentPath: clearAttachment ? null : (attachmentPath ?? this.attachmentPath),
     );
   }
 
@@ -118,6 +125,7 @@ class TransactionDraft extends Equatable {
         idempotencyKey,
         source,
         sourceNotice,
+        attachmentPath,
       ];
 }
 
@@ -233,6 +241,7 @@ class TransactionFormController extends Notifier<TransactionDraft> {
     String? title,
     String? note,
     String? notice,
+    String? attachmentPath,
   }) {
     state = state.copyWith(
       type: TransactionType.expense,
@@ -240,6 +249,7 @@ class TransactionFormController extends Notifier<TransactionDraft> {
       date: date ?? state.date,
       title: title ?? state.title,
       note: note ?? state.note,
+      attachmentPath: attachmentPath,
       source: TransactionInputSource.scan,
       sourceNotice: notice ??
           'Data terisi dari scan struk. Pilih kategori dan rekening pembayaran.',
@@ -305,6 +315,18 @@ class TransactionFormController extends Notifier<TransactionDraft> {
             ),
           );
       _lastSaved = saved;
+
+      if (state.attachmentPath != null && state.attachmentPath!.isNotEmpty) {
+        try {
+          await ref.read(transactionRepositoryProvider).uploadReceiptAttachment(
+            saved.id,
+            state.attachmentPath!,
+          );
+        } catch (_) {
+          // Gagal upload lampiran tidak menggagalkan transaksi yang sudah tersimpan
+        }
+      }
+
       // Invalidate semua provider yang bergantung pada transaksi dan saldo akun:
       ref.invalidate(transactionsProvider);
       ref.invalidate(paginatedTransactionsProvider);

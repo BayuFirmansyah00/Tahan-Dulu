@@ -223,6 +223,7 @@ class _TransactionScanScreenState extends ConsumerState<TransactionScanScreen> {
           : null,
       note: noteParts.isNotEmpty ? noteParts.join(' - ') : null,
       notice: notice,
+      attachmentPath: _imagePath,
     );
 
     // Arahkan ke formulir transaksi manual untuk verifikasi akun & kategori

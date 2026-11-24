@@ -34,6 +34,8 @@ class ApiRecurringTransaction extends Equatable {
   final String? createdAt;
   final String? updatedAt;
 
+  String? get instrumentId => instrument?.id;
+
   factory ApiRecurringTransaction.fromJson(Map<String, dynamic> json) {
     return ApiRecurringTransaction(
       id: '${json['id'] ?? ''}',

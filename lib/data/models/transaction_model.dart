@@ -34,6 +34,7 @@ class AppTransaction extends Equatable {
     this.note,
     this.fee = 0,
     this.idempotencyKey,
+    this.attachments = const [],
   });
 
   final String id;
@@ -54,6 +55,9 @@ class AppTransaction extends Equatable {
   /// Kunci idempotensi opsional (UUID v4) untuk mencegah transaksi duplikat saat retry/timeout.
   final String? idempotencyKey;
 
+  /// Daftar URL/path lampiran struk transaksi.
+  final List<String> attachments;
+
   AppTransaction copyWith({
     String? id,
     String? title,
@@ -65,6 +69,7 @@ class AppTransaction extends Equatable {
     String? note,
     double? fee,
     String? idempotencyKey,
+    List<String>? attachments,
   }) {
     return AppTransaction(
       id: id ?? this.id,
@@ -77,10 +82,11 @@ class AppTransaction extends Equatable {
       note: note ?? this.note,
       fee: fee ?? this.fee,
       idempotencyKey: idempotencyKey ?? this.idempotencyKey,
+      attachments: attachments ?? this.attachments,
     );
   }
 
   @override
   List<Object?> get props =>
-      [id, title, amount, type, date, category, accountId, note, fee, idempotencyKey];
+      [id, title, amount, type, date, category, accountId, note, fee, idempotencyKey, attachments];
 }

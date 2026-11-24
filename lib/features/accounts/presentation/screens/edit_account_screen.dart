@@ -42,8 +42,11 @@ class _EditAccountScreenState extends ConsumerState<EditAccountScreen> {
   final _institutionController = TextEditingController();
   final _balanceController = TextEditingController();
   final _feeController = TextEditingController();
+  final _maxBudgetController = TextEditingController();
   int _feeDay = 15;
   bool _feeEnabled = false;
+  bool _isActive = true;
+  String _budgetFrequency = 'monthly';
   AccountType? _type;
   String? _typeId;
   List<ApiInstrumentType> _instrumentTypes = const [];
@@ -77,6 +80,7 @@ class _EditAccountScreenState extends ConsumerState<EditAccountScreen> {
     _institutionController.dispose();
     _balanceController.dispose();
     _feeController.dispose();
+    _maxBudgetController.dispose();
     super.dispose();
   }
 
@@ -92,6 +96,11 @@ class _EditAccountScreenState extends ConsumerState<EditAccountScreen> {
     _feeController.text = account.monthlyAdminFee > 0
         ? RupiahInputFormatter.format(account.monthlyAdminFee)
         : '';
+    _isActive = account.isActive;
+    _maxBudgetController.text = account.maxBudget != null && account.maxBudget! > 0
+        ? RupiahInputFormatter.format(account.maxBudget!)
+        : '';
+    _budgetFrequency = account.budgetFrequency ?? 'monthly';
     if (account.bankName != null ||
         account.bankSlug != null ||
         account.bankId != null) {
@@ -183,6 +192,9 @@ class _EditAccountScreenState extends ConsumerState<EditAccountScreen> {
         : 0.0;
     final feeDay = (isBankOrDigital && _feeEnabled) ? _feeDay : 15;
     final feeEnabled = isBankOrDigital && _feeEnabled && feeAmount > 0;
+    final maxBudgetValue = _maxBudgetController.text.trim().isNotEmpty
+        ? RupiahInputFormatter.parse(_maxBudgetController.text)
+        : null;
 
     setState(() {
       _saving = true;
@@ -204,6 +216,9 @@ class _EditAccountScreenState extends ConsumerState<EditAccountScreen> {
                 monthlyAdminFee: feeAmount,
                 adminFeeDay: feeEnabled ? feeDay : null,
                 adminFeeEnabled: feeEnabled,
+                isActive: _isActive,
+                maxBudget: maxBudgetValue,
+                budgetFrequency: maxBudgetValue != null ? _budgetFrequency : null,
               );
       if (!mounted) return;
       if (ok) {
@@ -317,6 +332,12 @@ class _EditAccountScreenState extends ConsumerState<EditAccountScreen> {
                   onFeeEnabledChanged: (val) =>
                       setState(() => _feeEnabled = val),
                   onFeeDayChanged: (day) => setState(() => _feeDay = day),
+                  isActive: _isActive,
+                  onIsActiveChanged: (val) => setState(() => _isActive = val),
+                  maxBudgetController: _maxBudgetController,
+                  budgetFrequency: _budgetFrequency,
+                  onBudgetFrequencyChanged: (freq) =>
+                      setState(() => _budgetFrequency = freq),
                   fieldErrors: _fieldErrors,
                   onType: (t) => setState(() {
                     _type = t;
@@ -382,6 +403,11 @@ class _Form extends StatelessWidget {
     required this.feeEnabled,
     required this.onFeeEnabledChanged,
     required this.onFeeDayChanged,
+    required this.isActive,
+    required this.onIsActiveChanged,
+    required this.maxBudgetController,
+    required this.budgetFrequency,
+    required this.onBudgetFrequencyChanged,
     this.fieldErrors,
     required this.onType,
     required this.onPickBank,
@@ -398,10 +424,15 @@ class _Form extends StatelessWidget {
   final TextEditingController institutionController;
   final TextEditingController balanceController;
   final TextEditingController feeController;
+  final TextEditingController maxBudgetController;
   final int feeDay;
   final bool feeEnabled;
+  final bool isActive;
+  final String budgetFrequency;
   final ValueChanged<bool> onFeeEnabledChanged;
   final ValueChanged<int> onFeeDayChanged;
+  final ValueChanged<bool> onIsActiveChanged;
+  final ValueChanged<String> onBudgetFrequencyChanged;
   final Map<String, List<String>>? fieldErrors;
   final ValueChanged<AccountType> onType;
   final VoidCallback onPickBank;
@@ -613,6 +644,67 @@ class _Form extends StatelessWidget {
                     fieldError: fieldErrors?['monthly_admin_fee']?.first,
                   ),
                 ],
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: context.palette.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: context.palette.outlineVariant),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Batas Anggaran Akun (Opsional)',
+                        style: textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Tentukan limit pengeluaran untuk akun ini',
+                        style: textTheme.bodySmall?.copyWith(
+                          color: context.palette.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      AppTextField(
+                        controller: maxBudgetController,
+                        label: 'Maksimal Anggaran',
+                        hint: 'Tanpa batas',
+                        prefixText: 'Rp ',
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [RupiahInputFormatter()],
+                      ),
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<String>(
+                        initialValue: budgetFrequency,
+                        decoration: const InputDecoration(
+                          labelText: 'Frekuensi Anggaran',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: const [
+                          DropdownMenuItem(value: 'daily', child: Text('Harian')),
+                          DropdownMenuItem(value: 'weekly', child: Text('Mingguan')),
+                          DropdownMenuItem(value: 'monthly', child: Text('Bulanan')),
+                        ],
+                        onChanged: (val) {
+                          if (val != null) onBudgetFrequencyChanged(val);
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Status Akun Aktif', style: TextStyle(fontWeight: FontWeight.w600)),
+                  subtitle: Text(
+                    'Akun nonaktif tidak dapat digunakan untuk mutasi baru. Saldo historis tetap terjaga.',
+                    style: textTheme.bodySmall?.copyWith(color: context.palette.onSurfaceVariant),
+                  ),
+                  value: isActive,
+                  onChanged: onIsActiveChanged,
+                ),
               ],
             ),
           ),

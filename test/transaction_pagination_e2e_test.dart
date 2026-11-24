@@ -117,6 +117,12 @@ class MockLargeDatasetTransactionRepository implements TransactionRepository {
   Future<void> deleteTransaction(String id) async {
     _items.removeWhere((t) => t.id == id);
   }
+
+  @override
+  Future<String> uploadReceiptAttachment(String transactionId, String filePath) async => '';
+
+  @override
+  Future<void> deleteReceiptAttachment(String transactionId, String attachmentId) async {}
 }
 
 void main() {

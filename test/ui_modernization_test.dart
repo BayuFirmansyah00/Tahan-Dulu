@@ -51,6 +51,14 @@ class _FailingTransactionRepo implements TransactionRepository {
   @override
   Future<void> deleteTransaction(String id) =>
       Future.error(StateError('offline'));
+
+  @override
+  Future<String> uploadReceiptAttachment(String transactionId, String filePath) =>
+      Future.error(StateError('offline'));
+
+  @override
+  Future<void> deleteReceiptAttachment(String transactionId, String attachmentId) =>
+      Future.error(StateError('offline'));
 }
 
 Future<void> _pumpTransactions(

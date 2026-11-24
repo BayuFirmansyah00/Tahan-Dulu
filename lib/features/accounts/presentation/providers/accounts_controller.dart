@@ -102,6 +102,9 @@ class AccountsController {
     double monthlyAdminFee = 0,
     int? adminFeeDay,
     bool adminFeeEnabled = false,
+    bool isActive = true,
+    double? maxBudget,
+    String? budgetFrequency,
     String? idempotencyKey,
   }) async {
     if (_saving) return false;
@@ -134,6 +137,9 @@ class AccountsController {
               monthlyAdminFee: isBankCategory && adminFeeEnabled ? monthlyAdminFee : 0,
               adminFeeDay: isBankCategory && adminFeeEnabled ? adminFeeDay : null,
               adminFeeEnabled: isBankCategory ? adminFeeEnabled : false,
+              isActive: isActive,
+              maxBudget: maxBudget,
+              budgetFrequency: budgetFrequency,
               idempotencyKey: key,
             ),
           );
@@ -164,6 +170,9 @@ class AccountsController {
     double monthlyAdminFee = 0,
     int? adminFeeDay,
     bool adminFeeEnabled = false,
+    bool isActive = true,
+    double? maxBudget,
+    String? budgetFrequency,
   }) async {
     if (_saving) return false;
     if (validateName(name) != null) return false;
@@ -194,6 +203,9 @@ class AccountsController {
               monthlyAdminFee: isBankCategory && adminFeeEnabled ? monthlyAdminFee : 0,
               adminFeeDay: isBankCategory && adminFeeEnabled ? adminFeeDay : null,
               adminFeeEnabled: isBankCategory ? adminFeeEnabled : false,
+              isActive: isActive,
+              maxBudget: maxBudget,
+              budgetFrequency: budgetFrequency,
             ),
           );
       await _refresh();

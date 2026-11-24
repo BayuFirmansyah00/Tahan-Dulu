@@ -120,4 +120,57 @@ class RemoteInvestmentRepository implements InvestmentRepository {
             ))
         .toList();
   }
+
+  @override
+  Future<List<ApiInvestment>> getApiInvestments() async {
+    final token = await _requireToken();
+    final body = await _client.get('/investments', token: token);
+    final resp = ApiInvestmentsResponse.fromJson(body);
+    return resp.data;
+  }
+
+  @override
+  Future<List<ApiInvestmentTransaction>> getApiInvestmentTransactions(
+      String investmentId) async {
+    final token = await _requireToken();
+    final body =
+        await _client.get('/investments/$investmentId/transactions', token: token);
+    final resp = ApiInvestmentTransactionsResponse.fromJson(body);
+    return resp.data;
+  }
+
+  @override
+  Future<ApiInvestmentTransaction> addInvestmentTransaction({
+    required String investmentId,
+    required String type,
+    required int amount,
+    required String instrumentId,
+    String? notes,
+  }) async {
+    final token = await _requireToken();
+    final body = await _client.post(
+      '/investments/$investmentId/transactions',
+      {
+        'type': type,
+        'amount': amount,
+        'instrument_id': instrumentId,
+        if (notes != null && notes.isNotEmpty) 'notes': notes,
+      },
+      token: token,
+    );
+    final resp = ApiInvestmentTransactionResponse.fromJson(body);
+    return resp.data;
+  }
+
+  @override
+  Future<void> deleteInvestmentTransaction({
+    required String investmentId,
+    required String transactionId,
+  }) async {
+    final token = await _requireToken();
+    await _client.delete(
+      '/investments/$investmentId/transactions/$transactionId',
+      token: token,
+    );
+  }
 }

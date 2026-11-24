@@ -19,6 +19,9 @@ class ApiFinancialGoal extends Equatable {
     this.priority,
     this.recurringAmount,
     this.sourceAccountId,
+    this.link,
+    this.productLink,
+    this.note,
     this.isReached,
     this.remainingAmount,
     this.createdAt,
@@ -41,12 +44,16 @@ class ApiFinancialGoal extends Equatable {
   final String? priority;
   final int? recurringAmount;
   final String? sourceAccountId;
+  final String? link;
+  final String? productLink;
+  final String? note;
   final bool? isReached;
   final int? remainingAmount;
   final String? createdAt;
   final String? updatedAt;
 
   factory ApiFinancialGoal.fromJson(Map<String, dynamic> json) {
+    final linkValue = (json['product_link'] ?? json['link']) as String?;
     return ApiFinancialGoal(
       id: '${json['id'] ?? ''}',
       title: '${json['title'] ?? ''}',
@@ -72,6 +79,9 @@ class ApiFinancialGoal extends Equatable {
           ? json['recurring_amount'] as int
           : int.tryParse('${json['recurring_amount']}'),
       sourceAccountId: json['source_account_id'] as String?,
+      link: linkValue,
+      productLink: linkValue,
+      note: json['note'] as String?,
       isReached: json['is_reached'] as bool?,
       remainingAmount: json['remaining_amount'] is int
           ? json['remaining_amount'] as int
@@ -89,6 +99,9 @@ class ApiFinancialGoal extends Equatable {
       'target_amount': targetAmount,
       'recurring_amount': recurringAmount,
       'source_account_id': sourceAccountId,
+      'link': link,
+      'product_link': productLink,
+      'note': note,
       'current_amount': currentAmount,
       'progress_percentage': progressPercentage,
       'target_amount_formatted': targetAmountFormatted,
@@ -190,6 +203,9 @@ class ApiFinancialGoal extends Equatable {
         frequency,
         isActive,
         priority,
+        link,
+        productLink,
+        note,
         isReached,
         remainingAmount,
         createdAt,

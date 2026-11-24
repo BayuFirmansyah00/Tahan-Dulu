@@ -14,6 +14,9 @@ class ApiFinancialInstrument extends Equatable {
     this.adminFeeDay,
     this.adminFeeEnabled = false,
     this.nextAdminFeeDate,
+    this.maxBudget,
+    this.maxBudgetFormatted,
+    this.budgetFrequency,
     this.type,
     this.bank,
     this.createdAt,
@@ -30,6 +33,9 @@ class ApiFinancialInstrument extends Equatable {
   final int? adminFeeDay;
   final bool adminFeeEnabled;
   final String? nextAdminFeeDate;
+  final int? maxBudget;
+  final String? maxBudgetFormatted;
+  final String? budgetFrequency;
   final ApiInstrumentType? type;
   final ApiBank? bank;
   final String? createdAt;
@@ -39,20 +45,25 @@ class ApiFinancialInstrument extends Equatable {
     return ApiFinancialInstrument(
       id: '${json['id'] ?? ''}',
       name: '${json['name'] ?? ''}',
-      balance: json['balance'] is int
-          ? json['balance'] as int
-          : int.tryParse('${json['balance']}') ?? 0,
+      balance: json['balance'] is num
+          ? (json['balance'] as num).round()
+          : num.tryParse('${json['balance']}')?.round() ?? 0,
       isActive: json['is_active'] as bool? ?? false,
       balanceFormatted: json['balance_formatted'] as String?,
-      monthlyAdminFee: json['monthly_admin_fee'] is int
-          ? json['monthly_admin_fee'] as int
-          : int.tryParse('${json['monthly_admin_fee']}') ?? 0,
+      monthlyAdminFee: json['monthly_admin_fee'] is num
+          ? (json['monthly_admin_fee'] as num).round()
+          : num.tryParse('${json['monthly_admin_fee']}')?.round() ?? 0,
       monthlyAdminFeeFormatted: json['monthly_admin_fee_formatted'] as String?,
-      adminFeeDay: json['admin_fee_day'] is int
-          ? json['admin_fee_day'] as int
+      adminFeeDay: json['admin_fee_day'] is num
+          ? (json['admin_fee_day'] as num).round()
           : int.tryParse('${json['admin_fee_day']}'),
       adminFeeEnabled: json['admin_fee_enabled'] as bool? ?? false,
       nextAdminFeeDate: json['next_admin_fee_date'] as String?,
+      maxBudget: json['max_budget'] is num
+          ? (json['max_budget'] as num).round()
+          : num.tryParse('${json['max_budget']}')?.round(),
+      maxBudgetFormatted: json['max_budget_formatted'] as String?,
+      budgetFrequency: json['budget_frequency'] as String?,
       type: json['type'] is Map<String, dynamic>
           ? ApiInstrumentType.fromJson(json['type'] as Map<String, dynamic>)
           : null,
@@ -76,6 +87,9 @@ class ApiFinancialInstrument extends Equatable {
       'admin_fee_day': adminFeeDay,
       'admin_fee_enabled': adminFeeEnabled,
       'next_admin_fee_date': nextAdminFeeDate,
+      'max_budget': maxBudget,
+      'max_budget_formatted': maxBudgetFormatted,
+      'budget_frequency': budgetFrequency,
       'type': type?.toJson(),
       'bank': bank?.toJson(),
       'created_at': createdAt,
@@ -129,6 +143,9 @@ class ApiFinancialInstrument extends Equatable {
         adminFeeDay,
         adminFeeEnabled,
         nextAdminFeeDate,
+        maxBudget,
+        maxBudgetFormatted,
+        budgetFrequency,
         type,
         bank,
         createdAt,

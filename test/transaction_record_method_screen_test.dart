@@ -65,6 +65,12 @@ class _MockTransactionRepository implements TransactionRepository {
       hasNextPage: false,
     );
   }
+
+  @override
+  Future<String> uploadReceiptAttachment(String transactionId, String filePath) async => '';
+
+  @override
+  Future<void> deleteReceiptAttachment(String transactionId, String attachmentId) async {}
 }
 
 class MockSpeechRecognitionService implements SpeechRecognitionService {

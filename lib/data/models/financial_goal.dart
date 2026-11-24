@@ -38,6 +38,11 @@ class FinancialGoal extends Equatable {
     this.frequency = DepositFrequency.monthly,
     this.sourceAccountId,
     this.priority = 0,
+    this.image,
+    this.productLink,
+    this.note,
+    this.reminderDate,
+    this.isActive = true,
   });
 
   final String id;
@@ -50,6 +55,11 @@ class FinancialGoal extends Equatable {
   final DepositFrequency frequency;
   final String? sourceAccountId;
   final int priority;
+  final String? image;
+  final String? productLink;
+  final String? note;
+  final DateTime? reminderDate;
+  final bool isActive;
 
   double get progress => targetAmount <= 0 ? 0 : currentAmount / targetAmount;
 
@@ -69,6 +79,11 @@ class FinancialGoal extends Equatable {
     DepositFrequency? frequency,
     String? sourceAccountId,
     int? priority,
+    String? image,
+    String? productLink,
+    String? note,
+    DateTime? reminderDate,
+    bool? isActive,
   }) {
     return FinancialGoal(
       id: id ?? this.id,
@@ -81,6 +96,11 @@ class FinancialGoal extends Equatable {
       frequency: frequency ?? this.frequency,
       sourceAccountId: sourceAccountId ?? this.sourceAccountId,
       priority: priority ?? this.priority,
+      image: image ?? this.image,
+      productLink: productLink ?? this.productLink,
+      note: note ?? this.note,
+      reminderDate: reminderDate ?? this.reminderDate,
+      isActive: isActive ?? this.isActive,
     );
   }
 
@@ -96,5 +116,10 @@ class FinancialGoal extends Equatable {
         frequency,
         sourceAccountId,
         priority,
+        image,
+        productLink,
+        note,
+        reminderDate,
+        isActive,
       ];
 }
