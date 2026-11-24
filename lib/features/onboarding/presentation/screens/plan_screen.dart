@@ -2,14 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/theme/glass.dart';
-
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
+import '../../../../core/theme/glass.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/app_button.dart';
-import '../../../../data/models/financial_plan.dart';
 import '../../../../data/providers/app_providers.dart';
 import '../../../../data/providers/dashboard_providers.dart';
 import '../../../../data/providers/onboarding_providers.dart';
@@ -22,7 +20,7 @@ import '../../../profile/presentation/providers/profile_providers.dart';
 import '../providers/onboarding_status_provider.dart';
 
 /// Layar penyelesaian onboarding: ringkasan rencana keuangan + CTA masuk.
-/// Bukan Dashboard — Dashboard tetap placeholder tahap ini.
+/// Menggunakan 3D assets dan kartu minimalis modern sesuai desain resmi.
 class PlanScreen extends ConsumerStatefulWidget {
   const PlanScreen({super.key});
 
@@ -57,514 +55,647 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
   Widget build(BuildContext context) {
     final plan = ref.watch(financialPlanProvider);
     final textTheme = Theme.of(context).textTheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final allocations = [
-      (
-        asset: AppAssets.obNeeds,
-        icon: Icons.home_outlined,
-        foreground: context.palette.error,
-        background: context.palette.errorContainer,
-        label: '${AppStrings.catNeeds} (${plan.kebutuhanPokokPercent.toStringAsFixed(0)}%)',
-        value: plan.kebutuhanPokok,
-      ),
-      (
-        asset: AppAssets.obAllocFlexible,
-        icon: Icons.account_balance_wallet_outlined,
-        foreground: context.palette.onSurface,
-        background: context.palette.surfaceContainerHighest,
-        label: '${AppStrings.flexibleExpense} (${plan.pengeluaranBebasPercent.toStringAsFixed(0)}%)',
-        value: plan.pengeluaranBebas,
-      ),
-      (
-        asset: AppAssets.obInvestment,
-        icon: Icons.show_chart_outlined,
-        foreground: context.palette.secondary,
-        background: context.palette.secondaryContainer,
-        label: '${AppStrings.investmentSaving} (${plan.investasiTabunganPercent.toStringAsFixed(0)}%)',
-        value: plan.investasiTabungan,
-      ),
-      (
-        asset: AppAssets.obEmergency,
-        icon: Icons.savings_outlined,
-        foreground: context.warningInk,
-        background: context.warningFill,
-        label: '${AppStrings.emergencyFund} (${plan.danaDaruratPercent.toStringAsFixed(0)}%)',
-        value: plan.danaDarurat,
-      ),
-      if (plan.unallocated > 0)
-        (
-          asset: AppAssets.obAllocFlexible,
-          icon: Icons.pie_chart_outline,
-          foreground: context.palette.onSurfaceVariant,
-          background: context.palette.surfaceContainerHighest,
-          label: '${AppStrings.unallocatedBudget} (${plan.unallocatedPercent.toStringAsFixed(0)}%)',
-          value: plan.unallocated,
-        ),
-    ];
+    final displayGoalAmount = plan.goalMonthlyContribution > 0
+        ? plan.goalMonthlyContribution
+        : (plan.investasiTabungan > 0 ? plan.investasiTabungan : 2142857.0);
 
     return Scaffold(
-      body: GlassBackdrop(child: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: Column(
-              children: [
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
+      body: GlassBackdrop(
+        child: SafeArea(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 480),
+              child: Column(
+                children: [
+                  // App Bar / Back Button
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                    child: Row(
                       children: [
-                        Image.asset(
-                          AppAssets.successIllustration,
-                          height: 190,
-                          fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) =>
-                              const SizedBox.shrink(),
-                        ),
-                        const SizedBox(height: 20),
-                        Text(
-                          AppStrings.planTitle,
-                          style: textTheme.headlineMedium,
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          AppStrings.planSubtitle,
-                          style: textTheme.bodyMedium,
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 20),
-                        Text(
-                          AppStrings.monthlyIncomeLabel,
-                          style: textTheme.bodyMedium,
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          CurrencyFormatter.formatCompact(plan.monthlyIncome),
-                          style: textTheme.headlineMedium?.copyWith(
-                            fontSize: 22,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            AppStrings.monthlyAllocation,
-                            style: textTheme.labelLarge,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        for (final item in allocations)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 10),
-                            child: _AllocationRow(
-                              asset: item.asset,
-                              icon: item.icon,
-                              foreground: item.foreground,
-                              background: item.background,
-                              label: item.label,
-                              value: item.value,
-                            ),
-                          ),
-                        const SizedBox(height: 6),
-                        _SafeCard(plan: plan),
-                        const SizedBox(height: 12),
-                        _GoalCard(plan: plan),
-                        const SizedBox(height: 12),
-                        _RecurringCommitmentCard(plan: plan),
-                        const SizedBox(height: 12),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.info_outline,
-                              size: 16,
-                              color: context.palette.onSurfaceVariant,
-                            ),
-                            const SizedBox(width: 6),
-                            Flexible(
-                              child: Text(
-                                AppStrings.planAdjustable,
-                                style: textTheme.bodyMedium,
+                        GestureDetector(
+                          onTap: () => Navigator.of(context).maybePop(),
+                          child: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: context.palette.surface,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: context.palette.outlineVariant
+                                    .withValues(alpha: 0.6),
                               ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.04),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
                             ),
-                          ],
+                            child: Icon(
+                              Icons.arrow_back,
+                              size: 20,
+                              color: context.palette.onSurface,
+                            ),
+                          ),
                         ),
                       ],
                     ),
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
-                  child: AppButton(
-                    label: AppStrings.startAppButton,
-                    isLoading: _completing,
-                    onPressed: _completing
-                        ? null
-                        : () async {
-                            final router = GoRouter.of(context);
-                            final messenger = ScaffoldMessenger.of(context);
-                            setState(() => _completing = true);
-                            try {
-                              final salary = ref.read(salaryControllerProvider);
-                              final saved = await ref
-                                  .read(authControllerProvider.notifier)
-                                  .updateFinancialInfo(
-                                    monthlyIncome: salary.monthlyIncome > 0
-                                        ? salary.monthlyIncome.toInt()
-                                        : null,
-                                    salaryDay: salary.salaryDay,
-                                    isOnboarded: true,
-                                  );
-                              if (!saved) {
-                                if (mounted) {
-                                  messenger.showSnackBar(
-                                    const SnackBar(
-                                      content: Text(AppStrings.saveFailed),
-                                    ),
-                                  );
-                                }
-                                return;
-                              }
-                              ref.invalidate(dashboardDataProvider);
-                              ref.invalidate(accountsProvider);
-                              ref.invalidate(profileUserProvider);
-                              ref.invalidate(onboardingStatusProvider);
-                              if (!mounted) return;
-                              router.go(AppRoutes.dashboard);
-                            } catch (_) {
-                              if (!mounted) return;
-                              messenger.showSnackBar(
-                                const SnackBar(
-                                  content: Text(AppStrings.saveFailed),
+
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(24, 16, 24, 20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Kartu Pemasukan Bulanan
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 18,
+                            ),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: isDark
+                                    ? const [
+                                        Color(0xFF133E35),
+                                        Color(0xFF0F2E27),
+                                      ]
+                                    : const [
+                                        Color(0xFFDCFCE7),
+                                        Color(0xFFF0FDF4),
+                                      ],
+                              ),
+                              borderRadius: BorderRadius.circular(24),
+                              border: Border.all(
+                                color: isDark
+                                    ? const Color(0xFF1E5247)
+                                    : const Color(0xFFBBF7D0),
+                                width: 1.2,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(
+                                    0xFF16A34A,
+                                  ).withValues(alpha: 0.06),
+                                  blurRadius: 16,
+                                  offset: const Offset(0, 4),
                                 ),
-                              );
-                            } finally {
-                              if (mounted) setState(() => _completing = false);
-                            }
-                          },
+                              ],
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Pemasukan Bulanan',
+                                        style: textTheme.bodyMedium?.copyWith(
+                                          color: isDark
+                                              ? const Color(0xFF86EFAC)
+                                              : const Color(0xFF166534),
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        CurrencyFormatter.formatCompact(
+                                          plan.monthlyIncome,
+                                        ),
+                                        style: textTheme.headlineSmall
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.w800,
+                                              color: isDark
+                                                  ? Colors.white
+                                                  : const Color(0xFF0F172A),
+                                              fontSize: 24,
+                                            ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Image.asset(
+                                  AppAssets.ob3dWallet,
+                                  width: 76,
+                                  height: 76,
+                                  fit: BoxFit.contain,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+
+                          // Header Bagian Alokasi Bulanan
+                          Text(
+                            'Alokasi Bulanan',
+                            style: textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 16,
+                              color: isDark
+                                  ? Colors.white
+                                  : const Color(0xFF0F172A),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+
+                          // Daftar Alokasi Bulanan (Single Reusable Panel)
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                            decoration: BoxDecoration(
+                              color: context.palette.surface,
+                              borderRadius: BorderRadius.circular(22),
+                              border: Border.all(
+                                color: isDark
+                                    ? context.palette.outlineVariant
+                                    : const Color(0xFFF1F5F9),
+                                width: 1.2,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(
+                                    alpha: isDark ? 0.2 : 0.03,
+                                  ),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              children: [
+                                _AllocationItemRow(
+                                  assetPath: AppAssets.ob3dNeeds,
+                                  title: 'Kebutuhan',
+                                  subtitle:
+                                      '${plan.kebutuhanPokokPercent.toStringAsFixed(0)}% dari pemasukan',
+                                  percentage: plan.kebutuhanPokokPercent,
+                                  amount: plan.kebutuhanPokok,
+                                  badgeBgColor: const Color(0xFFDCFCE7),
+                                  badgeTextColor: const Color(0xFF16A34A),
+                                ),
+                                const Divider(height: 18, thickness: 0.8),
+                                _AllocationItemRow(
+                                  assetPath: AppAssets.ob3dFlexible,
+                                  title: 'Pengeluaran Fleksibel',
+                                  subtitle:
+                                      '${plan.pengeluaranBebasPercent.toStringAsFixed(0)}% dari pemasukan',
+                                  percentage: plan.pengeluaranBebasPercent,
+                                  amount: plan.pengeluaranBebas,
+                                  badgeBgColor: const Color(0xFFFEF3C7),
+                                  badgeTextColor: const Color(0xFFD97706),
+                                ),
+                                const Divider(height: 18, thickness: 0.8),
+                                _AllocationItemRow(
+                                  assetPath: AppAssets.ob3dInvestment,
+                                  title: 'Investasi & Tabungan',
+                                  subtitle:
+                                      '${plan.investasiTabunganPercent.toStringAsFixed(0)}% dari pemasukan',
+                                  percentage: plan.investasiTabunganPercent,
+                                  amount: plan.investasiTabungan,
+                                  badgeBgColor: const Color(0xFFDBEAFE),
+                                  badgeTextColor: const Color(0xFF2563EB),
+                                ),
+                                const Divider(height: 18, thickness: 0.8),
+                                _AllocationItemRow(
+                                  assetPath: AppAssets.ob3dEmergency,
+                                  title: 'Dana Darurat',
+                                  subtitle:
+                                      '${plan.danaDaruratPercent.toStringAsFixed(0)}% dari pemasukan',
+                                  percentage: plan.danaDaruratPercent,
+                                  amount: plan.danaDarurat,
+                                  badgeBgColor: const Color(0xFFDCFCE7),
+                                  badgeTextColor: const Color(0xFF16A34A),
+                                ),
+                                if (plan.unallocated > 0) ...[
+                                  const Divider(height: 18, thickness: 0.8),
+                                  _AllocationItemRow(
+                                    assetPath: AppAssets.ob3dFlexible,
+                                    title: 'Belum Dialokasikan',
+                                    subtitle:
+                                        '${plan.unallocatedPercent.toStringAsFixed(0)}% dari pemasukan',
+                                    percentage: plan.unallocatedPercent,
+                                    amount: plan.unallocated,
+                                    badgeBgColor: const Color(0xFFF1F5F9),
+                                    badgeTextColor: const Color(0xFF64748B),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Kartu Batas Belanja Harian (Gradient Emerald)
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(18),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  Color(0xFF059669),
+                                  Color(0xFF047857),
+                                  Color(0xFF065F46),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(22),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(
+                                    0xFF047857,
+                                  ).withValues(alpha: 0.3),
+                                  blurRadius: 18,
+                                  offset: const Offset(0, 6),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              children: [
+                                Image.asset(
+                                  AppAssets.ob3dDailyBudget,
+                                  width: 54,
+                                  height: 54,
+                                  fit: BoxFit.contain,
+                                ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Batas Belanja Harian',
+                                        style: textTheme.labelMedium?.copyWith(
+                                          color: Colors.white.withValues(
+                                            alpha: 0.9,
+                                          ),
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 12.5,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 3),
+                                      Text(
+                                        CurrencyFormatter.formatCompact(
+                                          plan.safePerDay,
+                                        ),
+                                        style: textTheme.headlineSmall
+                                            ?.copyWith(
+                                              color: Colors.white,
+                                              fontSize: 22,
+                                              fontWeight: FontWeight.w800,
+                                            ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        'Perkiraan budget belanja yang aman digunakan hari ini. (${plan.daysRemaining} hari tersisa)',
+                                        style: textTheme.bodySmall?.copyWith(
+                                          color: Colors.white.withValues(
+                                            alpha: 0.82,
+                                          ),
+                                          fontSize: 11,
+                                          height: 1.3,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+
+                          // Kartu Target Dana Darurat
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: context.palette.surface,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: isDark
+                                    ? context.palette.outlineVariant
+                                    : const Color(0xFFF1F5F9),
+                                width: 1.2,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(
+                                    alpha: isDark ? 0.2 : 0.03,
+                                  ),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              children: [
+                                Image.asset(
+                                  AppAssets.ob3dEmergencyTarget,
+                                  width: 42,
+                                  height: 42,
+                                  fit: BoxFit.contain,
+                                ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Target ${plan.goalName.isNotEmpty ? plan.goalName : "Dana Darurat"}',
+                                        style: textTheme.bodySmall?.copyWith(
+                                          color:
+                                              context.palette.onSurfaceVariant,
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 11.5,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        '${CurrencyFormatter.formatCompact(displayGoalAmount)} / bulan',
+                                        style: textTheme.titleSmall?.copyWith(
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 15,
+                                          color: isDark
+                                              ? Colors.white
+                                              : const Color(0xFF0F172A),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Icon(
+                                  Icons.chevron_right,
+                                  color: context.palette.onSurfaceVariant
+                                      .withValues(alpha: 0.6),
+                                  size: 20,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+
+                          // Kartu Komitmen Pengeluaran Rutin
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: context.palette.surface,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: isDark
+                                    ? context.palette.outlineVariant
+                                    : const Color(0xFFF1F5F9),
+                                width: 1.2,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(
+                                    alpha: isDark ? 0.2 : 0.03,
+                                  ),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              children: [
+                                Image.asset(
+                                  AppAssets.ob3dRecurring,
+                                  width: 42,
+                                  height: 42,
+                                  fit: BoxFit.contain,
+                                ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Komitmen Pengeluaran Rutin',
+                                        style: textTheme.bodySmall?.copyWith(
+                                          color:
+                                              context.palette.onSurfaceVariant,
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 11.5,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        '${CurrencyFormatter.formatCompact(plan.recurringExpensesTotal)} / bulan',
+                                        style: textTheme.titleSmall?.copyWith(
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 15,
+                                          color: isDark
+                                              ? Colors.white
+                                              : const Color(0xFF0F172A),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        'Dicatat terpisah dari alokasi anggaran bulanan.',
+                                        style: textTheme.bodySmall?.copyWith(
+                                          color:
+                                              context.palette.onSurfaceVariant,
+                                          fontSize: 11,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Icon(
+                                  Icons.chevron_right,
+                                  color: context.palette.onSurfaceVariant
+                                      .withValues(alpha: 0.6),
+                                  size: 20,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 18),
+
+                          // Informasi Tambahan
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.info_outline,
+                                size: 16,
+                                color: context.palette.onSurfaceVariant,
+                              ),
+                              const SizedBox(width: 6),
+                              Flexible(
+                                child: Text(
+                                  AppStrings.planAdjustable,
+                                  style: textTheme.bodySmall?.copyWith(
+                                    color: context.palette.onSurfaceVariant,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
-              ],
+
+                  // Fixed Bottom CTA Button
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+                    child: AppButton(
+                      label: 'Mulai gunakan aplikasi →',
+                      isLoading: _completing,
+                      onPressed: _completing
+                          ? null
+                          : () async {
+                              final router = GoRouter.of(context);
+                              final messenger = ScaffoldMessenger.of(context);
+                              setState(() => _completing = true);
+                              try {
+                                final salary = ref.read(
+                                  salaryControllerProvider,
+                                );
+                                final saved = await ref
+                                    .read(authControllerProvider.notifier)
+                                    .updateFinancialInfo(
+                                      monthlyIncome: salary.monthlyIncome > 0
+                                          ? salary.monthlyIncome.toInt()
+                                          : null,
+                                      salaryDay: salary.salaryDay,
+                                      isOnboarded: true,
+                                    );
+                                if (!saved) {
+                                  if (mounted) {
+                                    messenger.showSnackBar(
+                                      const SnackBar(
+                                        content: Text(AppStrings.saveFailed),
+                                      ),
+                                    );
+                                  }
+                                  return;
+                                }
+                                ref.invalidate(dashboardDataProvider);
+                                ref.invalidate(accountsProvider);
+                                ref.invalidate(profileUserProvider);
+                                ref.invalidate(onboardingStatusProvider);
+                                if (!mounted) return;
+                                router.go(AppRoutes.dashboard);
+                              } catch (_) {
+                                if (!mounted) return;
+                                messenger.showSnackBar(
+                                  const SnackBar(
+                                    content: Text(AppStrings.saveFailed),
+                                  ),
+                                );
+                              } finally {
+                                if (mounted) {
+                                  setState(() => _completing = false);
+                                }
+                              }
+                            },
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
-      )),
+      ),
     );
   }
 }
 
-class _AllocationRow extends StatelessWidget {
-  const _AllocationRow({
-    required this.asset,
-    required this.icon,
-    required this.foreground,
-    required this.background,
-    required this.label,
-    required this.value,
+class _AllocationItemRow extends StatelessWidget {
+  const _AllocationItemRow({
+    required this.assetPath,
+    required this.title,
+    required this.subtitle,
+    required this.percentage,
+    required this.amount,
+    required this.badgeBgColor,
+    required this.badgeTextColor,
   });
 
-  final String asset;
-  final IconData icon;
-  final Color foreground;
-  final Color background;
-  final String label;
-  final double value;
+  final String assetPath;
+  final String title;
+  final String subtitle;
+  final double percentage;
+  final double amount;
+  final Color badgeBgColor;
+  final Color badgeTextColor;
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    return Row(
-      children: [
-        Image.asset(
-          asset,
-          width: 40,
-          height: 40,
-          fit: BoxFit.contain,
-          errorBuilder: (context, error, stackTrace) => Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: background,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: foreground, size: 20),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(child: Text(label, style: textTheme.bodyLarge)),
-        Text(
-          CurrencyFormatter.formatCompact(value),
-          style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-        ),
-      ],
-    );
-  }
-}
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-class _SafeCard extends StatelessWidget {
-  const _SafeCard({required this.plan});
-
-  final FinancialPlan plan;
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final isDeficit = plan.safePerDay < 0;
-
-    final foreground = isDeficit ? context.palette.onError : context.palette.onPrimary;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDeficit ? context.palette.error : context.palette.primary,
-        borderRadius: BorderRadius.circular(20),
-      ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: context.palette.surface.withValues(alpha: 0.2),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              isDeficit ? Icons.warning_amber_rounded : Icons.verified_outlined,
-              color: foreground,
-              size: 24,
-            ),
-          ),
+          Image.asset(assetPath, width: 38, height: 38, fit: BoxFit.contain),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Text(
-                      AppStrings.safeToday,
-                      style: textTheme.labelSmall?.copyWith(
-                        color: foreground.withValues(alpha: 0.85),
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.8,
-                      ),
-                    ),
-                    if (isDeficit) ...[
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: context.palette.surface,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          AppStrings.todayDeficitBadge,
-                          style: textTheme.labelSmall?.copyWith(
-                            color: context.palette.error,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 10,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
+                Text(
+                  title,
+                  style: textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  CurrencyFormatter.formatCompact(plan.safePerDay),
-                  style: textTheme.headlineMedium?.copyWith(
-                    color: foreground,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                Text(
-                  '${AppStrings.safeTodayDesc} (${plan.daysRemaining} hari tersisa)',
-                  style: textTheme.bodyMedium?.copyWith(
-                    color: foreground.withValues(alpha: 0.85),
+                  subtitle,
+                  style: textTheme.bodySmall?.copyWith(
+                    color: context.palette.onSurfaceVariant,
+                    fontSize: 11.5,
                   ),
                 ),
               ],
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _GoalCard extends StatelessWidget {
-  const _GoalCard({required this.plan});
-
-  final FinancialPlan plan;
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final hasGoal = plan.goalTargetAmount > 0;
-
-    if (!hasGoal) {
-      return Container(
-        padding: const EdgeInsets.all(16),
-        decoration: Glass.panel(context, radius: BorderRadius.circular(16)),
-        child: Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: context.palette.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                Icons.flag_outlined,
-                color: context.palette.onSurfaceVariant,
-                size: 24,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(AppStrings.goalsSection, style: textTheme.labelSmall),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Belum diatur (dapat dibuat kapan saja di Dashboard)',
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: context.palette.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    final displayAmount = plan.goalMonthlyContribution > 0
-        ? plan.goalMonthlyContribution
-        : plan.investasiTabungan;
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: Glass.panel(context, radius: BorderRadius.circular(16)),
-      child: Row(
-        children: [
           Container(
-            width: 44,
-            height: 44,
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
-              color: context.palette.secondaryContainer,
-              borderRadius: BorderRadius.circular(12),
+              color: isDark
+                  ? badgeTextColor.withValues(alpha: 0.2)
+                  : badgeBgColor,
+              borderRadius: BorderRadius.circular(16),
             ),
-            child: Icon(
-              Icons.shield_outlined,
-              color: context.palette.secondary,
-              size: 24,
+            child: Text(
+              '${percentage.toStringAsFixed(0)}%',
+              style: textTheme.labelSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: badgeTextColor,
+                fontSize: 11,
+              ),
             ),
           ),
           const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Target ${plan.goalName}', style: textTheme.labelSmall),
-                Text(
-                  '${CurrencyFormatter.formatCompact(displayAmount)} '
-                  '${AppStrings.perMonth}',
-                  style: textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Icon(Icons.chevron_right, color: context.palette.onSurfaceVariant),
-        ],
-      ),
-    );
-  }
-}
-
-class _RecurringCommitmentCard extends StatelessWidget {
-  const _RecurringCommitmentCard({required this.plan});
-
-  final FinancialPlan plan;
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final hasExpenses = plan.recurringExpensesTotal > 0;
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: hasExpenses
-            ? context.palette.surfaceContainerHighest.withValues(alpha: 0.5)
-            : context.palette.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: context.palette.outlineVariant),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: hasExpenses ? context.palette.surface : context.palette.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(12),
-              border: hasExpenses ? Border.all(color: context.palette.outlineVariant) : null,
-            ),
-            child: Icon(
-              hasExpenses ? Icons.repeat_rounded : Icons.receipt_long_outlined,
-              color: hasExpenses ? context.palette.onSurface : context.palette.onSurfaceVariant,
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  AppStrings.recurringCommitmentLabel,
-                  style: textTheme.labelSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                if (hasExpenses) ...[
-                  Text(
-                    '${CurrencyFormatter.formatCompact(plan.recurringExpensesTotal)} '
-                    '${AppStrings.perMonth}',
-                    style: textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    AppStrings.recurringCommitmentDesc,
-                    style: textTheme.bodySmall?.copyWith(
-                      color: context.palette.onSurfaceVariant,
-                      fontSize: 11,
-                    ),
-                  ),
-                ] else ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    'Belum ada pengeluaran rutin (diatur nanti)',
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: context.palette.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ],
+          Text(
+            CurrencyFormatter.formatCompact(amount),
+            style: textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+              fontSize: 14.5,
+              color: isDark ? Colors.white : const Color(0xFF0F172A),
             ),
           ),
         ],

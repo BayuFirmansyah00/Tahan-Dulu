@@ -1,17 +1,32 @@
-/// Konfigurasi koneksi API backend Laravel.
+/// Konfigurasi koneksi API backend Laravel Tahan Dulu.
 ///
-/// Base URL dan mode remote diatur via `--dart-define` agar fleksibel untuk
-/// berbagai environment:
-/// - Android Emulator: `http://10.0.2.2:8000/api` (default)
+/// Base URL secara default sekarang mengarah langsung ke server VPS production:
+/// `https://tahandulu.kreasikan.site/api`
+/// sehingga aplikasi dapat langsung dijalankan (`flutter run`) tanpa perlu menyalakan
+/// `php artisan serve` di komputer lokal.
+///
+/// Pengembang tetap dapat beralih ke server lokal jika diperlukan via `--dart-define`:
+/// - Android Emulator (Local): `flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000/api`
 /// - Perangkat Fisik (LAN Wi-Fi): `flutter run --dart-define=API_BASE_URL=http://<IP_LAPTOP>:8000/api`
-/// - Production: `flutter build apk --dart-define=API_BASE_URL=https://tahandulu.kreasikan.site/api`
+/// - Desktop / Web (Local): `flutter run --dart-define=API_BASE_URL=http://localhost:8000/api`
 ///
 /// Nonaktifkan remote via `--dart-define=USE_REMOTE_API=false` untuk pengujian mock.
 abstract final class ApiConfig {
-  /// Base URL backend. Default menunjuk ke loopback Android emulator standard.
+  /// Production VPS API URL (default utama).
+  static const String productionBaseUrl =
+      'https://tahandulu.kreasikan.site/api';
+
+  /// Local development URL untuk Android Emulator standard loopback.
+  static const String devEmulatorBaseUrl = 'http://10.0.2.2:8000/api';
+
+  /// Local development URL untuk Desktop / Web localhost.
+  static const String devLocalhostBaseUrl = 'http://localhost:8000/api';
+
+  /// Base URL backend aktif.
+  /// Default: [productionBaseUrl] (https://tahandulu.kreasikan.site/api).
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://10.0.2.2:8000/api',
+    defaultValue: productionBaseUrl,
   );
 
   /// true = repository auth memakai backend Laravel (Sanctum).
@@ -28,4 +43,10 @@ abstract final class ApiConfig {
     'USE_REMOTE_API',
     defaultValue: true,
   );
+
+  /// Status apakah aplikasi sedang terhubung ke VPS production.
+  static bool get isProduction => baseUrl.contains('tahandulu.kreasikan.site');
+
+  /// Status apakah aplikasi sedang terhubung ke server lokal.
+  static bool get isLocal => !isProduction;
 }

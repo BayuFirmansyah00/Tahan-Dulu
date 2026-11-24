@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 import '../constants/app_assets.dart';
 import '../constants/app_strings.dart';
+import '../constants/glass_design_tokens.dart';
 import '../routing/app_routes.dart';
 import '../theme/glass.dart';
 
-/// Navigasi utama dengan satu permukaan kaca untuk kelima aksi.
+/// Navigasi utama Tahan Dulu dengan permukaan Liquid Glass mengambang.
+///
+/// Menghubungkan 5 tab utama (Beranda, Transaksi, Catat, Tujuan, Profil)
+/// dengan indikator pill teranimasi halus, aset ikon 3D terpadu,
+/// dan integrasi penuh dengan GoRouter.
 class AppBottomNavigationBar extends StatelessWidget {
   const AppBottomNavigationBar({super.key, this.currentIndex, this.onTap});
 
@@ -95,115 +101,136 @@ class AppBottomNavigationBar extends StatelessWidget {
       return const SizedBox.shrink();
     }
     final selected = _resolveCurrentIndex(context);
-    final scheme = Theme.of(context).colorScheme;
+    final scheme = context.palette;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final height = 43 + MediaQuery.textScalerOf(context).scale(11) * 1.5;
+
+    final navContent = SizedBox(
+      height: height,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final width = constraints.maxWidth / _items.length;
+          return Stack(
+            children: [
+              if (selected != null &&
+                  selected >= 0 &&
+                  selected < _items.length)
+                AnimatedPositionedDirectional(
+                  duration: GlassDesignTokens.motionDuration(context),
+                  curve: GlassDesignTokens.curve,
+                  start: selected * width,
+                  width: width,
+                  top: 0,
+                  bottom: 0,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      borderRadius: GlassDesignTokens.radiusCapsule,
+                      color: scheme.primaryContainer,
+                      border: Border.all(
+                        color: scheme.primary.withValues(alpha: .26),
+                      ),
+                    ),
+                  ),
+                ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (final (index, item) in _items.indexed)
+                    Expanded(
+                      child: Semantics(
+                        selected: index == selected,
+                        button: true,
+                        label: item.$1,
+                        child: Material(
+                          type: MaterialType.transparency,
+                          child: InkWell(
+                            key: index == 2
+                                ? const Key('record_button')
+                                : null,
+                            borderRadius:
+                                GlassDesignTokens.radiusCapsule,
+                            onTap: () => _handleTap(context, index),
+                            child: ExcludeSemantics(
+                              child: Column(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.center,
+                                children: [
+                                  Image.asset(
+                                    item.$2,
+                                    key: index == 2
+                                        ? const Key(
+                                            'record_button_icon',
+                                          )
+                                        : null,
+                                    width: index == 2 ? 31 : 25,
+                                    height: 31,
+                                    fit: BoxFit.contain,
+                                    errorBuilder: (_, _, _) => Icon(
+                                      item.$3,
+                                      color: scheme.primary,
+                                    ),
+                                  ),
+                                  FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: Text(
+                                      item.$1,
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        height: 1.3,
+                                        fontWeight: index == selected
+                                            ? FontWeight.w700
+                                            : FontWeight.w500,
+                                        color: index == selected
+                                            ? scheme.onPrimaryContainer
+                                            : scheme.onSurface,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
+    final isAccessible = Glass.accessible(context) ||
+        GlassDesignTokens.isHighContrast(context);
+
     return SafeArea(
       top: false,
-      minimum: const EdgeInsets.fromLTRB(8, 5, 8, 8),
+      minimum: const EdgeInsets.fromLTRB(10, 5, 10, 8),
       child: Align(
         heightFactor: 1,
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 520),
-          child: FloatingGlass(
-            child: Padding(
-              padding: const EdgeInsets.all(4),
-              child: SizedBox(
-                height: height,
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final width = constraints.maxWidth / _items.length;
-                    return Stack(
-                      children: [
-                        if (selected != null &&
-                            selected >= 0 &&
-                            selected < _items.length)
-                          AnimatedPositionedDirectional(
-                            duration: Glass.motion(context),
-                            curve: Glass.curve,
-                            start: selected * width,
-                            width: width,
-                            top: 0,
-                            bottom: 0,
-                            child: DecoratedBox(
-                              decoration: BoxDecoration(
-                                borderRadius: Glass.capsule,
-                                color: scheme.primaryContainer,
-                                border: Border.all(
-                                  color: scheme.primary.withValues(alpha: .26),
-                                ),
-                              ),
-                            ),
-                          ),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            for (final (index, item) in _items.indexed)
-                              Expanded(
-                                child: Semantics(
-                                  selected: index == selected,
-                                  button: true,
-                                  label: item.$1,
-                                  child: Material(
-                                    type: MaterialType.transparency,
-                                    child: InkWell(
-                                      key: index == 2
-                                          ? const Key('record_button')
-                                          : null,
-                                      borderRadius: Glass.capsule,
-                                      onTap: () => _handleTap(context, index),
-                                      child: ExcludeSemantics(
-                                        child: Column(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: [
-                                            Image.asset(
-                                              item.$2,
-                                              key: index == 2
-                                                  ? const Key(
-                                                      'record_button_icon',
-                                                    )
-                                                  : null,
-                                              width: index == 2 ? 31 : 25,
-                                              height: 31,
-                                              fit: BoxFit.contain,
-                                              errorBuilder: (_, _, _) => Icon(
-                                                item.$3,
-                                                color: scheme.primary,
-                                              ),
-                                            ),
-                                            FittedBox(
-                                              fit: BoxFit.scaleDown,
-                                              child: Text(
-                                                item.$1,
-                                                style: TextStyle(
-                                                  fontSize: 11,
-                                                  height: 1.3,
-                                                  fontWeight: index == selected
-                                                      ? FontWeight.w700
-                                                      : FontWeight.w500,
-                                                  color: index == selected
-                                                      ? scheme
-                                                            .onPrimaryContainer
-                                                      : scheme.onSurface,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ],
-                    );
-                  },
+          child: isAccessible
+              ? DecoratedBox(
+                  decoration: Glass.panel(
+                    context,
+                    radius: GlassDesignTokens.radiusCapsule,
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(4),
+                    child: navContent,
+                  ),
+                )
+              : GlassContainer(
+                  useOwnLayer: true,
+                  shape: const LiquidRoundedSuperellipse(borderRadius: 32),
+                  color: isDark
+                      ? scheme.surfaceContainerHighest.withValues(alpha: 0.6)
+                      : Colors.white.withValues(alpha: 0.84),
+                  padding: const EdgeInsets.all(4),
+                  child: navContent,
                 ),
-              ),
-            ),
-          ),
         ),
       ),
     );

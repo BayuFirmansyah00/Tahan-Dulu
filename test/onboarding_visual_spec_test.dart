@@ -160,26 +160,27 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('ringkasan: ilustrasi 190 contain + alokasi 40x40 contain',
+    testWidgets('ringkasan: dompet 3d 76 contain + alokasi 38x38 contain',
         (tester) async {
       await _pumpScreen(tester, const PlanScreen());
 
-      final hero =
-          tester.widget<Image>(_assetImage(AppAssets.successIllustration));
-      expect(hero.height, 190);
-      expect(hero.fit, BoxFit.contain);
+      final wallet =
+          tester.widget<Image>(_assetImage(AppAssets.ob3dWallet));
+      expect(wallet.width, 76);
+      expect(wallet.height, 76);
+      expect(wallet.fit, BoxFit.contain);
 
       for (final asset in [
-        AppAssets.obNeeds,
-        AppAssets.obEmergency,
-        AppAssets.obInvestment,
-        AppAssets.obAllocFlexible,
+        AppAssets.ob3dNeeds,
+        AppAssets.ob3dFlexible,
+        AppAssets.ob3dInvestment,
+        AppAssets.ob3dEmergency,
       ]) {
         await tester.ensureVisible(_assetImage(asset));
         await tester.pumpAndSettle();
         final image = tester.widget<Image>(_assetImage(asset));
-        expect(image.width, 40, reason: asset);
-        expect(image.height, 40, reason: asset);
+        expect(image.width, 38, reason: asset);
+        expect(image.height, 38, reason: asset);
         expect(image.fit, BoxFit.contain, reason: asset);
       }
       expect(tester.takeException(), isNull);

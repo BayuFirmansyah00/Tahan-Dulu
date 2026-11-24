@@ -121,6 +121,32 @@ class ApiClient {
     return result;
   }
 
+  Never _handleError(Object e) {
+    if (e is ApiException) throw e;
+    if (e is TimeoutException) {
+      throw ApiException(
+        'Server tidak merespons (waktu koneksi habis). Periksa koneksi internet Anda.',
+      );
+    }
+    if (e is http.ClientException) {
+      throw ApiException('Tidak dapat menghubungi server: ${e.message}');
+    }
+    final msg = e.toString();
+    if (msg.contains('SocketException') ||
+        msg.contains('Connection refused') ||
+        msg.contains('Failed host lookup') ||
+        msg.contains('Network is unreachable')) {
+      throw ApiException(
+        'Tidak dapat terhubung ke server ($baseUrl). Periksa jaringan internet Anda.',
+      );
+    }
+    if (msg.contains('HandshakeException') ||
+        msg.contains('CERTIFICATE_VERIFY_FAILED')) {
+      throw ApiException('Gagal memverifikasi sertifikat keamanan SSL server.');
+    }
+    throw ApiException('Terjadi kesalahan koneksi: $e');
+  }
+
   Future<Map<String, dynamic>> post(
     String path,
     Map<String, dynamic> payload, {
@@ -135,10 +161,8 @@ class ApiClient {
           )
           .timeout(timeout);
       return _decode(res);
-    } on TimeoutException {
-      throw ApiException('Server tidak merespons. Periksa koneksi.');
-    } on http.ClientException catch (e) {
-      throw ApiException('Tidak dapat menghubungi server: ${e.message}');
+    } catch (e) {
+      _handleError(e);
     }
   }
 
@@ -167,10 +191,8 @@ class ApiClient {
       final streamedResponse = await _http.send(request).timeout(timeout);
       final res = await http.Response.fromStream(streamedResponse);
       return _decode(res);
-    } on TimeoutException {
-      throw ApiException('Server tidak merespons. Periksa koneksi.');
-    } on http.ClientException catch (e) {
-      throw ApiException('Tidak dapat menghubungi server: ${e.message}');
+    } catch (e) {
+      _handleError(e);
     }
   }
 
@@ -180,10 +202,8 @@ class ApiClient {
           .get(Uri.parse('$baseUrl$path'), headers: _headers(token))
           .timeout(timeout);
       return _decode(res);
-    } on TimeoutException {
-      throw ApiException('Server tidak merespons. Periksa koneksi.');
-    } on http.ClientException catch (e) {
-      throw ApiException('Tidak dapat menghubungi server: ${e.message}');
+    } catch (e) {
+      _handleError(e);
     }
   }
 
@@ -217,10 +237,8 @@ class ApiClient {
         );
       }
       return res.bodyBytes;
-    } on TimeoutException {
-      throw ApiException('Server tidak merespons. Periksa koneksi.');
-    } on http.ClientException catch (e) {
-      throw ApiException('Tidak dapat menghubungi server: ${e.message}');
+    } catch (e) {
+      _handleError(e);
     }
   }
 
@@ -238,10 +256,8 @@ class ApiClient {
           )
           .timeout(timeout);
       return _decode(res);
-    } on TimeoutException {
-      throw ApiException('Server tidak merespons. Periksa koneksi.');
-    } on http.ClientException catch (e) {
-      throw ApiException('Tidak dapat menghubungi server: ${e.message}');
+    } catch (e) {
+      _handleError(e);
     }
   }
 
@@ -259,10 +275,8 @@ class ApiClient {
           )
           .timeout(timeout);
       return _decode(res);
-    } on TimeoutException {
-      throw ApiException('Server tidak merespons. Periksa koneksi.');
-    } on http.ClientException catch (e) {
-      throw ApiException('Tidak dapat menghubungi server: ${e.message}');
+    } catch (e) {
+      _handleError(e);
     }
   }
 
@@ -280,10 +294,8 @@ class ApiClient {
           )
           .timeout(timeout);
       return _decode(res);
-    } on TimeoutException {
-      throw ApiException('Server tidak merespons. Periksa koneksi.');
-    } on http.ClientException catch (e) {
-      throw ApiException('Tidak dapat menghubungi server: ${e.message}');
+    } catch (e) {
+      _handleError(e);
     }
   }
 

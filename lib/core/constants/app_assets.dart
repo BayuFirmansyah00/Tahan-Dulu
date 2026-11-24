@@ -176,7 +176,8 @@ abstract final class AppAssets {
   static const String txSecurity = '$_icons/keamanan.png';
 
   /// Ikon & ilustrasi 3D Scan Struk
-  static const String scanReceiptHero = '$_icons/scan_struk/scan_receipt_3d.png';
+  static const String scanReceiptHero =
+      '$_icons/scan_struk/scan_receipt_3d.png';
   static const String scanCamera3d = '$_icons/scan_struk/camera_3d.png';
   static const String scanGallery3d = '$_icons/scan_struk/gallery_3d.png';
   static const String scanStepCamera = '$_icons/scan_struk/step_camera.png';
@@ -275,6 +276,17 @@ abstract final class AppAssets {
   static const String obHoliday = '$_icons/icon_entertainment.png';
   static const String obAllocSaving = '$_icons/icon_savings.png';
   static const String obAllocFlexible = '$_icons/icon_wallet.png';
+
+  /// Ikon 3D Onboarding V2 (Atur Anggaran Bulanan & Ringkasan Rencana Keuangan)
+  static const String ob3dWallet = '$_icons/penghasilan_bulanan.png';
+  static const String ob3dNeeds = '$_icons/kebutuhan_pokok.png';
+  static const String ob3dFlexible = '$_icons/pengeluaran_fleksibel.png';
+  static const String ob3dInvestment = '$_icons/investasi_tabungan.png';
+  static const String ob3dEmergency = '$_icons/dana_darurat.png';
+  static const String ob3dTotalAllocation = '$_icons/total_alokasi.png';
+  static const String ob3dDailyBudget = '$_icons/batas_belanja_harian.png';
+  static const String ob3dEmergencyTarget = '$_icons/target_dana_darurat.png';
+  static const String ob3dRecurring = '$_icons/pengeluaran_rutin.png';
 
   /// Banner header settings (assets/illustrations/settings).
   /// Banner jadi dengan teks Indonesia bawaan — tampilkan utuh
