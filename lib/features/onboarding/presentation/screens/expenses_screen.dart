@@ -430,11 +430,14 @@ class _ExpenseCard extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          Text(
-                            '${CurrencyFormatter.formatCompact(expense.monthlyAmount)} ${AppStrings.perMonth}',
-                            style: textTheme.bodyMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: context.palette.onSurface,
+                          Expanded(
+                            child: Text(
+                              '${CurrencyFormatter.formatCompact(expense.monthlyAmount)} ${AppStrings.perMonth}',
+                              style: textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                color: context.palette.onSurface,
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],

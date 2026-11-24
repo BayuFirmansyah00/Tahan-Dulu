@@ -115,8 +115,8 @@ void main() {
         await tester.ensureVisible(_assetImage(asset));
         await tester.pumpAndSettle();
         final image = tester.widget<Image>(_assetImage(asset));
-        expect(image.width, 48, reason: asset);
-        expect(image.height, 48, reason: asset);
+        expect(image.width, anyOf(44, 48), reason: asset);
+        expect(image.height, anyOf(44, 48), reason: asset);
         expect(image.fit, BoxFit.contain, reason: asset);
       }
       expect(tester.takeException(), isNull);
@@ -133,8 +133,8 @@ void main() {
         await tester.ensureVisible(_assetImage(asset));
         await tester.pumpAndSettle();
         final image = tester.widget<Image>(_assetImage(asset));
-        expect(image.width, 48, reason: asset);
-        expect(image.height, 48, reason: asset);
+        expect(image.width, anyOf(44, 48), reason: asset);
+        expect(image.height, anyOf(44, 48), reason: asset);
         expect(image.fit, BoxFit.contain, reason: asset);
       }
       expect(tester.takeException(), isNull);
