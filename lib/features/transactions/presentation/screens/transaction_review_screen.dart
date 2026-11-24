@@ -56,6 +56,7 @@ class _TransactionReviewScreenState
   }
 
   Future<void> _save() async {
+    if (_submitting) return;
     setState(() {
       _submitting = true;
       _saveFailed = false;
@@ -66,7 +67,7 @@ class _TransactionReviewScreenState
           await ref.read(transactionFormProvider.notifier).save();
       if (!mounted) return;
       if (ok) {
-        context.push(AppRoutes.transactionSuccess);
+        context.pushReplacement(AppRoutes.transactionSuccess);
       } else {
         setState(() => _saveFailed = true);
       }

@@ -6,6 +6,7 @@ import '../../../../core/theme/glass.dart';
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/rupiah_input_formatter.dart';
+import '../../../../core/utils/uuid_generator.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_image_icon.dart';
 import '../../../../core/widgets/app_text_field.dart';
@@ -38,6 +39,7 @@ class _AddAccountScreenState extends ConsumerState<AddAccountScreen> {
   ApiBank? _selectedBank;
   bool _attempted = false;
   bool _saving = false;
+  late final String _idempotencyKey = generateUuidV4();
   bool _loadingInstrumentTypes = true;
   String? _instrumentTypesError;
 
@@ -170,6 +172,7 @@ class _AddAccountScreenState extends ConsumerState<AddAccountScreen> {
   }
 
   Future<void> _save() async {
+    if (_saving) return;
     final name = _nameController.text;
     final balance =
         RupiahInputFormatter.parse(_balanceController.text);
@@ -248,6 +251,7 @@ class _AddAccountScreenState extends ConsumerState<AddAccountScreen> {
             monthlyAdminFee: feeAmount,
             adminFeeDay: feeEnabled ? feeDay : null,
             adminFeeEnabled: feeEnabled,
+            idempotencyKey: _idempotencyKey,
           );
       if (!mounted) return;
       if (ok) {

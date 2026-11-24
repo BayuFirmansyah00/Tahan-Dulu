@@ -284,6 +284,9 @@ class TransactionFormController extends Notifier<TransactionDraft> {
       final key = state.idempotencyKey.isNotEmpty
           ? state.idempotencyKey
           : generateUuidV4();
+      if (state.idempotencyKey.isEmpty) {
+        state = state.copyWith(idempotencyKey: key);
+      }
 
       final saved = await ref
           .read(transactionRepositoryProvider)
@@ -310,6 +313,8 @@ class TransactionFormController extends Notifier<TransactionDraft> {
       ref.invalidate(currentBudgetProvider);
       ref.invalidate(monthlyReportProvider);
       ref.invalidate(apiFinancialReportProvider);
+      // Persiapkan key baru agar draft berikutnya tidak menggunakan key lama
+      state = state.copyWith(idempotencyKey: generateUuidV4());
       return true;
     } on ApiException {
       // Error validasi dari backend (422) akan ditangani oleh UI melalui

@@ -1,3 +1,4 @@
+import '../../../core/utils/uuid_generator.dart';
 import '../../../data/models/api_financial_goal.dart';
 import '../../../data/models/api_financial_instrument.dart';
 import '../../../data/models/api_recurring_transaction.dart';
@@ -308,7 +309,10 @@ class RemoteOnboardingRepository implements OnboardingRepository {
         payload['bank_slug'] = instrument.bankSlug;
       }
 
-      final isExistingBackendId = int.tryParse(instrument.id) != null;
+      final isExistingBackendId = isBackendId(instrument.id);
+      if (!isExistingBackendId) {
+        payload['idempotency_key'] = 'onboarding-${instrument.id}';
+      }
       final Map<String, dynamic> body;
       if (isExistingBackendId) {
         // Hindari duplikasi: perbarui instrumen yang sudah memiliki ID backend
@@ -373,7 +377,7 @@ class RemoteOnboardingRepository implements OnboardingRepository {
         'make_automatic': false,
       };
 
-      final isExistingBackendId = int.tryParse(expense.id) != null;
+      final isExistingBackendId = isBackendId(expense.id);
       final Map<String, dynamic> body;
       if (isExistingBackendId) {
         // Hindari duplikasi: perbarui pengeluaran rutin yang sudah tersimpan
@@ -424,8 +428,9 @@ class RemoteOnboardingRepository implements OnboardingRepository {
       'is_active': true,
     };
 
-    final existingId = int.tryParse(goal.id) ??
-        (_cachedGoal != null ? int.tryParse(_cachedGoal!.id) : null);
+    final existingId = isBackendId(goal.id)
+        ? goal.id
+        : (isBackendId(_cachedGoal?.id) ? _cachedGoal!.id : null);
 
     final Map<String, dynamic> body;
     if (existingId != null) {

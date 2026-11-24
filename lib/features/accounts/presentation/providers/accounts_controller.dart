@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/utils/uuid_generator.dart';
 import '../../../../data/datasources/remote/api_client.dart';
 import '../../../../data/models/financial_account.dart';
 import '../../../../data/providers/account_providers.dart';
@@ -84,6 +85,8 @@ class AccountsController {
     return AccountType.bank;
   }
 
+  bool _saving = false;
+
   Future<bool> addAccount({
     required String name,
     AccountType? type,
@@ -97,9 +100,12 @@ class AccountsController {
     double monthlyAdminFee = 0,
     int? adminFeeDay,
     bool adminFeeEnabled = false,
+    String? idempotencyKey,
   }) async {
+    if (_saving) return false;
     if (validateName(name) != null) return false;
     if (validateInitialBalance(initialBalance) != null) return false;
+    _saving = true;
     try {
       final resolvedType = _resolveAccountType(type, typeId);
       final isBankCategory = resolvedType == AccountType.bank ||
@@ -108,6 +114,7 @@ class AccountsController {
           (resolvedType == AccountType.bank
               ? 'bank'
               : (resolvedType == AccountType.digitalBank ? 'digitalBank' : 'ewallet'));
+      final key = idempotencyKey ?? generateUuidV4();
       await _ref.read(accountRepositoryProvider).addAccount(
             FinancialAccount(
               id: 'acc-${DateTime.now().millisecondsSinceEpoch}',
@@ -125,6 +132,7 @@ class AccountsController {
               monthlyAdminFee: isBankCategory && adminFeeEnabled ? monthlyAdminFee : 0,
               adminFeeDay: isBankCategory && adminFeeEnabled ? adminFeeDay : null,
               adminFeeEnabled: isBankCategory ? adminFeeEnabled : false,
+              idempotencyKey: key,
             ),
           );
       await _refresh();
@@ -135,6 +143,8 @@ class AccountsController {
       rethrow;
     } catch (_) {
       return false;
+    } finally {
+      _saving = false;
     }
   }
 
@@ -153,8 +163,10 @@ class AccountsController {
     int? adminFeeDay,
     bool adminFeeEnabled = false,
   }) async {
+    if (_saving) return false;
     if (validateName(name) != null) return false;
     if (validateInitialBalance(initialBalance) != null) return false;
+    _saving = true;
     try {
       final resolvedType = _resolveAccountType(type, typeId);
       final isBankCategory = resolvedType == AccountType.bank ||
@@ -188,6 +200,8 @@ class AccountsController {
       rethrow;
     } catch (_) {
       return false;
+    } finally {
+      _saving = false;
     }
   }
 

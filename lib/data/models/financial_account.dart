@@ -22,11 +22,15 @@ class FinancialAccount extends Equatable {
     this.monthlyAdminFee = 0,
     this.adminFeeDay,
     this.adminFeeEnabled = false,
+    this.idempotencyKey,
   });
 
   final String id;
   final String name;
   final AccountType type;
+
+  /// Kunci idempotensi untuk mencegah duplikasi create akun pada backend.
+  final String? idempotencyKey;
 
   /// ID tipe instrumen dari instrument_types (dikirim ke backend sebagai type_id).
   final String? typeId;
@@ -104,6 +108,7 @@ class FinancialAccount extends Equatable {
     double? monthlyAdminFee,
     int? adminFeeDay,
     bool? adminFeeEnabled,
+    String? idempotencyKey,
   }) {
     return FinancialAccount(
       id: id ?? this.id,
@@ -119,6 +124,7 @@ class FinancialAccount extends Equatable {
       monthlyAdminFee: monthlyAdminFee ?? this.monthlyAdminFee,
       adminFeeDay: adminFeeDay ?? this.adminFeeDay,
       adminFeeEnabled: adminFeeEnabled ?? this.adminFeeEnabled,
+      idempotencyKey: idempotencyKey ?? this.idempotencyKey,
     );
   }
 
@@ -137,5 +143,6 @@ class FinancialAccount extends Equatable {
         monthlyAdminFee,
         adminFeeDay,
         adminFeeEnabled,
+        idempotencyKey,
       ];
 }

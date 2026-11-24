@@ -122,6 +122,8 @@ class RemoteAccountRepository implements AccountRepository {
         'is_active': true,
         if (account.bankId != null) 'bank_id': account.bankId,
         if (account.bankSlug != null) 'bank_slug': account.bankSlug,
+        if (account.idempotencyKey != null)
+          'idempotency_key': account.idempotencyKey,
       },
       token: token,
     );

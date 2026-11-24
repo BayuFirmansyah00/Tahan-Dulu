@@ -226,6 +226,7 @@ class MockAccountRepository implements AccountRepository {
 
   final OnboardingRepository _onboarding;
   final Map<String, ({int? bankId, String? bankSlug, String? bankName, String? bankLogoUrl})> _bankMeta = {};
+  final Map<String, String?> _idempotencyKeys = {};
 
   List<FinancialInstrument> get _items =>
       _onboarding.getOnboardingData()?.financialInstruments ?? const [];
@@ -267,6 +268,7 @@ class MockAccountRepository implements AccountRepository {
       bankSlug: _bankMeta[e.id]?.bankSlug,
       bankName: _bankMeta[e.id]?.bankName,
       bankLogoUrl: _bankMeta[e.id]?.bankLogoUrl,
+      idempotencyKey: _idempotencyKeys[e.id],
     );
   }
 
@@ -292,6 +294,9 @@ class MockAccountRepository implements AccountRepository {
       bankName: account.bankName,
       bankLogoUrl: account.bankLogoUrl,
     );
+    if (account.idempotencyKey != null) {
+      _idempotencyKeys[account.id] = account.idempotencyKey;
+    }
     final saved = await _onboarding.addInstrument(
       FinancialInstrument(
         id: account.id,

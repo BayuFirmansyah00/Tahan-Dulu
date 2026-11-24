@@ -61,81 +61,95 @@ class _TransactionSuccessScreenState
         isIncome ? context.palette.primary : context.palette.error;
     final sign = isIncome ? '+' : '-';
 
-    return Scaffold(
-      body: GlassBackdrop(child: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  const SizedBox(height: 16),
-                  const AppImageIcon(
-                    assetPath: AppAssets.statusSuccess,
-                    size: 88,
-                    fallbackIcon: Icons.check_circle,
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    AppStrings.successTitle,
-                    style: textTheme.headlineMedium,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '$sign${CurrencyFormatter.formatCompact(saved.amount)}',
-                    style: textTheme.displayLarge?.copyWith(
-                      color: amountColor,
-                      fontSize: 32,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        ref.read(transactionFormProvider.notifier).reset();
+        context.go(AppRoutes.dashboard);
+      },
+      child: Scaffold(
+        body: GlassBackdrop(child: SafeArea(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 480),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const SizedBox(height: 16),
+                    const AppImageIcon(
+                      assetPath: AppAssets.statusSuccess,
+                      size: 88,
+                      fallbackIcon: Icons.check_circle,
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  _Row(
-                    label: AppStrings.reviewName,
-                    value: saved.title,
-                  ),
-                  _Row(
-                    label: AppStrings.reviewCategory,
-                    value: saved.category ?? '-',
-                  ),
-                  _Row(
-                    label: isIncome
-                        ? AppStrings.reviewReceiveIn
-                        : AppStrings.reviewPayFrom,
-                    value: accounts[saved.accountId] ?? '-',
-                  ),
-                  _Row(
-                    label: AppStrings.reviewDate,
-                    value: DateFormatter.dayMonthYear(saved.date),
-                  ),
-                  if (saved.fee > 0)
+                    const SizedBox(height: 20),
+                    Text(
+                      AppStrings.successTitle,
+                      style: textTheme.headlineMedium,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '$sign${CurrencyFormatter.formatCompact(saved.amount)}',
+                      style: textTheme.displayLarge?.copyWith(
+                        color: amountColor,
+                        fontSize: 32,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
                     _Row(
-                      label: AppStrings.reviewFee,
-                      value: CurrencyFormatter.formatCompact(saved.fee),
+                      label: AppStrings.reviewName,
+                      value: saved.title,
                     ),
-                  if (saved.note != null && saved.note!.isNotEmpty)
                     _Row(
-                      label: AppStrings.reviewNote,
-                      value: saved.note!,
+                      label: AppStrings.reviewCategory,
+                      value: saved.category ?? '-',
                     ),
-                  const SizedBox(height: 24),
-                  AppButton(
-                    label: AppStrings.seeTransactions,
-                    onPressed: () => context.go(AppRoutes.transactions),
-                  ),
-                  const SizedBox(height: 12),
-                  AppOutlineButton(
-                    label: AppStrings.backToHome,
-                    onPressed: () => context.go(AppRoutes.dashboard),
-                  ),
-                ],
+                    _Row(
+                      label: isIncome
+                          ? AppStrings.reviewReceiveIn
+                          : AppStrings.reviewPayFrom,
+                      value: accounts[saved.accountId] ?? '-',
+                    ),
+                    _Row(
+                      label: AppStrings.reviewDate,
+                      value: DateFormatter.dayMonthYear(saved.date),
+                    ),
+                    if (saved.fee > 0)
+                      _Row(
+                        label: AppStrings.reviewFee,
+                        value: CurrencyFormatter.formatCompact(saved.fee),
+                      ),
+                    if (saved.note != null && saved.note!.isNotEmpty)
+                      _Row(
+                        label: AppStrings.reviewNote,
+                        value: saved.note!,
+                      ),
+                    const SizedBox(height: 24),
+                    AppButton(
+                      label: AppStrings.seeTransactions,
+                      onPressed: () {
+                        ref.read(transactionFormProvider.notifier).reset();
+                        context.go(AppRoutes.transactions);
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    AppOutlineButton(
+                      label: AppStrings.backToHome,
+                      onPressed: () {
+                        ref.read(transactionFormProvider.notifier).reset();
+                        context.go(AppRoutes.dashboard);
+                      },
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-        ),
-      )),
+        )),
+      ),
     );
   }
 }

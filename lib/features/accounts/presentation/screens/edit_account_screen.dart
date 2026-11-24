@@ -164,6 +164,7 @@ class _EditAccountScreenState extends ConsumerState<EditAccountScreen> {
   }
 
   Future<void> _save(String id) async {
+    if (_saving) return;
     final balance =
         RupiahInputFormatter.parse(_balanceController.text);
     if (AccountsController.validateName(_nameController.text) != null ||
