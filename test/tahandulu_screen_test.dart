@@ -264,12 +264,7 @@ void main() {
 
     await tapV(find.text(AppStrings.decideBuy));
     await tester.pumpAndSettle();
-    await tapV(
-      find.descendant(
-        of: find.byType(AlertDialog),
-        matching: find.text(AppStrings.decideBuy),
-      ),
-    );
+    await tapV(find.text('Tandai Dibeli Saja (Tanpa Transaksi)'));
     // Dialog + repo async butuh advance eksplisit (settle bisa kembali
     // lebih dulu saat rantai microtask/dialog masih berjalan).
     await tester.pump(const Duration(seconds: 1));

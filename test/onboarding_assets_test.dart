@@ -96,14 +96,14 @@ void main() {
     testWidgets('ringkasan memakai ilustrasi + empat ikon alokasi',
         (tester) async {
       await pumpScreen(tester, const PlanScreen());
-      expect(obAssetImage(AppAssets.successIllustration), findsOneWidget);
+      expect(obAssetImage(AppAssets.ob3dDailyBudget), findsOneWidget);
       // needs & saving & investment & flexible memakai ikon berbeda.
       final found = <String>{
         for (final asset in [
-          AppAssets.obNeeds,
-          AppAssets.obEmergency,
-          AppAssets.obInvestment,
-          AppAssets.obAllocFlexible,
+          AppAssets.ob3dNeeds,
+          AppAssets.ob3dEmergency,
+          AppAssets.ob3dInvestment,
+          AppAssets.ob3dFlexible,
         ])
           if (obAssetImage(asset).evaluate().isNotEmpty) asset,
       };

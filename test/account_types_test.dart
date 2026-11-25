@@ -162,8 +162,6 @@ void main() {
 
       await _tapVisible(tester, find.text(AppStrings.addInstrument));
       await tester.pumpAndSettle();
-      await _tapVisible(tester, find.text('Pilih instrumen...'));
-      await tester.pumpAndSettle();
       expect(find.text(AppStrings.typeBank), findsOneWidget);
       expect(find.text(AppStrings.typeDigitalBank), findsOneWidget);
       expect(find.text(AppStrings.typeEWallet), findsOneWidget);
@@ -180,7 +178,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Tipe instrumen dimuat dari data master (dropdown, bukan grid kartu).
-      await _tapVisible(tester, find.byType(DropdownButtonFormField<int>));
+      await _tapVisible(tester, find.byType(DropdownButtonFormField<String>));
       expect(find.text(AppStrings.typeBank), findsOneWidget);
       expect(find.text(AppStrings.typeDigitalBank), findsOneWidget);
       expect(find.text(AppStrings.typeEWallet), findsOneWidget);

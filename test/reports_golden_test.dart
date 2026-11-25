@@ -29,8 +29,6 @@ void main() {
       await tapVisible(tester, find.text(AppStrings.onboardingPopupLater));
       await tester.pumpAndSettle();
     }
-    await tapVisible(tester, find.text(AppStrings.navReports));
-    await tester.pumpAndSettle();
     await tapVisible(tester, find.text(AppStrings.dashboardSeeReport));
     await tester.pumpAndSettle();
     expect(find.text(AppStrings.reportsTitle), findsOneWidget);

@@ -3,6 +3,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tahan_dulu/app.dart';
 import 'package:tahan_dulu/core/constants/app_strings.dart';
+import 'package:tahan_dulu/data/datasources/mock/mock_data.dart';
+import 'package:tahan_dulu/data/models/user_model.dart';
+import 'package:tahan_dulu/data/repositories/auth_repository.dart';
+import 'package:tahan_dulu/features/auth/presentation/providers/auth_controller.dart';
+
+class _NotOnboardedAuthRepo extends MockAuthRepository {
+  @override
+  Future<UserModel> loginWithEmail({
+    required String email,
+    required String password,
+  }) async {
+    return MockData.user.copyWith(isOnboarded: false);
+  }
+}
 
 /// Golden regresi visual No.5 pada viewport phone 390x844.
 void main() {
@@ -14,7 +28,14 @@ void main() {
       tester.view.resetDevicePixelRatio();
     });
 
-    await tester.pumpWidget(const ProviderScope(child: TahanDuluApp()));
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          authRepositoryProvider.overrideWithValue(_NotOnboardedAuthRepo()),
+        ],
+        child: const TahanDuluApp(),
+      ),
+    );
     await tester.pump(const Duration(milliseconds: 1300));
     await tester.pump();
 
@@ -24,14 +45,20 @@ void main() {
     await tester.pump();
     await tester.tap(find.text(AppStrings.loginWithEmail));
     await tester.pumpAndSettle();
-    // Langsung ke Dashboard; tutup popup onboarding bila muncul.
-    if (find.text(AppStrings.onboardingPopupLater).evaluate().isNotEmpty) {
-      await tester.tap(find.text(AppStrings.onboardingPopupLater));
-      await tester.pumpAndSettle();
-    }
-    await tester.tap(find.text(AppStrings.navReports));
+
+    // Step 1: Salary -> Lanjut
+    await tester.tap(find.widgetWithText(ElevatedButton, AppStrings.continueButton));
     await tester.pumpAndSettle();
-    await tester.tap(find.text(AppStrings.dashboardSeeReport));
+
+    // Step 2: Instruments -> Lanjut
+    await tester.tap(find.widgetWithText(ElevatedButton, AppStrings.continueButton));
+    await tester.pumpAndSettle();
+
+    // Step 3: Budget -> Lanjut
+    await tester.tap(find.widgetWithText(ElevatedButton, AppStrings.continueButton));
+    await tester.pumpAndSettle();
+
+    expect(find.text(AppStrings.expensesTitle), findsOneWidget);
 
     await expectLater(
       find.byType(MaterialApp),

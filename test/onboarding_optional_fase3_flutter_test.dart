@@ -5,7 +5,10 @@ import 'package:tahan_dulu/core/constants/app_strings.dart';
 import 'package:tahan_dulu/data/models/dashboard_data.dart';
 import 'package:tahan_dulu/data/models/financial_goal.dart';
 import 'package:tahan_dulu/data/models/financial_plan.dart';
+import 'package:tahan_dulu/data/models/onboarding_data.dart';
+import 'package:tahan_dulu/data/models/recurring_expense.dart';
 import 'package:tahan_dulu/data/models/user_model.dart';
+import 'package:tahan_dulu/data/repositories/onboarding_repository.dart';
 import 'package:tahan_dulu/features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'package:tahan_dulu/features/onboarding/presentation/providers/goal_controller.dart';
 import 'package:tahan_dulu/features/onboarding/presentation/screens/expenses_screen.dart';
@@ -16,6 +19,20 @@ import 'package:tahan_dulu/features/transactions/presentation/screens/transactio
 import 'package:tahan_dulu/data/providers/app_providers.dart';
 import 'package:tahan_dulu/data/providers/dashboard_providers.dart';
 import 'package:tahan_dulu/data/providers/onboarding_providers.dart';
+
+class _EmptyOnboardingRepository extends InMemoryOnboardingRepository {
+  @override
+  OnboardingData? getOnboardingData() => const OnboardingData(
+        monthlyIncome: 0,
+        salaryDay: 25,
+        financialInstruments: [],
+        recurringExpenses: [],
+        financialGoal: null,
+      );
+
+  @override
+  Future<List<RecurringExpense>> fetchExistingExpenses() async => [];
+}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -72,6 +89,7 @@ void main() {
       notifier.setTargetDate(DateTime.now().add(const Duration(days: 90)));
 
       // Nominal 0 -> false
+      notifier.setTargetAmount(0);
       expect(container.read(goalControllerProvider).canContinue, isFalse);
 
       // Nominal > 0 pada kategori standar -> true (tanpa perlu input nama manual)
@@ -108,8 +126,11 @@ void main() {
 
     testWidgets('ExpensesScreen menampilkan empty state dan tombol Atur Nanti', (tester) async {
       await tester.pumpWidget(
-        const ProviderScope(
-          child: MaterialApp(
+        ProviderScope(
+          overrides: [
+            onboardingRepositoryProvider.overrideWithValue(_EmptyOnboardingRepository()),
+          ],
+          child: const MaterialApp(
             home: ExpensesScreen(),
           ),
         ),
@@ -176,9 +197,10 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Belum ada pengeluaran rutin (diatur nanti)'), findsOneWidget);
-      expect(find.text('Belum diatur (dapat dibuat kapan saja di Dashboard)'), findsOneWidget);
-      expect(find.text(AppStrings.startAppButton), findsOneWidget);
+      expect(find.text('Komitmen Pengeluaran Rutin'), findsOneWidget);
+      expect(find.text('Rp0 / bulan'), findsOneWidget);
+      expect(find.text('Target Dana Darurat'), findsOneWidget);
+      expect(find.textContaining(AppStrings.startAppButton), findsOneWidget);
     });
   });
 
@@ -205,6 +227,7 @@ void main() {
           overrides: [
             dashboardDataProvider.overrideWithValue(AsyncData(mockData)),
             transactionsProvider.overrideWithValue(const AsyncData([])),
+            userProvider.overrideWithValue(AsyncData(mockData.user)),
           ],
           child: const MaterialApp(
             home: DashboardScreen(),
@@ -212,6 +235,7 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 500));
 
       expect(find.text('Belum ada akun keuangan'), findsOneWidget);
       expect(find.text('Tambahkan rekening atau e-wallet untuk mulai mencatat saldo'), findsOneWidget);

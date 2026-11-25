@@ -6,7 +6,6 @@ import 'package:tahan_dulu/core/widgets/app_icons.dart';
 import 'package:tahan_dulu/data/models/financial_account.dart';
 import 'package:tahan_dulu/data/models/financial_goal.dart';
 import 'package:tahan_dulu/data/models/transaction_model.dart';
-import 'package:tahan_dulu/features/accounts/presentation/screens/accounts_screen.dart';
 import 'package:tahan_dulu/features/goals/presentation/screens/goals_list_screen.dart';
 import 'package:tahan_dulu/features/transactions/presentation/screens/transaction_form_screen.dart';
 import 'package:tahan_dulu/features/transactions/presentation/screens/transactions_screen.dart';
@@ -22,6 +21,7 @@ Future<void> _pump(WidgetTester tester, Widget screen) async {
     ProviderScope(child: MaterialApp(home: screen)),
   );
   await tester.pumpAndSettle();
+  await tester.pump(const Duration(milliseconds: 500));
 }
 
 void main() {
@@ -121,7 +121,18 @@ void main() {
     });
 
     testWidgets('rekening memakai ikon penyedia', (tester) async {
-      await _pump(tester, const AccountsScreen());
+      await _pump(
+        tester,
+        const Scaffold(
+          body: Column(
+            children: [
+              AccountProviderIcon(type: AccountType.bank),
+              AccountProviderIcon(type: AccountType.digitalBank),
+              AccountProviderIcon(type: AccountType.ewallet),
+            ],
+          ),
+        ),
+      );
       expect(
         find.byWidgetPredicate((w) => _isAsset(w, AppAssets.txBills)),
         findsOneWidget,

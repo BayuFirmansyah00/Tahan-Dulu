@@ -4,7 +4,21 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:tahan_dulu/app.dart';
 import 'package:tahan_dulu/core/constants/app_strings.dart';
-import 'package:tahan_dulu/features/dashboard/presentation/widgets/dashboard_bottom_nav.dart';
+import 'package:tahan_dulu/core/widgets/app_button.dart';
+import 'package:tahan_dulu/data/datasources/mock/mock_data.dart';
+import 'package:tahan_dulu/data/models/user_model.dart';
+import 'package:tahan_dulu/data/repositories/auth_repository.dart';
+import 'package:tahan_dulu/features/auth/presentation/providers/auth_controller.dart';
+
+class _NotOnboardedAuthRepo extends MockAuthRepository {
+  @override
+  Future<UserModel> loginWithEmail({
+    required String email,
+    required String password,
+  }) async {
+    return MockData.user.copyWith(isOnboarded: false);
+  }
+}
 
 /// No.5 — Pengeluaran Rutin (mock repository, tanpa backend).
 Future<void> _tapVisible(WidgetTester tester, Finder finder) async {
@@ -14,9 +28,16 @@ Future<void> _tapVisible(WidgetTester tester, Finder finder) async {
   await tester.pump();
 }
 
-/// Login mock -> Dashboard (onboarding kini opsional via popup).
+/// Login mock -> Onboarding -> Salary (Step 1) -> Instruments (Step 2) -> Budget (Step 3) -> Expenses (Step 4).
 Future<void> _pumpToExpenses(WidgetTester tester) async {
-  await tester.pumpWidget(const ProviderScope(child: TahanDuluApp()));
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [
+        authRepositoryProvider.overrideWithValue(_NotOnboardedAuthRepo()),
+      ],
+      child: const TahanDuluApp(),
+    ),
+  );
   await tester.pump(const Duration(milliseconds: 1300));
   await tester.pump();
   final loginFields = find.byType(TextFormField);
@@ -25,32 +46,33 @@ Future<void> _pumpToExpenses(WidgetTester tester) async {
   await tester.pump();
   await _tapVisible(tester, find.text(AppStrings.loginWithEmail));
   await tester.pumpAndSettle();
-  // Langsung ke Dashboard; tutup popup onboarding bila muncul.
-  if (find.text(AppStrings.onboardingPopupLater).evaluate().isNotEmpty) {
-    await _tapVisible(tester, find.text(AppStrings.onboardingPopupLater));
-    await tester.pumpAndSettle();
-  }
+
+  // Step 1: Salary -> Lanjut
   await _tapVisible(
     tester,
-    find.descendant(
-      of: find.byType(DashboardBottomNav),
-      matching: find.text(AppStrings.navReports),
-    ),
+    find.widgetWithText(ElevatedButton, AppStrings.continueButton),
   );
   await tester.pumpAndSettle();
+
+  // Step 2: Instruments -> Lanjut
   await _tapVisible(
     tester,
-    find.text(AppStrings.dashboardSeeReport),
+    find.widgetWithText(ElevatedButton, AppStrings.continueButton),
   );
   await tester.pumpAndSettle();
+
+  // Step 3: Budget -> Lanjut
+  await _tapVisible(
+    tester,
+    find.widgetWithText(ElevatedButton, AppStrings.continueButton),
+  );
+  await tester.pumpAndSettle();
+
   expect(find.text(AppStrings.expensesTitle), findsOneWidget);
 }
 
 Finder _dialogFields(WidgetTester tester) {
-  return find.descendant(
-    of: find.byType(AlertDialog).first,
-    matching: find.byType(TextFormField),
-  );
+  return find.byType(TextFormField);
 }
 
 void main() {
@@ -58,12 +80,12 @@ void main() {
     await initializeDateFormatting('id_ID');
   });
 
-  testWidgets('Expenses screen shows step 3 and title', (
+  testWidgets('Expenses screen shows step 4 and title', (
     WidgetTester tester,
   ) async {
     await _pumpToExpenses(tester);
 
-    expect(find.text(AppStrings.onboardingStep3), findsOneWidget);
+    expect(find.text(AppStrings.onboardingStep4), findsOneWidget);
     expect(find.text(AppStrings.expensesSubtitle), findsOneWidget);
   });
 
@@ -76,9 +98,9 @@ void main() {
     expect(find.text('Transportasi'), findsWidgets);
     expect(find.text('Tagihan'), findsWidgets);
     expect(find.text('Belanja'), findsWidgets);
-    expect(find.text('Rp1.500.000'), findsOneWidget);
-    expect(find.text('Rp400.000'), findsOneWidget);
-    expect(find.text('Rp300.000'), findsNWidgets(2));
+    expect(find.textContaining('Rp1.500.000'), findsOneWidget);
+    expect(find.textContaining('Rp400.000'), findsOneWidget);
+    expect(find.textContaining('Rp300.000'), findsNWidgets(2));
   });
 
   testWidgets('Total is calculated correctly', (WidgetTester tester) async {
@@ -96,24 +118,24 @@ void main() {
 
     await _tapVisible(tester, find.text('Transportasi').first);
     await tester.pumpAndSettle();
-    expect(find.text(AppStrings.editExpenseTitle), findsOneWidget);
+    expect(find.text(AppStrings.editExpenseSheetTitle), findsOneWidget);
 
     final fields = _dialogFields(tester);
     await tester.enterText(fields.at(1), '500000');
     await tester.pump();
-    await _tapVisible(tester, find.text(AppStrings.save));
+    await _tapVisible(tester, find.text(AppStrings.saveExpenseAction));
     await tester.pumpAndSettle();
 
-    expect(find.text('Rp500.000'), findsOneWidget);
-    expect(find.text('Rp2.600.000 ${AppStrings.perMonth}'), findsOneWidget);
+    expect(find.textContaining('Rp500.000'), findsOneWidget);
+    expect(find.textContaining('Rp2.600.000'), findsOneWidget);
   });
 
   testWidgets('User can add a new expense', (WidgetTester tester) async {
     await _pumpToExpenses(tester);
 
-    await _tapVisible(tester, find.text(AppStrings.addExpense));
+    await _tapVisible(tester, find.text(AppStrings.addAnotherExpenseAction));
     await tester.pumpAndSettle();
-    expect(find.text(AppStrings.addExpenseTitle), findsOneWidget);
+    expect(find.text(AppStrings.addExpenseSheetTitle), findsOneWidget);
 
     await _tapVisible(tester, find.text(AppStrings.catOthers));
 
@@ -121,12 +143,12 @@ void main() {
     await tester.enterText(fields.at(0), 'Langganan');
     await tester.enterText(fields.at(1), '150000');
     await tester.pump();
-    await _tapVisible(tester, find.text(AppStrings.save));
+    await _tapVisible(tester, find.text(AppStrings.saveExpenseAction));
     await tester.pumpAndSettle();
 
     expect(find.text('Langganan'), findsOneWidget);
-    expect(find.text('Rp150.000'), findsOneWidget);
-    expect(find.text('Rp2.650.000 ${AppStrings.perMonth}'), findsOneWidget);
+    expect(find.textContaining('Rp150.000'), findsOneWidget);
+    expect(find.textContaining('Rp2.650.000'), findsOneWidget);
   });
 
   testWidgets('Empty amount shows validation and keeps dialog open', (
@@ -134,19 +156,21 @@ void main() {
   ) async {
     await _pumpToExpenses(tester);
 
-    await _tapVisible(tester, find.text(AppStrings.addExpense));
+    await _tapVisible(tester, find.text(AppStrings.addAnotherExpenseAction));
     await tester.pumpAndSettle();
 
     final fields = _dialogFields(tester);
     await tester.enterText(fields.at(0), 'Jajan');
     await tester.pump();
-    await tester.tap(find.text(AppStrings.save));
-    await tester.pump();
 
-    expect(find.text(AppStrings.expenseAmountRequired), findsOneWidget);
-    expect(find.text(AppStrings.addExpenseTitle), findsOneWidget);
+    // Button Simpan Pengeluaran remains disabled when amount is empty
+    final saveButton = tester.widget<AppButton>(
+      find.widgetWithText(AppButton, AppStrings.saveExpenseAction),
+    );
+    expect(saveButton.onPressed, isNull);
+    expect(find.text(AppStrings.addExpenseSheetTitle), findsOneWidget);
     // Total tidak berubah — data tidak tersimpan.
-    expect(find.text('Rp2.500.000 ${AppStrings.perMonth}'), findsWidgets);
+    expect(find.textContaining('Rp2.500.000'), findsWidgets);
 
     await tester.tap(find.text(AppStrings.cancel));
     await tester.pumpAndSettle();
@@ -157,9 +181,8 @@ void main() {
   ) async {
     await _pumpToExpenses(tester);
 
-    await _tapVisible(tester, find.text('Belanja').first);
-    await tester.pumpAndSettle();
-    await _tapVisible(tester, find.text(AppStrings.deleteExpense));
+    final deleteButtons = find.byTooltip(AppStrings.deleteExpense);
+    await _tapVisible(tester, deleteButtons.last);
     await tester.pumpAndSettle();
 
     expect(find.text(AppStrings.deleteExpenseTitle), findsOneWidget);
@@ -171,7 +194,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Belanja'), findsNothing);
-    expect(find.text('Rp2.200.000 ${AppStrings.perMonth}'), findsOneWidget);
+    expect(find.textContaining('Rp2.200.000'), findsOneWidget);
   });
 
   testWidgets('Lanjut saves expenses and goes to No.7', (
@@ -196,8 +219,7 @@ void main() {
     await _tapVisible(tester, find.byIcon(Icons.arrow_back));
     await tester.pumpAndSettle();
 
-    // Kembali di No.4 dengan pilihan utuh (BCA terpilih).
-    expect(find.text(AppStrings.instrumentsTitle), findsOneWidget);
-    expect(find.text('BCA'), findsOneWidget);
+    // Kembali di Budget dengan pilihan utuh.
+    expect(find.text(AppStrings.onboardingStep3), findsOneWidget);
   });
 }

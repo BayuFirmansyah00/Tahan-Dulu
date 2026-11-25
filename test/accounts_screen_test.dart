@@ -175,7 +175,7 @@ void main() {
     expect(find.text(AppStrings.accountNameRequired), findsOneWidget);
 
     // Isi lalu simpan.
-    await _tapVisible(tester, find.byType(DropdownButtonFormField<int>));
+    await _tapVisible(tester, find.byType(DropdownButtonFormField<String>));
     await tester.pumpAndSettle();
     await _tapVisible(tester, find.text(AppStrings.typeEWallet).last);
     await tester.pumpAndSettle();
@@ -232,7 +232,7 @@ void main() {
     await _pumpToAccounts(tester);
     await _tapVisible(tester, find.text('BCA').first);
     await tester.pumpAndSettle();
-    await _tapVisible(tester, find.byTooltip(AppStrings.editAccountTitle).first);
+    await _tapVisible(tester, find.text(AppStrings.editAccountTitle).first);
     await tester.pumpAndSettle();
 
     // Nilai awal dipertahankan (nama + institusi seed BCA).
@@ -256,7 +256,7 @@ void main() {
     await _pumpToAccounts(tester);
     await _tapVisible(tester, find.text('Bank Jago'));
     await tester.pumpAndSettle();
-    await _tapVisible(tester, find.byTooltip(AppStrings.editAccountTitle).first);
+    await _tapVisible(tester, find.text(AppStrings.editAccountTitle).first);
     await tester.pumpAndSettle();
 
     await tester.ensureVisible(find.text(AppStrings.deleteAccount));

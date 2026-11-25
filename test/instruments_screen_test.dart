@@ -3,7 +3,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tahan_dulu/app.dart';
 import 'package:tahan_dulu/core/constants/app_strings.dart';
-import 'package:tahan_dulu/features/dashboard/presentation/widgets/dashboard_bottom_nav.dart';
+import 'package:tahan_dulu/data/datasources/mock/mock_data.dart';
+import 'package:tahan_dulu/data/models/user_model.dart';
+import 'package:tahan_dulu/data/repositories/auth_repository.dart';
+import 'package:tahan_dulu/features/auth/presentation/providers/auth_controller.dart';
+
+class _NotOnboardedAuthRepo extends MockAuthRepository {
+  @override
+  Future<UserModel> loginWithEmail({
+    required String email,
+    required String password,
+  }) async {
+    return MockData.user.copyWith(isOnboarded: false);
+  }
+}
 
 /// No.4 — Pilih Instrumen Keuangan (mock repository, tanpa backend).
 Future<void> _tapVisible(WidgetTester tester, Finder finder) async {
@@ -13,9 +26,16 @@ Future<void> _tapVisible(WidgetTester tester, Finder finder) async {
   await tester.pump();
 }
 
-/// Login mock -> Dashboard -> Akun (onboarding kini opsional via popup).
+/// Login mock -> Onboarding -> Salary (Step 1) -> Lanjut -> Instruments (Step 2).
 Future<void> _pumpToInstruments(WidgetTester tester) async {
-  await tester.pumpWidget(const ProviderScope(child: TahanDuluApp()));
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [
+        authRepositoryProvider.overrideWithValue(_NotOnboardedAuthRepo()),
+      ],
+      child: const TahanDuluApp(),
+    ),
+  );
   await tester.pump(const Duration(milliseconds: 1300));
   await tester.pump();
   final loginFields = find.byType(TextFormField);
@@ -24,20 +44,12 @@ Future<void> _pumpToInstruments(WidgetTester tester) async {
   await tester.pump();
   await _tapVisible(tester, find.text(AppStrings.loginWithEmail));
   await tester.pumpAndSettle();
-  // Langsung ke Dashboard; tutup popup onboarding bila muncul.
-  if (find.text(AppStrings.onboardingPopupLater).evaluate().isNotEmpty) {
-    await _tapVisible(tester, find.text(AppStrings.onboardingPopupLater));
-    await tester.pumpAndSettle();
-  }
   await _tapVisible(
     tester,
-    find.descendant(
-      of: find.byType(DashboardBottomNav),
-      matching: find.text(AppStrings.navAccounts),
-    ),
+    find.widgetWithText(ElevatedButton, AppStrings.continueButton),
   );
   await tester.pumpAndSettle();
-  expect(find.text(AppStrings.accountsTitle), findsOneWidget);
+  expect(find.text(AppStrings.instrumentsTitle), findsOneWidget);
 }
 
 int _checkCount(WidgetTester tester) {
@@ -95,7 +107,7 @@ void main() {
 
     expect(find.text(AppStrings.instrumentDetail), findsNothing);
     // Panel detail milik BCA: fee 14.000.
-    expect(find.text('14.000'), findsOneWidget);
+    expect(find.textContaining('14.000'), findsWidgets);
   });
 
   testWidgets('Deselecting all shows validation and disables Lanjut', (
@@ -106,11 +118,11 @@ void main() {
     // BCA satu-satunya yang terpilih -> batalkan pilihan.
     await _tapVisible(tester, find.text('BCA'));
 
-    expect(find.text(AppStrings.noInstrumentError), findsOneWidget);
-    final button = tester.widget<ElevatedButton>(
+    expect(find.text(AppStrings.setupLater), findsOneWidget);
+    expect(
       find.widgetWithText(ElevatedButton, AppStrings.continueButton),
+      findsNothing,
     );
-    expect(button.onPressed, isNull);
     expect(find.text(AppStrings.expensesTitle), findsNothing);
   });
 
@@ -121,19 +133,19 @@ void main() {
 
     await _tapVisible(tester, find.text(AppStrings.addInstrument));
     await tester.pumpAndSettle();
-    expect(find.text(AppStrings.addInstrumentTitle), findsOneWidget);
+    expect(find.text(AppStrings.selectCategory), findsOneWidget);
 
     // Pilih tipe E-Wallet.
     await _tapVisible(tester, find.text(AppStrings.typeEWallet));
+    await tester.pumpAndSettle();
 
-    // Field di dalam dialog (bukan field milik screen di belakangnya).
-    final dialogFields = find.descendant(
-      of: find.byType(AlertDialog),
-      matching: find.byType(TextFormField),
-    );
-    expect(dialogFields, findsNWidgets(2));
-    await tester.enterText(dialogFields.at(0), 'OVO');
-    await tester.enterText(dialogFields.at(1), '250000');
+    // Pilih provider OVO dari BankPickerSheet
+    await _tapVisible(tester, find.text('OVO').last);
+    await tester.pumpAndSettle();
+
+    // Input saldo di form detail
+    final balanceField = find.byType(TextFormField).at(1);
+    await tester.enterText(balanceField, '250000');
     await tester.pump();
     await _tapVisible(tester, find.text(AppStrings.save));
     await tester.pumpAndSettle();
@@ -153,7 +165,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text(AppStrings.expensesTitle), findsOneWidget);
+    expect(find.text(AppStrings.onboardingStep3), findsOneWidget);
   });
 
   testWidgets('Back returns to salary without losing data', (

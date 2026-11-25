@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:tahan_dulu/data/datasources/remote/api_config.dart';
 import 'package:tahan_dulu/core/constants/app_strings.dart';
 import 'package:tahan_dulu/core/routing/app_routes.dart';
 import 'package:tahan_dulu/data/datasources/remote/api_client.dart';
@@ -450,7 +451,11 @@ void main() {
       addTearDown(container.dispose);
 
       final repo = container.read(notificationRepositoryProvider);
-      expect(repo, isA<RemoteNotificationRepository>());
+      if (ApiConfig.useRemoteApi) {
+        expect(repo, isA<RemoteNotificationRepository>());
+      } else {
+        expect(repo, isA<MockNotificationRepository>());
+      }
     });
 
     test('Remote error does NOT fallback silently to mock data', () async {

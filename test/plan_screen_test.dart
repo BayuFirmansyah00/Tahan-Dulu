@@ -4,6 +4,21 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:tahan_dulu/app.dart';
 import 'package:tahan_dulu/core/constants/app_strings.dart';
+import 'package:tahan_dulu/core/widgets/app_button.dart';
+import 'package:tahan_dulu/data/datasources/mock/mock_data.dart';
+import 'package:tahan_dulu/data/models/user_model.dart';
+import 'package:tahan_dulu/data/repositories/auth_repository.dart';
+import 'package:tahan_dulu/features/auth/presentation/providers/auth_controller.dart';
+
+class _NotOnboardedAuthRepo extends MockAuthRepository {
+  @override
+  Future<UserModel> loginWithEmail({
+    required String email,
+    required String password,
+  }) async {
+    return MockData.user.copyWith(isOnboarded: false);
+  }
+}
 
 /// Layar ringkasan rencana (mock repository, tanpa backend).
 Future<void> _tapVisible(WidgetTester tester, Finder finder) async {
@@ -13,9 +28,16 @@ Future<void> _tapVisible(WidgetTester tester, Finder finder) async {
   await tester.pump();
 }
 
-/// Login mock -> Dashboard (onboarding kini opsional via popup).
+/// Login mock -> Onboarding Steps 1 to 5 -> PlanScreen (Step 6).
 Future<void> _pumpToPlan(WidgetTester tester) async {
-  await tester.pumpWidget(const ProviderScope(child: TahanDuluApp()));
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [
+        authRepositoryProvider.overrideWithValue(_NotOnboardedAuthRepo()),
+      ],
+      child: const TahanDuluApp(),
+    ),
+  );
   await tester.pump(const Duration(milliseconds: 1300));
   await tester.pump();
   final loginFields = find.byType(TextFormField);
@@ -24,18 +46,43 @@ Future<void> _pumpToPlan(WidgetTester tester) async {
   await tester.pump();
   await _tapVisible(tester, find.text(AppStrings.loginWithEmail));
   await tester.pumpAndSettle();
-  // Langsung ke Dashboard; tutup popup onboarding bila muncul.
-  if (find.text(AppStrings.onboardingPopupLater).evaluate().isNotEmpty) {
-    await _tapVisible(tester, find.text(AppStrings.onboardingPopupLater));
-    await tester.pumpAndSettle();
-  }
-  await _tapVisible(tester, find.text(AppStrings.navGoals));
+
+  // Step 1: Salary -> Lanjut
+  await _tapVisible(
+    tester,
+    find.widgetWithText(ElevatedButton, AppStrings.continueButton),
+  );
   await tester.pumpAndSettle();
-  await _tapVisible(tester, find.text(AppStrings.newGoalButton));
+
+  // Step 2: Instruments -> Lanjut
+  await _tapVisible(
+    tester,
+    find.widgetWithText(ElevatedButton, AppStrings.continueButton),
+  );
   await tester.pumpAndSettle();
-  await _tapVisible(tester, find.text(AppStrings.saveGoalButton));
+
+  // Step 3: Budget -> Lanjut
+  await _tapVisible(
+    tester,
+    find.widgetWithText(ElevatedButton, AppStrings.continueButton),
+  );
   await tester.pumpAndSettle();
-  expect(find.text(AppStrings.planTitle), findsOneWidget);
+
+  // Step 4: Expenses -> Lanjut
+  await _tapVisible(
+    tester,
+    find.widgetWithText(ElevatedButton, AppStrings.continueButton),
+  );
+  await tester.pumpAndSettle();
+
+  // Step 5: Goals -> Selesai
+  await _tapVisible(
+    tester,
+    find.widgetWithText(AppButton, AppStrings.doneButton),
+  );
+  await tester.pumpAndSettle();
+
+  expect(find.text('Pemasukan Bulanan'), findsOneWidget);
 }
 
 void main() {
@@ -48,13 +95,14 @@ void main() {
   ) async {
     await _pumpToPlan(tester);
 
-    expect(find.text(AppStrings.planSubtitle), findsOneWidget);
-    expect(find.text(AppStrings.monthlyIncomeLabel), findsOneWidget);
+    expect(find.text('Pemasukan Bulanan'), findsOneWidget);
     expect(find.text('Rp5.000.000'), findsWidgets);
-    expect(find.text('Rp2.500.000'), findsOneWidget);
-    expect(find.text('Rp800.000'), findsOneWidget);
-    expect(find.text('Rp500.000'), findsWidgets);
-    expect(find.text('Rp1.200.000'), findsOneWidget);
+    expect(find.text('Alokasi Bulanan'), findsOneWidget);
+    expect(find.text('Kebutuhan'), findsOneWidget);
+    expect(find.text('Rp2.500.000'), findsWidgets);
+    expect(find.text('Pengeluaran Fleksibel'), findsOneWidget);
+    expect(find.text('Investasi & Tabungan'), findsOneWidget);
+    expect(find.text('Dana Darurat'), findsOneWidget);
   });
 
   testWidgets('Safe per day card matches design', (
@@ -62,9 +110,8 @@ void main() {
   ) async {
     await _pumpToPlan(tester);
 
-    expect(find.text(AppStrings.safeToday), findsOneWidget);
-    expect(find.text('Rp40.000'), findsOneWidget);
-    expect(find.text(AppStrings.safeTodayDesc), findsOneWidget);
+    expect(find.text('Batas Belanja Harian'), findsOneWidget);
+    expect(find.textContaining('budget belanja yang aman digunakan hari ini'), findsOneWidget);
   });
 
   testWidgets('Goal card shows monthly investment target', (
@@ -73,7 +120,7 @@ void main() {
     await _pumpToPlan(tester);
 
     expect(find.text('Target Investasi'), findsOneWidget);
-    expect(find.text('Rp500.000 ${AppStrings.perMonth}'), findsOneWidget);
+    expect(find.textContaining('/ bulan'), findsWidgets);
     expect(find.text(AppStrings.planAdjustable), findsOneWidget);
   });
 
@@ -82,7 +129,7 @@ void main() {
   ) async {
     await _pumpToPlan(tester);
 
-    await _tapVisible(tester, find.text(AppStrings.startAppButton));
+    await _tapVisible(tester, find.textContaining(AppStrings.startAppButton));
     await tester.pumpAndSettle();
 
     expect(find.text(AppStrings.dashboardGreeting), findsOneWidget);

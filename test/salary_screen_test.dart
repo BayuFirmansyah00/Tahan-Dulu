@@ -3,6 +3,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tahan_dulu/app.dart';
 import 'package:tahan_dulu/core/constants/app_strings.dart';
+import 'package:tahan_dulu/data/datasources/mock/mock_data.dart';
+import 'package:tahan_dulu/data/models/user_model.dart';
+import 'package:tahan_dulu/data/repositories/auth_repository.dart';
+import 'package:tahan_dulu/features/auth/presentation/providers/auth_controller.dart';
+
+class _NotOnboardedAuthRepo extends MockAuthRepository {
+  @override
+  Future<UserModel> loginWithEmail({
+    required String email,
+    required String password,
+  }) async {
+    return MockData.user.copyWith(isOnboarded: false);
+  }
+}
 
 /// No.3 — Input Gaji Bulanan (mock repository, tanpa backend).
 Future<void> _tapVisible(WidgetTester tester, Finder finder) async {
@@ -12,9 +26,16 @@ Future<void> _tapVisible(WidgetTester tester, Finder finder) async {
   await tester.pump();
 }
 
-/// Login mock -> Dashboard -> popup onboarding -> layar gaji.
+/// Login mock -> Onboarding -> layar gaji.
 Future<void> _pumpToSalary(WidgetTester tester) async {
-  await tester.pumpWidget(const ProviderScope(child: TahanDuluApp()));
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [
+        authRepositoryProvider.overrideWithValue(_NotOnboardedAuthRepo()),
+      ],
+      child: const TahanDuluApp(),
+    ),
+  );
   await tester.pump(const Duration(milliseconds: 1300));
   await tester.pump();
   // Login mock.
@@ -24,12 +45,6 @@ Future<void> _pumpToSalary(WidgetTester tester) async {
   await tester.pump();
   await _tapVisible(tester, find.text(AppStrings.loginWithEmail));
   await tester.pumpAndSettle();
-  // Langsung ke Dashboard; popup onboarding muncul karena onboarding belum selesai.
-  // Tekan "Lengkapi Sekarang" untuk membuka layar gaji.
-  if (find.text(AppStrings.onboardingPopupCompleteNow).evaluate().isNotEmpty) {
-    await _tapVisible(tester, find.text(AppStrings.onboardingPopupCompleteNow));
-    await tester.pumpAndSettle();
-  }
   expect(find.text(AppStrings.salaryTitle), findsOneWidget);
 }
 

@@ -13,6 +13,10 @@ void main() {
     'API_BASE_URL',
     defaultValue: 'http://127.0.0.1:8000/api',
   );
+  const useRemoteApi = bool.fromEnvironment(
+    'USE_REMOTE_API',
+    defaultValue: true,
+  );
 
   final client = ApiClient(baseUrl: baseUrl);
 
@@ -173,6 +177,6 @@ void main() {
       final txs = await transactionRepoA.getTransactions();
       expect(txs.isEmpty, isTrue);
     });
-  });
+  }, skip: useRemoteApi ? false : 'Live E2E test requires running backend (USE_REMOTE_API=true)');
 }
 

@@ -47,6 +47,7 @@ abstract final class MockData {
       institutionName: 'BCA',
       monthlyAdminFee: 14000,
       adminFeeDay: 15,
+      adminFeeEnabled: true,
       isSelected: true,
     ),
     FinancialInstrument(

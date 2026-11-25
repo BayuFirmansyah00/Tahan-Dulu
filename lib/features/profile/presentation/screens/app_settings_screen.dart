@@ -122,22 +122,25 @@ class AppSettingsScreen extends ConsumerWidget {
                       title: 'Pengembang (Debug Only)',
                     ),
                     const SizedBox(height: 8),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: context.palette.surface,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: context.palette.outlineVariant),
-                      ),
-                      child: ListTile(
-                        key: const Key('dev_glass_poc_tile'),
-                        leading: const Icon(Icons.lens_blur, color: AppColors.primary),
-                        title: const Text(
-                          'True Clear Liquid Glass POC',
-                          style: TextStyle(fontWeight: FontWeight.w700),
+                    Material(
+                      color: context.palette.surface,
+                      borderRadius: BorderRadius.circular(16),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: context.palette.outlineVariant),
                         ),
-                        subtitle: const Text('Komparasi optical refraction & shader tuning'),
-                        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                        onTap: () => context.push(AppRoutes.devGlassPoc),
+                        child: ListTile(
+                          key: const Key('dev_glass_poc_tile'),
+                          leading: const Icon(Icons.lens_blur, color: AppColors.primary),
+                          title: const Text(
+                            'True Clear Liquid Glass POC',
+                            style: TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                          subtitle: const Text('Komparasi optical refraction & shader tuning'),
+                          trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                          onTap: () => context.push(AppRoutes.devGlassPoc),
+                        ),
                       ),
                     ),
                   ],

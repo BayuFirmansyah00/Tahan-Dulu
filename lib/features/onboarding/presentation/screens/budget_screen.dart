@@ -749,12 +749,17 @@ class _CategoryAllocationCard extends StatelessWidget {
                   fontSize: 12,
                 ),
               ),
-              Text(
-                CurrencyFormatter.format(amount.toDouble()),
-                style: textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 15,
-                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  CurrencyFormatter.formatCompact(amount.toDouble()),
+                  textAlign: TextAlign.end,
+                  overflow: TextOverflow.ellipsis,
+                  style: textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  ),
                 ),
               ),
             ],

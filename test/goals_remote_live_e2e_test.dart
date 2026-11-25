@@ -15,6 +15,10 @@ void main() {
     'API_BASE_URL',
     defaultValue: 'http://127.0.0.1:8000/api',
   );
+  const useRemoteApi = bool.fromEnvironment(
+    'USE_REMOTE_API',
+    defaultValue: true,
+  );
 
   final client = ApiClient(baseUrl: baseUrl);
 
@@ -301,6 +305,6 @@ void main() {
       expect(verifiedAliceGoals.length, aliceGoals.length);
       expect(verifiedAliceGoals.first.id, aliceGoal.id);
     });
-  });
+  }, skip: useRemoteApi ? false : 'Live E2E test requires running backend (USE_REMOTE_API=true)');
 }
 

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tahan_dulu/core/constants/app_strings.dart';
 import 'package:tahan_dulu/core/theme/app_colors.dart';
+import 'package:tahan_dulu/core/theme/app_theme.dart';
 import 'package:tahan_dulu/core/widgets/app_states.dart';
 import 'package:tahan_dulu/data/models/transaction_model.dart';
 import 'package:tahan_dulu/data/providers/app_providers.dart';
@@ -75,6 +76,7 @@ Future<void> _pumpTransactions(
     ),
   );
   await tester.pumpAndSettle();
+  await tester.pump(const Duration(milliseconds: 500));
 }
 
 void main() {
@@ -179,15 +181,21 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 500));
       expect(find.text(AppStrings.dashboardGreeting), findsOneWidget);
     });
 
-    testWidgets('ringkasan memakai warna semantik', (tester) async {      await tester.pumpWidget(
-        const ProviderScope(
-          child: MaterialApp(home: DashboardScreen()),
+    testWidgets('ringkasan memakai warna semantik', (tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            theme: AppTheme.light,
+            home: const DashboardScreen(),
+          ),
         ),
       );
       await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 500));
 
       final nominals = tester
           .widgetList<Text>(find.byType(Text))
@@ -210,6 +218,7 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 500));
 
       expect(find.text(AppStrings.recentTransactionsTitle), findsOneWidget);
       expect(find.text('Gaji Bulanan'), findsWidgets);

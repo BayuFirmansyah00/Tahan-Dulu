@@ -410,7 +410,10 @@ class _ExpenseCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      Row(
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 4,
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           Container(
                             padding: const EdgeInsets.symmetric(
@@ -429,16 +432,13 @@ class _ExpenseCard extends StatelessWidget {
                               ),
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              '${CurrencyFormatter.formatCompact(expense.monthlyAmount)} ${AppStrings.perMonth}',
-                              style: textTheme.bodyMedium?.copyWith(
-                                fontWeight: FontWeight.w700,
-                                color: context.palette.onSurface,
-                              ),
-                              overflow: TextOverflow.ellipsis,
+                          Text(
+                            '${CurrencyFormatter.formatCompact(expense.monthlyAmount)} ${AppStrings.perMonth}',
+                            style: textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: context.palette.onSurface,
                             ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ),

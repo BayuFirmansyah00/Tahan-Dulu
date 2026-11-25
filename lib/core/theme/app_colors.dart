@@ -30,6 +30,11 @@ abstract final class AppColors {
   static const Color textSecondary = Color(0xFF526572);
   static const Color textDisabled = Color(0xFF617480);
 
+  /// Semantic high-contrast text tokens for WCAG AA (>= 4.5:1 on light surfaces)
+  static const Color textSuccess = Color(0xFF17604F);
+  static const Color textError = Color(0xFFAF3B50);
+  static const Color textWarning = Color(0xFF885516);
+
   static const Color border = Color(0xFFCFDBDE);
   static const Color divider = Color(0xFFD7E1E3);
 

@@ -4,6 +4,21 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:tahan_dulu/app.dart';
 import 'package:tahan_dulu/core/constants/app_strings.dart';
+import 'package:tahan_dulu/core/widgets/app_button.dart';
+import 'package:tahan_dulu/data/datasources/mock/mock_data.dart';
+import 'package:tahan_dulu/data/models/user_model.dart';
+import 'package:tahan_dulu/data/repositories/auth_repository.dart';
+import 'package:tahan_dulu/features/auth/presentation/providers/auth_controller.dart';
+
+class _NotOnboardedAuthRepo extends MockAuthRepository {
+  @override
+  Future<UserModel> loginWithEmail({
+    required String email,
+    required String password,
+  }) async {
+    return MockData.user.copyWith(isOnboarded: false);
+  }
+}
 
 /// Golden regresi visual ringkasan rencana pada viewport phone 390x844.
 void main() {
@@ -16,7 +31,14 @@ void main() {
     });
     await initializeDateFormatting('id_ID');
 
-    await tester.pumpWidget(const ProviderScope(child: TahanDuluApp()));
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          authRepositoryProvider.overrideWithValue(_NotOnboardedAuthRepo()),
+        ],
+        child: const TahanDuluApp(),
+      ),
+    );
     await tester.pump(const Duration(milliseconds: 1300));
     await tester.pump();
 
@@ -26,18 +48,28 @@ void main() {
     await tester.pump();
     await tester.tap(find.text(AppStrings.loginWithEmail));
     await tester.pumpAndSettle();
-    // Langsung ke Dashboard; tutup popup onboarding bila muncul.
-    if (find.text(AppStrings.onboardingPopupLater).evaluate().isNotEmpty) {
-      await tester.tap(find.text(AppStrings.onboardingPopupLater));
-      await tester.pumpAndSettle();
-    }
-    await tester.tap(find.text(AppStrings.navGoals));
+
+    // Step 1: Salary -> Lanjut
+    await tester.tap(find.widgetWithText(ElevatedButton, AppStrings.continueButton));
     await tester.pumpAndSettle();
-    await tester.tap(find.text(AppStrings.newGoalButton));
+
+    // Step 2: Instruments -> Lanjut
+    await tester.tap(find.widgetWithText(ElevatedButton, AppStrings.continueButton));
     await tester.pumpAndSettle();
-    await tester.tap(find.text(AppStrings.saveGoalButton));
+
+    // Step 3: Budget -> Lanjut
+    await tester.tap(find.widgetWithText(ElevatedButton, AppStrings.continueButton));
     await tester.pumpAndSettle();
-    expect(find.text(AppStrings.planTitle), findsOneWidget);
+
+    // Step 4: Expenses -> Lanjut
+    await tester.tap(find.widgetWithText(ElevatedButton, AppStrings.continueButton));
+    await tester.pumpAndSettle();
+
+    // Step 5: Goals -> Selesai
+    await tester.tap(find.widgetWithText(AppButton, AppStrings.doneButton));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Pemasukan Bulanan'), findsOneWidget);
 
     await expectLater(
       find.byType(MaterialApp),

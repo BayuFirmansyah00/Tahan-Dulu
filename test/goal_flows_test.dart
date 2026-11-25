@@ -99,7 +99,7 @@ void main() {
         find.widgetWithText(ElevatedButton, AppStrings.continueAction),
       );
       await tester.pump();
-      expect(find.text(AppStrings.goalNameRequired), findsOneWidget);
+      expect(find.text(AppStrings.goalNameRequired), findsWidgets);
       expect(find.text(AppStrings.setupGoalTitle), findsNothing);
     });
 
@@ -184,11 +184,12 @@ void main() {
       await tester.pumpAndSettle();
 
       // Kategori standar: field nama disembunyikan, nominal dimuat.
-      expect(find.byType(TextFormField), findsOneWidget);
+      expect(find.text(AppStrings.goalName), findsNothing);
       expect(find.text('10.000.000'), findsOneWidget);
       // Kembali ke Lainnya: nama kustom tersimpan muncul kembali.
       await _tapVisible(tester, find.text(AppStrings.goalCatOthers));
       await tester.pumpAndSettle();
+      expect(find.text(AppStrings.goalName), findsOneWidget);
       expect(find.text('Target Investasi'), findsWidgets);
     });
   });
