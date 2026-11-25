@@ -5,6 +5,7 @@ import 'package:liquid_glass_toolkit/liquid_glass_toolkit.dart';
 
 import 'app_radius.dart';
 import 'app_colors.dart';
+import '../constants/glass_design_tokens.dart';
 
 /// Permukaan daftar memakai dekorasi statis. Hanya panel mengambang mengambil
 /// sampel piksel latar melalui perender Liquid Glass.
@@ -185,17 +186,19 @@ class FloatingGlass extends StatelessWidget {
       foregroundColor: scheme.onSurface,
       borderRadius: radius,
       style: LiquidGlassStyle(
-        blur: high ? 14 : 8,
-        opacity: dark ? .86 : .72,
-        tintColor: scheme.surface,
-        borderColor: scheme.outlineVariant,
+        blur: GlassDesignTokens.clearPlatterBlur,
+        opacity: dark
+            ? GlassDesignTokens.clearPlatterDarkOpacity
+            : GlassDesignTokens.clearPlatterOpacity,
+        tintColor: dark ? const Color(0xFF142433) : Colors.white,
+        borderColor: Colors.white.withValues(alpha: dark ? 0.16 : 0.28),
         saturation: 1.05,
-        highlightOpacity: dark ? .08 : .24,
-        rimLightIntensity: dark ? .12 : .24,
-        specularIntensity: .16,
-        enableRefraction: high,
-        refractionStrength: .17,
-        dispersion: .04,
+        highlightOpacity: 0.20,
+        rimLightIntensity: GlassDesignTokens.clearPlatterRimLight,
+        specularIntensity: GlassDesignTokens.clearPlatterSpecular,
+        enableRefraction: true,
+        refractionStrength: high ? 0.38 : 0.26,
+        dispersion: high ? GlassDesignTokens.clearPlatterChromaticAberration : 0.0,
         shadowBlur: 14,
         shadowOffset: const Offset(0, 4),
       ),

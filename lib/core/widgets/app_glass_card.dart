@@ -90,8 +90,8 @@ class AppGlassCard extends StatelessWidget {
         shape: LiquidRoundedSuperellipse(borderRadius: radius.topLeft.x),
         color: tintColor ??
             (isDark
-                ? scheme.surfaceContainerHighest.withValues(alpha: 0.6)
-                : Colors.white.withValues(alpha: 0.85)),
+                ? const Color(0x0C142433)
+                : const Color(0x08FFFFFF)),
         child: content,
       );
     } else {

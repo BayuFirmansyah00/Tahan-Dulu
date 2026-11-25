@@ -163,8 +163,8 @@ class AppGlassButton extends StatelessWidget {
         style: GlassButtonStyle.prominent,
         shape: LiquidRoundedSuperellipse(borderRadius: radiusValue),
         tintColor: isDark
-            ? scheme.surfaceContainerHighest.withValues(alpha: 0.5)
-            : Colors.white.withValues(alpha: 0.65),
+            ? const Color(0x0C142433)
+            : const Color(0x08FFFFFF),
         child: Center(
           child: isLoading
               ? SizedBox(

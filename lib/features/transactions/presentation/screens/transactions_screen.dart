@@ -92,6 +92,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
           ),
         ],
       ),
+      extendBody: true,
       bottomNavigationBar: DashboardBottomNav(
         currentIndex: 1,
         onTap: _onNav,
@@ -569,7 +570,7 @@ class _GroupedList extends ConsumerWidget {
       controller: scrollController,
       physics: const AlwaysScrollableScrollPhysics(),
       key: const PageStorageKey('transactions_list_view'),
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.only(bottom: 100),
       children: children,
     );
   }

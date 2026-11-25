@@ -42,6 +42,7 @@ class ReportsScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text(AppStrings.reportsTitle)),
+      extendBody: true,
       bottomNavigationBar: DashboardBottomNav(
         onTap: (i) => _onNav(i, context),
       ),
@@ -86,7 +87,7 @@ class _Body extends ConsumerWidget {
     final savedAmount = apiReport?.summary.savedImpulseAmount ?? 0.0;
     final savedCount = apiReport?.summary.savedImpulseCount ?? 0;
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

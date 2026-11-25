@@ -6,7 +6,7 @@ import '../constants/app_assets.dart';
 import '../constants/app_strings.dart';
 import '../constants/glass_design_tokens.dart';
 import '../routing/app_routes.dart';
-import '../theme/glass.dart';
+import '../theme/glass.dart' hide GlassQuality;
 
 /// Navigasi utama Tahan Dulu dengan permukaan Liquid Glass mengambang.
 ///
@@ -222,14 +222,20 @@ class AppBottomNavigationBar extends StatelessWidget {
                     child: navContent,
                   ),
                 )
-              : GlassContainer(
-                  useOwnLayer: true,
-                  shape: const LiquidRoundedSuperellipse(borderRadius: 32),
-                  color: isDark
-                      ? scheme.surfaceContainerHighest.withValues(alpha: 0.6)
-                      : Colors.white.withValues(alpha: 0.84),
-                  padding: const EdgeInsets.all(4),
-                  child: navContent,
+              : GlassIsolationScope(
+                  defaultQuality: GlassQuality.premium,
+                  child: GlassContainer(
+                    useOwnLayer: true,
+                    shape: const LiquidRoundedSuperellipse(borderRadius: 32),
+                    settings: GlassDesignTokens.createClearPlatterSettings(
+                      isDark: isDark,
+                    ),
+                    color: isDark
+                        ? const Color(0x0A142433)
+                        : const Color(0x06FFFFFF),
+                    padding: const EdgeInsets.all(4),
+                    child: navContent,
+                  ),
                 ),
         ),
       ),

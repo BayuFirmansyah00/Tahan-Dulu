@@ -58,14 +58,17 @@ class _GlassPocScreenState extends State<GlassPocScreen> {
           // Navigation Mode Switcher
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              children: [
-                _buildModeChip(0, '3 Sampel Komparasi'),
-                const SizedBox(width: 8),
-                _buildModeChip(1, 'Interactive Sandbox'),
-                const SizedBox(width: 8),
-                _buildModeChip(2, 'GPU & Engine'),
-              ],
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  _buildModeChip(0, '3 Sampel Komparasi'),
+                  const SizedBox(width: 8),
+                  _buildModeChip(1, 'Interactive Sandbox'),
+                  const SizedBox(width: 8),
+                  _buildModeChip(2, 'GPU & Engine'),
+                ],
+              ),
             ),
           ),
           const Divider(height: 1),
@@ -350,26 +353,29 @@ class _GlassPocScreenState extends State<GlassPocScreen> {
             style: const TextStyle(color: Colors.white, fontSize: 13, height: 1.35),
           ),
           const SizedBox(height: 12),
-          Row(
-            children: [
-              _buildMetricChip(
-                label: 'Legibility',
-                value: isClear ? '98%' : '32%',
-                color: isClear ? AppColors.primary : AppColors.error,
-              ),
-              const SizedBox(width: 8),
-              _buildMetricChip(
-                label: 'Refraction',
-                value: isClear ? 'Active' : 'Disabled',
-                color: isClear ? Colors.lightBlueAccent : Colors.grey,
-              ),
-              const SizedBox(width: 8),
-              _buildMetricChip(
-                label: 'Milky Tint',
-                value: isClear ? '2-4%' : '72-86%',
-                color: isClear ? Colors.greenAccent : Colors.orangeAccent,
-              ),
-            ],
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _buildMetricChip(
+                  label: 'Legibility',
+                  value: isClear ? '98%' : '32%',
+                  color: isClear ? AppColors.primary : AppColors.error,
+                ),
+                const SizedBox(width: 8),
+                _buildMetricChip(
+                  label: 'Refraction',
+                  value: isClear ? 'Active' : 'Disabled',
+                  color: isClear ? Colors.lightBlueAccent : Colors.grey,
+                ),
+                const SizedBox(width: 8),
+                _buildMetricChip(
+                  label: 'Milky Tint',
+                  value: isClear ? '2-4%' : '72-86%',
+                  color: isClear ? Colors.greenAccent : Colors.orangeAccent,
+                ),
+              ],
+            ),
           ),
         ],
       ),

@@ -6,11 +6,83 @@ import '../theme/app_radius.dart';
 
 /// Token terpusat untuk Liquid Glass Design System di aplikasi Tahan Dulu.
 ///
-/// Menyediakan nilai baku transparansi, blur, radius, bayangan, dan preset
-/// kualitas agar konsisten di seluruh aplikasi dengan tetap mempertahankan
-/// identitas warna hijau emerald khas Tahan Dulu.
+/// Menyediakan 3 Preset Utama:
+/// - **PRESET A (True Clear Platter)**: Untuk floating chrome (Bottom Navigation Bar, FAB, tabs)
+///   dengan transparansi sangat tinggi (tint ~2%), blur ~0, dan refraksi optik nyata.
+/// - **PRESET B (Regular Adaptive Content Surface)**: Untuk kartu data finansial (saldo, transaksi, goal)
+///   dengan kontras tinggi tanpa distorsi refraksi pada angka dan teks.
+/// - **PRESET C (Lightweight Fallback)**: Untuk perangkat low-end atau mode aksesibilitas
+///   (Reduce Motion / High Contrast) tanpa shader berat.
 abstract final class GlassDesignTokens {
-  // --- Surface Transparency & Opacities ---
+  // ==========================================
+  // PRESET A: TRUE CLEAR OPTICAL PLATTER
+  // ==========================================
+  /// Opasitas lapisan kaca bening (True Clear) dalam mode terang (~2% white tint).
+  static const double clearPlatterOpacity = 0.02;
+
+  /// Opasitas lapisan kaca bening (True Clear) dalam mode gelap (~4% dark tint).
+  static const double clearPlatterDarkOpacity = 0.04;
+
+  /// Intensitas blur untuk True Clear glass (0.0px untuk mencegah kabur putih susu).
+  static const double clearPlatterBlur = 0.0;
+
+  /// Indeks bias cahaya (Snell's Law) optik kaca melengkung (1.20 - 1.33).
+  static const double clearPlatterRefractiveIndex = 1.25;
+
+  /// Ketebalan fisik virtual kaca optik pada tepi superellipse (dp).
+  static const double clearPlatterThickness = 24.0;
+
+  /// Dispersi kromatik halus (RGB separation) pada bevel pinggir kaca.
+  static const double clearPlatterChromaticAberration = 0.015;
+
+  /// Intensitas pantulan tepi (Fresnel Rim Lighting).
+  static const double clearPlatterRimLight = 0.35;
+
+  /// Intensitas kilau specular saat terkena cahaya sudut.
+  static const double clearPlatterSpecular = 0.28;
+
+  /// Sudut pencahayaan virtual (radian atau derajat).
+  static const double clearPlatterLightAngle = GlassDefaults.lightAngle;
+
+  /// Helper untuk membangun [LiquidGlassSettings] True Clear Platter yang konsisten.
+  static LiquidGlassSettings createClearPlatterSettings({
+    bool isDark = false,
+    double? refractiveIndex,
+    double? blur,
+  }) {
+    return LiquidGlassSettings(
+      glassColor: isDark
+          ? const Color(0x0A142433)
+          : const Color(0x05FFFFFF),
+      thickness: clearPlatterThickness,
+      blur: blur ?? clearPlatterBlur,
+      frost: 0.0,
+      refractiveIndex: refractiveIndex ?? clearPlatterRefractiveIndex,
+      chromaticAberration: clearPlatterChromaticAberration,
+      fresnelStrength: 0.90,
+      lightIntensity: 0.55,
+      bodyMode: GlassBodyMode.clear,
+      lensModel: GlassLensModel.spherical,
+      specularSharpness: GlassSpecularSharpness.medium,
+    );
+  }
+
+  // ==========================================
+  // PRESET B: REGULAR ADAPTIVE CONTENT SURFACE
+  // ==========================================
+  /// Opasitas permukaan kartu konten finansial (100% solid adaptive).
+  static const double solidCardOpacity = 1.0;
+
+  /// Blur kartu konten finansial (0.0px tanpa blur shader).
+  static const double solidCardBlur = 0.0;
+
+  /// Gaya permukaan baku kartu finansial (Rule 1 & Rule 2: Solid wells).
+  static const GlassSurfaceStyle adaptiveSurfaceStyle = GlassSurfaceStyle.solid;
+
+  // ==========================================
+  // PRESET C: LIGHTWEIGHT FALLBACK & LEGACY COMPAT
+  // ==========================================
+  /// Legacy surface opacity untuk backward compatibility pengujian lama.
   static const double lightSurfaceOpacity = 0.72;
   static const double darkSurfaceOpacity = 0.86;
   static const double solidSurfaceOpacity = 1.0;
@@ -58,24 +130,24 @@ abstract final class GlassDesignTokens {
   ];
 
   // --- Quality & Style Presets ---
-  /// Kualitas default untuk floating navigation dan overlays
+  /// Kualitas default untuk floating navigation dan overlays (Impeller Vulkan multi-pass).
   static const GlassQuality defaultNavigationQuality = GlassQuality.premium;
 
-  /// Kualitas standar untuk floating cards dan standalone buttons
+  /// Kualitas standar untuk floating cards dan standalone buttons (single-pass shader).
   static const GlassQuality defaultSurfaceQuality = GlassQuality.standard;
 
-  /// Gaya visual utama aplikasi
+  /// Gaya visual utama aplikasi (iOS 27 Superellipse Optics).
   static const GlassStyle defaultStyle = GlassStyle.ios27;
 
-  /// Helper untuk mengecek apakah animasi dinonaktifkan (Reduced Motion)
+  /// Helper untuk mengecek apakah animasi dinonaktifkan (Reduced Motion).
   static bool isReducedMotion(BuildContext context) =>
       MediaQuery.disableAnimationsOf(context);
 
-  /// Helper untuk mengecek apakah kontras tinggi diaktifkan (High Contrast)
+  /// Helper untuk mengecek apakah kontras tinggi diaktifkan (High Contrast).
   static bool isHighContrast(BuildContext context) =>
       MediaQuery.highContrastOf(context);
 
-  /// Durasi animasi yang otomatis 0 bila reduced motion aktif
+  /// Durasi animasi yang otomatis 0 bila reduced motion aktif.
   static Duration motionDuration(BuildContext context) =>
       isReducedMotion(context) ? Duration.zero : durationNormal;
 }

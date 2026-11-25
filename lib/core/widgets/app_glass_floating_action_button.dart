@@ -3,7 +3,7 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 import '../constants/glass_design_tokens.dart';
 import '../theme/app_colors.dart';
-import '../theme/glass.dart';
+import '../theme/glass.dart' hide GlassQuality;
 
 /// Floating Action Button dengan sentuhan Liquid Glass.
 ///
@@ -105,16 +105,25 @@ class AppGlassFloatingActionButton extends StatelessWidget {
       fabContent = SizedBox(
         width: 56,
         height: 56,
-        child: GlassIconButton(
-          icon: IconTheme(
-            data: IconThemeData(color: fgColor, size: 24),
-            child: icon,
+        child: GlassIsolationScope(
+          defaultQuality: GlassQuality.premium,
+          child: GlassIconButton(
+            icon: IconTheme(
+              data: IconThemeData(
+                color: foregroundColor ?? AppColors.primary,
+                size: 24,
+              ),
+              child: icon,
+            ),
+            onPressed: onPressed,
+            shape: GlassIconButtonShape.circle,
+            surfaceStyle: GlassSurfaceStyle.glass,
+            style: GlassButtonStyle.prominent,
+            tintColor: backgroundColor ??
+                (isDark
+                    ? const Color(0x0C142433)
+                    : const Color(0x08FFFFFF)),
           ),
-          onPressed: onPressed,
-          shape: GlassIconButtonShape.circle,
-          surfaceStyle: GlassSurfaceStyle.glass,
-          style: GlassButtonStyle.prominent,
-          tintColor: bgColor.withValues(alpha: 0.88),
         ),
       );
     }

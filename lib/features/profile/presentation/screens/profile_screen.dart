@@ -44,6 +44,7 @@ class ProfileScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: context.canvasColor,
+      extendBody: true,
       bottomNavigationBar: DashboardBottomNav(
         currentIndex: 4,
         onTap: (i) => profileOnNav(i, context),
@@ -105,7 +106,7 @@ class _Body extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     return SingleChildScrollView(
       key: const PageStorageKey('profile_scroll_view'),
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 100),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
