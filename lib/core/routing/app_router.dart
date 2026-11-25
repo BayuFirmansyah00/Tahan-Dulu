@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:tahan_dulu/data/models/transaction_model.dart';
 import 'package:tahan_dulu/core/utils/validators.dart';
 import 'package:tahan_dulu/features/auth/presentation/models/password_reset_flow.dart';
+import 'package:tahan_dulu/features/auth/presentation/screens/email_verification_screen.dart';
 import 'package:tahan_dulu/features/auth/presentation/screens/forgot_password_screen.dart';
 import 'package:tahan_dulu/features/auth/presentation/screens/login_screen.dart';
 import 'package:tahan_dulu/features/auth/presentation/screens/register_screen.dart';
@@ -177,6 +178,7 @@ GoRouter createAppRouter({AuthRouteNotifier? authNotifier}) {
       final location = state.uri.toString();
 
       final isAuth = authState.status == AuthStatus.authenticated;
+      final isEmailVerified = authState.user?.isEmailVerified ?? true;
       final isOnboarded = authState.user?.isOnboarded ?? false;
 
       // Sedang di splash — biarkan SplashScreen memutuskan navigasi sendiri.
@@ -184,27 +186,39 @@ GoRouter createAppRouter({AuthRouteNotifier? authNotifier}) {
 
       // Belum terautentikasi: boleh akses login, register, splash saja.
       if (!isAuth) {
-        if (isProtected(location) || isOnboardingRoute(location)) {
+        if (isProtected(location) ||
+            isOnboardingRoute(location) ||
+            location == AppRoutes.emailVerification) {
           return AppRoutes.login;
         }
         return null;
       }
 
-      // Sudah autentikasi + sudah onboarding:
-      // Jangan kembali ke onboarding atau auth pages.
+      // Sudah autentikasi tapi BELUM verifikasi email:
+      // Wajib menyelesaikan verifikasi email sebelum onboarding atau dashboard.
+      if (!isEmailVerified) {
+        if (location != AppRoutes.emailVerification) {
+          return AppRoutes.emailVerification;
+        }
+        return null;
+      }
+
+      // Sudah autentikasi + sudah verifikasi email + sudah onboarding:
+      // Jangan kembali ke onboarding, verifikasi email, atau auth pages.
       if (isOnboarded) {
         if (isOnboardingRoute(location) ||
             location == AppRoutes.login ||
-            location == AppRoutes.register) {
+            location == AppRoutes.register ||
+            location == AppRoutes.emailVerification) {
           return AppRoutes.dashboard;
         }
         return null;
       }
 
-      // Sudah autentikasi tapi BELUM onboarding:
+      // Sudah autentikasi + terverifikasi tapi BELUM onboarding:
       // Boleh akses onboarding, logout (settings/security), splash.
-      // Blokir semua fitur utama.
-      if (isProtected(location)) {
+      // Blokir semua fitur utama & halaman verifikasi email.
+      if (isProtected(location) || location == AppRoutes.emailVerification) {
         return AppRoutes.onboardingSalary;
       }
       // Tetap boleh di login/register (edge case: double-navigate).
@@ -222,6 +236,10 @@ GoRouter createAppRouter({AuthRouteNotifier? authNotifier}) {
       GoRoute(
         path: AppRoutes.register,
         builder: (context, state) => const RegisterScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.emailVerification,
+        builder: (context, state) => const EmailVerificationScreen(),
       ),
       GoRoute(
         path: AppRoutes.forgotPassword,

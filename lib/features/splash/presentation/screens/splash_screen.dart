@@ -174,9 +174,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       return;
     }
 
-    // Cek status onboarding dari user yang dipulihkan.
-    // Pengguna yang belum selesai onboarding diarahkan untuk melanjutkan.
+    // Cek status verifikasi email dan onboarding dari user yang dipulihkan.
     final user = ref.read(authControllerProvider).user;
+    if (!(user?.isEmailVerified ?? true)) {
+      context.go(AppRoutes.emailVerification);
+      return;
+    }
     final isOnboarded = user?.isOnboarded ?? false;
     context.go(isOnboarded ? AppRoutes.dashboard : AppRoutes.onboardingSalary);
     if (isOnboarded) {

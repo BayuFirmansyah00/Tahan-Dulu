@@ -35,6 +35,13 @@ class RemoteAuthRepository implements AuthRepository {
   late final GoogleSignIn _googleSignIn;
 
   static UserModel _toUser(Map<String, dynamic> json) {
+    final rawVerifiedAt = json['email_verified_at'];
+    final parsedVerifiedAt = rawVerifiedAt is String && rawVerifiedAt.isNotEmpty
+        ? DateTime.tryParse(rawVerifiedAt)
+        : null;
+    final bool emailVerified =
+        parsedVerifiedAt != null || json['email_verified'] == true;
+
     return UserModel(
       id: '${json['id']}',
       name: '${json['name'] ?? ''}',
@@ -52,6 +59,8 @@ class RemoteAuthRepository implements AuthRepository {
                 : int.tryParse('${json['salary_day']}'))
           : null,
       isOnboarded: json['is_onboarded'] as bool? ?? false,
+      isEmailVerified: emailVerified,
+      emailVerifiedAt: parsedVerifiedAt,
     );
   }
 
@@ -379,5 +388,46 @@ class RemoteAuthRepository implements AuthRepository {
     }
     await _client.post('/delete-account', payload, token: token);
     await _tokens.clearToken();
+  }
+
+  @override
+  Future<void> resendVerificationEmail() async {
+    final token = await _tokens.readToken();
+    if (token == null || token.isEmpty) {
+      throw ApiException(
+        'Token tidak tersedia. Silakan login ulang.',
+        statusCode: 401,
+      );
+    }
+    await _client.post('/email/verification-notification', {}, token: token);
+  }
+
+  @override
+  Future<UserModel> refreshVerificationStatus() async {
+    final token = await _tokens.readToken();
+    if (token == null || token.isEmpty) {
+      throw ApiException(
+        'Token tidak tersedia. Silakan login ulang.',
+        statusCode: 401,
+      );
+    }
+    final statusBody = await _client.get('/email/verification-status', token: token);
+    final statusData = statusBody['data'];
+    final bool verified = statusData is Map && statusData['email_verified'] == true;
+    final rawVerifiedAt = statusData is Map ? statusData['email_verified_at'] : null;
+
+    final meBody = await _client.get('/me', token: token);
+    final meData = meBody['data'];
+    if (meData is! Map<String, dynamic>) {
+      throw ApiException('Respons profil tidak lengkap.');
+    }
+    final user = _toUser(meData);
+    if (verified && !user.isEmailVerified) {
+      return user.copyWith(
+        isEmailVerified: true,
+        emailVerifiedAt: () => rawVerifiedAt is String ? DateTime.tryParse(rawVerifiedAt) : DateTime.now(),
+      );
+    }
+    return user;
   }
 }

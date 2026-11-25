@@ -11,6 +11,8 @@ class UserModel extends Equatable {
     this.monthlyIncome,
     this.salaryDay,
     this.isOnboarded = false,
+    this.isEmailVerified = true,
+    this.emailVerifiedAt,
   });
 
   final String id;
@@ -32,6 +34,12 @@ class UserModel extends Equatable {
   /// Status apakah onboarding wajib telah selesai.
   final bool isOnboarded;
 
+  /// Status apakah email akun sudah diverifikasi.
+  final bool isEmailVerified;
+
+  /// Timestamp verifikasi email (null jika belum diverifikasi).
+  final DateTime? emailVerifiedAt;
+
   UserModel copyWith({
     String? id,
     String? name,
@@ -41,6 +49,8 @@ class UserModel extends Equatable {
     int? Function()? monthlyIncome,
     int? Function()? salaryDay,
     bool? isOnboarded,
+    bool? isEmailVerified,
+    DateTime? Function()? emailVerifiedAt,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -51,9 +61,22 @@ class UserModel extends Equatable {
       monthlyIncome: monthlyIncome != null ? monthlyIncome() : this.monthlyIncome,
       salaryDay: salaryDay != null ? salaryDay() : this.salaryDay,
       isOnboarded: isOnboarded ?? this.isOnboarded,
+      isEmailVerified: isEmailVerified ?? this.isEmailVerified,
+      emailVerifiedAt: emailVerifiedAt != null ? emailVerifiedAt() : this.emailVerifiedAt,
     );
   }
 
   @override
-  List<Object?> get props => [id, name, email, bio, avatarUrl, monthlyIncome, salaryDay, isOnboarded];
+  List<Object?> get props => [
+        id,
+        name,
+        email,
+        bio,
+        avatarUrl,
+        monthlyIncome,
+        salaryDay,
+        isOnboarded,
+        isEmailVerified,
+        emailVerifiedAt,
+      ];
 }

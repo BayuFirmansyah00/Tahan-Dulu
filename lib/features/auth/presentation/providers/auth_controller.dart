@@ -435,6 +435,25 @@ class AuthController extends Notifier<AuthState> {
       return false;
     }
   }
+
+  /// Kirim ulang tautan verifikasi email untuk pengguna yang belum terverifikasi.
+  Future<void> resendVerificationEmail() async {
+    await ref.read(authRepositoryProvider).resendVerificationEmail();
+  }
+
+  /// Periksa status verifikasi email terbaru dari server dan perbarui state user.
+  /// Mengembalikan true bila email sudah terverifikasi.
+  Future<bool> checkEmailVerificationStatus() async {
+    final user = await ref.read(authRepositoryProvider).refreshVerificationStatus();
+    if (state.status == AuthStatus.authenticated) {
+      state = AuthState._(
+        status: AuthStatus.authenticated,
+        user: user,
+        loginMethod: state.loginMethod,
+      );
+    }
+    return user.isEmailVerified;
+  }
 }
 
 final authControllerProvider = NotifierProvider<AuthController, AuthState>(

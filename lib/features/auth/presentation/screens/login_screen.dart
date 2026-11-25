@@ -40,6 +40,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   void _goDashboard(AuthState? prev, AuthState next) {
     if (next.status == AuthStatus.authenticated) {
+      if (!(next.user?.isEmailVerified ?? true)) {
+        context.go(AppRoutes.emailVerification);
+        return;
+      }
       // Cek status onboarding: pengguna yang belum selesai diarahkan ke onboarding,
       // pengguna yang sudah selesai langsung masuk Dashboard.
       final isOnboarded = next.user?.isOnboarded ?? false;

@@ -5,6 +5,7 @@ abstract final class AppRoutes {
   static const String splash = '/';
   static const String login = '/login';
   static const String register = '/register';
+  static const String emailVerification = '/email-verification';
   static const String forgotPassword = '/forgot-password';
   static const String verifyResetOtp = '/forgot-password/verify';
   static const String resetPassword = '/forgot-password/reset';

@@ -81,11 +81,31 @@ abstract class AuthRepository {
 
   /// Ambil Google ID Token segar untuk verifikasi tindakan sensitif (mis. hapus akun).
   Future<String?> getGoogleReauthIdToken();
+
+  /// Kirim ulang email verifikasi ke alamat email pengguna saat ini.
+  Future<void> resendVerificationEmail();
+
+  /// Periksa status verifikasi email terbaru dari server dan kembalikan UserModel terbaru.
+  Future<UserModel> refreshVerificationStatus();
 }
 
 /// Mock authentication — simulasi login/register tanpa backend.
 class MockAuthRepository implements AuthRepository {
   UserModel _current = MockData.user;
+
+  @override
+  Future<void> resendVerificationEmail() async {
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+  }
+
+  @override
+  Future<UserModel> refreshVerificationStatus() async {
+    _current = _current.copyWith(
+      isEmailVerified: true,
+      emailVerifiedAt: () => DateTime.now(),
+    );
+    return mockDelay(_current, 250);
+  }
 
   @override
   Future<void> deleteAccount({String? password, String? googleIdToken}) async {

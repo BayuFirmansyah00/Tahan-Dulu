@@ -41,6 +41,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   void _goDashboard(AuthState? prev, AuthState next) {
     if (next.status == AuthStatus.authenticated) {
+      if (!(next.user?.isEmailVerified ?? true)) {
+        context.go(AppRoutes.emailVerification);
+        return;
+      }
       // Pengguna baru (is_onboarded=false) wajib menyelesaikan onboarding.
       // Pengguna lama yang sudah migrasi (is_onboarded=true) langsung dashboard.
       final isOnboarded = next.user?.isOnboarded ?? false;
