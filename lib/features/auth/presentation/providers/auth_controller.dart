@@ -203,6 +203,50 @@ class AuthController extends Notifier<AuthState> {
     }
   }
 
+  /// Unggah file gambar avatar pengguna ke backend.
+  Future<bool> uploadAvatar(String filePath) async {
+    if (_saving || filePath.trim().isEmpty) return false;
+    _saving = true;
+    try {
+      final updated = await ref
+          .read(authRepositoryProvider)
+          .uploadAvatar(filePath);
+      state = AuthState._(
+        status: state.status,
+        user: updated,
+        loginMethod: state.loginMethod,
+      );
+      ref.invalidate(userProvider);
+      return true;
+    } catch (_) {
+      rethrow;
+    } finally {
+      _saving = false;
+    }
+  }
+
+  /// Hapus foto profil pengguna di backend (menjadi null).
+  Future<bool> deleteAvatar() async {
+    if (_saving) return false;
+    _saving = true;
+    try {
+      final updated = await ref
+          .read(authRepositoryProvider)
+          .deleteAvatar();
+      state = AuthState._(
+        status: state.status,
+        user: updated,
+        loginMethod: state.loginMethod,
+      );
+      ref.invalidate(userProvider);
+      return true;
+    } catch (_) {
+      rethrow;
+    } finally {
+      _saving = false;
+    }
+  }
+
   /// Ubah kata sandi pengguna terautentikasi (email/password).
   Future<bool> changePassword({
     required String currentPassword,

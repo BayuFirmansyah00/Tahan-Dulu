@@ -50,6 +50,12 @@ abstract class AuthRepository {
   /// ulang. Tidak menyentuh data keuangan.
   Future<UserModel> updateProfile({required String name, String? bio});
 
+  /// Unggah file gambar avatar pengguna ke backend.
+  Future<UserModel> uploadAvatar(String filePath);
+
+  /// Hapus foto profil pengguna di backend (menjadi null).
+  Future<UserModel> deleteAvatar();
+
   /// Perbarui informasi keuangan pengguna (monthly_income + salary_day + is_onboarded)
   /// secara permanen di backend.
   Future<UserModel> updateFinancialInfo({
@@ -164,6 +170,22 @@ class MockAuthRepository implements AuthRepository {
     _current = _current.copyWith(
       name: trimmed,
       bio: () => bio?.trim().isEmpty ?? true ? null : bio!.trim(),
+    );
+    return mockDelay(_current);
+  }
+
+  @override
+  Future<UserModel> uploadAvatar(String filePath) {
+    _current = _current.copyWith(
+      avatarUrl: () => filePath,
+    );
+    return mockDelay(_current);
+  }
+
+  @override
+  Future<UserModel> deleteAvatar() {
+    _current = _current.copyWith(
+      avatarUrl: () => null,
     );
     return mockDelay(_current);
   }

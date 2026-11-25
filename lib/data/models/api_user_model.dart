@@ -12,6 +12,8 @@ class ApiUserModel extends Equatable {
     this.role,
     this.accessToken,
     this.tokenType,
+    this.avatarUrl,
+    this.bio,
     this.monthlyIncome,
     this.salaryDay,
   });
@@ -28,6 +30,12 @@ class ApiUserModel extends Equatable {
 
   final String? tokenType;
 
+  /// URL avatar profil pengguna (opsional).
+  final String? avatarUrl;
+
+  /// Bio pengguna (opsional, maks 120 karakter).
+  final String? bio;
+
   /// Gaji bulanan pengguna (dalam satuan mata uang, opsional).
   final int? monthlyIncome;
 
@@ -42,6 +50,8 @@ class ApiUserModel extends Equatable {
       role: json['role'] as String?,
       accessToken: json['access_token'] as String?,
       tokenType: json['token_type'] as String?,
+      avatarUrl: json['avatar_url'] as String?,
+      bio: json['bio'] as String?,
       monthlyIncome: json['monthly_income'] != null
           ? (json['monthly_income'] is int
               ? json['monthly_income'] as int
@@ -52,7 +62,7 @@ class ApiUserModel extends Equatable {
               ? json['salary_day'] as int
               : int.tryParse('${json['salary_day']}'))
           : null,
-  );
+    );
   }
 
   Map<String, dynamic> toJson() {
@@ -63,6 +73,8 @@ class ApiUserModel extends Equatable {
       'role': role,
       'access_token': accessToken,
       'token_type': tokenType,
+      'avatar_url': avatarUrl,
+      'bio': bio,
       'monthly_income': monthlyIncome,
       'salary_day': salaryDay,
     };
@@ -75,6 +87,8 @@ class ApiUserModel extends Equatable {
     String? Function()? role,
     String? Function()? accessToken,
     String? Function()? tokenType,
+    String? Function()? avatarUrl,
+    String? Function()? bio,
     int? Function()? monthlyIncome,
     int? Function()? salaryDay,
   }) {
@@ -85,13 +99,15 @@ class ApiUserModel extends Equatable {
       role: role != null ? role() : this.role,
       accessToken: accessToken != null ? accessToken() : this.accessToken,
       tokenType: tokenType != null ? tokenType() : this.tokenType,
+      avatarUrl: avatarUrl != null ? avatarUrl() : this.avatarUrl,
+      bio: bio != null ? bio() : this.bio,
       monthlyIncome: monthlyIncome != null ? monthlyIncome() : this.monthlyIncome,
       salaryDay: salaryDay != null ? salaryDay() : this.salaryDay,
     );
   }
 
   @override
-  List<Object?> get props => [id, name, email, role, accessToken, tokenType, monthlyIncome, salaryDay];
+  List<Object?> get props => [id, name, email, role, accessToken, tokenType, avatarUrl, bio, monthlyIncome, salaryDay];
 }
 
 /// Envelope respons autentikasi: {success, message, data}.

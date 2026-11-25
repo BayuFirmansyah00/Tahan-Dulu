@@ -7,7 +7,7 @@ import '../../../../core/theme/glass.dart';
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
-import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/app_avatar.dart';
 import '../../../../core/widgets/app_image_icon.dart';
 import '../../../../core/widgets/app_states.dart';
 import '../../../../data/models/user_model.dart';
@@ -181,15 +181,15 @@ class _Body extends StatelessWidget {
           ],
           const SizedBox(height: 16),
           const ProfileSectionHeader(
-            title: AppStrings.profileAccountSection,
+            title: 'Keuangan',
           ),
           const SizedBox(height: 8),
           SettingsMenuRow(
             iconForeground: context.palette.primary,
             iconBackground: context.palette.primaryContainer,
             asset: AppAssets.ntfBudget,
-            title: 'Pengaturan Keuangan',
-            description: 'Ubah penghasilan, tanggal gajian, dan siklus budget',
+            title: 'Rencana Keuangan',
+            description: 'Gaji terencana, tanggal gajian, dan siklus anggaran',
             onTap: () => context.push(AppRoutes.financialSettings),
           ),
           const SizedBox(height: 8),
@@ -209,6 +209,10 @@ class _Body extends StatelessWidget {
             title: AppStrings.recurringExpensesTitle,
             description: 'Kelola tagihan, langganan, dan pengeluaran rutin',
             onTap: () => context.push(AppRoutes.recurringExpenses),
+          ),
+          const SizedBox(height: 20),
+          const ProfileSectionHeader(
+            title: 'Akun & Preferensi',
           ),
           const SizedBox(height: 8),
           SettingsMenuRow(
@@ -311,23 +315,16 @@ class _ProfileCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final initial = user.name.trim().isEmpty
-        ? '?'
-        : user.name.trim()[0].toUpperCase();
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: Glass.panel(context, radius: BorderRadius.circular(20)),
       child: Row(
         children: [
-          CircleAvatar(
+          AppAvatar(
+            name: user.name,
+            avatarUrl: user.avatarUrl,
             radius: 28,
-            backgroundColor: AppColors.primary,
-            child: Text(
-              initial,
-              style: textTheme.headlineMedium?.copyWith(
-                color: Colors.white,
-              ),
-            ),
+            onTap: () => context.push(AppRoutes.profileEdit),
           ),
           const SizedBox(width: 12),
           Expanded(

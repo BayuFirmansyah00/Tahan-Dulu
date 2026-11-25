@@ -50,6 +50,7 @@ class RemoteDashboardRepository implements DashboardRepository {
       name: '${data['name'] ?? ''}',
       email: data['email'] as String?,
       bio: data['bio'] as String?,
+      avatarUrl: data['avatar_url'] as String?,
       monthlyIncome: data['monthly_income'] != null
           ? (data['monthly_income'] is int
                 ? data['monthly_income'] as int

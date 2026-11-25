@@ -42,6 +42,34 @@ abstract final class DateFormatter {
   static String dayMonthYear(DateTime date) =>
       '${date.day} ${_monthsId[date.month - 1]} ${date.year}';
 
+  /// Format string ISO tanggal 'YYYY-MM-DD' -> "8 Oktober 2026".
+  static String formatIsoDate(String? isoDate) {
+    if (isoDate == null || isoDate.trim().isEmpty) return '-';
+    final parsed = DateTime.tryParse(isoDate);
+    if (parsed == null) return isoDate;
+    return dayMonthYear(parsed);
+  }
+
+  /// Format rentang tanggal: "23 November – 22 Desember 2026"
+  static String dateRange(DateTime start, DateTime end) {
+    if (start.year == end.year) {
+      if (start.month == end.month) {
+        return '${start.day} – ${end.day} ${_monthsId[start.month - 1]} ${start.year}';
+      }
+      return '${start.day} ${_monthsId[start.month - 1]} – ${end.day} ${_monthsId[end.month - 1]} ${start.year}';
+    }
+    return '${dayMonthYear(start)} – ${dayMonthYear(end)}';
+  }
+
+  /// Format rentang dari dua string tanggal ISO: "23 November – 22 Desember 2026"
+  static String formatIsoRange(String? startIso, String? endIso) {
+    if (startIso == null || endIso == null) return '${startIso ?? '-'} – ${endIso ?? '-'}';
+    final start = DateTime.tryParse(startIso);
+    final end = DateTime.tryParse(endIso);
+    if (start == null || end == null) return '$startIso – $endIso';
+    return dateRange(start, end);
+  }
+
   static const List<String> _weekdaysId = [
     'Senin',
     'Selasa',

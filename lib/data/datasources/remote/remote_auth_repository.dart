@@ -40,6 +40,7 @@ class RemoteAuthRepository implements AuthRepository {
       name: '${json['name'] ?? ''}',
       email: json['email'] as String?,
       bio: json['bio'] as String?,
+      avatarUrl: json['avatar_url'] as String?,
       monthlyIncome: json['monthly_income'] != null
           ? (json['monthly_income'] is int
                 ? json['monthly_income'] as int
@@ -222,6 +223,45 @@ class RemoteAuthRepository implements AuthRepository {
     final data = body['data'];
     if (data is! Map<String, dynamic>) {
       throw ApiException('Respons update profil tidak lengkap.');
+    }
+    return _toUser(data);
+  }
+
+  @override
+  Future<UserModel> uploadAvatar(String filePath) async {
+    final token = await _tokens.readToken();
+    if (token == null || token.isEmpty) {
+      throw ApiException(
+        'Token tidak tersedia. Silakan login ulang.',
+        statusCode: 401,
+      );
+    }
+    final body = await _client.postMultipart(
+      '/user/avatar',
+      fileField: 'avatar',
+      filePath: filePath,
+      token: token,
+    );
+    final data = body['data'];
+    if (data is! Map<String, dynamic>) {
+      throw ApiException('Respons unggah foto profil tidak valid.');
+    }
+    return _toUser(data);
+  }
+
+  @override
+  Future<UserModel> deleteAvatar() async {
+    final token = await _tokens.readToken();
+    if (token == null || token.isEmpty) {
+      throw ApiException(
+        'Token tidak tersedia. Silakan login ulang.',
+        statusCode: 401,
+      );
+    }
+    final body = await _client.delete('/user/avatar', token: token);
+    final data = body['data'];
+    if (data is! Map<String, dynamic>) {
+      throw ApiException('Respons hapus foto profil tidak valid.');
     }
     return _toUser(data);
   }

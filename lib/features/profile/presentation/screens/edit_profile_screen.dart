@@ -6,9 +6,9 @@ import '../../../../core/theme/glass.dart';
 
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
-import '../../../../core/routing/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/validators.dart';
+import '../../../../core/widgets/app_avatar.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_image_icon.dart';
 import '../../../../core/widgets/app_states.dart';
@@ -16,6 +16,7 @@ import '../../../../core/widgets/app_text_field.dart';
 import '../../../../data/datasources/remote/api_client.dart';
 import '../../../../data/models/user_model.dart';
 import '../providers/profile_providers.dart';
+import '../widgets/avatar_picker_sheet.dart';
 
 /// Edit Profil: nama dapat diubah, email read-only, bio opsional.
 class EditProfileScreen extends ConsumerStatefulWidget {
@@ -32,6 +33,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   late final TextEditingController _bioController;
   bool _saving = false;
   bool _bound = false;
+  bool _avatarLoading = false;
 
   @override
   void initState() {
@@ -168,53 +170,43 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                               right: 0,
                               child: Center(
                                 child: Stack(
+                                  alignment: Alignment.center,
                                   children: [
-                                    CircleAvatar(
+                                    AppAvatar(
+                                      name: draft.name,
+                                      avatarUrl: user.value?.avatarUrl,
                                       radius: 44,
-                                      backgroundColor: AppColors.primary,
-                                      child: Text(
-                                        draft.name.trim().isEmpty
-                                            ? '?'
-                                            : draft.name
-                                                  .trim()[0]
-                                                  .toUpperCase(),
-                                        style: textTheme.displayLarge?.copyWith(
-                                          color: Colors.white,
-                                          fontSize: 36,
-                                        ),
+                                      showEditBadge: true,
+                                      textStyle: textTheme.displayLarge?.copyWith(
+                                        color: Colors.white,
+                                        fontSize: 36,
                                       ),
+                                      onTap: _avatarLoading || user.value == null
+                                          ? null
+                                          : () => showAvatarPickerSheet(
+                                                context,
+                                                ref: ref,
+                                                user: user.value!,
+                                                onLoadingChanged: (l) {
+                                                  if (mounted) setState(() => _avatarLoading = l);
+                                                },
+                                              ),
                                     ),
-                                    Positioned(
-                                      right: 0,
-                                      bottom: 0,
-                                      child: Container(
-                                        width: 30,
-                                        height: 30,
-                                        decoration: BoxDecoration(
-                                          color: context.palette.surface,
+                                    if (_avatarLoading)
+                                      Container(
+                                        width: 88,
+                                        height: 88,
+                                        decoration: const BoxDecoration(
+                                          color: Colors.black45,
                                           shape: BoxShape.circle,
-                                          border: Border.all(
-                                            color: context.palette.outlineVariant,
-                                          ),
                                         ),
-                                        child: ClipOval(
-                                          child: Image.asset(
-                                            AppAssets.setCameraBadge,
-                                            width: 28,
-                                            height: 28,
-                                            fit: BoxFit.cover,
-                                            errorBuilder:
-                                                (context, error, stackTrace) =>
-                                                    const Icon(
-                                                      Icons.camera_alt_outlined,
-                                                      size: 16,
-                                                      color: AppColors
-                                                          .textSecondary,
-                                                    ),
+                                        child: const Center(
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 3,
+                                            color: Colors.white,
                                           ),
                                         ),
                                       ),
-                                    ),
                                   ],
                                 ),
                               ),
@@ -232,14 +224,16 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                               vertical: 8,
                             ),
                           ),
-                          onPressed: () =>
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    AppStrings.editProfilePhotoSoon,
+                          onPressed: _avatarLoading || user.value == null
+                              ? null
+                              : () => showAvatarPickerSheet(
+                                    context,
+                                    ref: ref,
+                                    user: user.value!,
+                                    onLoadingChanged: (l) {
+                                      if (mounted) setState(() => _avatarLoading = l);
+                                    },
                                   ),
-                                ),
-                              ),
                           icon: const Icon(Icons.image_outlined, size: 16),
                           label: const Text(AppStrings.editProfilePhoto),
                         ),
@@ -301,62 +295,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      Container(
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: context.palette.primaryContainer,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: context.palette.primary.withValues(alpha: 0.2),
-                          ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.account_balance_wallet_outlined,
-                                  color: context.palette.primary,
-                                  size: 20,
-                                ),
-                                const SizedBox(width: 8),
-                                Flexible(child: Text(
-                                  'Gaji & Siklus Anggaran',
-                                  style: textTheme.titleSmall?.copyWith(
-                                    fontWeight: FontWeight.w700,
-                                    color: context.palette.primary,
-                                  ),
-                                )),
-                              ],
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              'Kelola perubahan penghasilan dan tanggal gajian agar siklus budget dan batas belanja harian tetap konsisten.',
-                              style: textTheme.bodySmall?.copyWith(
-                                color: context.palette.onSurface,
-                                fontSize: 12,
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            OutlinedButton.icon(
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: context.palette.primary,
-                                side: BorderSide(color: context.palette.primary),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                              icon: const Icon(Icons.tune_outlined, size: 16),
-                              label: const Text('Buka Pengaturan Keuangan'),
-                              onPressed: () =>
-                                  context.push(AppRoutes.financialSettings),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 24),
                       AppButton(
                         label: AppStrings.editProfileSave,
                         isLoading: _saving,

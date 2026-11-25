@@ -9,6 +9,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
+import '../../../../core/widgets/app_avatar.dart';
 import '../../../../core/widgets/app_icons.dart';
 import '../../../../core/widgets/app_states.dart';
 import '../../../../data/models/dashboard_data.dart';
@@ -290,20 +291,19 @@ class _Header extends ConsumerWidget {
     final textTheme = Theme.of(context).textTheme;
     final firstName = data.user.name.split(' ').first;
     final showInApp = ref.watch(showInAppNotificationsProvider);
-    final initial =
-        firstName.isEmpty ? '?' : firstName[0].toUpperCase();
     return Row(
       children: [
-        CircleAvatar(
+        AppAvatar(
+          name: firstName,
+          avatarUrl: data.user.avatarUrl,
           radius: 22,
           backgroundColor: context.palette.primaryContainer,
-          child: Text(
-            initial,
-            style: textTheme.titleLarge?.copyWith(
-              color: context.palette.primary,
-              fontWeight: FontWeight.w800,
-            ),
+          foregroundColor: context.palette.primary,
+          textStyle: textTheme.titleLarge?.copyWith(
+            color: context.palette.primary,
+            fontWeight: FontWeight.w800,
           ),
+          onTap: () => context.push(AppRoutes.settings),
         ),
         const SizedBox(width: 12),
         Expanded(

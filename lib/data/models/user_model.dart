@@ -7,6 +7,7 @@ class UserModel extends Equatable {
     required this.name,
     this.email,
     this.bio,
+    this.avatarUrl,
     this.monthlyIncome,
     this.salaryDay,
     this.isOnboarded = false,
@@ -15,6 +16,9 @@ class UserModel extends Equatable {
   final String id;
   final String name;
   final String? email;
+
+  /// URL foto profil pengguna (opsional).
+  final String? avatarUrl;
 
   /// Deskripsi singkat profil (opsional, maks 120 karakter di form).
   final String? bio;
@@ -33,6 +37,7 @@ class UserModel extends Equatable {
     String? name,
     String? Function()? email,
     String? Function()? bio,
+    String? Function()? avatarUrl,
     int? Function()? monthlyIncome,
     int? Function()? salaryDay,
     bool? isOnboarded,
@@ -42,6 +47,7 @@ class UserModel extends Equatable {
       name: name ?? this.name,
       email: email != null ? email() : this.email,
       bio: bio != null ? bio() : this.bio,
+      avatarUrl: avatarUrl != null ? avatarUrl() : this.avatarUrl,
       monthlyIncome: monthlyIncome != null ? monthlyIncome() : this.monthlyIncome,
       salaryDay: salaryDay != null ? salaryDay() : this.salaryDay,
       isOnboarded: isOnboarded ?? this.isOnboarded,
@@ -49,5 +55,5 @@ class UserModel extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id, name, email, bio, monthlyIncome, salaryDay, isOnboarded];
+  List<Object?> get props => [id, name, email, bio, avatarUrl, monthlyIncome, salaryDay, isOnboarded];
 }

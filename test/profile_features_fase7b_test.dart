@@ -7,16 +7,22 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tahan_dulu/core/constants/app_strings.dart';
+import 'package:tahan_dulu/core/utils/date_formatter.dart';
+import 'package:tahan_dulu/core/widgets/app_avatar.dart';
 import 'package:tahan_dulu/data/datasources/remote/api_client.dart';
 import 'package:tahan_dulu/data/datasources/remote/remote_auth_repository.dart';
 import 'package:tahan_dulu/data/datasources/remote/token_storage.dart';
+import 'package:tahan_dulu/data/models/financial_settings.dart';
 import 'package:tahan_dulu/data/models/user_model.dart';
 import 'package:tahan_dulu/features/auth/presentation/providers/auth_controller.dart';
+import 'package:tahan_dulu/features/profile/presentation/providers/financial_settings_controller.dart';
 import 'package:tahan_dulu/features/profile/presentation/providers/profile_providers.dart';
 import 'package:tahan_dulu/features/profile/presentation/screens/edit_profile_screen.dart';
+import 'package:tahan_dulu/features/profile/presentation/screens/financial_settings_screen.dart';
 import 'package:tahan_dulu/features/profile/presentation/screens/privacy_screen.dart';
 import 'package:tahan_dulu/features/profile/presentation/screens/profile_screen.dart';
 import 'package:tahan_dulu/features/profile/presentation/screens/security_screen.dart';
+import 'package:tahan_dulu/features/recurring/presentation/providers/recurring_controller.dart';
 
 class _MemoryTokenStore implements TokenStore {
   String? _token = 'test-bearer-token';
@@ -232,7 +238,9 @@ void main() {
       expect(find.text('Bayu Test'), findsOneWidget);
       expect(find.text('bayu@example.com'), findsOneWidget);
       expect(find.text(AppStrings.profileBadge), findsOneWidget);
-      expect(find.text('Pengaturan Keuangan'), findsOneWidget);
+      expect(find.text('Rencana Keuangan'), findsOneWidget);
+      expect(find.text(AppStrings.recurringIncomesTitle), findsOneWidget);
+      expect(find.text(AppStrings.recurringExpensesTitle), findsOneWidget);
       expect(find.text(AppStrings.profileMenuInfo), findsOneWidget);
       expect(find.text(AppStrings.profileMenuSecurity), findsOneWidget);
       expect(find.text(AppStrings.profileMenuPrivacy), findsOneWidget);
@@ -267,6 +275,42 @@ void main() {
       expect(find.text('budi@example.com'), findsOneWidget);
       expect(find.text(AppStrings.editProfileEmailFrozen), findsOneWidget);
       expect(find.text(AppStrings.editProfileSave), findsOneWidget);
+      expect(find.text(AppStrings.editProfilePhoto), findsOneWidget);
+      // Gaji & Siklus Anggaran telah dihapus dari EditProfileScreen demi simplifikasi personal info
+      expect(find.text('Gaji & Siklus Anggaran'), findsNothing);
+      expect(find.text('Buka Pengaturan Keuangan'), findsNothing);
+    });
+
+    testWidgets('EditProfileScreen membuka bottom sheet foto profil saat tombol Ubah Foto ditekan', (tester) async {
+      final container = ProviderContainer(
+        overrides: [
+          profileUserProvider.overrideWith((ref) async => const UserModel(
+                id: '1',
+                name: 'Budi Hartono',
+                email: 'budi@example.com',
+                bio: 'Bio awal',
+                isOnboarded: true,
+              )),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const MaterialApp(
+            home: EditProfileScreen(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text(AppStrings.editProfilePhoto));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Foto Profil'), findsOneWidget);
+      expect(find.text('Ambil Foto (Kamera)'), findsOneWidget);
+      expect(find.text('Pilih dari Galeri'), findsOneWidget);
     });
 
     testWidgets('SecurityScreen menampilkan opsi Ubah Kata Sandi dan Hapus Akun', (tester) async {
@@ -446,6 +490,84 @@ void main() {
       });
     }
   });
+
+  group('Fase 6C: Profile Avatar, Financial Settings & Indonesian Dates', () {
+    test('DateFormatter memformat rentang tanggal ISO ke format Indonesia yang mudah dibaca', () {
+      final formatted = DateFormatter.formatIsoRange('2026-11-23', '2026-12-22');
+      expect(formatted, '23 November – 22 Desember 2026');
+
+      final sameMonth = DateFormatter.formatIsoRange('2026-11-01', '2026-11-30');
+      expect(sameMonth, '1 – 30 November 2026');
+
+      final singleDate = DateFormatter.formatIsoDate('2026-12-25');
+      expect(singleDate, '25 Desember 2026');
+    });
+
+    testWidgets('AppAvatar menampilkan inisial teks saat avatarUrl kosong', (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: AppAvatar(name: 'Andi Pratama', avatarUrl: null, radius: 28),
+          ),
+        ),
+      );
+      expect(find.text('A'), findsOneWidget);
+    });
+
+    testWidgets('FinancialSettingsScreen menampilkan judul Rencana Keuangan dan Ringkasan Arus Kas Terjadwal', (tester) async {
+      const sampleSettings = FinancialSettings(
+        currentMonthlyIncome: 7500000,
+        currentMonthlyIncomeFormatted: 'Rp 7.500.000',
+        currentSalaryDay: 25,
+        activePeriod: ActivePeriodInfo(
+          id: 1,
+          periodStart: '2026-11-23',
+          periodEnd: '2026-12-22',
+          daysRemaining: 27,
+          monthlyIncome: 7500000,
+          isActive: true,
+          spendableAllocation: 3500000,
+          safeDailySpending: 120000,
+        ),
+      );
+
+      final container = ProviderContainer(
+        overrides: [
+          financialSettingsControllerProvider.overrideWith(
+            () => _MockFinancialSettingsController(sampleSettings),
+          ),
+          recurringIncomesProvider.overrideWith((ref) async => const []),
+          recurringExpensesProvider.overrideWith((ref) async => const []),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const MaterialApp(
+            home: FinancialSettingsScreen(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Rencana Keuangan'), findsOneWidget);
+      expect(find.text('Rencana Keuangan Aktif'), findsOneWidget);
+      expect(find.text('Ringkasan Arus Kas Terjadwal'), findsOneWidget);
+      expect(find.text('Pemasukan Rutin'), findsWidgets);
+      expect(find.text('Pengeluaran Rutin'), findsWidgets);
+      expect(find.textContaining('23 November – 22 Desember 2026'), findsOneWidget);
+    });
+  });
+}
+
+class _MockFinancialSettingsController extends FinancialSettingsController {
+  _MockFinancialSettingsController(this._initial);
+  final FinancialSettings _initial;
+
+  @override
+  Future<FinancialSettings> build() async => _initial;
 }
 
 class _MockScopedAuthController extends AuthController {

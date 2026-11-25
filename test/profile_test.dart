@@ -438,7 +438,7 @@ void main() {
       );
     });
 
-    testWidgets('ubah foto jujur belum tersedia', (tester) async {
+    testWidgets('ubah foto membuka lembar aksi foto profil', (tester) async {
       await _pumpProfile(tester, initial: '/settings/edit');
 
       await _tapVisible(
@@ -446,7 +446,15 @@ void main() {
         find.text(AppStrings.editProfilePhoto),
       );
       expect(
-        find.text(AppStrings.editProfilePhotoSoon),
+        find.text('Foto Profil'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Ambil Foto (Kamera)'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Pilih dari Galeri'),
         findsOneWidget,
       );
     });
