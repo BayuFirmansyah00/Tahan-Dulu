@@ -9,10 +9,12 @@ import '../../../../core/routing/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/utils/rupiah_input_formatter.dart';
+import '../../../../core/utils/scheduled_cashflow_calculator.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_image_icon.dart';
 import '../../../../core/widgets/app_states.dart';
 import '../../../../core/widgets/app_text_field.dart';
+import '../../../../data/models/api_recurring_transaction.dart';
 import '../../../../data/models/financial_settings.dart';
 import '../../../recurring/presentation/providers/recurring_controller.dart';
 import '../providers/financial_settings_controller.dart';
@@ -447,7 +449,7 @@ class _FinancialSettingsScreenState
                         const SizedBox(height: 16),
 
                         // Card 2: Ringkasan Arus Kas Terjadwal (Pemasukan & Pengeluaran Rutin)
-                        const _ScheduledCashflowCard(),
+                        _ScheduledCashflowCard(activePeriod: data.activePeriod),
                         const SizedBox(height: 16),
 
                         // Card 3: Pending Change (jika ada)
@@ -493,23 +495,15 @@ class _FinancialSettingsScreenState
 }
 
 class _ScheduledCashflowCard extends ConsumerWidget {
-  const _ScheduledCashflowCard();
+  const _ScheduledCashflowCard({this.activePeriod});
+
+  final ActivePeriodInfo? activePeriod;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final textTheme = Theme.of(context).textTheme;
     final incomesAsync = ref.watch(recurringIncomesProvider);
     final expensesAsync = ref.watch(recurringExpensesProvider);
-
-    final incomes = incomesAsync.value ?? [];
-    final expenses = expensesAsync.value ?? [];
-
-    final activeIncomes = incomes.where((i) => i.isActive).toList();
-    final activeExpenses = expenses.where((e) => e.isActive).toList();
-
-    final totalIncome = activeIncomes.fold<double>(0, (sum, i) => sum + i.amount);
-    final totalExpense = activeExpenses.fold<double>(0, (sum, e) => sum + e.amount);
-    final netCashflow = totalIncome - totalExpense;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -555,7 +549,7 @@ class _ScheduledCashflowCard extends ConsumerWidget {
                       ),
                     ),
                     Text(
-                      'Pemasukan & pengeluaran berkala aktif',
+                      'Pemasukan & pengeluaran berkala aktif periode ini',
                       style: textTheme.bodySmall?.copyWith(
                         color: context.palette.onSurfaceVariant,
                         fontSize: 12,
@@ -567,106 +561,80 @@ class _ScheduledCashflowCard extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: context.palette.primaryContainer.withValues(alpha: 0.5),
-                    borderRadius: BorderRadius.circular(12),
+
+          // Handling Status Loading & Error tanpa menampilkan angka 0 menyesatkan
+          if (incomesAsync.isLoading || expensesAsync.isLoading) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: context.palette.primary,
+                    ),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Pemasukan Rutin',
-                        style: textTheme.bodySmall?.copyWith(
-                          fontSize: 11,
-                          color: context.palette.onSurfaceVariant,
-                        ),
+                  const SizedBox(width: 10),
+                  Flexible(
+                    child: Text(
+                      'Menghitung arus kas terjadwal...',
+                      style: textTheme.bodySmall?.copyWith(
+                        color: context.palette.onSurfaceVariant,
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Rp ${RupiahInputFormatter.format(totalIncome.toInt())}',
-                        style: textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: context.palette.primary,
-                        ),
-                      ),
-                      Text(
-                        '${activeIncomes.length} jadwal aktif',
-                        style: textTheme.bodySmall?.copyWith(
-                          fontSize: 10.5,
-                          color: context.palette.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
+                ],
+              ),
+            ),
+          ] else if (incomesAsync.hasError || expensesAsync.hasError) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: context.palette.errorContainer.withValues(alpha: 0.4),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: context.palette.error.withValues(alpha: 0.2)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.error_outline, size: 18, color: context.palette.error),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Gagal memuat ringkasan transaksi rutin',
+                        style: textTheme.bodySmall?.copyWith(color: context.palette.error),
+                      ),
+                    ),
+                    TextButton(
+                      style: TextButton.styleFrom(
+                        visualDensity: VisualDensity.compact,
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                      ),
+                      onPressed: () {
+                        ref.invalidate(recurringIncomesProvider);
+                        ref.invalidate(recurringExpensesProvider);
+                      },
+                      child: const Text('Coba Lagi', style: TextStyle(fontSize: 12)),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: context.palette.errorContainer.withValues(alpha: 0.5),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Pengeluaran Rutin',
-                        style: textTheme.bodySmall?.copyWith(
-                          fontSize: 11,
-                          color: context.palette.onSurfaceVariant,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Rp ${RupiahInputFormatter.format(totalExpense.toInt())}',
-                        style: textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: context.palette.error,
-                        ),
-                      ),
-                      Text(
-                        '${activeExpenses.length} jadwal aktif',
-                        style: textTheme.bodySmall?.copyWith(
-                          fontSize: 10.5,
-                          color: context.palette.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Arus Kas Terjadwal Bersih:',
-                  style: textTheme.bodySmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: context.palette.onSurfaceVariant,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                '${netCashflow >= 0 ? '+' : '-'} Rp ${RupiahInputFormatter.format(netCashflow.abs().toInt())}',
-                style: textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: netCashflow >= 0 ? context.palette.primary : context.palette.error,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
+            ),
+          ] else ...[
+            _buildCalculatedCashflowContent(
+              context,
+              ref,
+              textTheme,
+              incomes: incomesAsync.value ?? [],
+              expenses: expensesAsync.value ?? [],
+            ),
+          ],
+
+          const SizedBox(height: 12),
           Row(
             children: [
               Expanded(
@@ -696,6 +664,147 @@ class _ScheduledCashflowCard extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildCalculatedCashflowContent(
+    BuildContext context,
+    WidgetRef ref,
+    TextTheme textTheme, {
+    required List<ApiRecurringTransaction> incomes,
+    required List<ApiRecurringTransaction> expenses,
+  }) {
+    DateTime? pStart;
+    DateTime? pEnd;
+
+    if (activePeriod?.periodStart != null) {
+      pStart = DateTime.tryParse(activePeriod!.periodStart!);
+    }
+    if (activePeriod?.periodEnd != null) {
+      pEnd = DateTime.tryParse(activePeriod!.periodEnd!);
+    }
+
+    final summary = ScheduledCashflowCalculator.calculateSummary(
+      incomes: incomes,
+      expenses: expenses,
+      periodStart: pStart,
+      periodEnd: pEnd,
+    );
+
+    final netCashflow = summary.netCashflow;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: context.palette.primaryContainer.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Pemasukan Rutin',
+                      style: textTheme.bodySmall?.copyWith(
+                        fontSize: 11,
+                        color: context.palette.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Rp ${RupiahInputFormatter.format(summary.income.totalAmount)}',
+                      style: textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: context.palette.primary,
+                      ),
+                    ),
+                    Text(
+                      '${summary.income.activeCount} jadwal (${summary.income.totalOccurrences}x periode ini)',
+                      style: textTheme.bodySmall?.copyWith(
+                        fontSize: 10,
+                        color: context.palette.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: context.palette.errorContainer.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Pengeluaran Rutin',
+                      style: textTheme.bodySmall?.copyWith(
+                        fontSize: 11,
+                        color: context.palette.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Rp ${RupiahInputFormatter.format(summary.expense.totalAmount)}',
+                      style: textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: context.palette.error,
+                      ),
+                    ),
+                    Text(
+                      '${summary.expense.activeCount} jadwal (${summary.expense.totalOccurrences}x periode ini)',
+                      style: textTheme.bodySmall?.copyWith(
+                        fontSize: 10,
+                        color: context.palette.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                'Arus Kas Terjadwal Bersih:',
+                style: textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: context.palette.onSurfaceVariant,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              '${netCashflow >= 0 ? '+' : '-'} Rp ${RupiahInputFormatter.format(netCashflow.abs())}',
+              style: textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w800,
+                color: netCashflow >= 0 ? context.palette.primary : context.palette.error,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'Dihitung berdasarkan frekuensi jadwal pada periode budget aktif. Tidak mengubah saldo sebelum transaksi dieksekusi.',
+          style: textTheme.bodySmall?.copyWith(
+            fontSize: 10.5,
+            color: context.palette.onSurfaceVariant.withValues(alpha: 0.8),
+            fontStyle: FontStyle.italic,
+          ),
+        ),
+      ],
     );
   }
 }

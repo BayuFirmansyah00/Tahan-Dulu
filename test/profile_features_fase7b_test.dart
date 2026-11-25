@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -12,6 +13,7 @@ import 'package:tahan_dulu/core/widgets/app_avatar.dart';
 import 'package:tahan_dulu/data/datasources/remote/api_client.dart';
 import 'package:tahan_dulu/data/datasources/remote/remote_auth_repository.dart';
 import 'package:tahan_dulu/data/datasources/remote/token_storage.dart';
+import 'package:tahan_dulu/data/models/api_recurring_transaction.dart';
 import 'package:tahan_dulu/data/models/financial_settings.dart';
 import 'package:tahan_dulu/data/models/user_model.dart';
 import 'package:tahan_dulu/features/auth/presentation/providers/auth_controller.dart';
@@ -558,6 +560,152 @@ void main() {
       expect(find.text('Pemasukan Rutin'), findsWidgets);
       expect(find.text('Pengeluaran Rutin'), findsWidgets);
       expect(find.textContaining('23 November – 22 Desember 2026'), findsOneWidget);
+    });
+
+    testWidgets('FinancialSettingsScreen menampilkan status loading saat jadwal arus kas sedang dimuat', (tester) async {
+      const sampleSettings = FinancialSettings(
+        currentMonthlyIncome: 5000000,
+        currentSalaryDay: 25,
+      );
+
+      final completer = Completer<List<ApiRecurringTransaction>>();
+
+      final container = ProviderContainer(
+        overrides: [
+          financialSettingsControllerProvider.overrideWith(
+            () => _MockFinancialSettingsController(sampleSettings),
+          ),
+          recurringIncomesProvider.overrideWith((ref) => completer.future),
+          recurringExpensesProvider.overrideWith((ref) => completer.future),
+        ],
+      );
+      addTearDown(() {
+        if (!completer.isCompleted) completer.complete(const []);
+        container.dispose();
+      });
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const MaterialApp(
+            home: FinancialSettingsScreen(),
+          ),
+        ),
+      );
+      await tester.pump(); // Pump frame without settling so async remains loading
+
+      expect(find.text('Menghitung arus kas terjadwal...'), findsOneWidget);
+
+      // Selesaikan completer agar tidak ada async pending
+      completer.complete(const []);
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('FinancialSettingsScreen menampilkan pesan error saat pemuatan jadwal gagal', (tester) async {
+      const sampleSettings = FinancialSettings(
+        currentMonthlyIncome: 5000000,
+        currentSalaryDay: 25,
+      );
+
+      final container = ProviderContainer(
+        overrides: [
+          financialSettingsControllerProvider.overrideWith(
+            () => _MockFinancialSettingsController(sampleSettings),
+          ),
+          recurringIncomesProvider.overrideWith((ref) async => throw Exception('Koneksi terputus')),
+          recurringExpensesProvider.overrideWith((ref) async => const []),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const MaterialApp(
+            home: FinancialSettingsScreen(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Gagal memuat ringkasan transaksi rutin'), findsOneWidget);
+      expect(find.text('Coba Lagi'), findsOneWidget);
+    });
+
+    testWidgets('FinancialSettingsScreen mengalkulasi arus kas terjadwal dengan frekuensi di periode aktif', (tester) async {
+      const sampleSettings = FinancialSettings(
+        currentMonthlyIncome: 5000000,
+        currentSalaryDay: 23,
+        activePeriod: ActivePeriodInfo(
+          id: 1,
+          periodStart: '2026-11-23',
+          periodEnd: '2026-12-22', // 30 days
+          daysRemaining: 28,
+          monthlyIncome: 5000000,
+          isActive: true,
+          spendableAllocation: 2500000,
+          safeDailySpending: 89000,
+        ),
+      );
+
+      const incomes = <ApiRecurringTransaction>[
+        ApiRecurringTransaction(
+          id: 'inc-1',
+          title: 'Gaji Pokok',
+          type: 'income',
+          category: 'salary',
+          amount: 5000000,
+          frequency: 'monthly',
+          nextDueDate: '2026-11-25',
+          isActive: true,
+          makeAutomatic: false,
+        ),
+      ];
+
+      const expenses = <ApiRecurringTransaction>[
+        ApiRecurringTransaction(
+          id: 'exp-1',
+          title: 'Uang Makan Harian',
+          type: 'expense',
+          category: 'needs',
+          amount: 20000,
+          frequency: 'daily',
+          isActive: true,
+          makeAutomatic: false,
+        ),
+      ];
+
+      final container = ProviderContainer(
+        overrides: [
+          financialSettingsControllerProvider.overrideWith(
+            () => _MockFinancialSettingsController(sampleSettings),
+          ),
+          recurringIncomesProvider.overrideWith((ref) async => incomes),
+          recurringExpensesProvider.overrideWith((ref) async => expenses),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const MaterialApp(
+            home: FinancialSettingsScreen(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Pemasukan rutin 5.000.000 (1 jadwal, 1x periode ini)
+      expect(find.text('Rp 5.000.000'), findsWidgets);
+      expect(find.textContaining('1 jadwal (1x periode ini)'), findsOneWidget);
+
+      // Pengeluaran harian 20.000 x 30 hari = 600.000 (1 jadwal, 30x periode ini)
+      expect(find.text('Rp 600.000'), findsOneWidget);
+      expect(find.textContaining('1 jadwal (30x periode ini)'), findsOneWidget);
+
+      // Arus kas bersih: 5.000.000 - 600.000 = + Rp 4.400.000
+      expect(find.text('+ Rp 4.400.000'), findsOneWidget);
     });
   });
 }
