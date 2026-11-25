@@ -67,10 +67,21 @@ abstract class AuthRepository {
   /// Keluar sesi. Mock: hanya mereset status sesi, data keuangan tetap ada.
   Future<void> logout();
 
+  /// Minta kode OTP 6 digit ke email terdaftar untuk penghapusan akun.
+  Future<PasswordResetRequestInfo> requestDeleteAccountOtp();
+
+  /// Verifikasi kode OTP 6 digit penghapusan akun dan dapatkan token sekali pakai.
+  Future<String> verifyDeleteAccountOtp({required String otp});
+
   /// Hapus akun secara permanen.
-  /// Akun email/password: verifikasi kata sandi.
-  /// Akun Google-only: verifikasi autentikasi ulang via Google ID Token.
-  Future<void> deleteAccount({String? password, String? googleIdToken});
+  /// Akun email/password: verifikasi kata sandi + OTP/deletionToken.
+  /// Akun Google-only: verifikasi autentikasi ulang via Google ID Token + OTP/deletionToken.
+  Future<void> deleteAccount({
+    String? password,
+    String? googleIdToken,
+    String? deletionToken,
+    String? otp,
+  });
 
   /// Ubah kata sandi pengguna terautentikasi (khusus akun email/password).
   Future<void> changePassword({
@@ -108,7 +119,31 @@ class MockAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<void> deleteAccount({String? password, String? googleIdToken}) async {
+  Future<PasswordResetRequestInfo> requestDeleteAccountOtp() async {
+    return mockDelay(
+      const PasswordResetRequestInfo(
+        expiresInSeconds: 300,
+        resendAfterSeconds: 60,
+      ),
+      300,
+    );
+  }
+
+  @override
+  Future<String> verifyDeleteAccountOtp({required String otp}) async {
+    if (otp.trim().length != 6) {
+      throw ArgumentError('Kode OTP harus 6 digit.');
+    }
+    return mockDelay('mock-deletion-token-64chars', 300);
+  }
+
+  @override
+  Future<void> deleteAccount({
+    String? password,
+    String? googleIdToken,
+    String? deletionToken,
+    String? otp,
+  }) async {
     _current = MockData.user;
   }
 

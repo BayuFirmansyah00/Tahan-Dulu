@@ -176,6 +176,23 @@ class AppPreferencesController extends Notifier<AppPreferences> {
       await prefs.setBool(_scopedKey(_baseShowTips), value);
     } catch (_) {}
   }
+
+  /// Hapus seluruh preferensi tersimpan milik pengguna yang baru saja dihapus.
+  Future<void> clearUserPreferences(String userId) async {
+    if (userId.isEmpty) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final suffix = '_$userId';
+      final keysToRemove = prefs
+          .getKeys()
+          .where((k) => k.endsWith(suffix))
+          .toList(growable: false);
+      for (final key in keysToRemove) {
+        await prefs.remove(key);
+      }
+      state = const AppPreferences();
+    } catch (_) {}
+  }
 }
 
 final appPreferencesProvider =

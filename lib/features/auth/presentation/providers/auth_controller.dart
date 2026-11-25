@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/services/fcm_service.dart';
@@ -265,23 +266,53 @@ class AuthController extends Notifier<AuthState> {
     }
   }
 
+  /// Minta kode OTP 6 digit penghapusan akun ke email terdaftar pengguna.
+  Future<PasswordResetRequestInfo> requestDeleteAccountOtp() async {
+    return ref.read(authRepositoryProvider).requestDeleteAccountOtp();
+  }
+
+  /// Verifikasi kode OTP 6 digit penghapusan akun dan dapatkan token penghapusan sekali pakai.
+  Future<String> verifyDeleteAccountOtp(String otp) async {
+    return ref.read(authRepositoryProvider).verifyDeleteAccountOtp(otp: otp);
+  }
+
   /// Hapus akun pengguna secara permanen dari server dan bersihkan seluruh state lokal.
   Future<bool> deleteAccount({
     String? password,
     String? googleIdToken,
+    String? deletionToken,
+    String? otp,
   }) async {
     try {
+      final deletedUserId = state.user?.id;
       await ref.read(authRepositoryProvider).deleteAccount(
             password: password,
             googleIdToken: googleIdToken,
+            deletionToken: deletionToken,
+            otp: otp,
           );
 
-      // Setelah server mengonfirmasi penghapusan berhasil, bersihkan registrasi FCM dan status lokal
+      // Setelah server mengonfirmasi penghapusan berhasil, bersihkan registrasi FCM,
+      // preferensi cache per-pengguna, dan state Riverpod lokal.
       try {
         await FcmService.instance.unregisterBeforeLogout(
           ref.read(fcmTokenRepositoryProvider),
         );
       } catch (_) {}
+
+      if (deletedUserId != null && deletedUserId.isNotEmpty) {
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          final suffix = '_$deletedUserId';
+          final keysToRemove = prefs
+              .getKeys()
+              .where((k) => k.endsWith(suffix))
+              .toList(growable: false);
+          for (final key in keysToRemove) {
+            await prefs.remove(key);
+          }
+        } catch (_) {}
+      }
 
       _resetUserData();
       state = const AuthState.initial();

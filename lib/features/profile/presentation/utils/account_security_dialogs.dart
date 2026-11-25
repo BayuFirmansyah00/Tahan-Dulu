@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/glass.dart';
 
 import '../../../../core/constants/app_assets.dart';
-import '../../../../core/routing/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../data/datasources/remote/api_client.dart';
 import '../../../auth/presentation/providers/auth_controller.dart';
+import '../screens/delete_account_otp_screen.dart';
 import 'profile_ui.dart';
 
 /// Membuka form modal bottom sheet untuk ubah kata sandi pengguna email.
@@ -263,19 +262,11 @@ Future<void> showDeleteAccountFlow(
       }
       if (!context.mounted) return;
 
-      await ref
-          .read(authControllerProvider.notifier)
-          .deleteAccount(googleIdToken: googleToken);
-
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Akun kamu telah berhasil dihapus.'),
-            backgroundColor: AppColors.success,
-          ),
-        );
-        context.go(AppRoutes.login);
-      }
+      await Navigator.of(context).push<void>(
+        MaterialPageRoute<void>(
+          builder: (_) => DeleteAccountOtpScreen(googleIdToken: googleToken),
+        ),
+      );
     } catch (e) {
       if (context.mounted) {
         final message =
@@ -293,18 +284,13 @@ Future<void> showDeleteAccountFlow(
       context: context,
       builder: (ctx) => _DeleteAccountPasswordDialog(
         onConfirm: (password) async {
-          await ref
-              .read(authControllerProvider.notifier)
-              .deleteAccount(password: password);
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Akun kamu telah berhasil dihapus.'),
-                backgroundColor: AppColors.success,
-              ),
-            );
-            context.go(AppRoutes.login);
-          }
+          if (!context.mounted) return;
+          Navigator.of(ctx).pop();
+          await Navigator.of(context).push<void>(
+            MaterialPageRoute<void>(
+              builder: (_) => DeleteAccountOtpScreen(password: password),
+            ),
+          );
         },
       ),
     );

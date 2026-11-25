@@ -371,7 +371,61 @@ class RemoteAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<void> deleteAccount({String? password, String? googleIdToken}) async {
+  Future<PasswordResetRequestInfo> requestDeleteAccountOtp() async {
+    final token = await _tokens.readToken();
+    if (token == null || token.isEmpty) {
+      throw ApiException(
+        'Token tidak tersedia. Silakan login ulang.',
+        statusCode: 401,
+      );
+    }
+    final body = await _client.post('/delete-account/request-otp', {}, token: token);
+    final data = body['data'];
+    if (data is! Map<String, dynamic>) {
+      return const PasswordResetRequestInfo(
+        expiresInSeconds: 300,
+        resendAfterSeconds: 60,
+      );
+    }
+    return PasswordResetRequestInfo(
+      expiresInSeconds: data['expires_in'] is int
+          ? data['expires_in'] as int
+          : int.tryParse('${data['expires_in']}') ?? 300,
+      resendAfterSeconds: data['resend_after'] is int
+          ? data['resend_after'] as int
+          : int.tryParse('${data['resend_after']}') ?? 60,
+    );
+  }
+
+  @override
+  Future<String> verifyDeleteAccountOtp({required String otp}) async {
+    final token = await _tokens.readToken();
+    if (token == null || token.isEmpty) {
+      throw ApiException(
+        'Token tidak tersedia. Silakan login ulang.',
+        statusCode: 401,
+      );
+    }
+    final body = await _client.post(
+      '/delete-account/verify-otp',
+      {'otp': otp.trim()},
+      token: token,
+    );
+    final data = body['data'];
+    final deletionToken = data is Map ? data['deletion_token'] : null;
+    if (deletionToken is! String || deletionToken.isEmpty) {
+      throw ApiException('Token konfirmasi penghapusan tidak diterima dari server.');
+    }
+    return deletionToken;
+  }
+
+  @override
+  Future<void> deleteAccount({
+    String? password,
+    String? googleIdToken,
+    String? deletionToken,
+    String? otp,
+  }) async {
     final token = await _tokens.readToken();
     if (token == null || token.isEmpty) {
       throw ApiException(
@@ -385,6 +439,12 @@ class RemoteAuthRepository implements AuthRepository {
     }
     if (googleIdToken != null && googleIdToken.isNotEmpty) {
       payload['google_id_token'] = googleIdToken;
+    }
+    if (deletionToken != null && deletionToken.isNotEmpty) {
+      payload['deletion_token'] = deletionToken;
+    }
+    if (otp != null && otp.isNotEmpty) {
+      payload['otp'] = otp;
     }
     await _client.post('/delete-account', payload, token: token);
     await _tokens.clearToken();
