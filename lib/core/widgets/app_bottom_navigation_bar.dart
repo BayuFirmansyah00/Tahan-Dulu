@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 import '../constants/app_assets.dart';
 import '../constants/app_strings.dart';
 import '../constants/glass_design_tokens.dart';
 import '../routing/app_routes.dart';
-import '../theme/glass.dart' hide GlassQuality;
+import '../theme/glass.dart';
 
 /// Navigasi utama Tahan Dulu dengan permukaan Liquid Glass mengambang.
 ///
@@ -102,7 +101,6 @@ class AppBottomNavigationBar extends StatelessWidget {
     }
     final selected = _resolveCurrentIndex(context);
     final scheme = context.palette;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final height = 43 + MediaQuery.textScalerOf(context).scale(11) * 1.5;
 
     final navContent = SizedBox(
@@ -201,9 +199,6 @@ class AppBottomNavigationBar extends StatelessWidget {
       ),
     );
 
-    final isAccessible = Glass.accessible(context) ||
-        GlassDesignTokens.isHighContrast(context);
-
     return SafeArea(
       top: false,
       minimum: const EdgeInsets.fromLTRB(10, 5, 10, 8),
@@ -211,32 +206,16 @@ class AppBottomNavigationBar extends StatelessWidget {
         heightFactor: 1,
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 520),
-          child: isAccessible
-              ? DecoratedBox(
-                  decoration: Glass.panel(
-                    context,
-                    radius: GlassDesignTokens.radiusCapsule,
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(4),
-                    child: navContent,
-                  ),
-                )
-              : GlassIsolationScope(
-                  defaultQuality: GlassQuality.premium,
-                  child: GlassContainer(
-                    useOwnLayer: true,
-                    shape: const LiquidRoundedSuperellipse(borderRadius: 32),
-                    settings: GlassDesignTokens.createClearPlatterSettings(
-                      isDark: isDark,
-                    ),
-                    color: isDark
-                        ? const Color(0x0A142433)
-                        : const Color(0x06FFFFFF),
-                    padding: const EdgeInsets.all(4),
-                    child: navContent,
-                  ),
-                ),
+          child: DecoratedBox(
+            decoration: Glass.panel(
+              context,
+              radius: GlassDesignTokens.radiusCapsule,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(4),
+              child: navContent,
+            ),
+          ),
         ),
       ),
     );

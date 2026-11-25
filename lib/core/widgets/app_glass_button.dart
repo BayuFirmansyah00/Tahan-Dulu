@@ -150,63 +150,61 @@ class AppGlassButton extends StatelessWidget {
       );
     }
 
-    // --- 2. SECONDARY ACTION (Liquid Glass Platter) ---
-    final glassStyle = surfaceStyle ?? GlassSurfaceStyle.glass;
-    final double radiusValue = radius.topLeft.x;
-
+    // --- 2. SECONDARY ACTION (Clean Adaptive Surface) ---
     return SizedBox(
       height: height,
-      child: GlassButton.custom(
-        onTap: disabled ? () {} : onPressed!,
-        enabled: !disabled,
-        surfaceStyle: glassStyle,
-        style: GlassButtonStyle.prominent,
-        shape: LiquidRoundedSuperellipse(borderRadius: radiusValue),
-        tintColor: isDark
-            ? const Color(0x0C142433)
-            : const Color(0x08FFFFFF),
-        child: Center(
-          child: isLoading
-              ? SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      foregroundColor ?? scheme.primary,
+      child: Container(
+        decoration: Glass.panel(context, radius: radius),
+        child: Material(
+          type: MaterialType.transparency,
+          borderRadius: radius,
+          child: InkWell(
+            onTap: disabled ? null : onPressed,
+            borderRadius: radius,
+            child: Center(
+              child: isLoading
+                  ? SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          foregroundColor ?? scheme.primary,
+                        ),
+                      ),
+                    )
+                  : Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (assetPath != null) ...[
+                          AppImageIcon(
+                            assetPath: assetPath!,
+                            size: 18,
+                            fallbackIcon: icon ?? Icons.arrow_forward,
+                          ),
+                          const SizedBox(width: 8),
+                        ] else if (icon != null) ...[
+                          Icon(
+                            icon,
+                            size: 18,
+                            color: foregroundColor ?? scheme.primary,
+                          ),
+                          const SizedBox(width: 8),
+                        ],
+                        Text(
+                          label,
+                          style: TextStyle(
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.w600,
+                            color: foregroundColor ??
+                                (isDark ? Colors.white : scheme.onSurface),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                )
-              : Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (assetPath != null) ...[
-                      AppImageIcon(
-                        assetPath: assetPath!,
-                        size: 18,
-                        fallbackIcon: icon ?? Icons.arrow_forward,
-                      ),
-                      const SizedBox(width: 8),
-                    ] else if (icon != null) ...[
-                      Icon(
-                        icon,
-                        size: 18,
-                        color: foregroundColor ?? scheme.primary,
-                      ),
-                      const SizedBox(width: 8),
-                    ],
-                    Text(
-                      label,
-                      style: TextStyle(
-                        fontSize: 14.5,
-                        fontWeight: FontWeight.w600,
-                        color: foregroundColor ??
-                            (isDark ? Colors.white : scheme.onSurface),
-                      ),
-                    ),
-                  ],
-                ),
+            ),
+          ),
         ),
       ),
     );
@@ -259,23 +257,39 @@ class AppGlassIconButton extends StatelessWidget {
     Widget button = SizedBox(
       width: size,
       height: size,
-      child: GlassIconButton(
-        icon: IconTheme(
-          data: IconThemeData(
-            size: iconSize,
-            color: foregroundColor ??
-                (isDark ? Colors.white : scheme.onSurface),
+      child: Container(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: tintColor ?? scheme.surface,
+          border: Border.all(
+            color: isDark ? scheme.outlineVariant : scheme.outlineVariant,
           ),
-          child: icon,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.06),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
         ),
-        onPressed: onPressed,
-        surfaceStyle: surfaceStyle,
-        style: GlassButtonStyle.prominent,
-        shape: GlassIconButtonShape.circle,
-        tintColor: tintColor ??
-            (isDark
-                ? scheme.surfaceContainerHighest.withValues(alpha: 0.5)
-                : Colors.white.withValues(alpha: 0.8)),
+        child: Material(
+          type: MaterialType.transparency,
+          shape: const CircleBorder(),
+          child: InkWell(
+            onTap: onPressed,
+            customBorder: const CircleBorder(),
+            child: Center(
+              child: IconTheme(
+                data: IconThemeData(
+                  size: iconSize,
+                  color: foregroundColor ??
+                      (isDark ? Colors.white : scheme.onSurface),
+                ),
+                child: icon,
+              ),
+            ),
+          ),
+        ),
       ),
     );
 

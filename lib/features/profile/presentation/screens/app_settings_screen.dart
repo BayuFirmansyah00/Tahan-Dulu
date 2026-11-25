@@ -1,13 +1,10 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/glass.dart';
 
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
-import '../../../../core/routing/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_image_icon.dart';
 import '../../../../data/models/app_preferences.dart';
@@ -116,34 +113,6 @@ class AppSettingsScreen extends ConsumerWidget {
                       ],
                     ),
                   ),
-                  if (kDebugMode) ...[
-                    const SizedBox(height: 20),
-                    const ProfileSectionHeader(
-                      title: 'Pengembang (Debug Only)',
-                    ),
-                    const SizedBox(height: 8),
-                    Material(
-                      color: context.palette.surface,
-                      borderRadius: BorderRadius.circular(16),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: context.palette.outlineVariant),
-                        ),
-                        child: ListTile(
-                          key: const Key('dev_glass_poc_tile'),
-                          leading: const Icon(Icons.lens_blur, color: AppColors.primary),
-                          title: const Text(
-                            'True Clear Liquid Glass POC',
-                            style: TextStyle(fontWeight: FontWeight.w700),
-                          ),
-                          subtitle: const Text('Komparasi optical refraction & shader tuning'),
-                          trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                          onTap: () => context.push(AppRoutes.devGlassPoc),
-                        ),
-                      ),
-                    ),
-                  ],
                 ],
               ),
             ),

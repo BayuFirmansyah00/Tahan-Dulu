@@ -52,7 +52,6 @@ class GoalsListScreen extends ConsumerWidget {
           ),
         ],
       ),
-      extendBody: true,
       bottomNavigationBar: DashboardBottomNav(
         currentIndex: 3,
         onTap: (i) => goalsBottomNavTap(context, i),
@@ -124,7 +123,7 @@ class _ListState extends State<_List> {
 
     return SingleChildScrollView(
       key: const PageStorageKey('goals_scroll_view'),
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

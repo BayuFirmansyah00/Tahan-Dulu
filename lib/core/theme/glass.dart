@@ -1,11 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:liquid_glass_toolkit/liquid_glass_toolkit.dart';
 
 import 'app_radius.dart';
 import 'app_colors.dart';
-import '../constants/glass_design_tokens.dart';
 
 /// Permukaan daftar memakai dekorasi statis. Hanya panel mengambang mengambil
 /// sampel piksel latar melalui perender Liquid Glass.
@@ -158,7 +156,8 @@ class _QualityScope extends InheritedWidget {
       quality != oldWidget.quality;
 }
 
-/// Profil seimbang menjadi bawaan. Mode tinggi mengaktifkan refraksi jika tersedia.
+/// Profil seimbang menjadi bawaan. Efek Liquid Glass dinonaktifkan sementara
+/// sehingga seluruh panel mengambang memakai dekorasi statis Light/Dark asli.
 class FloatingGlass extends StatelessWidget {
   const FloatingGlass({
     super.key,
@@ -169,39 +168,8 @@ class FloatingGlass extends StatelessWidget {
   final BorderRadius radius;
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final quality =
-        context.dependOnInheritedWidgetOfExactType<_QualityScope>()?.quality ??
-        GlassQuality.balanced;
-    if (Glass.accessible(context) || quality == GlassQuality.low) {
-      return DecoratedBox(
-        decoration: Glass.panel(context, radius: radius),
-        child: child,
-      );
-    }
-    final high = quality == GlassQuality.high;
-    final dark = scheme.brightness == Brightness.dark;
-    return LiquidGlassSurface(
-      quality: high ? LiquidGlassQuality.premium : LiquidGlassQuality.standard,
-      foregroundColor: scheme.onSurface,
-      borderRadius: radius,
-      style: LiquidGlassStyle(
-        blur: GlassDesignTokens.clearPlatterBlur,
-        opacity: dark
-            ? GlassDesignTokens.clearPlatterDarkOpacity
-            : GlassDesignTokens.clearPlatterOpacity,
-        tintColor: dark ? const Color(0xFF142433) : Colors.white,
-        borderColor: Colors.white.withValues(alpha: dark ? 0.16 : 0.28),
-        saturation: 1.05,
-        highlightOpacity: 0.20,
-        rimLightIntensity: GlassDesignTokens.clearPlatterRimLight,
-        specularIntensity: GlassDesignTokens.clearPlatterSpecular,
-        enableRefraction: true,
-        refractionStrength: high ? 0.38 : 0.26,
-        dispersion: high ? GlassDesignTokens.clearPlatterChromaticAberration : 0.0,
-        shadowBlur: 14,
-        shadowOffset: const Offset(0, 4),
-      ),
+    return DecoratedBox(
+      decoration: Glass.panel(context, radius: radius),
       child: child,
     );
   }

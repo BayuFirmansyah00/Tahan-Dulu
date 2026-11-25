@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 import '../constants/glass_design_tokens.dart';
 import '../theme/app_colors.dart';
-import '../theme/glass.dart' hide GlassQuality;
+import '../theme/glass.dart';
 
 /// Floating Action Button dengan sentuhan Liquid Glass.
 ///
@@ -101,28 +100,39 @@ class AppGlassFloatingActionButton extends StatelessWidget {
         ),
       );
     } else {
-      // --- Circular Glass FAB (56x56) ---
+      // --- Circular Solid Adaptive FAB (56x56) ---
       fabContent = SizedBox(
         width: 56,
         height: 56,
-        child: GlassIsolationScope(
-          defaultQuality: GlassQuality.premium,
-          child: GlassIconButton(
-            icon: IconTheme(
-              data: IconThemeData(
-                color: foregroundColor ?? AppColors.primary,
-                size: 24,
-              ),
-              child: icon,
+        child: Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: bgColor,
+            border: Border.all(
+              color: Colors.white.withValues(alpha: isDark ? 0.14 : 0.28),
+              width: 1.2,
             ),
-            onPressed: onPressed,
-            shape: GlassIconButtonShape.circle,
-            surfaceStyle: GlassSurfaceStyle.glass,
-            style: GlassButtonStyle.prominent,
-            tintColor: backgroundColor ??
-                (isDark
-                    ? const Color(0x0C142433)
-                    : const Color(0x08FFFFFF)),
+            boxShadow: [
+              BoxShadow(
+                color: bgColor.withValues(alpha: isDark ? 0.35 : 0.25),
+                blurRadius: 14,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          child: Material(
+            type: MaterialType.transparency,
+            shape: const CircleBorder(),
+            child: InkWell(
+              onTap: onPressed,
+              customBorder: const CircleBorder(),
+              child: Center(
+                child: IconTheme(
+                  data: IconThemeData(color: fgColor, size: 24),
+                  child: icon,
+                ),
+              ),
+            ),
           ),
         ),
       );

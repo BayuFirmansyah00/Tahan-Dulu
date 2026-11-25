@@ -87,7 +87,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
     return Scaffold(
       backgroundColor: context.canvasColor,
-      extendBody: true,
       bottomNavigationBar: DashboardBottomNav(
         currentIndex: 0,
         onTap: (i) => _onNav(i, context),
@@ -154,7 +153,7 @@ class _Body extends StatelessWidget {
           child: SingleChildScrollView(
             key: const PageStorageKey('dashboard_scroll_view'),
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 100),
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
