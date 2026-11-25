@@ -6,6 +6,7 @@ import '../../../../core/theme/glass.dart';
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_image_icon.dart';
 import '../../../../data/models/app_preferences.dart';
 import '../providers/profile_providers.dart';
@@ -197,7 +198,7 @@ class _SwitchRow extends StatelessWidget {
               ],
             ),
           ),
-          Switch(
+          AppAdaptiveSwitch(
             value: value,
             activeTrackColor: context.palette.primary,
             onChanged: onChanged,

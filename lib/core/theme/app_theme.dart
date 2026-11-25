@@ -149,6 +149,36 @@ abstract final class AppTheme {
         shape: shape,
         elevation: 3,
       ),
+      popupMenuTheme: dark
+          ? PopupMenuThemeData(
+              color: const Color(0xEC182532),
+              surfaceTintColor: Colors.transparent,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: BorderSide(
+                  color: Colors.white.withValues(alpha: 0.14),
+                ),
+              ),
+            )
+          : null,
+      dropdownMenuTheme: dark
+          ? DropdownMenuThemeData(
+              menuStyle: MenuStyle(
+                backgroundColor: WidgetStateProperty.all(
+                  const Color(0xEC182532),
+                ),
+                surfaceTintColor: WidgetStateProperty.all(Colors.transparent),
+                shape: WidgetStateProperty.all(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    side: BorderSide(
+                      color: Colors.white.withValues(alpha: 0.14),
+                    ),
+                  ),
+                ),
+              ),
+            )
+          : null,
       bottomSheetTheme: BottomSheetThemeData(
         backgroundColor: scheme.surface,
         modalBackgroundColor: scheme.surface,

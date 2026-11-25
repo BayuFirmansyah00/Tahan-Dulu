@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/glass.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_card.dart';
@@ -77,6 +79,14 @@ class TransferHistoryScreen extends ConsumerWidget {
     WidgetRef ref,
     TransferItem transfer,
   ) {
+    if (GlassDesignTokens.isDarkGlass(context)) {
+      showGlassSheet(
+        context: context,
+        isScrollControlled: true,
+        builder: (_) => _TransferDetailSheet(transfer: transfer),
+      );
+      return;
+    }
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -295,33 +305,25 @@ class _TransferDetailSheetState extends ConsumerState<_TransferDetailSheet> {
     final t = widget.transfer;
     final amountStr =
         t.amountFormatted ?? CurrencyFormatter.format(t.amount);
+    final useDarkGlass = GlassDesignTokens.isDarkGlass(context);
 
-    return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      padding: EdgeInsets.only(
-        left: 20,
-        right: 20,
-        top: 20,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-      ),
-      child: Column(
+    final content = Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(2),
+          if (!useDarkGlass) ...[
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 16),
+            const SizedBox(height: 16),
+          ],
           const Text(
             'Detail Transfer Dana',
             style: TextStyle(
@@ -365,7 +367,26 @@ class _TransferDetailSheetState extends ConsumerState<_TransferDetailSheet> {
             child: const Text('Tutup'),
           ),
         ],
+      );
+
+    final padding = EdgeInsets.only(
+      left: 20,
+      right: 20,
+      top: useDarkGlass ? 8 : 20,
+      bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+    );
+
+    if (useDarkGlass) {
+      return Padding(padding: padding, child: content);
+    }
+
+    return Container(
+      decoration: const BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
+      padding: padding,
+      child: content,
     );
   }
 

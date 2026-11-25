@@ -9,6 +9,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/routing/notification_deep_link.dart';
 import '../../../../core/utils/date_formatter.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_image_icon.dart';
 import '../../../../core/widgets/app_states.dart';
 import '../../../../data/models/app_notification.dart';
@@ -127,12 +128,24 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         titleSpacing: 0,
         centerTitle: false,
         actions: [
-          PopupMenuButton<String>(
+          AppAdaptiveMenuButton<String>(
             icon: const AppImageIcon(
               assetPath: AppAssets.navMore,
               size: 24,
               fallbackIcon: Icons.more_horiz,
             ),
+            options: const [
+              AppMenuOption<String>(
+                value: 'read-all',
+                label: AppStrings.notifMenuMarkAll,
+                icon: Icons.done_all_rounded,
+              ),
+              AppMenuOption<String>(
+                value: 'settings',
+                label: AppStrings.notifMenuSettings,
+                icon: Icons.tune_rounded,
+              ),
+            ],
             onSelected: (value) async {
               if (value == 'read-all') {
                 await _markAll(context, ref);
@@ -142,16 +155,6 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                 }
               }
             },
-            itemBuilder: (context) => const [
-              PopupMenuItem(
-                value: 'read-all',
-                child: Text(AppStrings.notifMenuMarkAll),
-              ),
-              PopupMenuItem(
-                value: 'settings',
-                child: Text(AppStrings.notifMenuSettings),
-              ),
-            ],
           ),
         ],
       ),

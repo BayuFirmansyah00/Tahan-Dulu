@@ -6,10 +6,12 @@ import '../../../../core/theme/glass.dart';
 
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/rupiah_input_formatter.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_icons.dart';
 import '../../../../data/datasources/remote/api_client.dart';
@@ -431,16 +433,24 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
                         _buildQuickAmountChip('250rb', 250000),
                         _buildQuickAmountChip('500rb', 500000),
                         if (sourceAccount.currentBalance > 0)
-                          ActionChip(
-                            label: const Text('Semua Saldo'),
-                            backgroundColor: context.palette.secondaryContainer,
-                            labelStyle: textTheme.bodySmall?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: context.palette.primary,
-                            ),
-                            onPressed: () =>
-                                _setAmount(sourceAccount.currentBalance),
-                          ),
+                          GlassDesignTokens.isDarkGlass(context)
+                              ? AppAdaptiveFilterChip(
+                                  label: 'Semua Saldo',
+                                  selected: true,
+                                  onTap: () =>
+                                      _setAmount(sourceAccount.currentBalance),
+                                )
+                              : ActionChip(
+                                  label: const Text('Semua Saldo'),
+                                  backgroundColor:
+                                      context.palette.secondaryContainer,
+                                  labelStyle: textTheme.bodySmall?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    color: context.palette.primary,
+                                  ),
+                                  onPressed: () =>
+                                      _setAmount(sourceAccount.currentBalance),
+                                ),
                       ],
                     ),
                     const SizedBox(height: 20),
@@ -574,6 +584,13 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
   }
 
   Widget _buildQuickAmountChip(String label, double amount) {
+    if (GlassDesignTokens.isDarkGlass(context)) {
+      return AppAdaptiveFilterChip(
+        label: label,
+        selected: _amountController.text == RupiahInputFormatter.format(amount),
+        onTap: () => _setAmount(amount),
+      );
+    }
     return ActionChip(
       label: Text(label),
       backgroundColor: context.palette.surface,

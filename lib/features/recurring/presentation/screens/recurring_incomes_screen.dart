@@ -7,10 +7,12 @@ import '../../../../core/theme/glass.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_states.dart';
 import '../../../../data/models/api_recurring_transaction.dart';
 import '../../../dashboard/presentation/widgets/dashboard_bottom_nav.dart';
+import '../../../profile/presentation/utils/profile_ui.dart';
 import '../providers/recurring_controller.dart';
 
 /// Daftar pemasukan rutin (gaji & pemasukan berulang) dengan opsi tambah.
@@ -150,57 +152,39 @@ class _RecurringItem extends ConsumerWidget {
                   color: context.palette.primary,
                 ),
               ),
-              PopupMenuButton<String>(
-                icon: Icon(Icons.more_vert, size: 20, color: context.palette.onSurfaceVariant),
+              AppAdaptiveMenuButton<String>(
+                options: [
+                  AppMenuOption<String>(
+                    value: 'toggle',
+                    label: item.isActive ? 'Jeda' : 'Aktifkan',
+                    icon: item.isActive
+                        ? Icons.pause_circle_outline
+                        : Icons.play_circle_outline,
+                  ),
+                  const AppMenuOption<String>(
+                    value: 'delete',
+                    label: 'Hapus',
+                    icon: Icons.delete_outline,
+                    isDestructive: true,
+                  ),
+                ],
                 onSelected: (action) async {
                   final controller = ref.read(recurringControllerProvider);
                   if (action == 'toggle') {
                     await controller.toggleRecurringIncomeStatus(item);
                   } else if (action == 'delete') {
-                    final confirm = await showDialog<bool>(
+                    final confirm = await showConfirmDialog(
                       context: context,
-                      builder: (ctx) => AlertDialog(
-                        title: const Text('Hapus Pemasukan Rutin?'),
-                        content: Text('Apakah Anda yakin ingin menghapus "${item.title}"?'),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(ctx, false),
-                            child: const Text('Batal'),
-                          ),
-                          TextButton(
-                            onPressed: () => Navigator.pop(ctx, true),
-                            child: const Text('Hapus', style: TextStyle(color: Colors.red)),
-                          ),
-                        ],
-                      ),
+                      icon: Icons.delete_outline,
+                      title: 'Hapus Pemasukan Rutin?',
+                      message: 'Apakah Anda yakin ingin menghapus "${item.title}"?',
+                      confirmLabel: 'Hapus',
                     );
-                    if (confirm == true) {
+                    if (confirm) {
                       await controller.removeRecurringIncome(item.id);
                     }
                   }
                 },
-                itemBuilder: (ctx) => [
-                  PopupMenuItem(
-                    value: 'toggle',
-                    child: Row(
-                      children: [
-                        Icon(item.isActive ? Icons.pause_circle_outline : Icons.play_circle_outline, size: 18),
-                        const SizedBox(width: 8),
-                        Text(item.isActive ? 'Jeda' : 'Aktifkan'),
-                      ],
-                    ),
-                  ),
-                  const PopupMenuItem(
-                    value: 'delete',
-                    child: Row(
-                      children: [
-                        Icon(Icons.delete_outline, size: 18, color: Colors.red),
-                        SizedBox(width: 8),
-                        Text('Hapus', style: TextStyle(color: Colors.red)),
-                      ],
-                    ),
-                  ),
-                ],
               ),
             ],
           ),

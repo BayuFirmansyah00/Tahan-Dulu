@@ -10,6 +10,7 @@ import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/utils/rupiah_input_formatter.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_icons.dart';
 import '../../../../core/widgets/app_text_field.dart';
@@ -115,11 +116,12 @@ class _TransactionFormScreenState
 
   Future<void> _pickDate(DateTime current) async {
     final today = DateTime.now();
-    final picked = await showDatePicker(
+    final picked = await showAppDatePicker(
       context: context,
       initialDate: current.isAfter(today) ? today : current,
       firstDate: DateTime(2020),
       lastDate: today,
+      title: 'Tanggal Transaksi',
     );
     if (picked != null) {
       ref.read(transactionFormProvider.notifier).setDate(picked);

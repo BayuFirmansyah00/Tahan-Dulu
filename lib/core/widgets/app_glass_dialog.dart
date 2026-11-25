@@ -21,8 +21,8 @@ Future<T?> showAppGlassDialog<T>({
   List<GlassDialogAction>? customActions,
   bool barrierDismissible = true,
 }) {
-  if (GlassDesignTokens.isHighContrast(context)) {
-    // Fallback Material Dialog untuk aksesibilitas kontras tinggi
+  if (!GlassDesignTokens.isDarkGlass(context)) {
+    // Light Mode atau mode aksesibilitas: Material Dialog asli
     return showDialog<T>(
       context: context,
       barrierDismissible: barrierDismissible,
@@ -80,7 +80,13 @@ Future<T?> showAppGlassDialog<T>({
     context: context,
     title: title,
     message: message,
-    content: content,
+    content: content != null
+        ? InheritedGlassSurfaceStyle(
+            surfaceStyle: GlassSurfaceStyle.solid,
+            child: content,
+          )
+        : null,
+    settings: GlassDesignTokens.darkOverlaySettings(context),
     actions: actions,
   );
 }

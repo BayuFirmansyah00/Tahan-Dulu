@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart' hide GlassQuality;
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart' as lgw show GlassQuality;
 
 import '../constants/glass_design_tokens.dart';
 import '../theme/app_colors.dart';
@@ -52,44 +54,34 @@ class AppGlassFloatingActionButton extends StatelessWidget {
 
     Widget fabContent;
 
+    final useDarkGlass = GlassDesignTokens.isDarkGlass(context);
+
     if (label != null && label!.isNotEmpty) {
-      // --- Extended Glass FAB ---
-      fabContent = Container(
-        height: 52,
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        decoration: BoxDecoration(
-          borderRadius: GlassDesignTokens.radiusCapsule,
-          color: bgColor.withValues(alpha: isDark ? 0.85 : 0.92),
-          border: Border.all(
-            color: Colors.white.withValues(alpha: isDark ? 0.15 : 0.28),
-            width: 1.2,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primaryGlow,
-              blurRadius: 16,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Material(
-          color: Colors.transparent,
-          borderRadius: GlassDesignTokens.radiusCapsule,
-          child: InkWell(
-            onTap: onPressed,
-            borderRadius: GlassDesignTokens.radiusCapsule,
+      if (useDarkGlass) {
+        fabContent = GlassButton.custom(
+          useOwnLayer: true,
+          quality: lgw.GlassQuality.premium,
+          height: 52,
+          onTap: onPressed ?? () {},
+          enabled: onPressed != null,
+          style: GlassButtonStyle.filled,
+          tintColor: (backgroundColor ?? AppColors.primary).withValues(alpha: 0.85),
+          settings: GlassDesignTokens.darkNavBarSettings(context),
+          shape: const LiquidRoundedSuperellipse(borderRadius: 28),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 IconTheme(
-                  data: IconThemeData(color: fgColor, size: 20),
+                  data: IconThemeData(color: foregroundColor ?? Colors.white, size: 20),
                   child: icon,
                 ),
                 const SizedBox(width: 8),
                 Text(
                   label!,
                   style: TextStyle(
-                    color: fgColor,
+                    color: foregroundColor ?? Colors.white,
                     fontWeight: FontWeight.w700,
                     fontSize: 14.5,
                   ),
@@ -97,10 +89,77 @@ class AppGlassFloatingActionButton extends StatelessWidget {
               ],
             ),
           ),
+        );
+      } else {
+        // --- Light Mode Extended FAB ---
+        fabContent = Container(
+          height: 52,
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          decoration: BoxDecoration(
+            borderRadius: GlassDesignTokens.radiusCapsule,
+            color: bgColor.withValues(alpha: isDark ? 0.85 : 0.92),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: isDark ? 0.15 : 0.28),
+              width: 1.2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primaryGlow,
+                blurRadius: 16,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            borderRadius: GlassDesignTokens.radiusCapsule,
+            child: InkWell(
+              onTap: onPressed,
+              borderRadius: GlassDesignTokens.radiusCapsule,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconTheme(
+                    data: IconThemeData(color: fgColor, size: 20),
+                    child: icon,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    label!,
+                    style: TextStyle(
+                      color: fgColor,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      }
+    } else if (useDarkGlass) {
+      fabContent = SizedBox(
+        width: 56,
+        height: 56,
+        child: GlassIconButton(
+          useOwnLayer: true,
+          quality: lgw.GlassQuality.premium,
+          size: 56,
+          iconSize: 24,
+          shape: GlassIconButtonShape.circle,
+          style: GlassButtonStyle.filled,
+          tintColor: (backgroundColor ?? AppColors.primary).withValues(alpha: 0.85),
+          settings: GlassDesignTokens.darkNavBarSettings(context),
+          icon: IconTheme(
+            data: IconThemeData(color: foregroundColor ?? Colors.white, size: 24),
+            child: icon,
+          ),
+          onPressed: onPressed,
         ),
       );
     } else {
-      // --- Circular Solid Adaptive FAB (56x56) ---
+      // --- Light Mode Circular FAB (56x56) ---
       fabContent = SizedBox(
         width: 56,
         height: 56,

@@ -6,9 +6,11 @@ import '../../../../core/theme/glass.dart';
 
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_avatar.dart';
 import '../../../../core/widgets/app_icons.dart';
 import '../../../../core/widgets/app_states.dart';
@@ -85,13 +87,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           orElse: () => const <AppTransaction>[],
         );
 
+    final useDarkGlass = GlassDesignTokens.isDarkGlass(context);
+
     return Scaffold(
       backgroundColor: context.canvasColor,
+      extendBody: useDarkGlass,
       bottomNavigationBar: DashboardBottomNav(
         currentIndex: 0,
         onTap: (i) => _onNav(i, context),
       ),
       body: GlassBackdrop(child: SafeArea(
+        bottom: !useDarkGlass,
         child: data.when(
           data: (d) => Stack(
             children: [
@@ -153,7 +159,12 @@ class _Body extends StatelessWidget {
           child: SingleChildScrollView(
             key: const PageStorageKey('dashboard_scroll_view'),
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+            padding: EdgeInsets.fromLTRB(
+              20,
+              12,
+              20,
+              GlassDesignTokens.isDarkGlass(context) ? 100 : 16,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -334,41 +345,64 @@ class _Header extends ConsumerWidget {
             ],
           ),
         ),
-        Container(
-          decoration: BoxDecoration(
-            color: context.palette.surface,
-            shape: BoxShape.circle,
-            border: Border.all(color: context.palette.outlineVariant),
-          ),
-          child: Stack(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.notifications_outlined),
-                tooltip: AppStrings.notificationsTitle,
-                color: context.palette.onSurface,
-                onPressed: () => context.push(AppRoutes.notifications),
-              ),
-              if (data.hasUnread && showInApp)
-                Positioned(
-                  right: 12,
-                  top: 12,
-                  child: Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: context.palette.error,
-                      shape: BoxShape.circle,
-                    ),
+        GlassDesignTokens.isDarkGlass(context)
+            ? Stack(
+                children: [
+                  AppAdaptiveIconButton(
+                    icon: const Icon(Icons.notifications_outlined),
+                    tooltip: AppStrings.notificationsTitle,
+                    onPressed: () => context.push(AppRoutes.notifications),
                   ),
+                  if (data.hasUnread && showInApp)
+                    Positioned(
+                      right: 10,
+                      top: 10,
+                      child: Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: context.palette.error,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                ],
+              )
+            : Container(
+                decoration: BoxDecoration(
+                  color: context.palette.surface,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: context.palette.outlineVariant),
                 ),
-            ],
-          ),
-        ),
+                child: Stack(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.notifications_outlined),
+                      tooltip: AppStrings.notificationsTitle,
+                      color: context.palette.onSurface,
+                      onPressed: () => context.push(AppRoutes.notifications),
+                    ),
+                    if (data.hasUnread && showInApp)
+                      Positioned(
+                        right: 12,
+                        top: 12,
+                        child: Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: context.palette.error,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
         const SizedBox(width: 4),
-        IconButton(
+        AppAdaptiveIconButton(
           icon: const Icon(Icons.settings_outlined),
           tooltip: AppStrings.profileMenuApp,
-          color: context.palette.onSurfaceVariant,
+          iconColor: context.palette.onSurfaceVariant,
           onPressed: () => context.push(AppRoutes.settings),
         ),
       ],

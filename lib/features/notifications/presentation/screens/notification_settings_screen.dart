@@ -8,6 +8,7 @@ import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/theme/app_radius.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_image_icon.dart';
 import '../../../../core/widgets/app_states.dart';
 import '../../../../data/models/reminder_settings.dart';
@@ -264,7 +265,7 @@ class _ReminderRow extends StatelessWidget {
                 ],
               ),
             ),
-            Switch(
+            AppAdaptiveSwitch(
               value: pref.enabled,
               activeTrackColor: context.palette.primary,
               onChanged: onToggle,

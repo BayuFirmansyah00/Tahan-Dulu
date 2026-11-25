@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/glass.dart';
 
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/widgets/app_icons.dart';
@@ -281,32 +282,26 @@ class _DepositRow extends ConsumerWidget {
   final GoalDeposit deposit;
 
   void _showDetailSheet(BuildContext context, WidgetRef ref) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (sheetContext) => Container(
-        padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
-        decoration: BoxDecoration(
-          color: Theme.of(sheetContext).scaffoldBackgroundColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: SafeArea(
+    final useDarkGlass = GlassDesignTokens.isDarkGlass(context);
+
+    Widget buildBody(BuildContext sheetContext) => SafeArea(
+          top: false,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 20),
-                  decoration: BoxDecoration(
-                    color: Theme.of(sheetContext).colorScheme.outlineVariant,
-                    borderRadius: BorderRadius.circular(2),
+              if (!useDarkGlass)
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 20),
+                    decoration: BoxDecoration(
+                      color: Theme.of(sheetContext).colorScheme.outlineVariant,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
                 ),
-              ),
               Row(
                 children: [
                   Icon(
@@ -475,7 +470,31 @@ class _DepositRow extends ConsumerWidget {
               ),
             ],
           ),
+        );
+
+    if (useDarkGlass) {
+      showGlassSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        builder: (sheetContext) => Padding(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+          child: buildBody(sheetContext),
         ),
+      );
+      return;
+    }
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => Container(
+        padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+        decoration: BoxDecoration(
+          color: Theme.of(sheetContext).scaffoldBackgroundColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: buildBody(sheetContext),
       ),
     );
   }

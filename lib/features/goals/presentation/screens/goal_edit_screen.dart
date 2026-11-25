@@ -9,6 +9,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/utils/rupiah_input_formatter.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_icons.dart';
 import '../../../../core/widgets/app_states.dart';
@@ -91,12 +92,13 @@ class _GoalEditScreenState extends ConsumerState<GoalEditScreen> {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final tomorrow = today.add(const Duration(days: 1));
-    final picked = await showDatePicker(
+    final picked = await showAppDatePicker(
       context: context,
       initialDate:
           _date != null && !_date!.isBefore(today) ? _date! : tomorrow,
       firstDate: today,
       lastDate: today.add(const Duration(days: 365 * 30)),
+      title: 'Target Tercapai',
     );
     if (picked != null) setState(() => _date = picked);
   }

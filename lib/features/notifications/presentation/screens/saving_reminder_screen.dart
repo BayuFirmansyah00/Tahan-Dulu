@@ -9,6 +9,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/rupiah_input_formatter.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_image_icon.dart';
 import '../../../../core/widgets/app_states.dart';
@@ -480,7 +481,7 @@ class _StatusRow extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            Switch(
+            AppAdaptiveSwitch(
               value: draft.enabled,
               activeTrackColor: context.palette.primary,
               onChanged: onChanged,

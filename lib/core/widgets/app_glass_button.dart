@@ -150,7 +150,68 @@ class AppGlassButton extends StatelessWidget {
       );
     }
 
-    // --- 2. SECONDARY ACTION (Clean Adaptive Surface) ---
+    // --- 2. SECONDARY ACTION ---
+    final secondaryChild = Center(
+      child: isLoading
+          ? SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  foregroundColor ?? scheme.primary,
+                ),
+              ),
+            )
+          : Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (assetPath != null) ...[
+                  AppImageIcon(
+                    assetPath: assetPath!,
+                    size: 18,
+                    fallbackIcon: icon ?? Icons.arrow_forward,
+                  ),
+                  const SizedBox(width: 8),
+                ] else if (icon != null) ...[
+                  Icon(
+                    icon,
+                    size: 18,
+                    color: foregroundColor ?? scheme.primary,
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w600,
+                    color: foregroundColor ??
+                        (isDark ? Colors.white : scheme.onSurface),
+                  ),
+                ),
+              ],
+            ),
+    );
+
+    if (GlassDesignTokens.isDarkGlass(context)) {
+      return SizedBox(
+        height: height,
+        child: GlassButton.custom(
+          useOwnLayer: true,
+          onTap: disabled ? () {} : onPressed!,
+          enabled: !disabled,
+          surfaceStyle: surfaceStyle ?? GlassSurfaceStyle.glass,
+          style: GlassButtonStyle.prominent,
+          shape: LiquidRoundedSuperellipse(borderRadius: radius.topLeft.x),
+          settings: GlassDesignTokens.darkPlatterSettings(context),
+          tintColor: const Color(0x18FFFFFF),
+          child: secondaryChild,
+        ),
+      );
+    }
+
     return SizedBox(
       height: height,
       child: Container(
@@ -161,49 +222,7 @@ class AppGlassButton extends StatelessWidget {
           child: InkWell(
             onTap: disabled ? null : onPressed,
             borderRadius: radius,
-            child: Center(
-              child: isLoading
-                  ? SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          foregroundColor ?? scheme.primary,
-                        ),
-                      ),
-                    )
-                  : Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (assetPath != null) ...[
-                          AppImageIcon(
-                            assetPath: assetPath!,
-                            size: 18,
-                            fallbackIcon: icon ?? Icons.arrow_forward,
-                          ),
-                          const SizedBox(width: 8),
-                        ] else if (icon != null) ...[
-                          Icon(
-                            icon,
-                            size: 18,
-                            color: foregroundColor ?? scheme.primary,
-                          ),
-                          const SizedBox(width: 8),
-                        ],
-                        Text(
-                          label,
-                          style: TextStyle(
-                            fontSize: 14.5,
-                            fontWeight: FontWeight.w600,
-                            color: foregroundColor ??
-                                (isDark ? Colors.white : scheme.onSurface),
-                          ),
-                        ),
-                      ],
-                    ),
-            ),
+            child: secondaryChild,
           ),
         ),
       ),
@@ -254,44 +273,67 @@ class AppGlassIconButton extends StatelessWidget {
     final scheme = context.palette;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    Widget button = SizedBox(
-      width: size,
-      height: size,
-      child: Container(
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: tintColor ?? scheme.surface,
-          border: Border.all(
-            color: isDark ? scheme.outlineVariant : scheme.outlineVariant,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.06),
-              blurRadius: 10,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Material(
-          type: MaterialType.transparency,
-          shape: const CircleBorder(),
-          child: InkWell(
-            onTap: onPressed,
-            customBorder: const CircleBorder(),
-            child: Center(
-              child: IconTheme(
+    Widget button = GlassDesignTokens.isDarkGlass(context)
+        ? SizedBox(
+            width: size,
+            height: size,
+            child: GlassIconButton(
+              useOwnLayer: true,
+              icon: IconTheme(
                 data: IconThemeData(
                   size: iconSize,
-                  color: foregroundColor ??
-                      (isDark ? Colors.white : scheme.onSurface),
+                  color: foregroundColor ?? Colors.white,
                 ),
                 child: icon,
               ),
+              onPressed: onPressed,
+              size: size,
+              iconSize: iconSize,
+              surfaceStyle: surfaceStyle,
+              style: GlassButtonStyle.transparent,
+              shape: GlassIconButtonShape.circle,
+              settings: GlassDesignTokens.darkPlatterSettings(context),
+              tintColor: tintColor ?? const Color(0x16FFFFFF),
             ),
-          ),
-        ),
-      ),
-    );
+          )
+        : SizedBox(
+            width: size,
+            height: size,
+            child: Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: tintColor ?? scheme.surface,
+                border: Border.all(
+                  color: scheme.outlineVariant,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.06),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Material(
+                type: MaterialType.transparency,
+                shape: const CircleBorder(),
+                child: InkWell(
+                  onTap: onPressed,
+                  customBorder: const CircleBorder(),
+                  child: Center(
+                    child: IconTheme(
+                      data: IconThemeData(
+                        size: iconSize,
+                        color: foregroundColor ??
+                            (isDark ? Colors.white : scheme.onSurface),
+                      ),
+                      child: icon,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
 
     if (tooltip != null && tooltip!.isNotEmpty) {
       button = Tooltip(message: tooltip!, child: button);

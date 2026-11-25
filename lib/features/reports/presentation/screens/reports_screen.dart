@@ -5,8 +5,10 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/glass.dart';
 
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_states.dart';
 import '../../../../data/models/monthly_report.dart';
@@ -40,12 +42,16 @@ class ReportsScreen extends ConsumerWidget {
     final report = ref.watch(monthlyReportProvider(month));
     final period = ref.read(reportMonthProvider.notifier);
 
+    final useDarkGlass = GlassDesignTokens.isDarkGlass(context);
+
     return Scaffold(
+      extendBody: useDarkGlass,
       appBar: AppBar(title: const Text(AppStrings.reportsTitle)),
       bottomNavigationBar: DashboardBottomNav(
         onTap: (i) => _onNav(i, context),
       ),
       body: GlassBackdrop(child: SafeArea(
+        bottom: !useDarkGlass,
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
@@ -86,7 +92,12 @@ class _Body extends ConsumerWidget {
     final savedAmount = apiReport?.summary.savedImpulseAmount ?? 0.0;
     final savedCount = apiReport?.summary.savedImpulseCount ?? 0;
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+      padding: EdgeInsets.fromLTRB(
+        20,
+        8,
+        20,
+        GlassDesignTokens.isDarkGlass(context) ? 100 : 16,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -146,12 +157,12 @@ class _Body extends ConsumerWidget {
                   isSelected: false,
                   icon: Icons.calendar_month_outlined,
                   onTap: () async {
-                    final picked = await showDatePicker(
+                    final picked = await showAppDatePicker(
                       context: context,
                       initialDate: month,
                       firstDate: DateTime(2020),
                       lastDate: DateTime(2035),
-                      initialDatePickerMode: DatePickerMode.year,
+                      title: 'Pilih Periode Laporan',
                     );
                     if (picked != null) {
                       ref.read(reportPeriodModeProvider.notifier).setMode('monthly');
@@ -534,6 +545,16 @@ class _PeriodChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (GlassDesignTokens.isDarkGlass(context)) {
+      return AppAdaptiveFilterChip(
+        label: label,
+        selected: isSelected,
+        onTap: onTap,
+        icon: icon != null
+            ? Icon(icon, size: 14, color: Colors.white)
+            : null,
+      );
+    }
     return GestureDetector(
       onTap: onTap,
       child: Container(

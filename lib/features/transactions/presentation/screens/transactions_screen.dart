@@ -6,9 +6,11 @@ import '../../../../core/theme/glass.dart';
 
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_icons.dart';
 import '../../../../core/widgets/app_states.dart';
@@ -81,14 +83,20 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
   Widget build(BuildContext context) {
     final paginated = ref.watch(paginatedTransactionsProvider);
 
+    final useDarkGlass = GlassDesignTokens.isDarkGlass(context);
+
     return Scaffold(
+      extendBody: useDarkGlass,
       appBar: AppBar(
         title: const Text(AppStrings.transactionsTitle),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            tooltip: AppStrings.addTransaction,
-            onPressed: _openAdd,
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: AppAdaptiveIconButton(
+              icon: const Icon(Icons.add),
+              tooltip: AppStrings.addTransaction,
+              onPressed: _openAdd,
+            ),
           ),
         ],
       ),
@@ -98,6 +106,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
       ),
       body: GlassBackdrop(
         child: SafeArea(
+          bottom: !useDarkGlass,
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 480),
@@ -331,24 +340,10 @@ class _FilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return AppAdaptiveFilterChip(
+      label: label,
+      selected: selected,
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: selected ? context.palette.primary : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: selected ? context.palette.primary : context.palette.outlineVariant,
-          ),
-        ),
-        child: Text(
-          label,
-          style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                color: selected ? context.palette.onPrimary : context.palette.onSurface,
-              ),
-        ),
-      ),
     );
   }
 }
@@ -569,7 +564,9 @@ class _GroupedList extends ConsumerWidget {
       controller: scrollController,
       physics: const AlwaysScrollableScrollPhysics(),
       key: const PageStorageKey('transactions_list_view'),
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: EdgeInsets.only(
+        bottom: GlassDesignTokens.isDarkGlass(context) ? 100 : 16,
+      ),
       children: children,
     );
   }

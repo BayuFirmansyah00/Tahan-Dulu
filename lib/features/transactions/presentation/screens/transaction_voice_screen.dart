@@ -5,10 +5,12 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/glass.dart';
 
 import '../../../../core/constants/app_assets.dart';
+import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_icons.dart';
@@ -478,6 +480,13 @@ class _TransactionVoiceScreenState
                     spacing: 8,
                     runSpacing: 8,
                     children: _samplePhrases.map((phrase) {
+                      if (GlassDesignTokens.isDarkGlass(context)) {
+                        return AppAdaptiveFilterChip(
+                          label: phrase,
+                          selected: false,
+                          onTap: () => _processText(phrase),
+                        );
+                      }
                       return ActionChip(
                         label: Text(
                           phrase,

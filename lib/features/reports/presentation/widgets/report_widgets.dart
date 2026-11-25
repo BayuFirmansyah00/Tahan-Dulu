@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/glass.dart';
 
 import '../../../../core/utils/date_formatter.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 
 /// Pemilih periode: chevron kiri/kanan + label bulan Indonesia + date picker.
 class PeriodSelector extends StatelessWidget {
@@ -37,11 +38,12 @@ class PeriodSelector extends StatelessWidget {
               onTap: onSelectPeriod == null
                   ? null
                   : () async {
-                      final picked = await showDatePicker(
+                      final picked = await showAppDatePicker(
                         context: context,
                         initialDate: month,
                         firstDate: DateTime(2020),
                         lastDate: DateTime(2035),
+                        title: 'Pilih Periode Laporan',
                         initialDatePickerMode: DatePickerMode.year,
                       );
                       if (picked != null) {

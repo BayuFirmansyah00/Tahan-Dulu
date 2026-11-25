@@ -6,6 +6,7 @@ import '../../../../core/theme/glass.dart';
 
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
@@ -24,8 +25,10 @@ class GoalsListScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final goals = ref.watch(goalsListProvider);
+    final useDarkGlass = GlassDesignTokens.isDarkGlass(context);
 
     return Scaffold(
+      extendBody: useDarkGlass,
       appBar: AppBar(
         title: const Text(AppStrings.goalsListTitle),
         actions: [
@@ -57,6 +60,7 @@ class GoalsListScreen extends ConsumerWidget {
         onTap: (i) => goalsBottomNavTap(context, i),
       ),
       body: GlassBackdrop(child: SafeArea(
+        bottom: !useDarkGlass,
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
@@ -121,9 +125,11 @@ class _ListState extends State<_List> {
         items.fold<double>(0, (sum, e) => sum + e.currentAmount);
     final overall = totalTarget <= 0 ? 0.0 : totalSaved / totalTarget;
 
+    final useDarkGlass = GlassDesignTokens.isDarkGlass(context);
+
     return SingleChildScrollView(
       key: const PageStorageKey('goals_scroll_view'),
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+      padding: EdgeInsets.fromLTRB(20, 8, 20, useDarkGlass ? 100 : 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

@@ -3,8 +3,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart' hide GlassQuality;
 
 import 'core/constants/app_constants.dart';
+import 'core/constants/glass_design_tokens.dart';
 import 'core/routing/app_router.dart';
 import 'core/services/fcm_service.dart';
 import 'core/theme/app_theme.dart';
@@ -70,11 +72,17 @@ class _TahanDuluAppState extends ConsumerState<TahanDuluApp> {
           : kThemeAnimationDuration,
       builder: (context, child) {
         final media = MediaQuery.of(context);
+        final isDark = Theme.of(context).brightness == Brightness.dark;
         return MediaQuery(
           data: media.copyWith(
             disableAnimations: media.disableAnimations || reduceMotion,
           ),
-          child: GlassQualityController(child: child!),
+          child: GlassTheme(
+            data: isDark
+                ? GlassDesignTokens.darkThemeData
+                : const GlassThemeData.ios27(),
+            child: GlassQualityController(child: child!),
+          ),
         );
       },
       themeMode: ref.watch(themeModeProvider),

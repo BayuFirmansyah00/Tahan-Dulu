@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart' hide GlassQuality;
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart' as lgw show GlassQuality;
 
 import '../constants/app_assets.dart';
 import '../constants/app_strings.dart';
@@ -199,6 +201,8 @@ class AppBottomNavigationBar extends StatelessWidget {
       ),
     );
 
+    final useDarkGlass = GlassDesignTokens.isDarkGlass(context);
+
     return SafeArea(
       top: false,
       minimum: const EdgeInsets.fromLTRB(10, 5, 10, 8),
@@ -206,16 +210,25 @@ class AppBottomNavigationBar extends StatelessWidget {
         heightFactor: 1,
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 520),
-          child: DecoratedBox(
-            decoration: Glass.panel(
-              context,
-              radius: GlassDesignTokens.radiusCapsule,
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(4),
-              child: navContent,
-            ),
-          ),
+          child: useDarkGlass
+              ? GlassContainer(
+                  useOwnLayer: true,
+                  quality: lgw.GlassQuality.premium,
+                  shape: const LiquidRoundedSuperellipse(borderRadius: 32),
+                  settings: GlassDesignTokens.darkNavBarSettings(context),
+                  padding: const EdgeInsets.all(4),
+                  child: navContent,
+                )
+              : DecoratedBox(
+                  decoration: Glass.panel(
+                    context,
+                    radius: GlassDesignTokens.radiusCapsule,
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(4),
+                    child: navContent,
+                  ),
+                ),
         ),
       ),
     );

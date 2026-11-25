@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
+import '../constants/glass_design_tokens.dart';
 import '../theme/app_radius.dart';
 import '../theme/glass.dart';
 
@@ -59,6 +60,8 @@ class AppGlassCard extends StatelessWidget {
     final scheme = context.palette;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final radius = borderRadius ?? AppRadius.cardLarge;
+    final effectiveStyle = surfaceStyle ??
+        (isFloatingGlass ? GlassSurfaceStyle.glass : GlassSurfaceStyle.solid);
 
     Widget content = Padding(
       padding: padding,
@@ -77,28 +80,47 @@ class AppGlassCard extends StatelessWidget {
       );
     }
 
-    // Efek Liquid Glass dinonaktifkan sementara — gunakan solid adaptive card untuk keterbacaan optimal.
-    Widget cardWidget = Container(
-      decoration: BoxDecoration(
-        color: tintColor ?? scheme.surface,
-        borderRadius: radius,
-        border: border ??
-            Border.all(
-              color: isDark
-                  ? scheme.outlineVariant.withValues(alpha: 0.6)
-                  : const Color(0xFFF1F5F9),
-              width: 1.2,
+    Widget cardWidget;
+
+    if (GlassDesignTokens.isDarkGlass(context) &&
+        effectiveStyle == GlassSurfaceStyle.glass) {
+      // Dark Mode Floating Refractive Glass Card (memakai package resmi + Rule 2 solid descendants)
+      cardWidget = GlassContainer.card(
+        useOwnLayer: true,
+        padding: EdgeInsets.zero,
+        surfaceStyle: GlassSurfaceStyle.glass,
+        settings: GlassDesignTokens.darkPlatterSettings(context),
+        shape: LiquidRoundedSuperellipse(borderRadius: radius.topLeft.x),
+        color: tintColor,
+        child: InheritedGlassSurfaceStyle(
+          surfaceStyle: GlassSurfaceStyle.solid,
+          child: content,
+        ),
+      );
+    } else {
+      // Light Mode asli atau Dark Mode Solid Adaptive Card (kontras maksimal untuk data finansial)
+      cardWidget = Container(
+        decoration: BoxDecoration(
+          color: tintColor ?? scheme.surface,
+          borderRadius: radius,
+          border: border ??
+              Border.all(
+                color: isDark
+                    ? scheme.outlineVariant.withValues(alpha: 0.6)
+                    : const Color(0xFFF1F5F9),
+                width: 1.2,
+              ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+              blurRadius: 14,
+              offset: const Offset(0, 4),
             ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
-            blurRadius: 14,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: content,
-    );
+          ],
+        ),
+        child: content,
+      );
+    }
 
     if (margin != null) {
       cardWidget = Padding(padding: margin!, child: cardWidget);

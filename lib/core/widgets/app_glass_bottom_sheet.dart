@@ -3,7 +3,6 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 import '../constants/glass_design_tokens.dart';
 import '../theme/app_radius.dart';
-import '../theme/glass.dart';
 
 /// Helper terpusat untuk menampilkan Modal Bottom Sheet bergaya Liquid Glass di Tahan Dulu.
 ///
@@ -21,8 +20,8 @@ Future<T?> showAppGlassBottomSheet<T>({
   bool isDismissible = true,
   bool showDragIndicator = true,
 }) {
-  if (GlassDesignTokens.isHighContrast(context)) {
-    // Fallback Material Bottom Sheet untuk mode kontras tinggi
+  if (!GlassDesignTokens.isDarkGlass(context)) {
+    // Light Mode atau mode aksesibilitas: Material Bottom Sheet asli
     return showModalBottomSheet<T>(
       context: context,
       isScrollControlled: true,
@@ -38,9 +37,6 @@ Future<T?> showAppGlassBottomSheet<T>({
     );
   }
 
-  final isDark = Theme.of(context).brightness == Brightness.dark;
-  final scheme = context.palette;
-
   return GlassModalSheet.show<T>(
     context: context,
     initialState: GlassSheetState.half,
@@ -48,13 +44,11 @@ Future<T?> showAppGlassBottomSheet<T>({
     fullSize: fullSize,
     isDismissible: isDismissible,
     showDragIndicator: showDragIndicator,
-    dragIndicatorColor: isDark
-        ? Colors.white.withValues(alpha: 0.3)
-        : Colors.black.withValues(alpha: 0.2),
+    dragIndicatorColor: Colors.white.withValues(alpha: 0.35),
     topBorderRadius: AppRadius.xl,
-    expandedColor: isDark
-        ? scheme.surfaceContainerHighest.withValues(alpha: 0.95)
-        : Colors.white.withValues(alpha: 0.95),
+    settings: GlassDesignTokens.darkOverlaySettings(context),
+    expandedColor: const Color(0xEC16222E),
+    expandedDarkColor: const Color(0xEC16222E),
     builder: (sheetContext) {
       // Mengikuti Rule 2 SKILL.md: elemen anak mengadopsi solid styling
       // agar tidak terjadi double refraction di atas sheet kaca

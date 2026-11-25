@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
+import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/theme/glass.dart';
 
 import '../../../../core/constants/app_assets.dart';
@@ -407,6 +409,28 @@ Future<bool> showConfirmDialog({
   required String confirmLabel,
   Color confirmColor = AppColors.error,
 }) async {
+  if (GlassDesignTokens.isDarkGlass(context)) {
+    final result = await GlassDialog.show<bool>(
+      context: context,
+      title: title,
+      message: message,
+      settings: GlassDesignTokens.darkOverlaySettings(context),
+      actions: [
+        GlassDialogAction(
+          label: cancelLabel,
+          onPressed: () => Navigator.of(context).pop(false),
+        ),
+        GlassDialogAction(
+          label: confirmLabel,
+          isPrimary: confirmColor != AppColors.error,
+          isDestructive: confirmColor == AppColors.error,
+          onPressed: () => Navigator.of(context).pop(true),
+        ),
+      ],
+    );
+    return result ?? false;
+  }
+
   final result = await showDialog<bool>(
     context: context,
     builder: (context) => ConfirmDialog(
@@ -431,6 +455,35 @@ Future<void> showInfoDialog({
   required String body,
   String closeLabel = 'Tutup',
 }) {
+  if (GlassDesignTokens.isDarkGlass(context)) {
+    return GlassDialog.show<void>(
+      context: context,
+      title: title,
+      settings: GlassDesignTokens.darkOverlaySettings(context),
+      content: InheritedGlassSurfaceStyle(
+        surfaceStyle: GlassSurfaceStyle.solid,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 320),
+          child: SingleChildScrollView(
+            child: Text(
+              body,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Colors.white.withValues(alpha: 0.85),
+                  ),
+            ),
+          ),
+        ),
+      ),
+      actions: [
+        GlassDialogAction(
+          label: closeLabel,
+          isPrimary: true,
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ],
+    );
+  }
+
   return showDialog<void>(
     context: context,
     builder: (context) => AlertDialog(

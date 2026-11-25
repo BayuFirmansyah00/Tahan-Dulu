@@ -8,6 +8,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/utils/rupiah_input_formatter.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_icons.dart';
 import '../../../../core/widgets/app_text_field.dart';
@@ -76,13 +77,14 @@ class _GoalCreateScreenState extends ConsumerState<GoalCreateScreen> {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final tomorrow = today.add(const Duration(days: 1));
-    final picked = await showDatePicker(
+    final picked = await showAppDatePicker(
       context: context,
       initialDate: current != null && !current.isBefore(today)
           ? current
           : tomorrow,
       firstDate: today,
       lastDate: today.add(const Duration(days: 365 * 30)),
+      title: 'Target Tercapai',
     );
     if (picked != null) {
       ref.read(goalsControllerProvider.notifier).setTargetDate(picked);

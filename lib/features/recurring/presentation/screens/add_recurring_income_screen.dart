@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/glass.dart';
 
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../data/models/financial_account.dart';
@@ -60,11 +61,12 @@ class _AddRecurringIncomeScreenState
   }
 
   Future<void> _pickDate() async {
-    final picked = await showDatePicker(
+    final picked = await showAppDatePicker(
       context: context,
       initialDate: DateTime.now(),
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
+      title: 'Tanggal Pemasukan Rutin',
     );
     if (picked != null && mounted) {
       _nextDueDateController.text =

@@ -8,6 +8,7 @@ import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/rupiah_input_formatter.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_image_icon.dart';
 import '../../../../core/widgets/app_states.dart';
@@ -695,7 +696,7 @@ class _Form extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
-                SwitchListTile(
+                AppAdaptiveSwitchTile(
                   contentPadding: EdgeInsets.zero,
                   title: const Text('Status Akun Aktif', style: TextStyle(fontWeight: FontWeight.w600)),
                   subtitle: Text(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/theme/glass.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
@@ -20,6 +21,17 @@ void showTransactionDetailSheet(
   AppTransaction item, {
   String? accountName,
 }) {
+  if (GlassDesignTokens.isDarkGlass(context)) {
+    showGlassSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => TransactionDetailSheet(
+        item: item,
+        accountName: accountName,
+      ),
+    );
+    return;
+  }
   showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
@@ -109,19 +121,16 @@ class TransactionDetailSheet extends ConsumerWidget {
     final isIncome = item.type == TransactionType.income;
     final color = isIncome ? context.palette.primary : context.palette.error;
     final sign = isIncome ? '+' : '-';
+    final useDarkGlass = GlassDesignTokens.isDarkGlass(context);
 
-    return Container(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
-      decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+    final sheetBody = SafeArea(
+      top: false,
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (!useDarkGlass)
               Center(
                 child: Container(
                   width: 40,
@@ -400,7 +409,22 @@ class TransactionDetailSheet extends ConsumerWidget {
             ],
           ),
         ),
+    );
+
+    if (useDarkGlass) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+        child: sheetBody,
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
+      child: sheetBody,
     );
   }
 

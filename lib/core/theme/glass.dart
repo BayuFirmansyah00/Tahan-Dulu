@@ -1,7 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart' as lgw;
 
+import '../constants/glass_design_tokens.dart';
 import 'app_radius.dart';
 import 'app_colors.dart';
 
@@ -70,6 +72,25 @@ class GlassBackdrop extends StatelessWidget {
     final canvas = context.canvasColor;
     if (Glass.accessible(context)) {
       return ColoredBox(color: canvas, child: child);
+    }
+    if (Theme.of(context).brightness == Brightness.dark) {
+      // Latar gelap bernuansa emerald & slate agar refraksi Liquid Glass tampak autentik.
+      return DecoratedBox(
+        decoration: BoxDecoration(
+          color: const Color(0xFF0C141B),
+          gradient: RadialGradient(
+            center: const Alignment(0.8, -0.75),
+            radius: 1.4,
+            colors: [
+              AppColors.primary.withValues(alpha: 0.16),
+              const Color(0xFF101D28),
+              const Color(0xFF0B1218),
+            ],
+            stops: const [0.0, 0.55, 1.0],
+          ),
+        ),
+        child: child,
+      );
     }
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -156,8 +177,9 @@ class _QualityScope extends InheritedWidget {
       quality != oldWidget.quality;
 }
 
-/// Profil seimbang menjadi bawaan. Efek Liquid Glass dinonaktifkan sementara
-/// sehingga seluruh panel mengambang memakai dekorasi statis Light/Dark asli.
+/// Light Mode memakai dekorasi statis asli. Dark Mode memakai shader resmi
+/// `GlassContainer` (`liquid_glass_widgets`) dengan `InheritedGlassSurfaceStyle.solid`
+/// pada subtree agar elemen interaktif di dalamnya tidak mengalami double-refraction.
 class FloatingGlass extends StatelessWidget {
   const FloatingGlass({
     super.key,
@@ -166,11 +188,34 @@ class FloatingGlass extends StatelessWidget {
   });
   final Widget child;
   final BorderRadius radius;
+
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: Glass.panel(context, radius: radius),
-      child: child,
+    if (!GlassDesignTokens.isDarkGlass(context)) {
+      return DecoratedBox(
+        decoration: Glass.panel(context, radius: radius),
+        child: child,
+      );
+    }
+
+    final quality =
+        context.dependOnInheritedWidgetOfExactType<_QualityScope>()?.quality ??
+            GlassQuality.balanced;
+    final effectiveQuality = switch (quality) {
+      GlassQuality.high => lgw.GlassQuality.premium,
+      GlassQuality.balanced => lgw.GlassQuality.standard,
+      GlassQuality.low => lgw.GlassQuality.minimal,
+    };
+
+    return lgw.GlassContainer(
+      useOwnLayer: true,
+      quality: effectiveQuality,
+      shape: lgw.LiquidRoundedSuperellipse(borderRadius: radius.topLeft.x),
+      settings: GlassDesignTokens.darkPlatterSettings(context),
+      child: lgw.InheritedGlassSurfaceStyle(
+        surfaceStyle: lgw.GlassSurfaceStyle.solid,
+        child: child,
+      ),
     );
   }
 }
@@ -187,12 +232,47 @@ extension GlassPalette on BuildContext {
 }
 
 /// Isi dan hasil modal tetap dikelola oleh pemanggil.
+/// Light Mode: Material modal sheet asli.
+/// Dark Mode: Official `GlassModalSheet.show` dengan `InheritedGlassSurfaceStyle.solid`.
 Future<T?> showGlassSheet<T>({
   required BuildContext context,
   required WidgetBuilder builder,
   bool isScrollControlled = false,
   bool scrollContent = false,
 }) {
+  if (GlassDesignTokens.isDarkGlass(context)) {
+    return lgw.GlassModalSheet.show<T>(
+      context: context,
+      detents: scrollContent
+          ? const {lgw.GlassSheetDetent.medium, lgw.GlassSheetDetent.large}
+          : const {lgw.GlassSheetDetent.medium},
+      initialState: lgw.GlassSheetState.half,
+      halfSize: 0.65,
+      topBorderRadius: AppRadius.xl,
+      dragIndicatorColor: Colors.white.withValues(alpha: 0.35),
+      settings: GlassDesignTokens.darkOverlaySettings(context),
+      expandedColor: const Color(0xEC16222E),
+      expandedDarkColor: const Color(0xEC16222E),
+      builder: (sheetContext) {
+        final content = builder(sheetContext);
+        final scrollProvider = lgw.ScrollControllerProvider.of(sheetContext);
+        return lgw.InheritedGlassSurfaceStyle(
+          surfaceStyle: lgw.GlassSurfaceStyle.solid,
+          child: Material(
+            type: MaterialType.transparency,
+            child: scrollContent
+                ? SingleChildScrollView(
+                    controller: scrollProvider?.controller,
+                    physics: scrollProvider?.physics,
+                    child: content,
+                  )
+                : content,
+          ),
+        );
+      },
+    );
+  }
+
   return showModalBottomSheet<T>(
     context: context,
     isScrollControlled: isScrollControlled || scrollContent,

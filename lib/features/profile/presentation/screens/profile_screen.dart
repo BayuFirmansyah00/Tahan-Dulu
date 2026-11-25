@@ -6,6 +6,7 @@ import '../../../../core/theme/glass.dart';
 
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/widgets/app_avatar.dart';
 import '../../../../core/widgets/app_image_icon.dart';
@@ -41,14 +42,17 @@ class ProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(profileUserProvider);
     final prefs = ref.watch(appPreferencesProvider);
+    final useDarkGlass = GlassDesignTokens.isDarkGlass(context);
 
     return Scaffold(
+      extendBody: useDarkGlass,
       backgroundColor: context.canvasColor,
       bottomNavigationBar: DashboardBottomNav(
         currentIndex: 4,
         onTap: (i) => profileOnNav(i, context),
       ),
       body: GlassBackdrop(child: SafeArea(
+        bottom: !useDarkGlass,
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
@@ -103,9 +107,11 @@ class _Body extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final useDarkGlass = GlassDesignTokens.isDarkGlass(context);
+
     return SingleChildScrollView(
       key: const PageStorageKey('profile_scroll_view'),
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+      padding: EdgeInsets.fromLTRB(20, 12, 20, useDarkGlass ? 100 : 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

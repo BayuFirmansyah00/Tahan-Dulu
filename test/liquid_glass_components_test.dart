@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 import 'package:tahan_dulu/core/constants/glass_design_tokens.dart';
 import 'package:tahan_dulu/core/theme/app_theme.dart';
+import 'package:tahan_dulu/core/widgets/app_adaptive_controls.dart';
 import 'package:tahan_dulu/core/widgets/app_glass_bottom_sheet.dart';
 import 'package:tahan_dulu/core/widgets/app_glass_button.dart';
 import 'package:tahan_dulu/core/widgets/app_glass_card.dart';
@@ -60,7 +61,7 @@ void main() {
       expect(tapped, isFalse);
     });
 
-    testWidgets('Renders secondary button with glass platter styling', (
+    testWidgets('Renders secondary button as Material OutlinedButton in Light Mode and GlassButton in Dark Mode', (
       tester,
     ) async {
       var tapped = false;
@@ -78,6 +79,36 @@ void main() {
           ),
         ),
       );
+
+      expect(find.text('Batal'), findsOneWidget);
+      expect(find.byType(InkWell), findsOneWidget);
+      expect(find.byType(GlassButton), findsNothing);
+      await tester.tap(find.text('Batal'));
+      await tester.pumpAndSettle();
+      expect(tapped, isTrue);
+
+      tapped = false;
+      await tester.pumpWidget(
+        MaterialApp(
+          key: const ValueKey('dark_btn_app'),
+          theme: AppTheme.dark,
+          themeMode: ThemeMode.dark,
+          builder: (context, child) => GlassTheme(
+            data: GlassDesignTokens.darkThemeData,
+            child: child!,
+          ),
+          home: Scaffold(
+            body: Center(
+              child: AppGlassButton(
+                label: 'Batal',
+                isPrimary: false,
+                onPressed: () => tapped = true,
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
 
       expect(find.text('Batal'), findsOneWidget);
       expect(find.byType(GlassButton), findsOneWidget);
@@ -141,7 +172,7 @@ void main() {
       expect(find.byType(GlassContainer), findsNothing);
     });
 
-    testWidgets('Floating glass card renders GlassContainer when requested', (
+    testWidgets('Floating glass card preserves Material Container in Light Mode and uses GlassContainer in Dark Mode', (
       tester,
     ) async {
       await tester.pumpWidget(
@@ -157,6 +188,30 @@ void main() {
           ),
         ),
       );
+
+      expect(find.text('Floating Banner'), findsOneWidget);
+      expect(find.byType(GlassContainer), findsNothing);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          key: const ValueKey('dark_card_app'),
+          theme: AppTheme.dark,
+          themeMode: ThemeMode.dark,
+          builder: (context, child) => GlassTheme(
+            data: GlassDesignTokens.darkThemeData,
+            child: child!,
+          ),
+          home: const Scaffold(
+            body: Center(
+              child: AppGlassCard(
+                isFloatingGlass: true,
+                child: Text('Floating Banner'),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
 
       expect(find.text('Floating Banner'), findsOneWidget);
       expect(find.byType(GlassContainer), findsOneWidget);
@@ -312,6 +367,82 @@ void main() {
       expect(GlassDesignTokens.darkSurfaceOpacity, 0.86);
       expect(GlassDesignTokens.solidSurfaceOpacity, 1.0);
       expect(GlassDesignTokens.radiusCapsule.topLeft.x, 32.0);
+    });
+
+    testWidgets('AppAdaptive controls render Material in Light Mode and Liquid Glass in Dark Mode', (
+      tester,
+    ) async {
+      bool switchValue = true;
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.light,
+          home: Scaffold(
+            body: Column(
+              children: [
+                AppAdaptiveSwitch(
+                  value: switchValue,
+                  onChanged: (v) => switchValue = v,
+                ),
+                AppAdaptiveFilterChip(
+                  label: 'Semua',
+                  selected: true,
+                  onTap: () {},
+                ),
+                AppAdaptiveMenuButton<String>(
+                  options: const [
+                    AppMenuOption(value: 'a', label: 'Opsi A'),
+                  ],
+                  onSelected: (_) {},
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+
+      expect(find.byType(Switch), findsOneWidget);
+      expect(find.byType(GlassSwitch), findsNothing);
+      expect(find.byType(GlassChip), findsNothing);
+      expect(find.byType(GlassPullDownButton), findsNothing);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          key: const ValueKey('dark_adaptive_app'),
+          theme: AppTheme.dark,
+          themeMode: ThemeMode.dark,
+          builder: (context, child) => GlassTheme(
+            data: GlassDesignTokens.darkThemeData,
+            child: child!,
+          ),
+          home: Scaffold(
+            body: Column(
+              children: [
+                AppAdaptiveSwitch(
+                  value: switchValue,
+                  onChanged: (v) => switchValue = v,
+                ),
+                AppAdaptiveFilterChip(
+                  label: 'Semua',
+                  selected: true,
+                  onTap: () {},
+                ),
+                AppAdaptiveMenuButton<String>(
+                  options: const [
+                    AppMenuOption(value: 'a', label: 'Opsi A'),
+                  ],
+                  onSelected: (_) {},
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(GlassSwitch), findsOneWidget);
+      expect(find.byType(GlassChip), findsOneWidget);
+      expect(find.byType(GlassPullDownButton), findsOneWidget);
+      expect(find.byType(Switch), findsNothing);
     });
   });
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/theme/glass.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/rupiah_input_formatter.dart';
@@ -21,6 +22,13 @@ class InvestmentDetailSheet extends ConsumerStatefulWidget {
   final FinancialAccount item;
 
   static Future<void> show(BuildContext context, FinancialAccount item) {
+    if (GlassDesignTokens.isDarkGlass(context)) {
+      return showGlassSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        builder: (_) => InvestmentDetailSheet(item: item),
+      );
+    }
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -183,33 +191,39 @@ class _InvestmentDetailSheetState extends ConsumerState<InvestmentDetailSheet> {
     final textTheme = Theme.of(context).textTheme;
     final transactionsAsync =
         ref.watch(apiInvestmentTransactionsProvider(widget.item.id));
+    final useDarkGlass = GlassDesignTokens.isDarkGlass(context);
 
     return Container(
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.85,
       ),
-      decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+      decoration: useDarkGlass
+          ? null
+          : BoxDecoration(
+              color: Theme.of(context).scaffoldBackgroundColor,
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(24)),
+            ),
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+          padding: EdgeInsets.fromLTRB(20, useDarkGlass ? 8 : 12, 20, 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.withAlpha(80),
-                    borderRadius: BorderRadius.circular(2),
+              if (!useDarkGlass) ...[
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.withAlpha(80),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
+                const SizedBox(height: 16),
+              ],
               Row(
                 children: [
                   Expanded(
