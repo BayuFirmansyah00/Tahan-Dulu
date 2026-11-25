@@ -7,6 +7,7 @@ import 'package:tahan_dulu/data/datasources/remote/remote_transaction_repository
 import 'package:tahan_dulu/data/datasources/remote/token_storage.dart';
 import 'package:tahan_dulu/data/models/financial_account.dart';
 import 'package:tahan_dulu/data/models/reminder_settings.dart';
+import 'package:tahan_dulu/data/models/transaction_model.dart';
 
 void main() {
   const baseUrl = String.fromEnvironment(
@@ -175,7 +176,9 @@ void main() {
       expect(balance, 10000000.0);
 
       final txs = await transactionRepoA.getTransactions();
-      expect(txs.isEmpty, isTrue);
+      // Operasi notifikasi tidak menambah transaksi baru (hanya ada 1 setoran awal dari pembuatan akun)
+      expect(txs.length, 1);
+      expect(txs.first.type, TransactionType.income);
     });
   }, skip: useRemoteApi ? false : 'Live E2E test requires running backend (USE_REMOTE_API=true)');
 }

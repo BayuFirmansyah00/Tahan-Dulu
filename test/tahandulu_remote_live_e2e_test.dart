@@ -7,6 +7,7 @@ import 'package:tahan_dulu/data/datasources/remote/remote_transaction_repository
 import 'package:tahan_dulu/data/datasources/remote/token_storage.dart';
 import 'package:tahan_dulu/data/models/financial_account.dart';
 import 'package:tahan_dulu/data/models/purchase_consideration.dart';
+import 'package:tahan_dulu/data/models/transaction_model.dart';
 
 void main() {
   const baseUrl = String.fromEnvironment(
@@ -118,7 +119,9 @@ void main() {
       expect(balance, 5000000.0);
 
       final txs = await transactionRepoA.getTransactions();
-      expect(txs.isEmpty, isTrue);
+      // Operasi Tahan Dulu tidak menambah transaksi (hanya ada setoran awal dari pembuatan akun)
+      expect(txs.length, 1);
+      expect(txs.first.type, TransactionType.income);
     });
 
     test('4. Mulai masa tunggu (cooling-off period) 48 jam di backend', () async {

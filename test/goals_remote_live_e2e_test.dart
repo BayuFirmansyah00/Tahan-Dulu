@@ -106,9 +106,9 @@ void main() {
         ),
       );
 
-      expect(int.parse(createdGoalA.id), greaterThan(0));
-      expect(int.parse(createdGoalB.id), greaterThan(0));
-      expect(int.parse(createdGoalC.id), greaterThan(0));
+      expect(createdGoalA.id.isNotEmpty, isTrue);
+      expect(createdGoalB.id.isNotEmpty, isTrue);
+      expect(createdGoalC.id.isNotEmpty, isTrue);
 
       // Ambil ulang dari backend untuk verifikasi sorting backend:
       // Urutan: Goal B (prio 0), lalu Goal C (prio 1, tenggat 31 Okt), lalu Goal A (prio 1, tenggat 15 Des)
@@ -236,12 +236,19 @@ void main() {
       final goals = await goalRepoA.getGoals();
       final emergencyGoal = goals.firstWhere((g) => g.category == GoalCategory.emergency);
 
-      // Hapus target Dana Darurat yang memiliki alokasi Rp 2.500.000
-      await goalRepoA.deleteGoal(emergencyGoal.id);
+      // 1. Verifikasi proteksi finansial: Target dengan alokasi aktif Rp 2.500.000 dilarang dihapus (422)
+      expect(
+        () => goalRepoA.deleteGoal(emergencyGoal.id),
+        throwsA(isA<ApiException>()),
+      );
+
+      // 2. Target dengan alokasi Rp0 dapat dihapus dengan aman
+      final zeroGoal = goals.firstWhere((g) => g.currentAmount == 0);
+      await goalRepoA.deleteGoal(zeroGoal.id);
 
       // Verifikasi target sudah terhapus dari backend
       final goalsAfterDelete = await goalRepoA.getGoals();
-      expect(goalsAfterDelete.any((g) => g.id == emergencyGoal.id), isFalse);
+      expect(goalsAfterDelete.any((g) => g.id == zeroGoal.id), isFalse);
 
       // Verifikasi transaksi pengeluaran riil tetap ada dan utuh di tabel transactions
       final recent = await transactionRepoA.getRecentTransactions();
