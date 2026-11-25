@@ -62,4 +62,7 @@ abstract final class AppRoutes {
   static const String profilePrivacy = '/settings/privacy';
   static const String profileHelp = '/settings/help';
   static const String profileAbout = '/settings/about';
+
+  // Development & POC routes.
+  static const String devGlassPoc = '/dev/glass-poc';
 }

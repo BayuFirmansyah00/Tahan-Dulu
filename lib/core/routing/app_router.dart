@@ -28,6 +28,7 @@ import 'package:tahan_dulu/features/accounts/presentation/screens/edit_account_s
 import 'package:tahan_dulu/features/accounts/presentation/screens/transfer_history_screen.dart';
 import 'package:tahan_dulu/features/accounts/presentation/screens/transfer_screen.dart';
 import 'package:tahan_dulu/features/dashboard/presentation/screens/dashboard_screen.dart';
+import 'package:tahan_dulu/features/dev/presentation/glass_poc_screen.dart';
 import 'package:tahan_dulu/features/goals/presentation/screens/goal_achieved_screen.dart';
 import 'package:tahan_dulu/features/goals/presentation/screens/goal_create_screen.dart';
 import 'package:tahan_dulu/features/goals/presentation/screens/goal_deposit_screen.dart';
@@ -550,6 +551,10 @@ GoRouter createAppRouter({AuthRouteNotifier? authNotifier}) {
             builder: (context, state) => const AboutScreen(),
           ),
         ],
+      ),
+      GoRoute(
+        path: AppRoutes.devGlassPoc,
+        builder: (context, state) => const GlassPocScreen(),
       ),
     ],
   );

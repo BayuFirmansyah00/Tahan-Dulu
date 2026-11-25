@@ -82,6 +82,7 @@ class _Body extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final apiReport = ref.watch(apiFinancialReportProvider(month)).asData?.value;
+    final periodMode = ref.watch(reportPeriodModeProvider);
     final savedAmount = apiReport?.summary.savedImpulseAmount ?? 0.0;
     final savedCount = apiReport?.summary.savedImpulseCount ?? 0;
     return SingleChildScrollView(
@@ -93,8 +94,10 @@ class _Body extends ConsumerWidget {
             month: month,
             onPrevious: onPrevious,
             onNext: onNext,
-            onSelectPeriod: (picked) =>
-                ref.read(reportMonthProvider.notifier).setMonth(picked),
+            onSelectPeriod: (picked) {
+              ref.read(reportPeriodModeProvider.notifier).setMode('monthly');
+              ref.read(reportMonthProvider.notifier).setMonth(picked);
+            },
           ),
           const SizedBox(height: 8),
           SingleChildScrollView(
@@ -103,15 +106,19 @@ class _Body extends ConsumerWidget {
               children: [
                 _PeriodChip(
                   label: 'Bulan Ini',
-                  isSelected: month.year == DateTime.now().year &&
+                  isSelected: periodMode == 'monthly' &&
+                      month.year == DateTime.now().year &&
                       month.month == DateTime.now().month,
-                  onTap: () =>
-                      ref.read(reportMonthProvider.notifier).setThisMonth(),
+                  onTap: () {
+                    ref.read(reportPeriodModeProvider.notifier).setMode('monthly');
+                    ref.read(reportMonthProvider.notifier).setThisMonth();
+                  },
                 ),
                 const SizedBox(width: 8),
                 _PeriodChip(
                   label: 'Bulan Lalu',
-                  isSelected: month.year ==
+                  isSelected: periodMode == 'monthly' &&
+                      month.year ==
                           (DateTime.now().month == 1
                               ? DateTime.now().year - 1
                               : DateTime.now().year) &&
@@ -119,8 +126,19 @@ class _Body extends ConsumerWidget {
                           (DateTime.now().month == 1
                               ? 12
                               : DateTime.now().month - 1),
-                  onTap: () =>
-                      ref.read(reportMonthProvider.notifier).setLastMonth(),
+                  onTap: () {
+                    ref.read(reportPeriodModeProvider.notifier).setMode('monthly');
+                    ref.read(reportMonthProvider.notifier).setLastMonth();
+                  },
+                ),
+                const SizedBox(width: 8),
+                _PeriodChip(
+                  label: 'Kuartal Ini',
+                  isSelected: periodMode == 'quarter',
+                  onTap: () {
+                    ref.read(reportPeriodModeProvider.notifier).setMode('quarter');
+                    ref.read(reportMonthProvider.notifier).setQuarter();
+                  },
                 ),
                 const SizedBox(width: 8),
                 _PeriodChip(
@@ -136,6 +154,7 @@ class _Body extends ConsumerWidget {
                       initialDatePickerMode: DatePickerMode.year,
                     );
                     if (picked != null) {
+                      ref.read(reportPeriodModeProvider.notifier).setMode('monthly');
                       ref
                           .read(reportMonthProvider.notifier)
                           .setMonth(picked);

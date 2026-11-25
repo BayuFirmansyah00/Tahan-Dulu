@@ -8,10 +8,28 @@ import '../../data/models/monthly_report.dart';
 import '../../data/models/transaction_model.dart';
 import '../../data/providers/app_providers.dart';
 
+/// Mode periode laporan: 'monthly' atau 'quarter'.
+class ReportPeriodModeNotifier extends Notifier<String> {
+  @override
+  String build() => 'monthly';
+
+  void setMode(String mode) => state = mode;
+}
+
+final reportPeriodModeProvider =
+    NotifierProvider<ReportPeriodModeNotifier, String>(
+  ReportPeriodModeNotifier.new,
+);
+
 /// Provider data laporan keuangan langsung dari backend Laravel `GET /api/reports/financial`.
 final apiFinancialReportProvider =
     FutureProvider.family<ApiFinancialReport, DateTime>((ref, month) async {
   final repo = ref.watch(reportRepositoryProvider);
+  final mode = ref.watch(reportPeriodModeProvider);
+  if (mode == 'quarter') {
+    return await repo.getFinancialReport(period: 'quarter');
+  }
+
   final now = DateTime.now();
   final isCurrentMonth = month.year == now.year && month.month == now.month;
   final isLastMonth = month.year == (now.month == 1 ? now.year - 1 : now.year) &&
@@ -63,6 +81,12 @@ class ReportPeriodController extends Notifier<DateTime> {
   void setLastMonth() {
     final now = DateTime.now();
     state = DateTime(now.year, now.month - 1);
+  }
+
+  void setQuarter() {
+    final now = DateTime.now();
+    final quarterStartMonth = ((now.month - 1) ~/ 3) * 3 + 1;
+    state = DateTime(now.year, quarterStartMonth);
   }
 }
 
