@@ -180,6 +180,16 @@ class ApiClient {
     throw ApiException('Terjadi kesalahan koneksi: $e');
   }
 
+  /// Bangun [Uri] yang terbebas dari duplikasi pemisah garis miring (double slashes //).
+  Uri _buildUri(String path) {
+    var base = baseUrl.trim();
+    while (base.endsWith('/')) {
+      base = base.substring(0, base.length - 1);
+    }
+    final cleanPath = path.startsWith('/') ? path : '/$path';
+    return Uri.parse('$base$cleanPath');
+  }
+
   Future<Map<String, dynamic>> post(
     String path,
     Map<String, dynamic> payload, {
@@ -188,7 +198,7 @@ class ApiClient {
     try {
       final res = await _http
           .post(
-            Uri.parse('$baseUrl$path'),
+            _buildUri(path),
             headers: _headers(token),
             body: jsonEncode(payload),
           )
@@ -208,7 +218,7 @@ class ApiClient {
     String? token,
   }) async {
     try {
-      final uri = Uri.parse('$baseUrl$path');
+      final uri = _buildUri(path);
       final request = http.MultipartRequest('POST', uri);
       request.headers.addAll({
         'Accept': 'application/json',
@@ -232,7 +242,7 @@ class ApiClient {
   Future<Map<String, dynamic>> get(String path, {String? token}) async {
     try {
       final res = await _http
-          .get(Uri.parse('$baseUrl$path'), headers: _headers(token))
+          .get(_buildUri(path), headers: _headers(token))
           .timeout(timeout);
       return _decode(res);
     } catch (e) {
@@ -254,7 +264,7 @@ class ApiClient {
         reqHeaders.addAll(headers);
       }
       final res = await _http
-          .get(Uri.parse('$baseUrl$path'), headers: reqHeaders)
+          .get(_buildUri(path), headers: reqHeaders)
           .timeout(timeout);
       if (res.statusCode == 401) {
         onUnauthorized?.call();
@@ -283,7 +293,7 @@ class ApiClient {
     try {
       final res = await _http
           .put(
-            Uri.parse('$baseUrl$path'),
+            _buildUri(path),
             headers: _headers(token),
             body: jsonEncode(payload),
           )
@@ -302,7 +312,7 @@ class ApiClient {
     try {
       final res = await _http
           .patch(
-            Uri.parse('$baseUrl$path'),
+            _buildUri(path),
             headers: _headers(token),
             body: jsonEncode(payload),
           )
@@ -321,7 +331,7 @@ class ApiClient {
     try {
       final res = await _http
           .delete(
-            Uri.parse('$baseUrl$path'),
+            _buildUri(path),
             headers: _headers(token),
             body: payload != null ? jsonEncode(payload) : null,
           )

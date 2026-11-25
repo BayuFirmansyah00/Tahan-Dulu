@@ -182,6 +182,88 @@ void main() {
       await repo.deleteAccount(password: 'Rahasia123');
       expect(await tokens.readToken(), isNull);
     });
+
+    test('ApiClient normalizes baseUrl with trailing slash and path without double slashes', () async {
+      String? requestedUrl;
+      final mockClient = MockClient((request) async {
+        requestedUrl = request.url.toString();
+        return http.Response(
+          jsonEncode({'success': true, 'data': {}}),
+          200,
+          headers: {'content-type': 'application/json'},
+        );
+      });
+
+      // baseUrl memiliki trailing slash, path memiliki leading slash
+      final clientWithSlash = ApiClient(
+        baseUrl: 'https://tahandulu.kreasikan.site/api/',
+        httpClient: mockClient,
+      );
+      await clientWithSlash.get('/user/avatar');
+      expect(requestedUrl, 'https://tahandulu.kreasikan.site/api/user/avatar');
+
+      // baseUrl tanpa trailing slash, path tanpa leading slash
+      final clientNoSlash = ApiClient(
+        baseUrl: 'https://tahandulu.kreasikan.site/api',
+        httpClient: mockClient,
+      );
+      await clientNoSlash.get('user/avatar');
+      expect(requestedUrl, 'https://tahandulu.kreasikan.site/api/user/avatar');
+    });
+
+    test('resolveAvatarUrl correctly normalizes relative paths and external URLs', () {
+      // 1. Path tanpa /storage/ (format raw Filament FileUpload)
+      final urlFromFilament = resolveAvatarUrl('avatars/avatar_123_abc.jpg');
+      expect(urlFromFilament, contains('/storage/avatars/avatar_123_abc.jpg'));
+      expect(urlFromFilament.contains('//storage'), isFalse);
+      expect(urlFromFilament.contains('/api/storage'), isFalse);
+
+      // 2. Path yang sudah diawali /storage/
+      final urlWithStorage = resolveAvatarUrl('/storage/avatars/avatar_123_abc.jpg');
+      expect(urlWithStorage, contains('/storage/avatars/avatar_123_abc.jpg'));
+      expect(urlWithStorage.contains('//storage'), isFalse);
+
+      // 3. URL absolut Google OAuth eksternal tidak diubah
+      final googleUrl = 'https://lh3.googleusercontent.com/a/ACg8ocISomeAvatarUrl=s96-c';
+      expect(resolveAvatarUrl(googleUrl), googleUrl);
+
+      // 4. String kosong
+      expect(resolveAvatarUrl(''), '');
+    });
+
+    test('RemoteAuthRepository.deleteAvatar calls DELETE /user/avatar', () async {
+      final mockClient = MockClient((request) async {
+        expect(request.method, 'DELETE');
+        expect(request.url.path, '/user/avatar');
+
+        return http.Response(
+          jsonEncode({
+            'success': true,
+            'message': 'Foto profil berhasil dihapus',
+            'data': {
+              'id': 123,
+              'name': 'Budi User',
+              'email': 'budi@example.com',
+              'avatar_url': null,
+            },
+          }),
+          200,
+          headers: {'content-type': 'application/json'},
+        );
+      });
+
+      final apiClient = ApiClient(
+        baseUrl: 'http://test',
+        httpClient: mockClient,
+      );
+      final repo = RemoteAuthRepository(
+        client: apiClient,
+        tokens: _MemoryTokenStore(),
+      );
+
+      final result = await repo.deleteAvatar();
+      expect(result.avatarUrl, isNull);
+    });
   });
 
   group('Fase 7B: App Preferences Persistence', () {

@@ -8,20 +8,37 @@ import '../theme/glass.dart';
 
 /// Helper untuk menyelesaikan URL avatar (menangani relative path, localhost, emulator 10.0.2.2).
 String resolveAvatarUrl(String url) {
-  if (url.isEmpty) return url;
-  if (url.startsWith('http://') || url.startsWith('https://')) {
+  final trimmed = url.trim();
+  if (trimmed.isEmpty) return trimmed;
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
     if (ApiConfig.baseUrl.contains('10.0.2.2')) {
-      return url
+      return trimmed
           .replaceAll('http://localhost:8000', 'http://10.0.2.2:8000')
           .replaceAll('http://127.0.0.1:8000', 'http://10.0.2.2:8000')
           .replaceAll('http://localhost', 'http://10.0.2.2');
     }
-    return url;
+    return trimmed;
   }
-  // Relative path (misal: /storage/avatars/...)
-  final base = ApiConfig.baseUrl.replaceAll('/api', '');
-  final prefix = url.startsWith('/') ? '' : '/';
-  return '$base$prefix$url';
+
+  // Jamin base host tanpa suffix /api atau trailing slash
+  String base = ApiConfig.baseUrl.trim();
+  while (base.endsWith('/')) {
+    base = base.substring(0, base.length - 1);
+  }
+  if (base.endsWith('/api')) {
+    base = base.substring(0, base.length - 4);
+  }
+
+  // Normalisasi path relatif publik: jika belum diawali storage/, tambahkan
+  String path = trimmed;
+  while (path.startsWith('/')) {
+    path = path.substring(1);
+  }
+  if (!path.startsWith('storage/')) {
+    path = 'storage/$path';
+  }
+
+  return '$base/$path';
 }
 
 /// Widget lingkaran avatar pengguna dengan fallback inisial teks dan badge kamera opsional.
