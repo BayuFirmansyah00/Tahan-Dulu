@@ -49,10 +49,14 @@ abstract final class NotificationDeepLink {
 
     switch (type?.trim()) {
       case 'tahandulu':
+      case 'wishlist':
         return hasValidEntityId
             ? '${AppRoutes.tahanDulu}/$cleanEntityId'
             : AppRoutes.tahanDulu;
       case 'savingsGoal':
+      case 'goal':
+      case 'saving':
+      case 'savings':
         return hasValidEntityId
             ? '${AppRoutes.goals}/$cleanEntityId'
             : AppRoutes.goals;

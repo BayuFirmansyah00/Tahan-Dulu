@@ -34,7 +34,11 @@ class RemoteNotificationRepository implements NotificationRepository {
     for (final cat in NotificationCategory.values) {
       if (cat.name == str) return cat;
     }
-    // Fallback aman untuk kategori yang tidak dikenal (misal 'bills' bila dikirim).
+    // Dukung alias kategori dari Laravel / Filament web
+    if (str == 'wishlist') return NotificationCategory.tahandulu;
+    if (str == 'saving' || str == 'goal') return NotificationCategory.savingsGoal;
+    if (str == 'bill') return NotificationCategory.overspending;
+    // Fallback aman untuk kategori yang tidak dikenal.
     return NotificationCategory.budget;
   }
 
