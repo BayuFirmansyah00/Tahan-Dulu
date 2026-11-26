@@ -103,7 +103,7 @@ void main() {
         'id': bankUuid,
         'name': 'Bank',
         'type': 'bank',
-        'logo_url': 'https://example.com/bank.png',
+        'logo_url': 'https://example.com/bank.webp',
       };
       final parsed = ApiInstrumentType.fromJson(json);
       expect(parsed.id, bankUuid);

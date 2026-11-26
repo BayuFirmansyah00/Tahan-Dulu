@@ -9,13 +9,11 @@ import 'core/services/fcm_service.dart';
 /// Entry point bersih: init locale IDR, Firebase FCM, LiquidGlassWidgets, lalu jalankan app.
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await initializeDateFormatting('id_ID');
-  await FcmService.initializeFirebase();
-  try {
-    await LiquidGlassWidgets.initialize();
-  } catch (e) {
-    debugPrint('[LiquidGlass] Init fallback: $e');
-  }
+  await Future.wait<void>([
+    initializeDateFormatting('id_ID'),
+    FcmService.initializeFirebase(),
+    _initializeLiquidGlass(),
+  ]);
   runApp(
     LiquidGlassWidgets.wrap(
       adaptiveQuality: true,
@@ -24,4 +22,12 @@ Future<void> main() async {
       child: const ProviderScope(child: TahanDuluApp()),
     ),
   );
+}
+
+Future<void> _initializeLiquidGlass() async {
+  try {
+    await LiquidGlassWidgets.initialize();
+  } catch (e) {
+    debugPrint('[LiquidGlass] Init fallback: $e');
+  }
 }

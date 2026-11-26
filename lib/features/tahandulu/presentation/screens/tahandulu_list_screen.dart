@@ -263,7 +263,7 @@ class _HeroCard extends StatelessWidget {
           const TdHeroImage(
             asset: TdHeaderArt.list,
             fallbackAsset:
-                'assets/illustrations/illustration_tas_tahandulu.png',
+                'assets/illustrations/illustration_tas_tahandulu.webp',
             height: 132,
             width: 148,
           ),

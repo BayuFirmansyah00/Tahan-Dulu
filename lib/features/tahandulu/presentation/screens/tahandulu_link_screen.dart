@@ -170,7 +170,7 @@ class _TahanDuluLinkScreenState extends ConsumerState<TahanDuluLinkScreen> {
               child: TdHeroImage(
                 asset: TdHeaderArt.link,
                 fallbackAsset:
-                    'assets/illustrations/illustration_link_produk.png',
+                    'assets/illustrations/illustration_link_produk.webp',
                 height: 150,
                 width: 230,
               ),

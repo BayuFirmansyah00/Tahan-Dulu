@@ -11,7 +11,7 @@ void main() {
   test('aset Google login lokal tersedia dan terdaftar', () {
     expect(
       AppAssets.setGoogle,
-      'assets/icons/icon_google_login.png',
+      'assets/icons/icon_google_login.webp',
     );
     expect(
       File(AppAssets.setGoogle).existsSync(),

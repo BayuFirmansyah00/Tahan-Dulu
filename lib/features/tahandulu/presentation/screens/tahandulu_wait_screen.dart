@@ -91,7 +91,7 @@ class _TahanDuluWaitScreenState extends ConsumerState<TahanDuluWaitScreen> {
                   child: TdHeroImage(
                     asset: TdHeaderArt.wait,
                     fallbackAsset:
-                        'assets/illustrations/illustration_masa_tunggu.png',
+                        'assets/illustrations/illustration_masa_tunggu.webp',
                     height: 120,
                     width: 210,
                   ),

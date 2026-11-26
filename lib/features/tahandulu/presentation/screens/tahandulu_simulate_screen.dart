@@ -56,7 +56,7 @@ class TahanDuluSimulateScreen extends ConsumerWidget {
                   child: TdHeroImage(
                     asset: TdHeaderArt.simulate,
                     fallbackAsset:
-                        'assets/illustrations/illustration_perbandingan.png',
+                        'assets/illustrations/illustration_perbandingan.webp',
                     height: 120,
                     width: 210,
                   ),

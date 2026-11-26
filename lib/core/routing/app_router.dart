@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:tahan_dulu/data/models/transaction_model.dart';
@@ -570,10 +571,11 @@ GoRouter createAppRouter({AuthRouteNotifier? authNotifier}) {
           ),
         ],
       ),
-      GoRoute(
-        path: AppRoutes.devGlassPoc,
-        builder: (context, state) => const GlassPocScreen(),
-      ),
+      if (kDebugMode)
+        GoRoute(
+          path: AppRoutes.devGlassPoc,
+          builder: (context, state) => const GlassPocScreen(),
+        ),
     ],
   );
 }

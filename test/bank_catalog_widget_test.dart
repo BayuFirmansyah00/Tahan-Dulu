@@ -126,7 +126,7 @@ void main() {
     });
 
     testWidgets('rejects unapproved external image URLs and derives safe CDN or fallback', (tester) async {
-      const suspiciousUrl = 'https://untrusted-external-site.com/exploit.png';
+      const suspiciousUrl = 'https://untrusted-external-site.com/exploit.webp';
       expect(BankLogoBadge.isAllowedUrl(suspiciousUrl), isFalse);
       expect(BankLogoBadge.isAllowedUrl('https://cdn.jsdelivr.net/npm/idn-finlogos@2/dist/icons/bca.svg'), isTrue);
       expect(BankLogoBadge.isAllowedUrl('https://raw.githubusercontent.com/hafidznoor/idn-finlogos/main/icons/bca.svg'), isTrue);

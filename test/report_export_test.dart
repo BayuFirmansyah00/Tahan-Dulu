@@ -152,7 +152,7 @@ void main() {
         goals: _sampleGoals(),
         now: DateTime(2026, 10, 28, 14, 30),
       );
-      final logoFile = File('assets/branding/tahan_dulu_logo.png');
+      final logoFile = File('assets/branding/tahan_dulu_logo.webp');
       expect(logoFile.existsSync(), isTrue);
       final withLogo =
           await buildReportPdf(data, logoBytes: logoFile.readAsBytesSync());
@@ -229,7 +229,7 @@ void main() {
     test('dump contoh untuk inspeksi visual', () async {
       final dir = Directory('build/pdf_preview');
       dir.createSync(recursive: true);
-      final logo = File('assets/branding/tahan_dulu_logo.png').readAsBytesSync();
+      final logo = File('assets/branding/tahan_dulu_logo.webp').readAsBytesSync();
       final rich = buildReportExportData(
         report: _sampleReport(),
         goals: _sampleGoals(),

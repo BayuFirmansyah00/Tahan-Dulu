@@ -1,7 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:liquid_glass_widgets/liquid_glass_widgets.dart' hide GlassQuality;
-import 'package:liquid_glass_widgets/liquid_glass_widgets.dart' as lgw show GlassQuality;
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
+    hide GlassQuality;
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
+    as lgw
+    show GlassQuality;
 
 import '../constants/app_assets.dart';
 import '../constants/app_strings.dart';
@@ -112,9 +116,7 @@ class AppBottomNavigationBar extends StatelessWidget {
           final width = constraints.maxWidth / _items.length;
           return Stack(
             children: [
-              if (selected != null &&
-                  selected >= 0 &&
-                  selected < _items.length)
+              if (selected != null && selected >= 0 && selected < _items.length)
                 AnimatedPositionedDirectional(
                   duration: GlassDesignTokens.motionDuration(context),
                   curve: GlassDesignTokens.curve,
@@ -144,31 +146,37 @@ class AppBottomNavigationBar extends StatelessWidget {
                         child: Material(
                           type: MaterialType.transparency,
                           child: InkWell(
-                            key: index == 2
-                                ? const Key('record_button')
-                                : null,
-                            borderRadius:
-                                GlassDesignTokens.radiusCapsule,
+                            key: index == 2 ? const Key('record_button') : null,
+                            borderRadius: GlassDesignTokens.radiusCapsule,
                             onTap: () => _handleTap(context, index),
                             child: ExcludeSemantics(
                               child: Column(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.center,
+                                mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Image.asset(
                                     item.$2,
                                     key: index == 2
-                                        ? const Key(
-                                            'record_button_icon',
-                                          )
+                                        ? const Key('record_button_icon')
                                         : null,
                                     width: index == 2 ? 31 : 25,
                                     height: 31,
+                                    cacheWidth: kReleaseMode
+                                        ? (31 *
+                                                  MediaQuery.devicePixelRatioOf(
+                                                    context,
+                                                  ))
+                                              .ceil()
+                                        : null,
+                                    cacheHeight: kReleaseMode
+                                        ? (31 *
+                                                  MediaQuery.devicePixelRatioOf(
+                                                    context,
+                                                  ))
+                                              .ceil()
+                                        : null,
                                     fit: BoxFit.contain,
-                                    errorBuilder: (_, _, _) => Icon(
-                                      item.$3,
-                                      color: scheme.primary,
-                                    ),
+                                    errorBuilder: (_, _, _) =>
+                                        Icon(item.$3, color: scheme.primary),
                                   ),
                                   FittedBox(
                                     fit: BoxFit.scaleDown,
@@ -217,7 +225,7 @@ class AppBottomNavigationBar extends StatelessWidget {
                   shape: const LiquidRoundedSuperellipse(borderRadius: 32),
                   settings: GlassDesignTokens.darkNavBarSettings(context),
                   padding: const EdgeInsets.all(4),
-                  child: navContent,
+                  child: RepaintBoundary(child: navContent),
                 )
               : DecoratedBox(
                   decoration: Glass.panel(

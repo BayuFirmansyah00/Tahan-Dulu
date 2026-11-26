@@ -24,16 +24,22 @@ import 'onboarding_providers.dart';
 /// - income: dari `user.monthlyIncome` (backend, lewat AuthController),
 ///   fallback ke onboarding in-memory jika kosong.
 final dashboardDataProvider = FutureProvider<DashboardData>((ref) async {
-  final user = await ref.watch(dashboardRepositoryProvider).getUser();
+  // Mulai seluruh pembacaan independen secara bersamaan. Provider bersama
+  // mencegah layar lain memicu request identik saat dashboard sedang dimuat.
+  final userFuture = ref.watch(userProvider.future);
+  final goalsFuture = ref.watch(goalsProvider.future);
+  final considerationsFuture = ref.watch(considerationsProvider.future);
+  final notificationsFuture = ref.watch(notificationsProvider.future);
+  final transactionsFuture = ref.watch(transactionsProvider.future);
+  final accountsFuture = ref.watch(accountsProvider.future);
+
+  final user = await userFuture;
   final onboarding =
       ref.watch(onboardingRepositoryProvider).getOnboardingData();
-  final repoGoals = await ref.watch(goalRepositoryProvider).getGoals();
-  final considerations =
-      await ref.watch(purchaseDecisionRepositoryProvider).getConsiderations();
-  final notifications =
-      await ref.watch(notificationRepositoryProvider).getNotifications();
-  // Reaktif terhadap transaksi baru tanpa restart aplikasi.
-  final transactions = await ref.watch(transactionsProvider.future);
+  final repoGoals = await goalsFuture;
+  final considerations = await considerationsFuture;
+  final notifications = await notificationsFuture;
+  final transactions = await transactionsFuture;
 
   final now = DateTime.now();
 
@@ -47,7 +53,7 @@ final dashboardDataProvider = FutureProvider<DashboardData>((ref) async {
 
   // Satu jalur baca akun (lihat AccountRepository): juga menjadi sinyal
   // refresh saat akun berubah, selain perubahan transaksi.
-  final accounts = await ref.watch(accountsProvider.future);
+  final accounts = await accountsFuture;
   final expenses = onboarding?.recurringExpenses ?? const [];
   final goal = onboarding?.financialGoal;
 

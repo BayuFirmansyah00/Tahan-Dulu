@@ -36,26 +36,6 @@ class DashboardScreen extends ConsumerStatefulWidget {
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   bool _obscured = false;
 
-  @override
-  void initState() {
-    super.initState();
-    // Hangatkan cache ilustrasi agar hero/banner/piggy tampil utuh
-    // tanpa pop-in (dan deterministik pada golden test).
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      for (final asset in [
-        AppAssets.safeBudgetHero,
-        AppAssets.tahanDuluBanner,
-        AppAssets.goalsPiggy,
-      ]) {
-        precacheImage(AssetImage(asset), context).then(
-          (_) {},
-          onError: (_) {},
-        );
-      }
-    });
-  }
-
   void _onNav(int index, BuildContext context) {
     switch (index) {
       case 0:

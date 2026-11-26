@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'app_card.dart';
@@ -39,6 +40,12 @@ class AppMethodTile extends StatelessWidget {
                 assetPath,
                 width: 44,
                 height: 44,
+                cacheWidth: kReleaseMode
+                    ? (44 * MediaQuery.devicePixelRatioOf(context)).ceil()
+                    : null,
+                cacheHeight: kReleaseMode
+                    ? (44 * MediaQuery.devicePixelRatioOf(context)).ceil()
+                    : null,
                 excludeFromSemantics: true,
                 errorBuilder: (_, _, _) =>
                     const Icon(Icons.edit_note, size: 44),

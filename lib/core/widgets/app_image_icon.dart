@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../constants/app_assets.dart';
@@ -77,6 +78,7 @@ class AppImageIcon extends StatelessWidget {
       return _buildFallback();
     }
 
+    final devicePixelRatio = MediaQuery.devicePixelRatioOf(context);
     Widget imageWidget = Image.asset(
       assetPath,
       width: _effectiveWidth,
@@ -85,6 +87,12 @@ class AppImageIcon extends StatelessWidget {
       color: color,
       colorBlendMode: color != null ? blendMode : null,
       filterQuality: FilterQuality.medium,
+      cacheWidth: kReleaseMode
+          ? (_effectiveWidth * devicePixelRatio).ceil()
+          : null,
+      cacheHeight: kReleaseMode
+          ? (_effectiveHeight * devicePixelRatio).ceil()
+          : null,
       errorBuilder: (context, error, stackTrace) {
         debugPrint('AppImageIcon: Gagal memuat aset "$assetPath": $error');
         return _buildFallback();
@@ -93,10 +101,7 @@ class AppImageIcon extends StatelessWidget {
 
     final clampedOpacity = opacity.clamp(0.0, 1.0);
     if (clampedOpacity < 1.0) {
-      imageWidget = Opacity(
-        opacity: clampedOpacity,
-        child: imageWidget,
-      );
+      imageWidget = Opacity(opacity: clampedOpacity, child: imageWidget);
     }
 
     if (excludeSemantics) {
@@ -104,21 +109,14 @@ class AppImageIcon extends StatelessWidget {
     }
 
     if (semanticLabel != null && semanticLabel!.isNotEmpty) {
-      return Semantics(
-        label: semanticLabel,
-        image: true,
-        child: imageWidget,
-      );
+      return Semantics(label: semanticLabel, image: true, child: imageWidget);
     }
 
     return imageWidget;
   }
 
   Widget _buildFallback() {
-    return AppIconFallback(
-      icon: fallbackIcon,
-      size: _effectiveWidth,
-    );
+    return AppIconFallback(icon: fallbackIcon, size: _effectiveWidth);
   }
 }
 
@@ -162,4 +160,3 @@ class AppBackButton extends StatelessWidget {
     );
   }
 }
-

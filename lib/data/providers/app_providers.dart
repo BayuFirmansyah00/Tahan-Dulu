@@ -295,7 +295,7 @@ final accountsProvider = FutureProvider<List<FinancialAccount>>((ref) {
 });
 
 final recentTransactionsProvider = FutureProvider<List<AppTransaction>>((ref) {
-  return ref.watch(transactionRepositoryProvider).getRecentTransactions();
+  return ref.watch(transactionsProvider.future);
 });
 
 /// Daftar transaksi terurut terbaru. Satu-satunya sumber daftar untuk

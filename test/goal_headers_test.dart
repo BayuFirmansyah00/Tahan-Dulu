@@ -393,7 +393,7 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('Rumah menampilkan icon_goal_house.png', (tester) async {
+    testWidgets('Rumah menampilkan icon_goal_house.webp', (tester) async {
       await _pump(tester, const GoalCreateScreen());
       await _tapVisible(tester, find.text(AppStrings.goalCatHouse));
       expect(
@@ -406,7 +406,7 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('Liburan menampilkan icon_goal_travel.png', (tester) async {
+    testWidgets('Liburan menampilkan icon_goal_travel.webp', (tester) async {
       await _pump(tester, const GoalCreateScreen());
       await _tapVisible(tester, find.text(AppStrings.goalCatHoliday));
       expect(
@@ -419,7 +419,7 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('Investasi menampilkan icon_goal_investment.png', (
+    testWidgets('Investasi menampilkan icon_goal_investment.webp', (
       tester,
     ) async {
       await _pump(tester, const GoalCreateScreen());
