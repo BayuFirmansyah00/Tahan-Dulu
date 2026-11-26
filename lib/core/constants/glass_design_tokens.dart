@@ -75,6 +75,23 @@ abstract final class GlassDesignTokens {
     );
   }
 
+  /// Pengaturan platter kaca resmi untuk input teks, sandi, pencarian, & picker di Dark Mode.
+  static LiquidGlassSettings darkInputSettings(BuildContext context) {
+    return const LiquidGlassSettings(
+      glassColor: Color(0x20182634),
+      thickness: 14.0,
+      blur: 2.0,
+      frost: 0.0,
+      refractiveIndex: 1.12,
+      chromaticAberration: 0.006,
+      fresnelStrength: 0.72,
+      lightIntensity: 0.45,
+      bodyMode: GlassBodyMode.clear,
+      lensModel: GlassLensModel.spherical,
+      specularSharpness: GlassSpecularSharpness.soft,
+    );
+  }
+
   // --- Legacy & Surface Opacity Tokens (dipertahankan untuk kompatibilitas) ---
   static const double clearPlatterOpacity = 0.02;
   static const double clearPlatterDarkOpacity = 0.08;

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
+    hide GlassQuality;
 
+import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/theme/glass.dart';
 
 import '../../../../core/constants/app_assets.dart';
@@ -172,28 +175,46 @@ class _GoalEditScreenState extends ConsumerState<GoalEditScreen> {
   }
 
   Future<void> _confirmDelete(FinancialGoal goal) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Hapus target ini?'),
-        content: Text(
-          '“${goal.name}” akan dihapus. Riwayat transaksi pengeluaran aktual dan saldo akun kamu tetap utuh.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text(AppStrings.cancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(
-              foregroundColor: Theme.of(context).colorScheme.error,
+    final message =
+        '“${goal.name}” akan dihapus. Riwayat transaksi pengeluaran aktual dan saldo akun kamu tetap utuh.';
+    final confirmed = GlassDesignTokens.isDarkGlass(context)
+        ? await GlassDialog.show<bool>(
+            context: context,
+            title: 'Hapus target ini?',
+            message: message,
+            settings: GlassDesignTokens.darkOverlaySettings(context),
+            actions: [
+              GlassDialogAction(
+                label: AppStrings.cancel,
+                onPressed: () => Navigator.of(context).pop(false),
+              ),
+              GlassDialogAction(
+                label: 'Hapus',
+                isDestructive: true,
+                onPressed: () => Navigator.of(context).pop(true),
+              ),
+            ],
+          )
+        : await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('Hapus target ini?'),
+              content: Text(message),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text(AppStrings.cancel),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  style: TextButton.styleFrom(
+                    foregroundColor: Theme.of(context).colorScheme.error,
+                  ),
+                  child: const Text('Hapus'),
+                ),
+              ],
             ),
-            child: const Text('Hapus'),
-          ),
-        ],
-      ),
-    );
+          );
     if (confirmed != true || !mounted) return;
     setState(() => _saving = true);
     try {
@@ -233,17 +254,21 @@ class _GoalEditScreenState extends ConsumerState<GoalEditScreen> {
   Widget build(BuildContext context) {
     final goals = ref.watch(goalsListProvider);
     final textTheme = Theme.of(context).textTheme;
+    final useDarkGlass = GlassDesignTokens.isDarkGlass(context);
 
     return Scaffold(
-      appBar: AppBar(
-        leading: const AppBackButton(),
-        title: const Text(AppStrings.editGoalAction),
+      extendBody: useDarkGlass,
+      extendBodyBehindAppBar: useDarkGlass,
+      appBar: const AppAdaptiveAppBar(
+        leading: AppBackButton(),
+        title: Text(AppStrings.editGoalAction),
       ),
       bottomNavigationBar: DashboardBottomNav(
         currentIndex: 3,
         onTap: (i) => goalsBottomNavTap(context, i),
       ),
       body: GlassBackdrop(child: SafeArea(
+        bottom: !useDarkGlass,
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),

@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
+    hide GlassQuality;
 
 import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/theme/glass.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/rupiah_input_formatter.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_states.dart';
 import '../../../../core/widgets/app_text_field.dart';
@@ -54,123 +57,155 @@ class _InvestmentDetailSheetState extends ConsumerState<InvestmentDetailSheet> {
     bool saving = false;
     String? errorMessage;
 
+    final isDarkGlass = GlassDesignTokens.isDarkGlass(context);
+
     await showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setDialogState) {
+          final formContent = SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isDeposit
+                      ? 'Tambah modal ke ${widget.item.name}'
+                      : 'Cairkan dana dari ${widget.item.name}',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                const SizedBox(height: 12),
+                AppTextField(
+                  label: 'Nominal (Rp)',
+                  hint: '0',
+                  controller: amountController,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [RupiahInputFormatter()],
+                ),
+                const SizedBox(height: 12),
+                if (accounts.isNotEmpty) ...[
+                  Text(
+                    isDeposit ? 'Sumber Dana (Rekening)' : 'Rekening Tujuan',
+                    style: Theme.of(context).textTheme.labelMedium,
+                  ),
+                  const SizedBox(height: 4),
+                  AppAdaptiveDropdown<String>(
+                    value: selectedAccountId,
+                    isExpanded: true,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    ),
+                    items: accounts.map((acc) {
+                      return DropdownMenuItem<String>(
+                        value: acc.id,
+                        child: Text('${acc.name} (${CurrencyFormatter.formatCompact(acc.balance)})'),
+                      );
+                    }).toList(),
+                    onChanged: (val) {
+                      setDialogState(() => selectedAccountId = val);
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                ],
+                AppTextField(
+                  label: 'Catatan (Opsional)',
+                  hint: isDeposit ? 'Misal: Top up bulanan' : 'Misal: Kebutuhan darurat',
+                  controller: notesController,
+                ),
+                if (errorMessage != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    errorMessage!,
+                    style: const TextStyle(color: Colors.red, fontSize: 12),
+                  ),
+                ],
+              ],
+            ),
+          );
+
+          Future<void> submitDialog() async {
+            if (saving) return;
+            final amount = RupiahInputFormatter.parse(amountController.text).round();
+            if (amount <= 0) {
+              setDialogState(() => errorMessage = 'Nominal harus lebih dari 0');
+              return;
+            }
+            if (selectedAccountId == null) {
+              setDialogState(() => errorMessage = 'Pilih rekening terlebih dahulu');
+              return;
+            }
+            if (!isDeposit && amount > widget.item.balance) {
+              setDialogState(() => errorMessage = 'Nominal pencairan melebihi portofolio');
+              return;
+            }
+
+            setDialogState(() {
+              saving = true;
+              errorMessage = null;
+            });
+
+            final success = await ref
+                .read(investmentControllerProvider)
+                .addInvestmentTransaction(
+                  investmentId: widget.item.id,
+                  type: isDeposit ? 'deposit' : 'withdraw',
+                  amount: amount,
+                  instrumentId: selectedAccountId!,
+                  notes: notesController.text.trim().isEmpty
+                      ? null
+                      : notesController.text.trim(),
+                );
+
+            if (ctx.mounted) {
+              if (success) {
+                Navigator.pop(ctx);
+              } else {
+                setDialogState(() {
+                  saving = false;
+                  errorMessage = 'Gagal menyimpan transaksi investasi';
+                });
+              }
+            }
+          }
+
+          if (isDarkGlass) {
+            return GlassDialog(
+              title: isDeposit ? 'Top Up Investasi' : 'Pencairan Investasi',
+              settings: GlassDesignTokens.darkOverlaySettings(context),
+              content: InheritedGlassSurfaceStyle(
+                surfaceStyle: GlassSurfaceStyle.solid,
+                child: Material(
+                  type: MaterialType.transparency,
+                  child: formContent,
+                ),
+              ),
+              actions: [
+                GlassDialogAction(
+                  label: 'Batal',
+                  onPressed: saving ? () {} : () => Navigator.pop(ctx),
+                ),
+                GlassDialogAction(
+                  label: saving
+                      ? 'Menyimpan...'
+                      : (isDeposit ? 'Setor' : 'Cairkan'),
+                  isPrimary: true,
+                  onPressed: submitDialog,
+                ),
+              ],
+            );
+          }
+
           return AlertDialog(
             title: Text(isDeposit ? 'Top Up Investasi' : 'Pencairan Investasi'),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    isDeposit
-                        ? 'Tambah modal ke ${widget.item.name}'
-                        : 'Cairkan dana dari ${widget.item.name}',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                  const SizedBox(height: 12),
-                  AppTextField(
-                    label: 'Nominal (Rp)',
-                    hint: '0',
-                    controller: amountController,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [RupiahInputFormatter()],
-                  ),
-                  const SizedBox(height: 12),
-                  if (accounts.isNotEmpty) ...[
-                    Text(
-                      isDeposit ? 'Sumber Dana (Rekening)' : 'Rekening Tujuan',
-                      style: Theme.of(context).textTheme.labelMedium,
-                    ),
-                    const SizedBox(height: 4),
-                    DropdownButtonFormField<String>(
-                      initialValue: selectedAccountId,
-                      isExpanded: true,
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      ),
-                      items: accounts.map((acc) {
-                        return DropdownMenuItem<String>(
-                          value: acc.id,
-                          child: Text('${acc.name} (${CurrencyFormatter.formatCompact(acc.balance)})'),
-                        );
-                      }).toList(),
-                      onChanged: (val) {
-                        setDialogState(() => selectedAccountId = val);
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                  ],
-                  AppTextField(
-                    label: 'Catatan (Opsional)',
-                    hint: isDeposit ? 'Misal: Top up bulanan' : 'Misal: Kebutuhan darurat',
-                    controller: notesController,
-                  ),
-                  if (errorMessage != null) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      errorMessage!,
-                      style: const TextStyle(color: Colors.red, fontSize: 12),
-                    ),
-                  ],
-                ],
-              ),
-            ),
+            content: formContent,
             actions: [
               TextButton(
                 onPressed: saving ? null : () => Navigator.pop(ctx),
                 child: const Text('Batal'),
               ),
               ElevatedButton(
-                onPressed: saving
-                    ? null
-                    : () async {
-                        final amount = RupiahInputFormatter.parse(amountController.text).round();
-                        if (amount <= 0) {
-                          setDialogState(() => errorMessage = 'Nominal harus lebih dari 0');
-                          return;
-                        }
-                        if (selectedAccountId == null) {
-                          setDialogState(() => errorMessage = 'Pilih rekening terlebih dahulu');
-                          return;
-                        }
-                        if (!isDeposit && amount > widget.item.balance) {
-                          setDialogState(() => errorMessage = 'Nominal pencairan melebihi portofolio');
-                          return;
-                        }
-
-                        setDialogState(() {
-                          saving = true;
-                          errorMessage = null;
-                        });
-
-                        final success = await ref
-                            .read(investmentControllerProvider)
-                            .addInvestmentTransaction(
-                              investmentId: widget.item.id,
-                              type: isDeposit ? 'deposit' : 'withdraw',
-                              amount: amount,
-                              instrumentId: selectedAccountId!,
-                              notes: notesController.text.trim().isEmpty
-                                  ? null
-                                  : notesController.text.trim(),
-                            );
-
-                        if (ctx.mounted) {
-                          if (success) {
-                            Navigator.pop(ctx);
-                          } else {
-                            setDialogState(() {
-                              saving = false;
-                              errorMessage = 'Gagal menyimpan transaksi investasi';
-                            });
-                          }
-                        }
-                      },
+                onPressed: saving ? null : submitDialog,
                 child: saving
                     ? const SizedBox(
                         width: 16,
@@ -286,16 +321,11 @@ class _InvestmentDetailSheetState extends ConsumerState<InvestmentDetailSheet> {
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: OutlinedButton.icon(
+                    child: AppAdaptiveOutlinedButton(
+                      borderRadius: 12,
                       onPressed: () => _showTransactionDialog(isDeposit: false),
                       icon: const Icon(Icons.remove_circle_outline, size: 18),
-                      label: const Text('Cairkan'),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
+                      label: 'Cairkan',
                     ),
                   ),
                 ],
@@ -353,23 +383,42 @@ class _InvestmentDetailSheetState extends ConsumerState<InvestmentDetailSheet> {
                               IconButton(
                                 icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
                                 onPressed: () async {
-                                  final confirm = await showDialog<bool>(
-                                    context: ctx,
-                                    builder: (dCtx) => AlertDialog(
-                                      title: const Text('Hapus Transaksi?'),
-                                      content: const Text('Tindakan ini akan membatalkan mutasi saldo rekening dan portofolio.'),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () => Navigator.pop(dCtx, false),
-                                          child: const Text('Batal'),
-                                        ),
-                                        TextButton(
-                                          onPressed: () => Navigator.pop(dCtx, true),
-                                          child: const Text('Hapus', style: TextStyle(color: Colors.red)),
-                                        ),
-                                      ],
-                                    ),
-                                  );
+                                  final confirm = GlassDesignTokens.isDarkGlass(ctx)
+                                      ? await GlassDialog.show<bool>(
+                                          context: ctx,
+                                          title: 'Hapus Transaksi?',
+                                          message:
+                                              'Tindakan ini akan membatalkan mutasi saldo rekening dan portofolio.',
+                                          settings: GlassDesignTokens.darkOverlaySettings(ctx),
+                                          actions: [
+                                            GlassDialogAction(
+                                              label: 'Batal',
+                                              onPressed: () => Navigator.pop(ctx, false),
+                                            ),
+                                            GlassDialogAction(
+                                              label: 'Hapus',
+                                              isDestructive: true,
+                                              onPressed: () => Navigator.pop(ctx, true),
+                                            ),
+                                          ],
+                                        )
+                                      : await showDialog<bool>(
+                                          context: ctx,
+                                          builder: (dCtx) => AlertDialog(
+                                            title: const Text('Hapus Transaksi?'),
+                                            content: const Text('Tindakan ini akan membatalkan mutasi saldo rekening dan portofolio.'),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () => Navigator.pop(dCtx, false),
+                                                child: const Text('Batal'),
+                                              ),
+                                              TextButton(
+                                                onPressed: () => Navigator.pop(dCtx, true),
+                                                child: const Text('Hapus', style: TextStyle(color: Colors.red)),
+                                              ),
+                                            ],
+                                          ),
+                                        );
                                   if (confirm == true) {
                                     await ref
                                         .read(investmentControllerProvider)
@@ -408,23 +457,41 @@ class _InvestmentDetailSheetState extends ConsumerState<InvestmentDetailSheet> {
                     );
                     return;
                   }
-                  final confirm = await showDialog<bool>(
-                    context: context,
-                    builder: (dCtx) => AlertDialog(
-                      title: const Text('Hapus Portofolio Investasi?'),
-                      content: Text('Apakah Anda yakin ingin menghapus "${widget.item.name}"?'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(dCtx, false),
-                          child: const Text('Batal'),
-                        ),
-                        TextButton(
-                          onPressed: () => Navigator.pop(dCtx, true),
-                          child: const Text('Hapus', style: TextStyle(color: Colors.red)),
-                        ),
-                      ],
-                    ),
-                  );
+                  final confirm = GlassDesignTokens.isDarkGlass(context)
+                      ? await GlassDialog.show<bool>(
+                          context: context,
+                          title: 'Hapus Portofolio Investasi?',
+                          message: 'Apakah Anda yakin ingin menghapus "${widget.item.name}"?',
+                          settings: GlassDesignTokens.darkOverlaySettings(context),
+                          actions: [
+                            GlassDialogAction(
+                              label: 'Batal',
+                              onPressed: () => Navigator.pop(context, false),
+                            ),
+                            GlassDialogAction(
+                              label: 'Hapus',
+                              isDestructive: true,
+                              onPressed: () => Navigator.pop(context, true),
+                            ),
+                          ],
+                        )
+                      : await showDialog<bool>(
+                          context: context,
+                          builder: (dCtx) => AlertDialog(
+                            title: const Text('Hapus Portofolio Investasi?'),
+                            content: Text('Apakah Anda yakin ingin menghapus "${widget.item.name}"?'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(dCtx, false),
+                                child: const Text('Batal'),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.pop(dCtx, true),
+                                child: const Text('Hapus', style: TextStyle(color: Colors.red)),
+                              ),
+                            ],
+                          ),
+                        );
                   if (confirm == true) {
                     await ref
                         .read(investmentControllerProvider)

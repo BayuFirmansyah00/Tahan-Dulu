@@ -6,6 +6,7 @@ import '../../../../core/theme/glass.dart';
 
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_button.dart';
@@ -43,11 +44,17 @@ class _RecurringIncomesScreenState extends ConsumerState<RecurringIncomesScreen>
   @override
   Widget build(BuildContext context) {
     final items = ref.watch(recurringIncomesProvider);
+    final useDarkGlass = GlassDesignTokens.isDarkGlass(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text(AppStrings.recurringIncomesTitle)),
+      extendBody: useDarkGlass,
+      extendBodyBehindAppBar: useDarkGlass,
+      appBar: const AppAdaptiveAppBar(
+        title: Text(AppStrings.recurringIncomesTitle),
+      ),
       bottomNavigationBar: DashboardBottomNav(onTap: _onNav),
       body: GlassBackdrop(child: SafeArea(
+        bottom: !useDarkGlass,
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
@@ -73,8 +80,9 @@ class _List extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final useDarkGlass = GlassDesignTokens.isDarkGlass(context);
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+      padding: EdgeInsets.fromLTRB(20, 12, 20, useDarkGlass ? 100 : 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -92,10 +100,12 @@ class _List extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Flexible(
-                child: OutlinedButton.icon(
+                child: AppAdaptiveOutlinedButton(
+                  height: 38,
+                  borderRadius: 19,
                   onPressed: () => context.push(AppRoutes.recurringIncomeAdd),
                   icon: const Icon(Icons.add, size: 18),
-                  label: const Text(AppStrings.addRecurringIncome),
+                  label: AppStrings.addRecurringIncome,
                 ),
               ),
             ],

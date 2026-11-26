@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
+    hide GlassQuality;
 
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/theme/glass.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_icons.dart';
+import '../../../../core/widgets/app_text_field.dart';
 import '../../../../data/datasources/remote/api_client.dart';
 import '../../../../data/models/transaction_model.dart';
 import '../../../../data/providers/account_providers.dart';
@@ -224,38 +228,64 @@ class TransactionDetailSheet extends ConsumerWidget {
                       onTap: () async {
                         final token = await ref.read(tokenStoreProvider).readToken();
                         if (!context.mounted) return;
-                        showDialog(
-                          context: context,
-                          builder: (dCtx) => Dialog(
+                        final receiptImage = Image.network(
+                          url,
+                          headers: token != null ? {'Authorization': 'Bearer $token'} : null,
+                          fit: BoxFit.contain,
+                          errorBuilder: (_, _, _) => const Padding(
+                            padding: EdgeInsets.all(32),
                             child: Column(
-                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                AppBar(
-                                  title: const Text('Pratinjau Struk'),
-                                  leading: IconButton(
-                                    icon: const Icon(Icons.close),
-                                    onPressed: () => Navigator.pop(dCtx),
-                                  ),
-                                ),
-                                Image.network(
-                                  url,
-                                  headers: token != null ? {'Authorization': 'Bearer $token'} : null,
-                                  fit: BoxFit.contain,
-                                  errorBuilder: (_, _, _) => const Padding(
-                                    padding: EdgeInsets.all(32),
-                                    child: Column(
-                                      children: [
-                                        Icon(Icons.broken_image, size: 48, color: Colors.grey),
-                                        SizedBox(height: 8),
-                                        Text('Gagal memuat pratinjau gambar struk.'),
-                                      ],
-                                    ),
-                                  ),
-                                ),
+                                Icon(Icons.broken_image, size: 48, color: Colors.grey),
+                                SizedBox(height: 8),
+                                Text('Gagal memuat pratinjau gambar struk.'),
                               ],
                             ),
                           ),
                         );
+                        if (GlassDesignTokens.isDarkGlass(context)) {
+                          await GlassDialog.show<void>(
+                            context: context,
+                            title: 'Pratinjau Struk',
+                            settings: GlassDesignTokens.darkOverlaySettings(context),
+                            content: InheritedGlassSurfaceStyle(
+                              surfaceStyle: GlassSurfaceStyle.solid,
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(maxHeight: 380),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(14),
+                                  child: receiptImage,
+                                ),
+                              ),
+                            ),
+                            actions: [
+                              GlassDialogAction(
+                                label: 'Tutup',
+                                isPrimary: true,
+                                onPressed: () => Navigator.pop(context),
+                              ),
+                            ],
+                          );
+                        } else {
+                          await showDialog(
+                            context: context,
+                            builder: (dCtx) => Dialog(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  AppBar(
+                                    title: const Text('Pratinjau Struk'),
+                                    leading: IconButton(
+                                      icon: const Icon(Icons.close),
+                                      onPressed: () => Navigator.pop(dCtx),
+                                    ),
+                                  ),
+                                  receiptImage,
+                                ],
+                              ),
+                            ),
+                          );
+                        }
                       },
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -329,75 +359,91 @@ class TransactionDetailSheet extends ConsumerWidget {
                 Row(
                   children: [
                     Expanded(
-                      child: OutlinedButton.icon(
+                      child: AppAdaptiveOutlinedButton(
                         icon: const Icon(Icons.edit_outlined, size: 20),
-                        label: const Text('Edit Transaksi'),
-                        onPressed: () async {
+                        label: 'Edit Transaksi',
+                        onPressed: () {
+                          final hostContext = Navigator.of(context, rootNavigator: true).context;
                           Navigator.of(context).pop();
-                          _showEditDialog(context, ref);
+                          _showEditDialog(hostContext, ref);
                         },
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Theme.of(context).colorScheme.error,
-                          foregroundColor: Theme.of(context).colorScheme.onError,
-                        ),
+                      child: AppAdaptiveElevatedButton(
+                        backgroundColor: Theme.of(context).colorScheme.error,
+                        foregroundColor: Theme.of(context).colorScheme.onError,
                         icon: const Icon(Icons.delete_outline, size: 20),
-                        label: const Text('Hapus'),
+                        label: 'Hapus',
                         onPressed: () async {
+                          final navigator = Navigator.of(context, rootNavigator: true);
+                          final messenger = ScaffoldMessenger.of(context);
+                          final errorColor = Theme.of(context).colorScheme.error;
+                          final isDark = GlassDesignTokens.isDarkGlass(context);
                           Navigator.of(context).pop();
-                          final confirm = await showDialog<bool>(
-                            context: context,
-                            builder: (dlgContext) => AlertDialog(
-                              title: const Text('Hapus Transaksi?'),
-                              content: Text(
-                                'Transaksi "${item.title}" sebesar ${CurrencyFormatter.format(item.amount)} akan dihapus. Saldo akun terkait akan disesuaikan kembali.',
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.of(dlgContext).pop(false),
-                                  child: const Text(AppStrings.cancel),
-                                ),
-                                ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Theme.of(dlgContext).colorScheme.error,
-                                    foregroundColor: Theme.of(dlgContext).colorScheme.onError,
+                          final hostContext = navigator.context;
+                          final message =
+                              'Transaksi "${item.title}" sebesar ${CurrencyFormatter.format(item.amount)} akan dihapus. Saldo akun terkait akan disesuaikan kembali.';
+                          final confirm = isDark
+                              ? await GlassDialog.show<bool>(
+                                  context: hostContext,
+                                  title: 'Hapus Transaksi?',
+                                  message: message,
+                                  settings: GlassDesignTokens.darkOverlaySettings(hostContext),
+                                  actions: [
+                                    GlassDialogAction(
+                                      label: AppStrings.cancel,
+                                      onPressed: () => Navigator.of(hostContext).pop(false),
+                                    ),
+                                    GlassDialogAction(
+                                      label: 'Hapus',
+                                      isDestructive: true,
+                                      onPressed: () => Navigator.of(hostContext).pop(true),
+                                    ),
+                                  ],
+                                )
+                              : await showDialog<bool>(
+                                  context: hostContext,
+                                  builder: (dlgContext) => AlertDialog(
+                                    title: const Text('Hapus Transaksi?'),
+                                    content: Text(message),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.of(dlgContext).pop(false),
+                                        child: const Text(AppStrings.cancel),
+                                      ),
+                                      ElevatedButton(
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Theme.of(dlgContext).colorScheme.error,
+                                          foregroundColor: Theme.of(dlgContext).colorScheme.onError,
+                                        ),
+                                        onPressed: () => Navigator.of(dlgContext).pop(true),
+                                        child: const Text('Hapus'),
+                                      ),
+                                    ],
                                   ),
-                                  onPressed: () => Navigator.of(dlgContext).pop(true),
-                                  child: const Text('Hapus'),
-                                ),
-                              ],
-                            ),
-                          );
-                          if (confirm == true && context.mounted) {
+                                );
+                          if (confirm == true) {
                             try {
                               await ref
                                   .read(transactionRepositoryProvider)
                                   .deleteTransaction(item.id);
                               _refreshProviders(ref);
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Transaksi berhasil dihapus.')),
-                                );
-                              }
+                              messenger.showSnackBar(
+                                const SnackBar(content: Text('Transaksi berhasil dihapus.')),
+                              );
                             } on ApiException catch (e) {
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(e.message),
-                                    backgroundColor: Theme.of(context).colorScheme.error,
-                                  ),
-                                );
-                              }
+                              messenger.showSnackBar(
+                                SnackBar(
+                                  content: Text(e.message),
+                                  backgroundColor: errorColor,
+                                ),
+                              );
                             } catch (_) {
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Gagal menghapus transaksi.')),
-                                );
-                              }
+                              messenger.showSnackBar(
+                                const SnackBar(content: Text('Gagal menghapus transaksi.')),
+                              );
                             }
                           }
                         },
@@ -432,42 +478,80 @@ class TransactionDetailSheet extends ConsumerWidget {
     final titleController = TextEditingController(text: item.title);
     final noteController = TextEditingController(text: item.note ?? '');
 
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (dlgContext) => AlertDialog(
-        title: const Text('Ubah Transaksi'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: titleController,
-                decoration: const InputDecoration(
-                  labelText: 'Judul Transaksi',
+    final result = GlassDesignTokens.isDarkGlass(context)
+        ? await GlassDialog.show<bool>(
+            context: context,
+            title: 'Ubah Transaksi',
+            settings: GlassDesignTokens.darkOverlaySettings(context),
+            content: InheritedGlassSurfaceStyle(
+              surfaceStyle: GlassSurfaceStyle.solid,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    AppTextField(
+                      controller: titleController,
+                      label: 'Judul Transaksi',
+                      hint: 'Judul Transaksi',
+                    ),
+                    const SizedBox(height: 12),
+                    AppTextField(
+                      controller: noteController,
+                      label: 'Catatan',
+                      hint: 'Catatan',
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: noteController,
-                decoration: const InputDecoration(
-                  labelText: 'Catatan',
-                ),
+            ),
+            actions: [
+              GlassDialogAction(
+                label: AppStrings.cancel,
+                onPressed: () => Navigator.of(context).pop(false),
+              ),
+              GlassDialogAction(
+                label: 'Simpan',
+                isPrimary: true,
+                onPressed: () => Navigator.of(context).pop(true),
               ),
             ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dlgContext).pop(false),
-            child: const Text(AppStrings.cancel),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(dlgContext).pop(true),
-            child: const Text('Simpan'),
-          ),
-        ],
-      ),
-    );
+          )
+        : await showDialog<bool>(
+            context: context,
+            builder: (dlgContext) => AlertDialog(
+              title: const Text('Ubah Transaksi'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: titleController,
+                      decoration: const InputDecoration(
+                        labelText: 'Judul Transaksi',
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: noteController,
+                      decoration: const InputDecoration(
+                        labelText: 'Catatan',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dlgContext).pop(false),
+                  child: const Text(AppStrings.cancel),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.of(dlgContext).pop(true),
+                  child: const Text('Simpan'),
+                ),
+              ],
+            ),
+          );
 
     if (result == true && context.mounted) {
       try {

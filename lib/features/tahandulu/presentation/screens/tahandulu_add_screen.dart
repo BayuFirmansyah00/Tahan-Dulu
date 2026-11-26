@@ -7,7 +7,9 @@ import '../../../../core/theme/glass.dart';
 
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/routing/app_routes.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_icons.dart';
 import '../../../../core/widgets/app_method_tile.dart';
 import '../../../dashboard/presentation/widgets/dashboard_bottom_nav.dart';
@@ -25,18 +27,18 @@ class TahanDuluAddScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final useDarkGlass = GlassDesignTokens.isDarkGlass(context);
     return Scaffold(
       backgroundColor: context.canvasColor,
-      appBar: AppBar(
-        backgroundColor: context.canvasColor,
-        elevation: 0,
-        scrolledUnderElevation: 0,
+      extendBodyBehindAppBar: useDarkGlass,
+      appBar: AppAdaptiveAppBar(
+        backgroundColor: useDarkGlass ? null : context.canvasColor,
         centerTitle: true,
         leading: const AppBackButton(),
         title: Text(
           'Tambah Barang',
           style: TextStyle(
-            color: context.palette.onSurface,
+            color: useDarkGlass ? Colors.white : context.palette.onSurface,
             fontSize: 17.5,
             fontWeight: FontWeight.w600,
           ),

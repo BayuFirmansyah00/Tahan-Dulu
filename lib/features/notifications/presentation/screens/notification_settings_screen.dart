@@ -6,6 +6,7 @@ import '../../../../core/theme/glass.dart';
 
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/widgets/app_adaptive_controls.dart';
@@ -85,14 +86,17 @@ class NotificationSettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final prefs = ref.watch(reminderPreferencesProvider);
 
+    final useDarkGlass = GlassDesignTokens.isDarkGlass(context);
+
     return Scaffold(
+      extendBody: useDarkGlass,
+      extendBodyBehindAppBar: useDarkGlass,
       backgroundColor: context.canvasColor,
-      appBar: AppBar(
+      appBar: AppAdaptiveAppBar(
         leading: const AppBackButton(),
         title: const Text(AppStrings.notifSettingsTitle),
-        flexibleSpace: const AppBarMintCorner(),
         actions: [
-          IconButton(
+          AppAdaptiveIconButton(
             icon: const AppImageIcon(
               assetPath: AppAssets.setNotif,
               size: 24,
@@ -107,6 +111,7 @@ class NotificationSettingsScreen extends ConsumerWidget {
         onTap: (i) => _onNav(i, context),
       ),
       body: GlassBackdrop(child: SafeArea(
+        bottom: !useDarkGlass,
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),

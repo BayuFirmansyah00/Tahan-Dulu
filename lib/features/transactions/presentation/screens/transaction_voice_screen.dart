@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
+    hide GlassQuality;
 
 import '../../../../core/theme/glass.dart';
 
@@ -263,16 +265,41 @@ class _TransactionVoiceScreenState
   }
 
   void _showPermissionDeniedDialog({bool isPermanentlyDenied = false}) {
+    final message = isPermanentlyDenied
+        ? 'Izin mikrofon telah ditolak secara permanen. Buka pengaturan aplikasi untuk mengizinkan mikrofon secara manual.'
+        : 'Untuk menggunakan fitur input suara, TahanDulu memerlukan akses ke mikrofon perangkat Anda.\n\n'
+            'Silakan izinkan akses mikrofon di pengaturan sistem Anda.';
+    if (GlassDesignTokens.isDarkGlass(context)) {
+      GlassDialog.show<void>(
+        context: context,
+        title: 'Izin Mikrofon Diperlukan',
+        message: message,
+        settings: GlassDesignTokens.darkOverlaySettings(context),
+        actions: [
+          GlassDialogAction(
+            label: 'Tutup',
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          GlassDialogAction(
+            label: 'Buka Pengaturan',
+            isPrimary: true,
+            onPressed: () async {
+              Navigator.of(context).pop();
+              final speechService =
+                  ref.read(speechRecognitionServiceProvider);
+              await speechService.openPermissionSettings();
+            },
+          ),
+        ],
+      );
+      return;
+    }
+
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Izin Mikrofon Diperlukan'),
-        content: Text(
-          isPermanentlyDenied
-              ? 'Izin mikrofon telah ditolak secara permanen. Buka pengaturan aplikasi untuk mengizinkan mikrofon secara manual.'
-              : 'Untuk menggunakan fitur input suara, TahanDulu memerlukan akses ke mikrofon perangkat Anda.\n\n'
-                  'Silakan izinkan akses mikrofon di pengaturan sistem Anda.',
-        ),
+        content: Text(message),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
@@ -332,14 +359,17 @@ class _TransactionVoiceScreenState
     ref.watch(accountsProvider);
     final textTheme = Theme.of(context).textTheme;
 
+    final useDarkGlass = GlassDesignTokens.isDarkGlass(context);
+
     return Scaffold(
       backgroundColor: context.canvasColor,
-      appBar: AppBar(
+      extendBodyBehindAppBar: useDarkGlass,
+      appBar: AppAdaptiveAppBar(
         title: const Text('Input Suara'),
         leading: AppBackButton(onPressed: () => context.pop()),
         actions: [
           if (_transcription.isNotEmpty || _parsedResult != null)
-            IconButton(
+            AppAdaptiveIconButton(
               icon: const AppImageIcon(
                 assetPath: AppAssets.actionRefresh,
                 size: 22,

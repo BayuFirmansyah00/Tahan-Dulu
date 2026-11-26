@@ -5,6 +5,7 @@ import '../../../../core/theme/glass.dart';
 
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_image_icon.dart';
@@ -21,9 +22,12 @@ class AppSettingsScreen extends ConsumerWidget {
     final prefs = ref.watch(appPreferencesProvider);
     final notifier = ref.read(appPreferencesProvider.notifier);
 
+    final useDarkGlass = GlassDesignTokens.isDarkGlass(context);
+
     return Scaffold(
+      extendBodyBehindAppBar: useDarkGlass,
       backgroundColor: context.canvasColor,
-      appBar: AppBar(
+      appBar: AppAdaptiveAppBar(
         leading: const AppBackButton(),
         title: const Text(AppStrings.appSettingsTitle),
       ),
@@ -42,10 +46,10 @@ class AppSettingsScreen extends ConsumerWidget {
                     title: AppStrings.appSettingsExperience,
                   ),
                   const SizedBox(height: 8),
-                  DropdownButtonFormField<AppThemeChoice>(
-                    initialValue: prefs.theme,
+                  AppAdaptiveDropdown<AppThemeChoice>(
+                    value: prefs.theme,
                     key: ValueKey(prefs.theme),
-                    decoration: const InputDecoration(labelText: 'Tema tampilan'),
+                    labelText: 'Tema tampilan',
                     items: const [
                       DropdownMenuItem(value: AppThemeChoice.system, child: Text('Ikuti sistem')),
                       DropdownMenuItem(value: AppThemeChoice.light, child: Text('Terang')),

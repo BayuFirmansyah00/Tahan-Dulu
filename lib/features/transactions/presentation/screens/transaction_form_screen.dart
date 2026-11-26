@@ -6,6 +6,7 @@ import '../../../../core/theme/glass.dart';
 
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
@@ -172,8 +173,11 @@ class _TransactionFormScreenState
     final showAccountError =
         _attempted && accounts.isNotEmpty && !draft.isAccountValid(ids);
 
+    final useDarkGlass = GlassDesignTokens.isDarkGlass(context);
+
     return Scaffold(
-      appBar: AppBar(
+      extendBodyBehindAppBar: useDarkGlass,
+      appBar: AppAdaptiveAppBar(
         leading: const AppBackButton(),
         title: const Text(AppStrings.addTransaction),
       ),
@@ -198,32 +202,43 @@ class _TransactionFormScreenState
                           style: textTheme.titleMedium,
                         ),
                         const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _TypeChip(
-                                label: AppStrings.typeExpense,
-                                type: TransactionType.expense,
-                                selected: draft.type ==
-                                    TransactionType.expense,
-                                onTap: () => notifier.setType(
-                                  TransactionType.expense,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: _TypeChip(
-                                label: AppStrings.typeIncome,
-                                type: TransactionType.income,
-                                selected: draft.type ==
-                                    TransactionType.income,
-                                onTap: () => notifier.setType(
-                                  TransactionType.income,
-                                ),
-                              ),
-                            ),
+                        AppAdaptiveSegmentedControl<TransactionType>(
+                          values: const [
+                            TransactionType.expense,
+                            TransactionType.income,
                           ],
+                          selected: draft.type,
+                          onSelected: notifier.setType,
+                          labelBuilder: (t) => t == TransactionType.expense
+                              ? AppStrings.typeExpense
+                              : AppStrings.typeIncome,
+                          lightBuilder: (_) => Row(
+                            children: [
+                              Expanded(
+                                child: _TypeChip(
+                                  label: AppStrings.typeExpense,
+                                  type: TransactionType.expense,
+                                  selected:
+                                      draft.type == TransactionType.expense,
+                                  onTap: () => notifier.setType(
+                                    TransactionType.expense,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: _TypeChip(
+                                  label: AppStrings.typeIncome,
+                                  type: TransactionType.income,
+                                  selected:
+                                      draft.type == TransactionType.income,
+                                  onTap: () => notifier.setType(
+                                    TransactionType.income,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                         const SizedBox(height: 16),
                         AppTextField(
@@ -274,13 +289,12 @@ class _TransactionFormScreenState
                         if (accounts.isEmpty)
                           _NoAccountBanner()
                         else
-                          DropdownButtonFormField<String>(
+                          AppAdaptiveDropdown<String>(
                             isExpanded: true,
-                            initialValue: ids.contains(draft.accountId)
+                            value: ids.contains(draft.accountId)
                                 ? draft.accountId
                                 : null,
-                            hint:
-                                const Text(AppStrings.accountHint),
+                            hint: AppStrings.accountHint,
                             items: [
                               for (final e in accounts)
                                 DropdownMenuItem(

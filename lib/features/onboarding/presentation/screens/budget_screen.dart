@@ -7,6 +7,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/theme/glass.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../providers/budget_controller.dart';
 
@@ -553,27 +554,16 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
                           const SizedBox(height: 14),
 
                           // Tombol Reset ke Rekomendasi
-                          OutlinedButton.icon(
+                          AppAdaptiveOutlinedButton(
                             onPressed: controller.resetToDefault,
                             icon: const Icon(Icons.refresh_rounded, size: 18),
-                            label: const Text(
-                              'Reset ke Rekomendasi (50/5/30/15)',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13,
-                              ),
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: const Color(0xFF16A34A),
-                              side: const BorderSide(
-                                color: Color(0xFF16A34A),
-                                width: 1.2,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              minimumSize: const Size.fromHeight(46),
-                            ),
+                            label: 'Reset ke Rekomendasi (50/5/30/15)',
+                            foregroundColor: const Color(0xFF16A34A),
+                            borderColor: const Color(0xFF16A34A),
+                            tintColor: const Color(0xFF16A34A)
+                                .withValues(alpha: 0.14),
+                            height: 46,
+                            borderRadius: 16,
                           ),
                         ],
                       ),

@@ -8,6 +8,7 @@ import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_icons.dart';
 import '../../../../core/widgets/app_states.dart';
@@ -237,9 +238,9 @@ class _TahanDuluWaitScreenState extends ConsumerState<TahanDuluWaitScreen> {
                         ],
                       ),
                       const SizedBox(height: 8),
-                      DropdownButtonFormField<String>(
-                        initialValue: _frequency,
-                        hint: const Text(AppStrings.waitFrequencyDaily),
+                      AppAdaptiveDropdown<String>(
+                        value: _frequency,
+                        hint: AppStrings.waitFrequencyDaily,
                         items: const [
                           DropdownMenuItem(
                             value: 'daily',

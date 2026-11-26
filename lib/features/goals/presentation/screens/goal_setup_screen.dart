@@ -6,11 +6,13 @@ import '../../../../core/theme/glass.dart';
 
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/utils/goal_math.dart';
 import '../../../../core/utils/rupiah_input_formatter.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_icons.dart';
 import '../../../../core/widgets/app_text_field.dart';
@@ -146,9 +148,10 @@ class _GoalSetupScreenState extends ConsumerState<GoalSetupScreen> {
         eta.isAfter(draft.targetDate!);
 
     return Scaffold(
-      appBar: AppBar(
-        leading: const AppBackButton(),
-        title: const Text(AppStrings.setupGoalTitle),
+      extendBodyBehindAppBar: GlassDesignTokens.isDarkGlass(context),
+      appBar: const AppAdaptiveAppBar(
+        leading: AppBackButton(),
+        title: Text(AppStrings.setupGoalTitle),
       ),
       bottomNavigationBar: DashboardBottomNav(
         currentIndex: 3,

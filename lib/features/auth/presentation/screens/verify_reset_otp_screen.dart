@@ -4,11 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
+    hide GlassQuality;
 
+import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/theme/glass.dart';
 
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../data/datasources/remote/api_client.dart';
 import '../models/password_reset_flow.dart';
@@ -194,10 +198,14 @@ class _VerifyResetOtpScreenState extends ConsumerState<VerifyResetOtpScreen> {
   Widget build(BuildContext context) {
     final expiresIn = _secondsRemaining(_expiresAt);
     final resendIn = _secondsRemaining(_resendAvailableAt);
+    final useDarkGlass = GlassDesignTokens.isDarkGlass(context);
     return AuthScaffold(
-      appBar: AppBar(
+      appBar: AppAdaptiveAppBar(
         title: const Text(AppStrings.verifyEmailTitle),
-        leading: BackButton(onPressed: () => context.pop()),
+        leading: AppAdaptiveIconButton(
+          icon: const Icon(Icons.arrow_back_outlined),
+          onPressed: () => context.pop(),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -235,29 +243,72 @@ class _VerifyResetOtpScreenState extends ConsumerState<VerifyResetOtpScreen> {
                 return Expanded(
                   child: Padding(
                     padding: EdgeInsets.only(right: index == 5 ? 0 : 8),
-                    child: TextField(
-                      autofocus: index == 0,
-                      controller: _controllers[index],
-                      focusNode: _focusNodes[index],
-                      keyboardType: TextInputType.number,
-                      textAlign: TextAlign.center,
-                      textInputAction: index == 5
-                          ? TextInputAction.done
-                          : TextInputAction.next,
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 1,
-                      ),
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      decoration: const InputDecoration(
-                        counterText: '',
-                        contentPadding: EdgeInsets.symmetric(vertical: 14),
-                      ),
-                      onChanged: (value) => _handleDigitChange(index, value),
-                      onSubmitted: (_) {
-                        if (index < 5) _focusNodes[index + 1].requestFocus();
-                      },
-                    ),
+                    child: useDarkGlass
+                        ? GlassTextField(
+                            autofocus: index == 0,
+                            controller: _controllers[index],
+                            focusNode: _focusNodes[index],
+                            keyboardType: TextInputType.number,
+                            textInputAction: index == 5
+                                ? TextInputAction.done
+                                : TextInputAction.next,
+                            height: 54,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 14,
+                            ),
+                            useOwnLayer: true,
+                            surfaceStyle: GlassSurfaceStyle.glass,
+                            settings: GlassDesignTokens.darkInputSettings(context),
+                            shape: const LiquidRoundedRectangle(
+                              borderRadius: 12,
+                            ),
+                            textStyle: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                            ),
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                            ],
+                            onChanged: (value) =>
+                                _handleDigitChange(index, value),
+                            onSubmitted: (_) {
+                              if (index < 5) {
+                                _focusNodes[index + 1].requestFocus();
+                              }
+                            },
+                          )
+                        : TextField(
+                            autofocus: index == 0,
+                            controller: _controllers[index],
+                            focusNode: _focusNodes[index],
+                            keyboardType: TextInputType.number,
+                            textAlign: TextAlign.center,
+                            textInputAction: index == 5
+                                ? TextInputAction.done
+                                : TextInputAction.next,
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 1,
+                                ),
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                            ],
+                            decoration: const InputDecoration(
+                              counterText: '',
+                              contentPadding:
+                                  EdgeInsets.symmetric(vertical: 14),
+                            ),
+                            onChanged: (value) =>
+                                _handleDigitChange(index, value),
+                            onSubmitted: (_) {
+                              if (index < 5) {
+                                _focusNodes[index + 1].requestFocus();
+                              }
+                            },
+                          ),
                   ),
                 );
               }),

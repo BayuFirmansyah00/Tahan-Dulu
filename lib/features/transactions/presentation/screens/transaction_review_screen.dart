@@ -5,9 +5,11 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/glass.dart';
 
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_icons.dart';
 import '../../../../data/datasources/remote/api_client.dart';
@@ -109,9 +111,10 @@ class _TransactionReviewScreenState
     final sign = isIncome ? '+' : '-';
 
     return Scaffold(
-      appBar: AppBar(
-        leading: const AppBackButton(),
-        title: const Text(AppStrings.reviewTitle),
+      extendBodyBehindAppBar: GlassDesignTokens.isDarkGlass(context),
+      appBar: const AppAdaptiveAppBar(
+        leading: AppBackButton(),
+        title: Text(AppStrings.reviewTitle),
       ),
       body: GlassBackdrop(child: SafeArea(
         child: Center(

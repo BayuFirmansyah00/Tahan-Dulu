@@ -7,6 +7,8 @@ import '../../../../core/theme/glass.dart';
 
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/constants/glass_design_tokens.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_states.dart';
 import '../../../../data/providers/app_providers.dart';
@@ -137,7 +139,8 @@ class _ReportExportScreenState extends ConsumerState<ReportExportScreen> {
     final raster = ref.watch(reportRasterCapableProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text(AppStrings.exportPreviewTitle)),
+      extendBodyBehindAppBar: GlassDesignTokens.isDarkGlass(context),
+      appBar: const AppAdaptiveAppBar(title: Text(AppStrings.exportPreviewTitle)),
       body: GlassBackdrop(child: SafeArea(
         child: report.when(
           data: (r) => goals.when(

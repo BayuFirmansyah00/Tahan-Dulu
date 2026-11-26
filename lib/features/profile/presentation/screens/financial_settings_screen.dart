@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
+    hide GlassQuality;
 
+import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/theme/glass.dart';
 
 import '../../../../core/constants/app_assets.dart';
@@ -10,6 +13,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/utils/rupiah_input_formatter.dart';
 import '../../../../core/utils/scheduled_cashflow_calculator.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_image_icon.dart';
 import '../../../../core/widgets/app_states.dart';
@@ -131,26 +135,45 @@ class _FinancialSettingsScreenState
   }
 
   Future<void> _handleCancelPending() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Batalkan Perubahan Jadwal?'),
-        content: const Text(
-          'Perubahan gaji atau tanggal gajian yang tertunda akan dibatalkan. Konfigurasi anggaran periode berjalan tetap dipertahankan.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Batal'),
-          ),
-          ElevatedButton(
-            style: destructiveButtonStyle(context),
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Ya, Batalkan'),
-          ),
-        ],
-      ),
-    );
+    final confirmed = GlassDesignTokens.isDarkGlass(context)
+        ? await GlassDialog.show<bool>(
+            context: context,
+            title: 'Batalkan Perubahan Jadwal?',
+            message:
+                'Perubahan gaji atau tanggal gajian yang tertunda akan dibatalkan. Konfigurasi anggaran periode berjalan tetap dipertahankan.',
+            settings: GlassDesignTokens.darkOverlaySettings(context),
+            actions: [
+              GlassDialogAction(
+                label: 'Batal',
+                onPressed: () => Navigator.of(context).pop(false),
+              ),
+              GlassDialogAction(
+                label: 'Ya, Batalkan',
+                isDestructive: true,
+                onPressed: () => Navigator.of(context).pop(true),
+              ),
+            ],
+          )
+        : await showDialog<bool>(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: const Text('Batalkan Perubahan Jadwal?'),
+              content: const Text(
+                'Perubahan gaji atau tanggal gajian yang tertunda akan dibatalkan. Konfigurasi anggaran periode berjalan tetap dipertahankan.',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(false),
+                  child: const Text('Batal'),
+                ),
+                ElevatedButton(
+                  style: destructiveButtonStyle(context),
+                  onPressed: () => Navigator.of(ctx).pop(true),
+                  child: const Text('Ya, Batalkan'),
+                ),
+              ],
+            ),
+          );
 
     if (confirmed == true && mounted) {
       setState(() => _isSubmitting = true);
@@ -422,10 +445,10 @@ class _FinancialSettingsScreenState
 
     return Scaffold(
       backgroundColor: context.canvasColor,
-      appBar: AppBar(
-        leading: const AppBackButton(),
-        title: const Text('Rencana Keuangan'),
-        elevation: 0,
+      extendBodyBehindAppBar: GlassDesignTokens.isDarkGlass(context),
+      appBar: const AppAdaptiveAppBar(
+        leading: AppBackButton(),
+        title: Text('Rencana Keuangan'),
       ),
       body: GlassBackdrop(child: SafeArea(
         child: Center(
@@ -638,25 +661,21 @@ class _ScheduledCashflowCard extends ConsumerWidget {
           Row(
             children: [
               Expanded(
-                child: OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    visualDensity: VisualDensity.compact,
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  ),
+                child: AppAdaptiveOutlinedButton(
+                  height: 36,
+                  borderRadius: 18,
                   icon: const Icon(Icons.arrow_upward, size: 14),
-                  label: const Text('Pemasukan Rutin', style: TextStyle(fontSize: 11)),
+                  label: 'Pemasukan Rutin',
                   onPressed: () => context.push(AppRoutes.recurringIncomes),
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    visualDensity: VisualDensity.compact,
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  ),
+                child: AppAdaptiveOutlinedButton(
+                  height: 36,
+                  borderRadius: 18,
                   icon: const Icon(Icons.arrow_downward, size: 14),
-                  label: const Text('Pengeluaran Rutin', style: TextStyle(fontSize: 11)),
+                  label: 'Pengeluaran Rutin',
                   onPressed: () => context.push(AppRoutes.recurringExpenses),
                 ),
               ),
@@ -1052,16 +1071,14 @@ class _PendingBannerCard extends StatelessWidget {
           const SizedBox(height: 12),
           Align(
             alignment: Alignment.centerRight,
-            child: OutlinedButton.icon(
-              style: OutlinedButton.styleFrom(
-                foregroundColor: context.palette.error,
-                side: BorderSide(color: context.palette.error),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
+            child: AppAdaptiveOutlinedButton(
+              height: 40,
+              borderRadius: 12,
+              foregroundColor: context.palette.error,
+              borderColor: context.palette.error,
+              tintColor: context.palette.error.withValues(alpha: 0.14),
               icon: const Icon(Icons.cancel_outlined, size: 16),
-              label: const Text('Batalkan Perubahan'),
+              label: 'Batalkan Perubahan',
               onPressed: onCancel,
             ),
           ),
@@ -1152,34 +1169,48 @@ class _ChangeScheduleCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 6),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
-              decoration: BoxDecoration(
-                color: context.palette.surface,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: context.palette.outlineVariant),
-              ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<int>(
-                  value: selectedSalaryDay,
-                  isExpanded: true,
-                  icon: Icon(Icons.arrow_drop_down, color: context.palette.onSurfaceVariant),
-                  items: List.generate(31, (index) {
-                    final day = index + 1;
-                    return DropdownMenuItem<int>(
-                      value: day,
-                      child: Text(
-                        'Tanggal $day',
-                        style: textTheme.bodyMedium?.copyWith(
-                          color: context.palette.onSurface,
+            if (GlassDesignTokens.isDarkGlass(context))
+              AppAdaptiveDropdown<int>(
+                value: selectedSalaryDay,
+                isExpanded: true,
+                items: List.generate(31, (index) {
+                  final day = index + 1;
+                  return DropdownMenuItem<int>(
+                    value: day,
+                    child: Text('Tanggal $day'),
+                  );
+                }),
+                onChanged: onSalaryDayChanged,
+              )
+            else
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+                decoration: BoxDecoration(
+                  color: context.palette.surface,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: context.palette.outlineVariant),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<int>(
+                    value: selectedSalaryDay,
+                    isExpanded: true,
+                    icon: Icon(Icons.arrow_drop_down, color: context.palette.onSurfaceVariant),
+                    items: List.generate(31, (index) {
+                      final day = index + 1;
+                      return DropdownMenuItem<int>(
+                        value: day,
+                        child: Text(
+                          'Tanggal $day',
+                          style: textTheme.bodyMedium?.copyWith(
+                            color: context.palette.onSurface,
+                          ),
                         ),
-                      ),
-                    );
-                  }),
-                  onChanged: onSalaryDayChanged,
+                      );
+                    }),
+                    onChanged: onSalaryDayChanged,
+                  ),
                 ),
               ),
-            ),
             const SizedBox(height: 14),
             Container(
               padding: const EdgeInsets.all(12),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 import '../../../../core/theme/glass.dart';
 
@@ -14,6 +15,7 @@ import '../../../../core/utils/rupiah_input_formatter.dart';
 import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_icons.dart';
+import '../../../../core/widgets/app_text_field.dart';
 import '../../../../data/datasources/remote/api_client.dart';
 import '../../../../data/models/financial_account.dart';
 import '../../../../data/providers/account_providers.dart';
@@ -160,12 +162,12 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
     final accountsAsync = ref.watch(accountsOverviewProvider);
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: AppAdaptiveAppBar(
         leading: const AppBackButton(),
         title: const Text(AppStrings.transferTitle),
         centerTitle: true,
         actions: [
-          IconButton(
+          AppAdaptiveIconButton(
             icon: const Icon(Icons.history_rounded),
             tooltip: 'Riwayat Transfer',
             onPressed: () => context.push(AppRoutes.transferHistory),
@@ -395,32 +397,67 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    TextField(
-                      controller: _amountController,
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [RupiahInputFormatter()],
-                      style: textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                      decoration: InputDecoration(
-                        prefixIcon: const Padding(
-                          padding: EdgeInsets.all(12),
-                          child: AppImageIcon(
+                    if (GlassDesignTokens.isDarkGlass(context))
+                      GlassFormField(
+                        errorText: !isBalanceSufficient && enteredAmount > 0
+                            ? AppStrings.transferInsufficientBalance
+                            : null,
+                        child: GlassTextField(
+                          controller: _amountController,
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [RupiahInputFormatter()],
+                          placeholder: 'Rp 0',
+                          useOwnLayer: true,
+                          surfaceStyle: GlassSurfaceStyle.glass,
+                          settings:
+                              GlassDesignTokens.darkInputSettings(context),
+                          shape: const LiquidRoundedRectangle(borderRadius: 14),
+                          textStyle: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          placeholderStyle: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.45),
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          prefixIcon: const AppImageIcon(
                             assetPath: AppAssets.actionAddMoney,
                             size: 20,
                             fallbackIcon: Icons.payments_outlined,
                           ),
                         ),
-                        hintText: 'Rp 0',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: context.palette.outlineVariant),
+                      )
+                    else
+                      TextField(
+                        controller: _amountController,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [RupiahInputFormatter()],
+                        style: textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
                         ),
-                        errorText: !isBalanceSufficient && enteredAmount > 0
-                            ? AppStrings.transferInsufficientBalance
-                            : null,
+                        decoration: InputDecoration(
+                          prefixIcon: const Padding(
+                            padding: EdgeInsets.all(12),
+                            child: AppImageIcon(
+                              assetPath: AppAssets.actionAddMoney,
+                              size: 20,
+                              fallbackIcon: Icons.payments_outlined,
+                            ),
+                          ),
+                          hintText: 'Rp 0',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                              color: context.palette.outlineVariant,
+                            ),
+                          ),
+                          errorText: !isBalanceSufficient && enteredAmount > 0
+                              ? AppStrings.transferInsufficientBalance
+                              : null,
+                        ),
                       ),
-                    ),
                     const SizedBox(height: 8),
 
                     // Quick amount chips
@@ -463,21 +500,30 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    TextField(
-                      controller: _notesController,
-                      maxLength: 255,
-                      decoration: InputDecoration(
-                        hintText: AppStrings.transferNotesHint,
-                        prefixIcon: Icon(
-                          Icons.notes_outlined,
-                          color: context.palette.onSurfaceVariant,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: context.palette.outlineVariant),
+                    if (GlassDesignTokens.isDarkGlass(context))
+                      AppTextField(
+                        controller: _notesController,
+                        hint: AppStrings.transferNotesHint,
+                        prefixIcon: Icons.notes_outlined,
+                      )
+                    else
+                      TextField(
+                        controller: _notesController,
+                        maxLength: 255,
+                        decoration: InputDecoration(
+                          hintText: AppStrings.transferNotesHint,
+                          prefixIcon: Icon(
+                            Icons.notes_outlined,
+                            color: context.palette.onSurfaceVariant,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                              color: context.palette.outlineVariant,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
                     const SizedBox(height: 16),
 
                     // Visual Ringkasan Simulasi Saldo
@@ -661,9 +707,9 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
     required String selectedId,
     required ValueChanged<String?> onChanged,
   }) {
-    return DropdownButtonFormField<String>(
+    return AppAdaptiveDropdown<String>(
       isExpanded: true,
-      initialValue: selectedId,
+      value: selectedId,
       items: items.map((item) {
         return DropdownMenuItem<String>(
           value: item.account.id,

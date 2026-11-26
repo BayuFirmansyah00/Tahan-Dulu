@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/glass.dart';
 
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/utils/rupiah_input_formatter.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../providers/investment_controller.dart';
@@ -84,7 +86,8 @@ class _AddInvestmentScreenState extends ConsumerState<AddInvestmentScreen> {
         RupiahInputFormatter.parse(_achievedController.text) < 0;
 
     return Scaffold(
-      appBar: AppBar(title: const Text(AppStrings.addInvestmentTitle)),
+      extendBodyBehindAppBar: GlassDesignTokens.isDarkGlass(context),
+      appBar: const AppAdaptiveAppBar(title: Text(AppStrings.addInvestmentTitle)),
       body: GlassBackdrop(child: SafeArea(
         child: Center(
           child: ConstrainedBox(

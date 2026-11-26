@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
+    hide GlassQuality;
 
 import '../../../../core/theme/glass.dart';
 
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/rupiah_input_formatter.dart';
 import '../../../../core/widgets/app_adaptive_controls.dart';
@@ -246,28 +249,45 @@ class _EditAccountScreenState extends ConsumerState<EditAccountScreen> {
     WidgetRef ref,
     FinancialAccount account,
   ) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text(AppStrings.deleteAccountTitle),
-        content: Text(
-          '“${account.name}” akan dihapus dari daftar akun.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text(AppStrings.cancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(
-              foregroundColor: Theme.of(context).colorScheme.error,
+    final message = '“${account.name}” akan dihapus dari daftar akun.';
+    final confirmed = GlassDesignTokens.isDarkGlass(context)
+        ? await GlassDialog.show<bool>(
+            context: context,
+            title: AppStrings.deleteAccountTitle,
+            message: message,
+            settings: GlassDesignTokens.darkOverlaySettings(context),
+            actions: [
+              GlassDialogAction(
+                label: AppStrings.cancel,
+                onPressed: () => Navigator.of(context).pop(false),
+              ),
+              GlassDialogAction(
+                label: AppStrings.deleteAccount,
+                isDestructive: true,
+                onPressed: () => Navigator.of(context).pop(true),
+              ),
+            ],
+          )
+        : await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text(AppStrings.deleteAccountTitle),
+              content: Text(message),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text(AppStrings.cancel),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  style: TextButton.styleFrom(
+                    foregroundColor: Theme.of(context).colorScheme.error,
+                  ),
+                  child: const Text(AppStrings.deleteAccount),
+                ),
+              ],
             ),
-            child: const Text(AppStrings.deleteAccount),
-          ),
-        ],
-      ),
-    );
+          );
     if (confirmed != true || !context.mounted) return;
     try {
       final ok = await ref
@@ -297,13 +317,18 @@ class _EditAccountScreenState extends ConsumerState<EditAccountScreen> {
   Widget build(BuildContext context) {
     final accounts = ref.watch(accountsOverviewProvider);
 
+    final useDarkGlass = GlassDesignTokens.isDarkGlass(context);
+
     return Scaffold(
-      appBar: AppBar(
+      extendBody: useDarkGlass,
+      extendBodyBehindAppBar: useDarkGlass,
+      appBar: AppAdaptiveAppBar(
         leading: const AppBackButton(),
         title: const Text(AppStrings.editAccountTitle),
       ),
       bottomNavigationBar: DashboardBottomNav(onTap: _onNav),
       body: GlassBackdrop(child: SafeArea(
+        bottom: !useDarkGlass,
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
@@ -479,8 +504,8 @@ class _Form extends StatelessWidget {
                   style: textTheme.titleMedium,
                 ),
                 const SizedBox(height: 8),
-                DropdownButtonFormField<AccountType>(
-                  initialValue: type,
+                AppAdaptiveDropdown<AccountType>(
+                  value: type,
                   items: [
                     for (final t in AccountType.values)
                       DropdownMenuItem(
@@ -677,8 +702,9 @@ class _Form extends StatelessWidget {
                         inputFormatters: [RupiahInputFormatter()],
                       ),
                       const SizedBox(height: 12),
-                      DropdownButtonFormField<String>(
-                        initialValue: budgetFrequency,
+                      AppAdaptiveDropdown<String>(
+                        value: budgetFrequency,
+                        labelText: 'Frekuensi Anggaran',
                         decoration: const InputDecoration(
                           labelText: 'Frekuensi Anggaran',
                           border: OutlineInputBorder(),
@@ -719,26 +745,25 @@ class _Form extends StatelessWidget {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+          padding: EdgeInsets.fromLTRB(
+            24,
+            0,
+            24,
+            GlassDesignTokens.isDarkGlass(context) ? 100 : 24,
+          ),
           child: SizedBox(
             width: double.infinity,
-            child: OutlinedButton.icon(
+            child: AppAdaptiveOutlinedButton(
               icon: const AppImageIcon(
                 assetPath: AppAssets.actionDelete,
                 size: 20,
                 fallbackIcon: Icons.delete_outline,
               ),
-              label: const Text(AppStrings.deleteAccount),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Theme.of(context).colorScheme.error,
-                side: BorderSide(
-                  color: Theme.of(context).colorScheme.error,
-                ),
-                minimumSize: const Size.fromHeight(52),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
+              label: AppStrings.deleteAccount,
+              foregroundColor: Theme.of(context).colorScheme.error,
+              borderColor: Theme.of(context).colorScheme.error,
+              height: 52,
+              borderRadius: 16,
               onPressed: onDelete,
             ),
           ),

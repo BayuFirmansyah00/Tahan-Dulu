@@ -87,11 +87,12 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
 
     return Scaffold(
       extendBody: useDarkGlass,
-      appBar: AppBar(
+      extendBodyBehindAppBar: useDarkGlass,
+      appBar: AppAdaptiveAppBar(
         title: const Text(AppStrings.transactionsTitle),
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 8),
+            padding: EdgeInsets.only(right: useDarkGlass ? 8 : 0),
             child: AppAdaptiveIconButton(
               icon: const Icon(Icons.add),
               tooltip: AppStrings.addTransaction,
@@ -248,23 +249,11 @@ class _ListState extends State<_List> {
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
           child: Column(
             children: [
-              TextField(
+              AppAdaptiveSearchBar(
                 controller: widget.searchController,
-                textInputAction: TextInputAction.search,
-                decoration: InputDecoration(
-                  hintText: AppStrings.searchHint,
-                  prefixIcon: const Icon(Icons.search_outlined),
-                  suffixIcon: widget.query.isEmpty
-                      ? null
-                      : IconButton(
-                          icon: const Icon(Icons.close_outlined),
-                          tooltip: AppStrings.searchClear,
-                          onPressed: () {
-                            widget.searchController.clear();
-                            widget.onQuery('');
-                          },
-                        ),
-                ),
+                hintText: AppStrings.searchHint,
+                query: widget.query,
+                clearTooltip: AppStrings.searchClear,
                 onChanged: widget.onQuery,
               ),
               const SizedBox(height: 8),

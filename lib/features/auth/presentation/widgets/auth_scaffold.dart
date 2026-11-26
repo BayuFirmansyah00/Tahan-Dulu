@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/theme/glass.dart';
 
 /// Layout auth bersama: aman (SafeArea), scroll saat keyboard muncul,
@@ -12,7 +13,9 @@ class AuthScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final useDarkGlass = GlassDesignTokens.isDarkGlass(context);
     return Scaffold(
+      extendBodyBehindAppBar: appBar != null && useDarkGlass,
       appBar: appBar,
       body: GlassBackdrop(child: SafeArea(
         child: Center(

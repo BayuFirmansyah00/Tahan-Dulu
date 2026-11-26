@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
+    hide GlassQuality;
 
+import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/theme/glass.dart';
 
 import '../../../../core/constants/app_assets.dart';
@@ -57,26 +60,45 @@ class _TahanDuluDecideScreenState extends ConsumerState<TahanDuluDecideScreen> {
   }
 
   Future<void> _confirmCancel(PurchaseConsideration item) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text(AppStrings.confirmCancelTitle),
-        content: Text('“${item.itemName}” ${AppStrings.confirmCancelBody}'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text(AppStrings.cancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(
-              foregroundColor: Theme.of(context).colorScheme.error,
+    final message = '“${item.itemName}” ${AppStrings.confirmCancelBody}';
+    final confirmed = GlassDesignTokens.isDarkGlass(context)
+        ? await GlassDialog.show<bool>(
+            context: context,
+            title: AppStrings.confirmCancelTitle,
+            message: message,
+            settings: GlassDesignTokens.darkOverlaySettings(context),
+            actions: [
+              GlassDialogAction(
+                label: AppStrings.cancel,
+                onPressed: () => Navigator.of(context).pop(false),
+              ),
+              GlassDialogAction(
+                label: AppStrings.decideCancel,
+                isDestructive: true,
+                onPressed: () => Navigator.of(context).pop(true),
+              ),
+            ],
+          )
+        : await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text(AppStrings.confirmCancelTitle),
+              content: Text(message),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text(AppStrings.cancel),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  style: TextButton.styleFrom(
+                    foregroundColor: Theme.of(context).colorScheme.error,
+                  ),
+                  child: const Text(AppStrings.decideCancel),
+                ),
+              ],
             ),
-            child: const Text(AppStrings.decideCancel),
-          ),
-        ],
-      ),
-    );
+          );
     if (confirmed != true || !mounted) return;
     final notifier = ref.read(tahanDuluControllerProvider.notifier);
     await _act(

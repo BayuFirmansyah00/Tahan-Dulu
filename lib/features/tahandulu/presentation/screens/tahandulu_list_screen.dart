@@ -6,9 +6,11 @@ import '../../../../core/theme/glass.dart';
 
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/finance_math.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_icons.dart';
 import '../../../../core/widgets/app_states.dart';
@@ -67,12 +69,15 @@ class _TahanDuluListScreenState extends ConsumerState<TahanDuluListScreen> {
     final dashboard = ref.watch(dashboardDataProvider);
     final textTheme = Theme.of(context).textTheme;
 
+    final useDarkGlass = GlassDesignTokens.isDarkGlass(context);
+
     return Scaffold(
       backgroundColor: context.canvasColor,
-      appBar: AppBar(
+      extendBodyBehindAppBar: useDarkGlass,
+      appBar: AppAdaptiveAppBar(
         leading: const AppBackButton(),
         title: const Text(AppStrings.tahanDuluPageTitle),
-        backgroundColor: context.canvasColor,
+        backgroundColor: useDarkGlass ? null : context.canvasColor,
       ),
       bottomNavigationBar: DashboardBottomNav(
         onTap: (i) => tahanDuluBottomNavTap(context, i),

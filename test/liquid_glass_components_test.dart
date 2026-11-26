@@ -9,6 +9,8 @@ import 'package:tahan_dulu/core/widgets/app_glass_button.dart';
 import 'package:tahan_dulu/core/widgets/app_glass_card.dart';
 import 'package:tahan_dulu/core/widgets/app_glass_dialog.dart';
 import 'package:tahan_dulu/core/widgets/app_glass_floating_action_button.dart';
+import 'package:tahan_dulu/core/widgets/app_image_icon.dart';
+import 'package:tahan_dulu/core/widgets/app_text_field.dart';
 
 void main() {
   group('AppGlassButton Widget Tests', () {
@@ -444,5 +446,107 @@ void main() {
       expect(find.byType(GlassPullDownButton), findsOneWidget);
       expect(find.byType(Switch), findsNothing);
     });
+
+    testWidgets(
+      'AppTextField, AppAdaptiveSearchBar, AppAdaptiveDropdown, AppAdaptiveAppBar, AppAdaptiveSegmentedControl and adaptive buttons switch cleanly between Light Material and Dark Liquid Glass',
+      (tester) async {
+        final textController = TextEditingController(text: 'Halo');
+        final searchController = TextEditingController();
+        String selectedDropdown = 'a';
+        int selectedTab = 0;
+
+        Widget buildHarness({required bool dark}) {
+          final app = MaterialApp(
+            key: ValueKey(dark ? 'dark_coverage_app' : 'light_coverage_app'),
+            theme: dark ? AppTheme.dark : AppTheme.light,
+            themeMode: dark ? ThemeMode.dark : ThemeMode.light,
+            home: Scaffold(
+              appBar: const AppAdaptiveAppBar(
+                leading: AppBackButton(),
+                title: Text('Judul Uji'),
+              ),
+              body: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    AppTextField(
+                      controller: textController,
+                      label: 'Nama',
+                      hint: 'Masukkan nama',
+                    ),
+                    const SizedBox(height: 12),
+                    AppAdaptiveSearchBar(
+                      controller: searchController,
+                      hintText: 'Cari...',
+                      query: searchController.text,
+                      onChanged: (_) {},
+                    ),
+                    const SizedBox(height: 12),
+                    AppAdaptiveDropdown<String>(
+                      value: selectedDropdown,
+                      labelText: 'Pilihan',
+                      items: const [
+                        DropdownMenuItem(value: 'a', child: Text('Opsi A')),
+                        DropdownMenuItem(value: 'b', child: Text('Opsi B')),
+                      ],
+                      onChanged: (v) {
+                        if (v != null) selectedDropdown = v;
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    AppAdaptiveSegmentedControl<int>(
+                      values: const [0, 1],
+                      selected: selectedTab,
+                      labelBuilder: (v) => v == 0 ? 'Tab 1' : 'Tab 2',
+                      onSelected: (v) => selectedTab = v,
+                      lightBuilder: (context) => Row(
+                        children: const [Text('Tab 1'), Text('Tab 2')],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    AppAdaptiveOutlinedButton(
+                      label: 'Sekunder',
+                      onPressed: () {},
+                    ),
+                    const SizedBox(height: 8),
+                    AppAdaptiveElevatedButton(
+                      label: 'Utama',
+                      onPressed: () {},
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+
+          if (!dark) return app;
+          return GlassTheme(
+            data: GlassDesignTokens.darkThemeData,
+            child: app,
+          );
+        }
+
+        await tester.pumpWidget(buildHarness(dark: false));
+        expect(find.byType(AppBar), findsOneWidget);
+        expect(find.byType(GlassAppBar), findsNothing);
+        expect(find.byType(GlassTextField), findsNothing);
+        expect(find.byType(GlassSearchBar), findsNothing);
+        expect(find.byType(GlassPicker), findsNothing);
+        expect(find.byType(GlassSegmentedControl), findsNothing);
+
+        await tester.pumpWidget(buildHarness(dark: true));
+        await tester.pumpAndSettle();
+        expect(find.byType(GlassAppBar), findsOneWidget);
+        expect(find.byType(GlassTextField), findsNWidgets(2));
+        expect(find.byType(GlassSearchBar), findsOneWidget);
+        expect(find.byType(GlassPicker), findsOneWidget);
+        expect(find.byType(GlassSegmentedControl), findsOneWidget);
+        expect(find.byType(GlassIconButton), findsOneWidget);
+        expect(find.byType(GlassButton), findsAtLeastNWidgets(2));
+
+        textController.dispose();
+        searchController.dispose();
+      },
+    );
   });
 }

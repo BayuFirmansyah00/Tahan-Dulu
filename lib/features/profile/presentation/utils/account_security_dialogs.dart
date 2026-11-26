@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
+    hide GlassQuality;
 
+import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/theme/glass.dart';
 
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_text_field.dart';
 import '../../../../data/datasources/remote/api_client.dart';
 import '../../../auth/presentation/providers/auth_controller.dart';
 import '../screens/delete_account_otp_screen.dart';
@@ -130,43 +134,41 @@ class _ChangePasswordSheetState extends ConsumerState<_ChangePasswordSheet> {
                 ),
               ),
               const SizedBox(height: 16),
-              TextFormField(
+              AppTextField(
                 controller: _currentController,
+                label: 'Kata Sandi Saat Ini',
+                hint: 'Masukkan kata sandi saat ini',
+                prefixIcon: Icons.lock_outline,
                 obscureText: _obscureCurrent,
-                decoration: InputDecoration(
-                  labelText: 'Kata Sandi Saat Ini',
-                  prefixIcon: const Icon(Icons.lock_outline, size: 20),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _obscureCurrent
-                          ? Icons.visibility_off_outlined
-                          : Icons.visibility_outlined,
-                      size: 20,
-                    ),
-                    onPressed: () =>
-                        setState(() => _obscureCurrent = !_obscureCurrent),
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _obscureCurrent
+                        ? Icons.visibility_off_outlined
+                        : Icons.visibility_outlined,
+                    size: 20,
                   ),
+                  onPressed: () =>
+                      setState(() => _obscureCurrent = !_obscureCurrent),
                 ),
                 validator: (v) => v == null || v.trim().isEmpty
                     ? 'Kata sandi saat ini wajib diisi'
                     : null,
               ),
               const SizedBox(height: 12),
-              TextFormField(
+              AppTextField(
                 controller: _newController,
+                label: 'Kata Sandi Baru',
+                hint: 'Minimal 8 karakter',
+                prefixIcon: Icons.lock_reset_outlined,
                 obscureText: _obscureNew,
-                decoration: InputDecoration(
-                  labelText: 'Kata Sandi Baru',
-                  prefixIcon: const Icon(Icons.lock_reset_outlined, size: 20),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _obscureNew
-                          ? Icons.visibility_off_outlined
-                          : Icons.visibility_outlined,
-                      size: 20,
-                    ),
-                    onPressed: () => setState(() => _obscureNew = !_obscureNew),
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _obscureNew
+                        ? Icons.visibility_off_outlined
+                        : Icons.visibility_outlined,
+                    size: 20,
                   ),
+                  onPressed: () => setState(() => _obscureNew = !_obscureNew),
                 ),
                 validator: (v) {
                   if (v == null || v.isEmpty) return 'Kata sandi baru wajib diisi';
@@ -178,22 +180,21 @@ class _ChangePasswordSheetState extends ConsumerState<_ChangePasswordSheet> {
                 },
               ),
               const SizedBox(height: 12),
-              TextFormField(
+              AppTextField(
                 controller: _confirmController,
+                label: 'Konfirmasi Kata Sandi Baru',
+                hint: 'Ulangi kata sandi baru',
+                prefixIcon: Icons.check_circle_outline,
                 obscureText: _obscureConfirm,
-                decoration: InputDecoration(
-                  labelText: 'Konfirmasi Kata Sandi Baru',
-                  prefixIcon: const Icon(Icons.check_circle_outline, size: 20),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _obscureConfirm
-                          ? Icons.visibility_off_outlined
-                          : Icons.visibility_outlined,
-                      size: 20,
-                    ),
-                    onPressed: () =>
-                        setState(() => _obscureConfirm = !_obscureConfirm),
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _obscureConfirm
+                        ? Icons.visibility_off_outlined
+                        : Icons.visibility_outlined,
+                    size: 20,
                   ),
+                  onPressed: () =>
+                      setState(() => _obscureConfirm = !_obscureConfirm),
                 ),
                 validator: (v) {
                   if (v == null || v.isEmpty) {
@@ -346,6 +347,77 @@ class _DeleteAccountPasswordDialogState
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+
+    if (GlassDesignTokens.isDarkGlass(context)) {
+      return GlassDialog(
+        title: 'Hapus Akun',
+        settings: GlassDesignTokens.darkOverlaySettings(context),
+        content: InheritedGlassSurfaceStyle(
+          surfaceStyle: GlassSurfaceStyle.solid,
+          child: Material(
+            type: MaterialType.transparency,
+            child: Form(
+              key: _formKey,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'Tindakan ini tidak dapat dibatalkan. Seluruh data keuangan, transaksi, dan target kamu akan dihapus secara permanen.\n\nMasukkan kata sandi untuk konfirmasi:',
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: Colors.white.withValues(alpha: 0.85),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    AppTextField(
+                      controller: _passwordController,
+                      label: 'Kata Sandi Akun',
+                      hint: 'Masukkan kata sandi',
+                      prefixIcon: Icons.lock_outline,
+                      obscureText: _obscure,
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscure
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined,
+                          size: 20,
+                        ),
+                        onPressed: () => setState(() => _obscure = !_obscure),
+                      ),
+                      validator: (v) => v == null || v.isEmpty
+                          ? 'Kata sandi wajib diisi untuk konfirmasi'
+                          : null,
+                    ),
+                    if (_error != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        _error!,
+                        style: textTheme.bodySmall?.copyWith(
+                          color: context.palette.error,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+        actions: [
+          GlassDialogAction(
+            label: 'Batal',
+            onPressed: _loading ? () {} : () => Navigator.of(context).pop(),
+          ),
+          GlassDialogAction(
+            label: _loading ? 'Memproses...' : 'Ya, Hapus Akun',
+            isDestructive: true,
+            onPressed: _loading ? () {} : _handleConfirm,
+          ),
+        ],
+      );
+    }
 
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: AppRadius.cardLarge),

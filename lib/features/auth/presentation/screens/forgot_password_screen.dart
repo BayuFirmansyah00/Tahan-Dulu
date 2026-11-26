@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/validators.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../data/datasources/remote/api_client.dart';
@@ -77,9 +78,9 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return AuthScaffold(
-      appBar: AppBar(
+      appBar: AppAdaptiveAppBar(
         title: const Text(AppStrings.forgotPasswordTitle),
-        leading: IconButton(
+        leading: AppAdaptiveIconButton(
           tooltip: 'Kembali ke Login',
           onPressed: () => context.go(AppRoutes.login),
           icon: const Icon(Icons.arrow_back),

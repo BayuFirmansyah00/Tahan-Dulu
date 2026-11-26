@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../constants/app_assets.dart';
+import '../constants/glass_design_tokens.dart';
+import 'app_adaptive_controls.dart';
 import 'app_icons.dart';
 
 /// Widget terpusat untuk merender seluruh ikon UI aplikasi TahanDulu
@@ -137,14 +139,24 @@ class AppBackButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final iconWidget = AppImageIcon(
+      assetPath: AppAssets.navBack,
+      size: size,
+      color: color,
+      semanticLabel: tooltip,
+      fallbackIcon: Icons.arrow_back_rounded,
+    );
+
+    if (GlassDesignTokens.isDarkGlass(context)) {
+      return AppAdaptiveIconButton(
+        icon: iconWidget,
+        tooltip: tooltip,
+        onPressed: onPressed ?? () => Navigator.maybePop(context),
+      );
+    }
+
     return IconButton(
-      icon: AppImageIcon(
-        assetPath: AppAssets.navBack,
-        size: size,
-        color: color,
-        semanticLabel: tooltip,
-        fallbackIcon: Icons.arrow_back_rounded,
-      ),
+      icon: iconWidget,
       tooltip: tooltip,
       onPressed: onPressed ?? () => Navigator.maybePop(context),
     );

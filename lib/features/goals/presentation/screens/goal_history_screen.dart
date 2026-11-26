@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
+    hide GlassQuality;
 
 import '../../../../core/theme/glass.dart';
 
@@ -7,8 +9,10 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_icons.dart';
 import '../../../../core/widgets/app_states.dart';
+import '../../../../core/widgets/app_text_field.dart';
 import '../../../../data/models/financial_goal.dart';
 import '../../../../data/models/goal_deposit.dart';
 import '../../../../data/providers/onboarding_providers.dart';
@@ -27,17 +31,21 @@ class GoalHistoryScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final goals = ref.watch(goalsListProvider);
     final deposits = ref.watch(goalDepositsProvider(goalId));
+    final useDarkGlass = GlassDesignTokens.isDarkGlass(context);
 
     return Scaffold(
-      appBar: AppBar(
-        leading: const AppBackButton(),
-        title: const Text(AppStrings.historyTitle),
+      extendBody: useDarkGlass,
+      extendBodyBehindAppBar: useDarkGlass,
+      appBar: const AppAdaptiveAppBar(
+        leading: AppBackButton(),
+        title: Text(AppStrings.historyTitle),
       ),
       bottomNavigationBar: DashboardBottomNav(
         currentIndex: 3,
         onTap: (i) => goalsBottomNavTap(context, i),
       ),
       body: GlassBackdrop(child: SafeArea(
+        bottom: !useDarkGlass,
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
@@ -107,8 +115,9 @@ class _Body extends StatelessWidget {
     final average = months <= 0 ? total : total / months;
     final grouped = groupDepositsByMonth(deposits);
 
+    final useDarkGlass = GlassDesignTokens.isDarkGlass(context);
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+      padding: EdgeInsets.fromLTRB(24, 8, 24, useDarkGlass ? 100 : 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -354,35 +363,59 @@ class _DepositRow extends ConsumerWidget {
               Row(
                 children: [
                   Expanded(
-                    child: OutlinedButton.icon(
+                    child: AppAdaptiveOutlinedButton(
                       icon: const Icon(Icons.edit_note, size: 20),
-                      label: const Text('Edit Catatan'),
+                      label: 'Edit Catatan',
                       onPressed: () async {
                         Navigator.of(sheetContext).pop();
                         final noteController = TextEditingController(text: deposit.note ?? '');
-                        final newNote = await showDialog<String>(
-                          context: context,
-                          builder: (dlgContext) => AlertDialog(
-                            title: const Text('Ubah Catatan'),
-                            content: TextField(
-                              controller: noteController,
-                              decoration: const InputDecoration(
-                                hintText: 'Masukkan catatan transaksi...',
-                              ),
-                              autofocus: true,
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.of(dlgContext).pop(),
-                                child: const Text(AppStrings.cancel),
-                              ),
-                              ElevatedButton(
-                                onPressed: () => Navigator.of(dlgContext).pop(noteController.text.trim()),
-                                child: const Text('Simpan'),
-                              ),
-                            ],
-                          ),
-                        );
+                        final newNote = GlassDesignTokens.isDarkGlass(context)
+                            ? await GlassDialog.show<String>(
+                                context: context,
+                                title: 'Ubah Catatan',
+                                settings: GlassDesignTokens.darkOverlaySettings(context),
+                                content: InheritedGlassSurfaceStyle(
+                                  surfaceStyle: GlassSurfaceStyle.solid,
+                                  child: AppTextField(
+                                    controller: noteController,
+                                    hint: 'Masukkan catatan transaksi...',
+                                  ),
+                                ),
+                                actions: [
+                                  GlassDialogAction(
+                                    label: AppStrings.cancel,
+                                    onPressed: () => Navigator.of(context).pop(),
+                                  ),
+                                  GlassDialogAction(
+                                    label: 'Simpan',
+                                    isPrimary: true,
+                                    onPressed: () => Navigator.of(context).pop(noteController.text.trim()),
+                                  ),
+                                ],
+                              )
+                            : await showDialog<String>(
+                                context: context,
+                                builder: (dlgContext) => AlertDialog(
+                                  title: const Text('Ubah Catatan'),
+                                  content: TextField(
+                                    controller: noteController,
+                                    decoration: const InputDecoration(
+                                      hintText: 'Masukkan catatan transaksi...',
+                                    ),
+                                    autofocus: true,
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.of(dlgContext).pop(),
+                                      child: const Text(AppStrings.cancel),
+                                    ),
+                                    ElevatedButton(
+                                      onPressed: () => Navigator.of(dlgContext).pop(noteController.text.trim()),
+                                      child: const Text('Simpan'),
+                                    ),
+                                  ],
+                                ),
+                              );
                         if (newNote != null && context.mounted) {
                           try {
                             await ref.read(goalsControllerProvider.notifier).updateGoalTransaction(
@@ -406,40 +439,55 @@ class _DepositRow extends ConsumerWidget {
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(sheetContext).colorScheme.error,
-                        foregroundColor: Theme.of(sheetContext).colorScheme.onError,
-                      ),
+                    child: AppAdaptiveElevatedButton(
+                      backgroundColor: Theme.of(sheetContext).colorScheme.error,
+                      foregroundColor: Theme.of(sheetContext).colorScheme.onError,
                       icon: const Icon(Icons.delete_outline, size: 20),
-                      label: const Text('Hapus'),
+                      label: 'Hapus',
                       onPressed: () async {
                         Navigator.of(sheetContext).pop();
-                        final confirm = await showDialog<bool>(
-                          context: context,
-                          builder: (dlgContext) => AlertDialog(
-                            title: const Text('Hapus Transaksi?'),
-                            content: Text(
-                              deposit.isWithdraw
-                                  ? 'Penarikan sebesar ${CurrencyFormatter.format(deposit.amount)} akan dibatalkan dan saldo target akan bertambah kembali.'
-                                  : 'Setoran sebesar ${CurrencyFormatter.format(deposit.amount)} akan dihapus dan akumulasi target akan berkurang.',
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.of(dlgContext).pop(false),
-                                child: const Text(AppStrings.cancel),
-                              ),
-                              ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Theme.of(dlgContext).colorScheme.error,
-                                  foregroundColor: Theme.of(dlgContext).colorScheme.onError,
+                        final message = deposit.isWithdraw
+                            ? 'Penarikan sebesar ${CurrencyFormatter.format(deposit.amount)} akan dibatalkan dan saldo target akan bertambah kembali.'
+                            : 'Setoran sebesar ${CurrencyFormatter.format(deposit.amount)} akan dihapus dan akumulasi target akan berkurang.';
+                        final confirm = GlassDesignTokens.isDarkGlass(context)
+                            ? await GlassDialog.show<bool>(
+                                context: context,
+                                title: 'Hapus Transaksi?',
+                                message: message,
+                                settings: GlassDesignTokens.darkOverlaySettings(context),
+                                actions: [
+                                  GlassDialogAction(
+                                    label: AppStrings.cancel,
+                                    onPressed: () => Navigator.of(context).pop(false),
+                                  ),
+                                  GlassDialogAction(
+                                    label: 'Hapus',
+                                    isDestructive: true,
+                                    onPressed: () => Navigator.of(context).pop(true),
+                                  ),
+                                ],
+                              )
+                            : await showDialog<bool>(
+                                context: context,
+                                builder: (dlgContext) => AlertDialog(
+                                  title: const Text('Hapus Transaksi?'),
+                                  content: Text(message),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.of(dlgContext).pop(false),
+                                      child: const Text(AppStrings.cancel),
+                                    ),
+                                    ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Theme.of(dlgContext).colorScheme.error,
+                                        foregroundColor: Theme.of(dlgContext).colorScheme.onError,
+                                      ),
+                                      onPressed: () => Navigator.of(dlgContext).pop(true),
+                                      child: const Text('Hapus'),
+                                    ),
+                                  ],
                                 ),
-                                onPressed: () => Navigator.of(dlgContext).pop(true),
-                                child: const Text('Hapus'),
-                              ),
-                            ],
-                          ),
-                        );
+                              );
                         if (confirm == true && context.mounted) {
                           try {
                             final ok = await ref.read(goalsControllerProvider.notifier).deleteGoalTransaction(

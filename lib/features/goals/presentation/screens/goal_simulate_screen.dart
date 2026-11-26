@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
+    hide GlassQuality;
 
+import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/theme/glass.dart';
 
 import '../../../../core/constants/app_assets.dart';
@@ -10,6 +13,7 @@ import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/utils/finance_math.dart';
 import '../../../../core/utils/goal_math.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_icons.dart';
 import '../../../../core/widgets/app_states.dart';
@@ -37,23 +41,41 @@ class _GoalSimulateScreenState
   DepositFrequency? _frequency;
 
   Future<void> _usePlan(double amount, DepositFrequency frequency) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text(AppStrings.confirmUsePlanTitle),
-        content: const Text(AppStrings.confirmUsePlanBody),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text(AppStrings.cancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text(AppStrings.usePlanAction),
-          ),
-        ],
-      ),
-    );
+    final confirmed = GlassDesignTokens.isDarkGlass(context)
+        ? await GlassDialog.show<bool>(
+            context: context,
+            title: AppStrings.confirmUsePlanTitle,
+            message: AppStrings.confirmUsePlanBody,
+            settings: GlassDesignTokens.darkOverlaySettings(context),
+            actions: [
+              GlassDialogAction(
+                label: AppStrings.cancel,
+                onPressed: () => Navigator.of(context).pop(false),
+              ),
+              GlassDialogAction(
+                label: AppStrings.usePlanAction,
+                isPrimary: true,
+                onPressed: () => Navigator.of(context).pop(true),
+              ),
+            ],
+          )
+        : await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text(AppStrings.confirmUsePlanTitle),
+              content: const Text(AppStrings.confirmUsePlanBody),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text(AppStrings.cancel),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: const Text(AppStrings.usePlanAction),
+                ),
+              ],
+            ),
+          );
     if (confirmed != true || !mounted) return;
     try {
       final ok = await ref
@@ -94,17 +116,21 @@ class _GoalSimulateScreenState
   Widget build(BuildContext context) {
     final goals = ref.watch(goalsListProvider);
     final textTheme = Theme.of(context).textTheme;
+    final useDarkGlass = GlassDesignTokens.isDarkGlass(context);
 
     return Scaffold(
-      appBar: AppBar(
-        leading: const AppBackButton(),
-        title: const Text(AppStrings.simulateTitle),
+      extendBody: useDarkGlass,
+      extendBodyBehindAppBar: useDarkGlass,
+      appBar: const AppAdaptiveAppBar(
+        leading: AppBackButton(),
+        title: Text(AppStrings.simulateTitle),
       ),
       bottomNavigationBar: DashboardBottomNav(
         currentIndex: 3,
         onTap: (i) => goalsBottomNavTap(context, i),
       ),
       body: GlassBackdrop(child: SafeArea(
+        bottom: !useDarkGlass,
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),

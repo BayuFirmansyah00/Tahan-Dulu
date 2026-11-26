@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/constants/glass_design_tokens.dart';
+import '../../../../core/theme/glass.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
+
 /// Placeholder generik untuk fitur yang UI-nya belum dibangun.
 /// Memungkinkan routing tervalidasi tanpa membuat 9 screen penuh.
 class FeaturePlaceholderScreen extends StatelessWidget {
@@ -17,9 +21,13 @@ class FeaturePlaceholderScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final useDarkGlass = GlassDesignTokens.isDarkGlass(context);
     return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: Center(
+      extendBodyBehindAppBar: useDarkGlass,
+      appBar: AppAdaptiveAppBar(title: Text(title)),
+      body: GlassBackdrop(
+        child: SafeArea(
+          child: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
@@ -37,6 +45,8 @@ class FeaturePlaceholderScreen extends StatelessWidget {
             ],
           ),
         ),
+      ),
+      ),
       ),
     );
   }

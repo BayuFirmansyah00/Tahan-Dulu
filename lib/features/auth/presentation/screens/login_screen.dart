@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
+    hide GlassQuality;
 
+import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/theme/glass.dart';
 
 import '../../../../core/constants/app_assets.dart';
@@ -209,6 +212,44 @@ class _GoogleButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (GlassDesignTokens.isDarkGlass(context)) {
+      return SizedBox(
+        width: double.infinity,
+        height: 48,
+        child: GlassButton.custom(
+          useOwnLayer: true,
+          onTap: isLoading ? () {} : (onPressed ?? () {}),
+          enabled: !isLoading && onPressed != null,
+          surfaceStyle: GlassSurfaceStyle.glass,
+          style: GlassButtonStyle.prominent,
+          shape: const LiquidRoundedSuperellipse(borderRadius: 24),
+          settings: GlassDesignTokens.darkPlatterSettings(context),
+          tintColor: const Color(0x18FFFFFF),
+          child: isLoading
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Wrap(
+                  alignment: WrapAlignment.center,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 10,
+                  children: const [
+                    _GoogleBadge(),
+                    Text(
+                      AppStrings.continueWithGoogle,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+        ),
+      );
+    }
+
     return SizedBox(
       width: double.infinity,
       child: OutlinedButton(

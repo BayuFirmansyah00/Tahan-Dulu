@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/glass.dart';
 
 import '../../../../core/utils/rupiah_input_formatter.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_text_field.dart';
 
 /// Komponen form bersama untuk pengaturan biaya administrasi akun bulanan.
@@ -82,8 +83,8 @@ class AdminFeeFormSection extends StatelessWidget {
           const SizedBox(height: 12),
           Text('Tanggal Pemotongan', style: textTheme.labelLarge),
           const SizedBox(height: 8),
-          DropdownButtonFormField<int>(
-            initialValue: feeDay,
+          AppAdaptiveDropdown<int>(
+            value: feeDay,
             decoration: InputDecoration(
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 12),

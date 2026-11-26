@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
+    hide GlassQuality;
 
 import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/glass.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_image_icon.dart';
@@ -20,14 +23,19 @@ class TransferHistoryScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final transfersAsync = ref.watch(transfersProvider);
+    final useDarkGlass = GlassDesignTokens.isDarkGlass(context);
 
     return Scaffold(
-      appBar: AppBar(
-        leading: const AppBackButton(),
-        title: const Text('Riwayat Transfer'),
+      extendBodyBehindAppBar: useDarkGlass,
+      appBar: const AppAdaptiveAppBar(
+        leading: AppBackButton(),
+        title: Text('Riwayat Transfer'),
         centerTitle: true,
       ),
-      body: RefreshIndicator(
+      body: GlassBackdrop(
+        child: SafeArea(
+          bottom: false,
+          child: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(transfersProvider);
         },
@@ -70,6 +78,8 @@ class TransferHistoryScreen extends ConsumerWidget {
             );
           },
         ),
+        ),
+      ),
       ),
     );
   }
@@ -217,32 +227,50 @@ class _TransferDetailSheetState extends ConsumerState<_TransferDetailSheet> {
   bool _cancelling = false;
 
   Future<void> _confirmCancelTransfer() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Batalkan Transfer?'),
-        content: Text(
-          'Saldo sebesar ${widget.transfer.amountFormatted ?? CurrencyFormatter.format(widget.transfer.amount)} '
-          'akan dikembalikan ke rekening ${widget.transfer.fromInstrument?.name ?? 'asal'} dan ditarik '
-          'dari rekening ${widget.transfer.toInstrument?.name ?? 'tujuan'}.\n\n'
-          'Pastikan saldo pada rekening tujuan masih mencukupi untuk pembalikan ini.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Kembali'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.error,
-              foregroundColor: Colors.white,
+    final message =
+        'Saldo sebesar ${widget.transfer.amountFormatted ?? CurrencyFormatter.format(widget.transfer.amount)} '
+        'akan dikembalikan ke rekening ${widget.transfer.fromInstrument?.name ?? 'asal'} dan ditarik '
+        'dari rekening ${widget.transfer.toInstrument?.name ?? 'tujuan'}.\n\n'
+        'Pastikan saldo pada rekening tujuan masih mencukupi untuk pembalikan ini.';
+    final confirmed = GlassDesignTokens.isDarkGlass(context)
+        ? await GlassDialog.show<bool>(
+            context: context,
+            title: 'Batalkan Transfer?',
+            message: message,
+            settings: GlassDesignTokens.darkOverlaySettings(context),
+            actions: [
+              GlassDialogAction(
+                label: 'Kembali',
+                onPressed: () => Navigator.of(context).pop(false),
+              ),
+              GlassDialogAction(
+                label: 'Ya, Batalkan',
+                isDestructive: true,
+                onPressed: () => Navigator.of(context).pop(true),
+              ),
+            ],
+          )
+        : await showDialog<bool>(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: const Text('Batalkan Transfer?'),
+              content: Text(message),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(false),
+                  child: const Text('Kembali'),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.error,
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: () => Navigator.of(ctx).pop(true),
+                  child: const Text('Ya, Batalkan'),
+                ),
+              ],
             ),
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Ya, Batalkan'),
-          ),
-        ],
-      ),
-    );
+          );
 
     if (confirmed != true || !mounted) return;
 
@@ -275,19 +303,35 @@ class _TransferDetailSheetState extends ConsumerState<_TransferDetailSheet> {
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _cancelling = false);
-      showDialog(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('Tidak Dapat Membatalkan'),
-          content: Text(e.message),
+      if (GlassDesignTokens.isDarkGlass(context)) {
+        await GlassDialog.show<void>(
+          context: context,
+          title: 'Tidak Dapat Membatalkan',
+          message: e.message,
+          settings: GlassDesignTokens.darkOverlaySettings(context),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('Mengerti'),
+            GlassDialogAction(
+              label: 'Mengerti',
+              isPrimary: true,
+              onPressed: () => Navigator.of(context).pop(),
             ),
           ],
-        ),
-      );
+        );
+      } else {
+        await showDialog<void>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Tidak Dapat Membatalkan'),
+            content: Text(e.message),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text('Mengerti'),
+              ),
+            ],
+          ),
+        );
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() => _cancelling = false);

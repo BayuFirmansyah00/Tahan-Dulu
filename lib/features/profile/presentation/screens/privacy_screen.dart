@@ -5,6 +5,8 @@ import '../../../../core/theme/glass.dart';
 
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/constants/glass_design_tokens.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_image_icon.dart';
 import '../utils/account_security_dialogs.dart';
 import '../utils/profile_ui.dart';
@@ -15,12 +17,14 @@ class PrivacyScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final useDarkGlass = GlassDesignTokens.isDarkGlass(context);
     return Scaffold(
       backgroundColor: context.canvasColor,
-      appBar: AppBar(
+      extendBodyBehindAppBar: useDarkGlass,
+      appBar: AppAdaptiveAppBar(
         leading: const AppBackButton(),
         title: const Text(AppStrings.privacyTitle),
-        flexibleSpace: const AppBarMintCorner(),
+        flexibleSpace: useDarkGlass ? null : const AppBarMintCorner(),
       ),
       body: GlassBackdrop(child: SafeArea(
         child: Center(

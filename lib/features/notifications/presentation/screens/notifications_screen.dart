@@ -6,6 +6,7 @@ import '../../../../core/theme/glass.dart';
 
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/routing/notification_deep_link.dart';
 import '../../../../core/utils/date_formatter.dart';
@@ -119,9 +120,13 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     final filter = ref.watch(notificationFilterProvider);
     final paginated = ref.watch(paginatedNotificationsProvider);
 
+    final useDarkGlass = GlassDesignTokens.isDarkGlass(context);
+
     return Scaffold(
+      extendBody: useDarkGlass,
+      extendBodyBehindAppBar: useDarkGlass,
       backgroundColor: context.canvasColor,
-      appBar: AppBar(
+      appBar: AppAdaptiveAppBar(
         leading: const AppBackButton(),
         backgroundColor: context.canvasColor,
         title: const Text(AppStrings.notificationsTitle),
@@ -161,6 +166,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       bottomNavigationBar: DashboardBottomNav(onTap: (i) => _onNav(i, context)),
       body: GlassBackdrop(
         child: SafeArea(
+          bottom: !useDarkGlass,
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 480),
@@ -365,32 +371,51 @@ class _FilterTabs extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-      child: Row(
-        children: [
-          Expanded(
-            child: _Tab(
-              label: AppStrings.notifTabAll,
-              selected: filter == NotificationFilter.all,
-              onTap: () => onSelect(NotificationFilter.all),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: _Tab(
-              label: AppStrings.notifTabUnread,
-              selected: filter == NotificationFilter.unread,
-              onTap: () => onSelect(NotificationFilter.unread),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: _Tab(
-              label: AppStrings.notifTabReminder,
-              selected: filter == NotificationFilter.reminder,
-              onTap: () => onSelect(NotificationFilter.reminder),
-            ),
-          ),
+      child: AppAdaptiveSegmentedControl<NotificationFilter>(
+        values: const [
+          NotificationFilter.all,
+          NotificationFilter.unread,
+          NotificationFilter.reminder,
         ],
+        selected: filter,
+        onSelected: onSelect,
+        labelBuilder: (f) {
+          switch (f) {
+            case NotificationFilter.all:
+              return AppStrings.notifTabAll;
+            case NotificationFilter.unread:
+              return AppStrings.notifTabUnread;
+            case NotificationFilter.reminder:
+              return AppStrings.notifTabReminder;
+          }
+        },
+        lightBuilder: (_) => Row(
+          children: [
+            Expanded(
+              child: _Tab(
+                label: AppStrings.notifTabAll,
+                selected: filter == NotificationFilter.all,
+                onTap: () => onSelect(NotificationFilter.all),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _Tab(
+                label: AppStrings.notifTabUnread,
+                selected: filter == NotificationFilter.unread,
+                onTap: () => onSelect(NotificationFilter.unread),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _Tab(
+                label: AppStrings.notifTabReminder,
+                selected: filter == NotificationFilter.reminder,
+                onTap: () => onSelect(NotificationFilter.reminder),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

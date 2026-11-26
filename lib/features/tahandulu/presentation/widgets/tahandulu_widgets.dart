@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_assets.dart';
+import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/theme/glass.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_icons.dart';
 import '../../../../data/datasources/remote/api_config.dart';
 import '../../../../data/models/purchase_consideration.dart';
@@ -49,12 +51,14 @@ class TahanDuluScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final useDarkGlass = GlassDesignTokens.isDarkGlass(context);
     return Scaffold(
       backgroundColor: context.canvasColor,
-      appBar: AppBar(
+      extendBodyBehindAppBar: useDarkGlass,
+      appBar: AppAdaptiveAppBar(
         leading: const AppBackButton(),
         title: Text(title),
-        backgroundColor: context.canvasColor,
+        backgroundColor: useDarkGlass ? null : context.canvasColor,
         actions: actions,
       ),
       bottomNavigationBar: DashboardBottomNav(

@@ -8,6 +8,7 @@ import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../data/models/financial_goal.dart';
 import '../../../../data/providers/onboarding_providers.dart';
@@ -326,10 +327,10 @@ class GoalAccountDropdown extends ConsumerWidget {
     final instruments = data?.financialInstruments ?? const [];
     if (instruments.isEmpty) return const SizedBox.shrink();
     final ids = {for (final e in instruments) e.id};
-    return DropdownButtonFormField<String>(
+    return AppAdaptiveDropdown<String>(
       isExpanded: true,
-      initialValue: value != null && ids.contains(value) ? value : null,
-      hint: const Text(AppStrings.accountHint),
+      value: value != null && ids.contains(value) ? value : null,
+      hint: AppStrings.accountHint,
       items: [
         for (final e in instruments)
           DropdownMenuItem(

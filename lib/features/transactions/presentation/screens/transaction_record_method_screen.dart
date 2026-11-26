@@ -5,7 +5,9 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/glass.dart';
 
 import '../../../../core/constants/app_assets.dart';
+import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/routing/app_routes.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_icons.dart';
 import '../../../../core/widgets/app_method_tile.dart';
 import '../providers/transactions_controller.dart';
@@ -39,12 +41,13 @@ class TransactionRecordMethodScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final textTheme = Theme.of(context).textTheme;
 
+    final useDarkGlass = GlassDesignTokens.isDarkGlass(context);
+
     return Scaffold(
+      extendBodyBehindAppBar: useDarkGlass,
       backgroundColor: context.canvasColor,
-      appBar: AppBar(
+      appBar: AppAdaptiveAppBar(
         backgroundColor: context.canvasColor,
-        elevation: 0,
-        scrolledUnderElevation: 0,
         leading: AppBackButton(onPressed: () => context.pop()),
         title: Text(
           'Pilih Metode Catat',

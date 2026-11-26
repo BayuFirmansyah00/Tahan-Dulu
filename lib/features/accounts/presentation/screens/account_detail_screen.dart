@@ -6,13 +6,16 @@ import '../../../../core/theme/glass.dart';
 
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_icons.dart';
 import '../../../../core/widgets/app_states.dart';
+import '../../../../core/widgets/app_text_field.dart';
 import '../../../../data/models/financial_account.dart';
 import '../../../../data/models/transaction_model.dart';
 import '../../../../data/providers/account_providers.dart';
@@ -53,10 +56,15 @@ class _AccountDetailScreenState extends ConsumerState<AccountDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final useDarkGlass = GlassDesignTokens.isDarkGlass(context);
+
     return Scaffold(
-      appBar: AppBar(leading: const AppBackButton()),
+      extendBody: useDarkGlass,
+      extendBodyBehindAppBar: useDarkGlass,
+      appBar: AppAdaptiveAppBar(leading: const AppBackButton()),
       bottomNavigationBar: DashboardBottomNav(onTap: _onNav),
       body: GlassBackdrop(child: SafeArea(
+        bottom: !useDarkGlass,
         child: _Body(
           accountId: widget.accountId,
           obscured: _obscured,
@@ -810,9 +818,10 @@ class _ReconcileLegacyCashSheetState
           ] else ...[
             Text('Rekening Tujuan', style: textTheme.labelMedium),
             const SizedBox(height: 6),
-            DropdownButtonFormField<String>(
-              initialValue: _selectedToAccountId,
-              hint: const Text('Pilih rekening tujuan'),
+            AppAdaptiveDropdown<String>(
+              value: _selectedToAccountId,
+              hint: 'Pilih rekening tujuan',
+              isExpanded: true,
               decoration: InputDecoration(
                 filled: true,
                 fillColor: context.palette.surface,
@@ -835,23 +844,12 @@ class _ReconcileLegacyCashSheetState
               onChanged: (val) => setState(() => _selectedToAccountId = val),
             ),
             const SizedBox(height: 14),
-            Text('Nominal Rekonsiliasi (Rp)', style: textTheme.labelMedium),
-            const SizedBox(height: 6),
-            TextField(
+            AppTextField(
               controller: _amountController,
+              label: 'Nominal Rekonsiliasi (Rp)',
+              hint: '0',
+              prefixText: 'Rp ',
               keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                prefixText: 'Rp ',
-                hintText: '0',
-                filled: true,
-                fillColor: context.palette.surface,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: context.palette.outlineVariant),
-                ),
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              ),
             ),
             const SizedBox(height: 4),
             Text(

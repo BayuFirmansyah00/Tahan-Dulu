@@ -7,6 +7,7 @@ import '../../../../core/theme/glass.dart';
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/constants/glass_design_tokens.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
@@ -29,28 +30,17 @@ class GoalsListScreen extends ConsumerWidget {
 
     return Scaffold(
       extendBody: useDarkGlass,
-      appBar: AppBar(
+      extendBodyBehindAppBar: useDarkGlass,
+      appBar: AppAdaptiveAppBar(
         title: const Text(AppStrings.goalsListTitle),
         actions: [
-          IconButton(
+          AppAdaptiveIconButton(
             tooltip: AppStrings.priorityTitle,
             onPressed: () => context.push(AppRoutes.goalsPriority),
-            icon: Container(
-              width: 44,
-              height: 44,
-              padding: const EdgeInsets.all(7),
-              decoration: BoxDecoration(
-                color: context.palette.primaryContainer,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: context.palette.primary.withValues(alpha: 0.25),
-                ),
-              ),
-              child: const AppImageIcon(
-                assetPath: AppAssets.priorityNavIcon,
-                size: 30,
-                fallbackIcon: Icons.leaderboard_outlined,
-              ),
+            icon: const AppImageIcon(
+              assetPath: AppAssets.priorityNavIcon,
+              size: 26,
+              fallbackIcon: Icons.leaderboard_outlined,
             ),
           ),
         ],
@@ -391,14 +381,29 @@ class _TabBar extends StatelessWidget {
       );
     }
 
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        chip(GoalTab.active, AppStrings.goalStatusActive, activeCount),
-        chip(GoalTab.reached, AppStrings.goalStatusReached, reachedCount),
-        chip(GoalTab.overdue, AppStrings.goalTabOverdue, overdueCount),
-      ],
+    return AppAdaptiveSegmentedControl<GoalTab>(
+      values: GoalTab.values,
+      selected: tab,
+      onSelected: onChanged,
+      labelBuilder: (value) {
+        switch (value) {
+          case GoalTab.active:
+            return '${AppStrings.goalStatusActive} ($activeCount)';
+          case GoalTab.reached:
+            return '${AppStrings.goalStatusReached} ($reachedCount)';
+          case GoalTab.overdue:
+            return '${AppStrings.goalTabOverdue} ($overdueCount)';
+        }
+      },
+      lightBuilder: (_) => Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          chip(GoalTab.active, AppStrings.goalStatusActive, activeCount),
+          chip(GoalTab.reached, AppStrings.goalStatusReached, reachedCount),
+          chip(GoalTab.overdue, AppStrings.goalTabOverdue, overdueCount),
+        ],
+      ),
     );
   }
 }

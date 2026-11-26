@@ -4,11 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
+    hide GlassQuality;
 
 import '../../../../core/constants/app_assets.dart';
+import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/glass.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../data/datasources/remote/api_client.dart';
 import '../../../auth/presentation/providers/auth_controller.dart';
@@ -292,12 +296,14 @@ class _DeleteAccountOtpScreenState
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final busy = _requestingOtp || _verifying || _deleting;
 
+    final useDarkGlass = GlassDesignTokens.isDarkGlass(context);
+
     return GlassBackdrop(
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
+        extendBodyBehindAppBar: useDarkGlass,
+        appBar: AppAdaptiveAppBar(
+          backgroundColor: useDarkGlass ? null : Colors.transparent,
           title: const Text('Verifikasi OTP Hapus Akun'),
         ),
         body: SafeArea(
@@ -379,44 +385,73 @@ class _DeleteAccountOtpScreenState
                     return SizedBox(
                       width: 46,
                       height: 56,
-                      child: TextField(
-                        key: Key('delete_otp_box_$index'),
-                        controller: _controllers[index],
-                        focusNode: _focusNodes[index],
-                        enabled: !busy,
-                        keyboardType: TextInputType.number,
-                        textAlign: TextAlign.center,
-                        maxLength: 6,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                        ],
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.w800,
+                      child: useDarkGlass
+                          ? GlassTextField(
+                              key: Key('delete_otp_box_$index'),
+                              controller: _controllers[index],
+                              focusNode: _focusNodes[index],
+                              enabled: !busy,
+                              keyboardType: TextInputType.number,
+                              maxLength: 6,
+                              height: 56,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 14,
+                              ),
+                              useOwnLayer: true,
+                              surfaceStyle: GlassSurfaceStyle.glass,
+                              settings: GlassDesignTokens.darkInputSettings(context),
+                              shape: const LiquidRoundedRectangle(
+                                borderRadius: 14,
+                              ),
+                              textStyle: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800,
+                              ),
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                              ],
+                              onChanged: (v) => _onDigitChanged(index, v),
+                            )
+                          : TextField(
+                              key: Key('delete_otp_box_$index'),
+                              controller: _controllers[index],
+                              focusNode: _focusNodes[index],
+                              enabled: !busy,
+                              keyboardType: TextInputType.number,
+                              textAlign: TextAlign.center,
+                              maxLength: 6,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                              ],
+                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                              decoration: InputDecoration(
+                                counterText: '',
+                                filled: true,
+                                fillColor: isDark
+                                    ? Colors.white.withValues(alpha: 0.08)
+                                    : Colors.white.withValues(alpha: 0.85),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                  borderSide: BorderSide(
+                                    color: isDark
+                                        ? Colors.white.withValues(alpha: 0.18)
+                                        : Colors.black.withValues(alpha: 0.12),
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                  borderSide: BorderSide(
+                                    color: context.palette.error,
+                                    width: 1.8,
+                                  ),
+                                ),
+                              ),
+                              onChanged: (v) => _onDigitChanged(index, v),
                             ),
-                        decoration: InputDecoration(
-                          counterText: '',
-                          filled: true,
-                          fillColor: isDark
-                              ? Colors.white.withValues(alpha: 0.08)
-                              : Colors.white.withValues(alpha: 0.85),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: BorderSide(
-                              color: isDark
-                                  ? Colors.white.withValues(alpha: 0.18)
-                                  : Colors.black.withValues(alpha: 0.12),
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: BorderSide(
-                              color: context.palette.error,
-                              width: 1.8,
-                            ),
-                          ),
-                        ),
-                        onChanged: (v) => _onDigitChanged(index, v),
-                      ),
                     );
                   }),
                 ),
@@ -450,26 +485,19 @@ class _DeleteAccountOtpScreenState
                   onPressed: busy ? null : _verifyAndDelete,
                 ),
                 const SizedBox(height: 12),
-                OutlinedButton(
+                AppAdaptiveOutlinedButton(
                   onPressed: (_requestingOtp ||
                           _resendCooldownSeconds > 0 ||
                           _verifying ||
                           _deleting)
                       ? null
                       : _requestOtp,
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  child: Text(
-                    _requestingOtp
-                        ? 'Mengirim Kode OTP...'
-                        : _resendCooldownSeconds > 0
-                            ? 'Kirim Ulang dalam ${_resendCooldownSeconds}d'
-                            : 'Kirim Ulang Kode OTP',
-                  ),
+                  borderRadius: 14,
+                  label: _requestingOtp
+                      ? 'Mengirim Kode OTP...'
+                      : _resendCooldownSeconds > 0
+                          ? 'Kirim Ulang dalam ${_resendCooldownSeconds}d'
+                          : 'Kirim Ulang Kode OTP',
                 ),
                 const SizedBox(height: 8),
                 TextButton(

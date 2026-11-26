@@ -6,11 +6,15 @@ import '../../../../core/theme/glass.dart';
 
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/rupiah_input_formatter.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_button.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
+    hide GlassQuality;
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../data/models/recurring_expense.dart';
@@ -141,26 +145,45 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
   }
 
   Future<void> _deleteExpense(RecurringExpense expense) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text(AppStrings.deleteExpenseTitle),
-        content: Text('Hapus pengeluaran "${expense.name}"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text(AppStrings.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
+    final message = 'Hapus pengeluaran "${expense.name}"?';
+    final confirmed = GlassDesignTokens.isDarkGlass(context)
+        ? await GlassDialog.show<bool>(
+            context: context,
+            title: AppStrings.deleteExpenseTitle,
+            message: message,
+            settings: GlassDesignTokens.darkOverlaySettings(context),
+            actions: [
+              GlassDialogAction(
+                label: AppStrings.cancel,
+                onPressed: () => Navigator.of(context).pop(false),
+              ),
+              GlassDialogAction(
+                label: AppStrings.deleteExpenseConfirm,
+                isDestructive: true,
+                onPressed: () => Navigator.of(context).pop(true),
+              ),
+            ],
+          )
+        : await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text(AppStrings.deleteExpenseTitle),
+              content: Text(message),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text(AppStrings.cancel),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.error,
+                  ),
+                  child: const Text(AppStrings.deleteExpenseConfirm),
+                ),
+              ],
             ),
-            child: const Text(AppStrings.deleteExpenseConfirm),
-          ),
-        ],
-      ),
-    );
+          );
     if (confirmed == true && mounted) {
       ref.read(expensesControllerProvider.notifier).removeExpense(expense.id);
     }
@@ -172,7 +195,8 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      appBar: AppBar(),
+      extendBodyBehindAppBar: GlassDesignTokens.isDarkGlass(context),
+      appBar: const AppAdaptiveAppBar(),
       body: GlassBackdrop(child: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -266,21 +290,16 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
                                   ),
                                 ),
                                 const SizedBox(height: 20),
-                                OutlinedButton.icon(
+                                AppAdaptiveOutlinedButton(
                                   onPressed: () => _openSheet(),
                                   icon: const Icon(Icons.add, size: 20),
-                                  label: const Text(AppStrings.addExpenseAction),
-                                  style: OutlinedButton.styleFrom(
-                                    foregroundColor: context.palette.primary,
-                                    side: BorderSide(color: context.palette.primary),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 24,
-                                      vertical: 12,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                  ),
+                                  label: AppStrings.addExpenseAction,
+                                  foregroundColor: context.palette.primary,
+                                  borderColor: context.palette.primary,
+                                  tintColor: context.palette.primary
+                                      .withValues(alpha: 0.14),
+                                  height: 46,
+                                  borderRadius: 12,
                                 ),
                               ],
                             ),
@@ -302,18 +321,16 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
                           const SizedBox(height: 8),
 
                           // Tombol Tambah Pengeluaran Lain
-                          OutlinedButton.icon(
+                          AppAdaptiveOutlinedButton(
                             onPressed: () => _openSheet(),
                             icon: const Icon(Icons.add, size: 18),
-                            label: const Text(AppStrings.addAnotherExpenseAction),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: context.palette.primary,
-                              side: BorderSide(color: context.palette.primary),
-                              minimumSize: const Size(double.infinity, 48),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
+                            label: AppStrings.addAnotherExpenseAction,
+                            foregroundColor: context.palette.primary,
+                            borderColor: context.palette.primary,
+                            tintColor: context.palette.primary
+                                .withValues(alpha: 0.14),
+                            height: 48,
+                            borderRadius: 12,
                           ),
                         ],
                       ],
@@ -632,26 +649,45 @@ class _ExpenseBottomSheetState extends State<_ExpenseBottomSheet> {
   Future<void> _delete() async {
     final expense = widget.expense;
     if (expense == null) return;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text(AppStrings.deleteExpenseTitle),
-        content: Text('Hapus pengeluaran "${expense.name}"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text(AppStrings.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
+    final message = 'Hapus pengeluaran "${expense.name}"?';
+    final confirmed = GlassDesignTokens.isDarkGlass(context)
+        ? await GlassDialog.show<bool>(
+            context: context,
+            title: AppStrings.deleteExpenseTitle,
+            message: message,
+            settings: GlassDesignTokens.darkOverlaySettings(context),
+            actions: [
+              GlassDialogAction(
+                label: AppStrings.cancel,
+                onPressed: () => Navigator.of(context).pop(false),
+              ),
+              GlassDialogAction(
+                label: AppStrings.deleteExpenseConfirm,
+                isDestructive: true,
+                onPressed: () => Navigator.of(context).pop(true),
+              ),
+            ],
+          )
+        : await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text(AppStrings.deleteExpenseTitle),
+              content: Text(message),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text(AppStrings.cancel),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.error,
+                  ),
+                  child: const Text(AppStrings.deleteExpenseConfirm),
+                ),
+              ],
             ),
-            child: const Text(AppStrings.deleteExpenseConfirm),
-          ),
-        ],
-      ),
-    );
+          );
     if (confirmed == true && mounted) {
       Navigator.of(context).pop(
         _ExpenseSheetResult(deleted: true, expense: expense),
@@ -813,15 +849,11 @@ class _ExpenseBottomSheetState extends State<_ExpenseBottomSheet> {
                       Row(
                         children: [
                           Expanded(
-                            child: OutlinedButton(
+                            child: AppAdaptiveOutlinedButton(
                               onPressed: () => Navigator.of(context).pop(),
-                              style: OutlinedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 14),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              child: const Text(AppStrings.cancel),
+                              label: AppStrings.cancel,
+                              height: 48,
+                              borderRadius: 12,
                             ),
                           ),
                           const SizedBox(width: 12),

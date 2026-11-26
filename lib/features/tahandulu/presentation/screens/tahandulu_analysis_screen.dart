@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
+    hide GlassQuality;
 
+import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/theme/glass.dart';
 
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_icons.dart';
 import '../../../../core/widgets/app_states.dart';
@@ -34,32 +38,50 @@ class TahanDuluAnalysisScreen extends ConsumerWidget {
     return TahanDuluScaffold(
       title: AppStrings.reviewFirstTitle,
       actions: [
-        IconButton(
+        AppAdaptiveIconButton(
           icon: const Icon(Icons.delete_outline),
           tooltip: 'Hapus Item',
           onPressed: () async {
-            final confirmed = await showDialog<bool>(
-              context: context,
-              builder: (ctx) => AlertDialog(
-                title: const Text('Hapus barang ini?'),
-                content: const Text(
-                  'Item ini akan dihapus dari daftar Tahan Dulu. Jika barang sudah pernah dibeli, transaksi di buku kas tetap aman dan tidak akan terhapus.',
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(ctx).pop(false),
-                    child: const Text(AppStrings.cancel),
-                  ),
-                  TextButton(
-                    onPressed: () => Navigator.of(ctx).pop(true),
-                    style: TextButton.styleFrom(
-                      foregroundColor: Theme.of(ctx).colorScheme.error,
+            const message =
+                'Item ini akan dihapus dari daftar Tahan Dulu. Jika barang sudah pernah dibeli, transaksi di buku kas tetap aman dan tidak akan terhapus.';
+            final confirmed = GlassDesignTokens.isDarkGlass(context)
+                ? await GlassDialog.show<bool>(
+                    context: context,
+                    title: 'Hapus barang ini?',
+                    message: message,
+                    settings: GlassDesignTokens.darkOverlaySettings(context),
+                    actions: [
+                      GlassDialogAction(
+                        label: AppStrings.cancel,
+                        onPressed: () => Navigator.of(context).pop(false),
+                      ),
+                      GlassDialogAction(
+                        label: 'Hapus',
+                        isDestructive: true,
+                        onPressed: () => Navigator.of(context).pop(true),
+                      ),
+                    ],
+                  )
+                : await showDialog<bool>(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: const Text('Hapus barang ini?'),
+                      content: const Text(message),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(ctx).pop(false),
+                          child: const Text(AppStrings.cancel),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.of(ctx).pop(true),
+                          style: TextButton.styleFrom(
+                            foregroundColor: Theme.of(ctx).colorScheme.error,
+                          ),
+                          child: const Text('Hapus'),
+                        ),
+                      ],
                     ),
-                    child: const Text('Hapus'),
-                  ),
-                ],
-              ),
-            );
+                  );
             if (confirmed != true || !context.mounted) return;
             final ok = await ref.read(tahanDuluControllerProvider.notifier).deleteItem(itemId);
             if (!context.mounted) return;

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/glass.dart';
 
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
@@ -125,8 +126,11 @@ class _AddRecurringExpenseScreenState
     final textTheme = Theme.of(context).textTheme;
     final showError = _attempted;
 
+    final useDarkGlass = GlassDesignTokens.isDarkGlass(context);
+
     return Scaffold(
-      appBar: AppBar(title: const Text(AppStrings.addRecurringExpenseTitle)),
+      extendBodyBehindAppBar: useDarkGlass,
+      appBar: AppAdaptiveAppBar(title: const Text(AppStrings.addRecurringExpenseTitle)),
       body: GlassBackdrop(child: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -194,15 +198,17 @@ class _AddRecurringExpenseScreenState
                     style: textTheme.titleMedium,
                   ),
                   const SizedBox(height: 8),
-                  DropdownButtonFormField<String>(
-                    initialValue: _frequency,
+                  AppAdaptiveDropdown<String>(
+                    value: _frequency,
                     items: _frequencies
                         .map((f) => DropdownMenuItem(
                               value: f,
                               child: Text(f.toUpperCase()),
                             ))
                         .toList(),
-                    onChanged: (v) => setState(() => _frequency = v!),
+                    onChanged: (v) {
+                      if (v != null) setState(() => _frequency = v);
+                    },
                     decoration: InputDecoration(
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -261,8 +267,9 @@ class _AddRecurringExpenseScreenState
                       ),
                     )
                   else
-                    DropdownButtonFormField<String?>(
-                      initialValue: _instrumentId,
+                    AppAdaptiveDropdown<String?>(
+                      value: _instrumentId,
+                      isExpanded: true,
                       items: [
                         const DropdownMenuItem<String?>(
                           value: null,

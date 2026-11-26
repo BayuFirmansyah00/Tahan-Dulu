@@ -6,6 +6,7 @@ import '../../../../core/theme/glass.dart';
 
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/rupiah_input_formatter.dart';
@@ -13,6 +14,7 @@ import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_image_icon.dart';
 import '../../../../core/widgets/app_states.dart';
+import '../../../../core/widgets/app_text_field.dart';
 import '../../../../data/models/reminder_settings.dart';
 import '../../../dashboard/presentation/widgets/dashboard_bottom_nav.dart';
 import '../../../goals/presentation/providers/goals_controller.dart';
@@ -71,7 +73,7 @@ class _SavingReminderScreenState extends ConsumerState<SavingReminderScreen> {
   }
 
   Future<void> _pickTime(SavingReminderDraft draft) async {
-    final picked = await showTimePicker(
+    final picked = await showAppTimePicker(
       context: context,
       initialTime: TimeOfDay(hour: draft.hour, minute: draft.minute),
     );
@@ -140,13 +142,18 @@ class _SavingReminderScreenState extends ConsumerState<SavingReminderScreen> {
     final goals = ref.watch(goalsListProvider);
     _syncAmountOnce(draft);
 
+    final useDarkGlass = GlassDesignTokens.isDarkGlass(context);
+
     return Scaffold(
-      appBar: AppBar(
+      extendBody: useDarkGlass,
+      extendBodyBehindAppBar: useDarkGlass,
+      appBar: AppAdaptiveAppBar(
         leading: const AppBackButton(),
         title: const Text(AppStrings.savingReminderTitle),
       ),
       bottomNavigationBar: DashboardBottomNav(onTap: _onNav),
       body: GlassBackdrop(child: SafeArea(
+        bottom: !useDarkGlass,
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
@@ -219,13 +226,13 @@ class _Form extends ConsumerWidget {
             const SizedBox(height: 6),
             goals.isEmpty
                 ? _EmptyGoalCard(textTheme: textTheme)
-                : DropdownButtonFormField<String>(
+                : AppAdaptiveDropdown<String>(
                     isExpanded: true,
-                    initialValue: draft.goalId != null &&
+                    value: draft.goalId != null &&
                             goals.any((g) => g.id == draft.goalId)
                         ? draft.goalId
                         : null,
-                    hint: const Text(AppStrings.savingTargetHint),
+                    hint: AppStrings.savingTargetHint,
                     items: [
                       for (final g in goals)
                         DropdownMenuItem<String>(
@@ -244,11 +251,11 @@ class _Form extends ConsumerWidget {
             const SizedBox(height: 14),
             _Label(textTheme: textTheme, text: AppStrings.savingAmountLabel),
             const SizedBox(height: 6),
-            TextFormField(
+            AppTextField(
               controller: amountController,
+              prefixText: 'Rp ',
               keyboardType: TextInputType.number,
               inputFormatters: [RupiahInputFormatter()],
-              decoration: const InputDecoration(prefixText: 'Rp '),
               validator: (_) =>
                   draft.isAmountValid ? null : AppStrings.savingAmountRequired,
               onChanged: notifier.setAmountText,
@@ -266,9 +273,9 @@ class _Form extends ConsumerWidget {
               text: AppStrings.savingFrequencyLabel,
             ),
             const SizedBox(height: 6),
-            DropdownButtonFormField<SavingFrequency>(
+            AppAdaptiveDropdown<SavingFrequency>(
               isExpanded: true,
-              initialValue: draft.frequency,
+              value: draft.frequency,
               items: [
                 for (final f in SavingFrequency.values)
                   DropdownMenuItem(
@@ -284,9 +291,9 @@ class _Form extends ConsumerWidget {
             if (draft.frequency == SavingFrequency.weekly) ...[
               _Label(textTheme: textTheme, text: AppStrings.savingWeekdayLabel),
               const SizedBox(height: 6),
-              DropdownButtonFormField<int>(
+              AppAdaptiveDropdown<int>(
                 isExpanded: true,
-                initialValue: draft.weekday,
+                value: draft.weekday,
                 items: [
                   for (var i = 1; i <= 7; i++)
                     DropdownMenuItem(
@@ -301,9 +308,9 @@ class _Form extends ConsumerWidget {
             ] else if (draft.frequency == SavingFrequency.monthly) ...[
               _Label(textTheme: textTheme, text: AppStrings.savingDateLabel),
               const SizedBox(height: 6),
-              DropdownButtonFormField<int>(
+              AppAdaptiveDropdown<int>(
                 isExpanded: true,
-                initialValue: draft.dayOfMonth,
+                value: draft.dayOfMonth,
                 items: [
                   for (var d = 1; d <= 31; d++)
                     DropdownMenuItem(
@@ -377,26 +384,15 @@ class _Form extends ConsumerWidget {
               onPressed: saving ? null : onSave,
             ),
             const SizedBox(height: 10),
-            OutlinedButton(
+            AppAdaptiveOutlinedButton(
+              label: AppStrings.savingDeactivateAction,
+              icon: const Icon(Icons.notifications_off_outlined, size: 18),
+              foregroundColor: context.palette.error,
+              borderColor: context.palette.error,
               onPressed: saving ? null : onDeactivate,
-              style: OutlinedButton.styleFrom(
-                foregroundColor: context.palette.error,
-                side: BorderSide(color: context.palette.error),
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.notifications_off_outlined, size: 18),
-                  SizedBox(width: 8),
-                  Flexible(
-                    child: Text(
-                      AppStrings.savingDeactivateAction,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
             ),
+            if (GlassDesignTokens.isDarkGlass(context))
+              const SizedBox(height: 80),
           ],
         ),
       ),

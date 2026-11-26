@@ -1170,30 +1170,14 @@ class _TahanDuluCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 10),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: context.palette.tertiary,
-                    foregroundColor: context.palette.onTertiary,
-                    minimumSize: const Size(0, 40),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 20),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    elevation: 0,
-                    textStyle: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
+                AppAdaptiveElevatedButton(
+                  backgroundColor: context.palette.tertiary,
+                  foregroundColor: context.palette.onTertiary,
+                  height: 40,
+                  borderRadius: 20,
+                  label: AppStrings.tahanDuluSee,
+                  icon: const Icon(Icons.chevron_right, size: 18),
                   onPressed: () => context.push(AppRoutes.tahanDulu),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: const [
-                      Text(AppStrings.tahanDuluSee),
-                      SizedBox(width: 4),
-                      Icon(Icons.chevron_right, size: 18),
-                    ],
-                  ),
                 ),
               ],
             ),

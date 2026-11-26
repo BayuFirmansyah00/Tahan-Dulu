@@ -2,7 +2,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
+    hide GlassQuality;
 
+import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/glass.dart';
 import '../../../../core/widgets/app_avatar.dart';
@@ -16,6 +19,52 @@ import '../utils/profile_ui.dart';
 void showProfilePhotoPreview(BuildContext context, {required String avatarUrl, required String name}) {
   final resolved = resolveAvatarUrl(avatarUrl);
   final isLocal = !resolved.startsWith('http://') && !resolved.startsWith('https://');
+  final previewImage = ClipRRect(
+    borderRadius: BorderRadius.circular(20),
+    child: isLocal
+        ? Image.file(
+            File(resolved),
+            width: 300,
+            height: 300,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) => const Icon(
+              Icons.broken_image,
+              size: 80,
+              color: Colors.white54,
+            ),
+          )
+        : Image.network(
+            resolved,
+            width: 300,
+            height: 300,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) => const Icon(
+              Icons.broken_image,
+              size: 80,
+              color: Colors.white54,
+            ),
+          ),
+  );
+
+  if (GlassDesignTokens.isDarkGlass(context)) {
+    GlassDialog.show<void>(
+      context: context,
+      title: name,
+      settings: GlassDesignTokens.darkOverlaySettings(context),
+      content: InheritedGlassSurfaceStyle(
+        surfaceStyle: GlassSurfaceStyle.solid,
+        child: previewImage,
+      ),
+      actions: [
+        GlassDialogAction(
+          label: 'Tutup',
+          isPrimary: true,
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ],
+    );
+    return;
+  }
 
   showDialog(
     context: context,
@@ -47,32 +96,7 @@ void showProfilePhotoPreview(BuildContext context, {required String avatarUrl, r
             ],
           ),
           const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: isLocal
-                ? Image.file(
-                    File(resolved),
-                    width: 300,
-                    height: 300,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => const Icon(
-                      Icons.broken_image,
-                      size: 80,
-                      color: Colors.white54,
-                    ),
-                  )
-                : Image.network(
-                    resolved,
-                    width: 300,
-                    height: 300,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => const Icon(
-                      Icons.broken_image,
-                      size: 80,
-                      color: Colors.white54,
-                    ),
-                  ),
-          ),
+          previewImage,
         ],
       ),
     ),

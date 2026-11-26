@@ -8,6 +8,7 @@ import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/routing/app_routes.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_avatar.dart';
 import '../../../../core/widgets/app_image_icon.dart';
 import '../../../../core/widgets/app_states.dart';
@@ -286,24 +287,17 @@ class _Body extends StatelessWidget {
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
-            child: OutlinedButton(
-              style: OutlinedButton.styleFrom(
-                foregroundColor: context.palette.error,
-                side: BorderSide(color: context.palette.error),
+            child: AppAdaptiveOutlinedButton(
+              label: AppStrings.profileLogoutAction,
+              foregroundColor: context.palette.error,
+              borderColor: context.palette.error,
+              tintColor: context.palette.error.withValues(alpha: 0.14),
+              icon: const AppImageIcon(
+                assetPath: AppAssets.setLogoutIcon,
+                size: 18,
+                fallbackIcon: Icons.logout_outlined,
               ),
               onPressed: onLogout,
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  AppImageIcon(
-                    assetPath: AppAssets.setLogoutIcon,
-                    size: 18,
-                    fallbackIcon: Icons.logout_outlined,
-                  ),
-                  SizedBox(width: 8),
-                  Text(AppStrings.profileLogoutAction),
-                ],
-              ),
             ),
           ),
         ],
@@ -396,20 +390,11 @@ class _ProfileCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          OutlinedButton(
-            style: OutlinedButton.styleFrom(
-              minimumSize: Size.zero,
-              padding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 8,
-              ),
-            ),
+          AppAdaptiveOutlinedButton(
+            label: AppStrings.profileEditAction,
+            height: 36,
+            borderRadius: 18,
             onPressed: () => context.push(AppRoutes.profileEdit),
-            child: const Text(
-              AppStrings.profileEditAction,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
           ),
         ],
       ),

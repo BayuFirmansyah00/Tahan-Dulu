@@ -6,7 +6,9 @@ import '../../../../core/theme/glass.dart';
 
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/routing/app_routes.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_states.dart';
 import '../../../../data/models/financial_health.dart';
@@ -43,7 +45,8 @@ class ReportHealthScreen extends ConsumerWidget {
     final period = ref.read(reportMonthProvider.notifier);
 
     return Scaffold(
-      appBar: AppBar(title: const Text(AppStrings.healthTitle)),
+      extendBodyBehindAppBar: GlassDesignTokens.isDarkGlass(context),
+      appBar: const AppAdaptiveAppBar(title: Text(AppStrings.healthTitle)),
       bottomNavigationBar: DashboardBottomNav(
         onTap: (i) => _onNav(i, context),
       ),

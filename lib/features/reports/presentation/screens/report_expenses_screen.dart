@@ -6,8 +6,10 @@ import '../../../../core/theme/glass.dart';
 
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_icons.dart';
 import '../../../../core/widgets/app_states.dart';
@@ -53,7 +55,8 @@ class _ReportExpensesScreenState
     final period = ref.read(reportMonthProvider.notifier);
 
     return Scaffold(
-      appBar: AppBar(title: const Text(AppStrings.expense)),
+      extendBodyBehindAppBar: GlassDesignTokens.isDarkGlass(context),
+      appBar: const AppAdaptiveAppBar(title: Text(AppStrings.expense)),
       bottomNavigationBar: DashboardBottomNav(
         onTap: _onNav,
       ),

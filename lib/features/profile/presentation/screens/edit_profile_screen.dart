@@ -6,8 +6,10 @@ import '../../../../core/theme/glass.dart';
 
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/validators.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_avatar.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_image_icon.dart';
@@ -116,9 +118,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final draft = ref.watch(editProfileControllerProvider);
     final textTheme = Theme.of(context).textTheme;
 
+    final useDarkGlass = GlassDesignTokens.isDarkGlass(context);
+
     return Scaffold(
+      extendBodyBehindAppBar: useDarkGlass,
       backgroundColor: context.canvasColor,
-      appBar: AppBar(
+      appBar: AppAdaptiveAppBar(
         leading: const AppBackButton(),
         title: const Text(AppStrings.editProfileTitle),
       ),
@@ -216,14 +221,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       ),
                       const SizedBox(height: 8),
                       Center(
-                        child: OutlinedButton.icon(
-                          style: OutlinedButton.styleFrom(
-                            minimumSize: Size.zero,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 8,
-                            ),
-                          ),
+                        child: AppAdaptiveOutlinedButton(
+                          label: AppStrings.editProfilePhoto,
+                          icon: const Icon(Icons.image_outlined, size: 16),
+                          height: 40,
                           onPressed: _avatarLoading || user.value == null
                               ? null
                               : () => showAvatarPickerSheet(
@@ -231,11 +232,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                     ref: ref,
                                     user: user.value!,
                                     onLoadingChanged: (l) {
-                                      if (mounted) setState(() => _avatarLoading = l);
+                                      if (mounted) {
+                                        setState(() => _avatarLoading = l);
+                                      }
                                     },
                                   ),
-                          icon: const Icon(Icons.image_outlined, size: 16),
-                          label: const Text(AppStrings.editProfilePhoto),
                         ),
                       ),
                       const SizedBox(height: 16),

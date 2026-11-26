@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
+    hide GlassQuality;
 
+import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/theme/glass.dart';
 
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/rupiah_input_formatter.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../providers/salary_controller.dart';
@@ -79,7 +83,8 @@ class _SalaryScreenState extends ConsumerState<SalaryScreen> {
     final showIncomeError = _incomeTouched && !state.isIncomeValid;
 
     return Scaffold(
-      appBar: AppBar(),
+      extendBodyBehindAppBar: GlassDesignTokens.isDarkGlass(context),
+      appBar: const AppAdaptiveAppBar(),
       body: GlassBackdrop(child: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -316,28 +321,55 @@ class _CustomDayDialogState extends State<_CustomDayDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final content = Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        AppTextField(
+          controller: _controller,
+          hint: AppStrings.salaryCustomDayHint,
+          keyboardType: TextInputType.number,
+        ),
+        if (_error != null) ...[
+          const SizedBox(height: 6),
+          Text(
+            _error!,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.error,
+                ),
+          ),
+        ],
+      ],
+    );
+
+    if (GlassDesignTokens.isDarkGlass(context)) {
+      return GlassDialog(
+        title: AppStrings.salaryCustomDayTitle,
+        settings: GlassDesignTokens.darkOverlaySettings(context),
+        content: InheritedGlassSurfaceStyle(
+          surfaceStyle: GlassSurfaceStyle.solid,
+          child: Material(
+            type: MaterialType.transparency,
+            child: content,
+          ),
+        ),
+        actions: [
+          GlassDialogAction(
+            label: AppStrings.cancel,
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          GlassDialogAction(
+            label: AppStrings.save,
+            isPrimary: true,
+            onPressed: _save,
+          ),
+        ],
+      );
+    }
+
     return AlertDialog(
       title: const Text(AppStrings.salaryCustomDayTitle),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          AppTextField(
-            controller: _controller,
-            hint: AppStrings.salaryCustomDayHint,
-            keyboardType: TextInputType.number,
-          ),
-          if (_error != null) ...[
-            const SizedBox(height: 6),
-            Text(
-              _error!,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.error,
-                  ),
-            ),
-          ],
-        ],
-      ),
+      content: content,
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),

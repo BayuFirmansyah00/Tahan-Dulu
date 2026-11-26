@@ -6,9 +6,11 @@ import '../../../../core/theme/glass.dart';
 
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/rupiah_input_formatter.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_icons.dart';
 import '../../../../core/widgets/app_states.dart';
@@ -145,7 +147,8 @@ class _GoalDepositScreenState extends ConsumerState<GoalDepositScreen> {
     final goals = ref.watch(goalsListProvider);
 
     return Scaffold(
-      appBar: AppBar(
+      extendBodyBehindAppBar: GlassDesignTokens.isDarkGlass(context),
+      appBar: AppAdaptiveAppBar(
         leading: const AppBackButton(),
         title: Text(widget.isWithdraw ? 'Tarik Dana Target' : AppStrings.depositTitle),
       ),

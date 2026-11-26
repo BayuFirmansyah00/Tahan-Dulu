@@ -5,6 +5,8 @@ import '../../../../core/theme/glass.dart';
 
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/constants/glass_design_tokens.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_image_icon.dart';
 import '../../../../core/widgets/app_states.dart';
 import '../../data/help_articles.dart';
@@ -47,8 +49,11 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
     final articles = ref.watch(filteredHelpArticlesProvider);
     final reduceMotion = ref.watch(appPreferencesProvider).reduceMotion;
 
+    final useDarkGlass = GlassDesignTokens.isDarkGlass(context);
+
     return Scaffold(
-      appBar: AppBar(
+      extendBodyBehindAppBar: useDarkGlass,
+      appBar: AppAdaptiveAppBar(
         leading: const AppBackButton(),
         title: const Text(AppStrings.helpTitle),
       ),
@@ -92,12 +97,10 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
                           style: textTheme.bodyMedium,
                         ),
                         const SizedBox(height: 12),
-                        TextField(
+                        AppAdaptiveSearchBar(
                           controller: _searchController,
-                          decoration: const InputDecoration(
-                            hintText: AppStrings.helpSearchHint,
-                            prefixIcon: Icon(Icons.search_outlined),
-                          ),
+                          hintText: AppStrings.helpSearchHint,
+                          query: query,
                           onChanged: (v) => ref
                               .read(helpQueryProvider.notifier)
                               .setQuery(v),
@@ -244,7 +247,8 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
                             style: textTheme.bodyMedium,
                           ),
                           const SizedBox(height: 10),
-                          OutlinedButton(
+                          AppAdaptiveOutlinedButton(
+                            label: AppStrings.helpContactAction,
                             onPressed: () =>
                                 ScaffoldMessenger.of(context)
                                     .showSnackBar(
@@ -253,9 +257,6 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
                                   AppStrings.helpContactSoon,
                                 ),
                               ),
-                            ),
-                            child: const Text(
-                              AppStrings.helpContactAction,
                             ),
                           ),
                         ],

@@ -6,8 +6,10 @@ import '../../../../core/theme/glass.dart';
 
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/theme/app_radius.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_image_icon.dart';
 import '../../../auth/presentation/providers/auth_controller.dart';
 import '../utils/account_security_dialogs.dart';
@@ -41,12 +43,15 @@ class SecurityScreen extends ConsumerWidget {
     final method = auth.loginMethod;
     final email = auth.user?.email;
 
+    final useDarkGlass = GlassDesignTokens.isDarkGlass(context);
+
     return Scaffold(
       backgroundColor: context.canvasColor,
-      appBar: AppBar(
+      extendBodyBehindAppBar: useDarkGlass,
+      appBar: AppAdaptiveAppBar(
         leading: const AppBackButton(),
         title: const Text(AppStrings.securityTitle),
-        flexibleSpace: const AppBarMintCorner(),
+        flexibleSpace: useDarkGlass ? null : const AppBarMintCorner(),
       ),
       body: GlassBackdrop(child: SafeArea(
         child: Center(
@@ -86,11 +91,9 @@ class SecurityScreen extends ConsumerWidget {
                             style: textTheme.bodyMedium,
                           ),
                           const SizedBox(height: 10),
-                          OutlinedButton(
+                          AppAdaptiveOutlinedButton(
                             onPressed: () => context.go(AppRoutes.login),
-                            child: const Text(
-                              AppStrings.securityLoginAction,
-                            ),
+                            label: AppStrings.securityLoginAction,
                           ),
                         ],
                       ),

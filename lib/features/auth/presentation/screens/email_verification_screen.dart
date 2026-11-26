@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/glass.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../data/datasources/remote/api_client.dart';
 import '../providers/auth_controller.dart';
@@ -209,23 +210,16 @@ class _EmailVerificationScreenState
             onPressed: _checking ? null : _checkStatus,
           ),
           const SizedBox(height: 12),
-          OutlinedButton(
+          AppAdaptiveOutlinedButton(
             onPressed: (_resending || _cooldownSeconds > 0)
                 ? null
                 : _resendEmail,
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
-              ),
-            ),
-            child: Text(
-              _resending
-                  ? 'Mengirim Ulang...'
-                  : _cooldownSeconds > 0
-                      ? 'Kirim Ulang dalam ${_cooldownSeconds}d'
-                      : 'Kirim Ulang Email Verifikasi',
-            ),
+            borderRadius: 14,
+            label: _resending
+                ? 'Mengirim Ulang...'
+                : _cooldownSeconds > 0
+                    ? 'Kirim Ulang dalam ${_cooldownSeconds}d'
+                    : 'Kirim Ulang Email Verifikasi',
           ),
           const SizedBox(height: 16),
           TextButton(

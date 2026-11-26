@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -77,11 +78,16 @@ class _TahanDuluAppState extends ConsumerState<TahanDuluApp> {
           data: media.copyWith(
             disableAnimations: media.disableAnimations || reduceMotion,
           ),
-          child: GlassTheme(
-            data: isDark
-                ? GlassDesignTokens.darkThemeData
-                : const GlassThemeData.ios27(),
-            child: GlassQualityController(child: child!),
+          child: CupertinoTheme(
+            data: CupertinoThemeData(
+              brightness: isDark ? Brightness.dark : Brightness.light,
+            ),
+            child: GlassTheme(
+              data: isDark
+                  ? GlassDesignTokens.darkThemeData
+                  : const GlassThemeData.ios27(),
+              child: GlassQualityController(child: child!),
+            ),
           ),
         );
       },

@@ -46,7 +46,8 @@ class ReportsScreen extends ConsumerWidget {
 
     return Scaffold(
       extendBody: useDarkGlass,
-      appBar: AppBar(title: const Text(AppStrings.reportsTitle)),
+      extendBodyBehindAppBar: useDarkGlass,
+      appBar: AppAdaptiveAppBar(title: const Text(AppStrings.reportsTitle)),
       bottomNavigationBar: DashboardBottomNav(
         onTap: (i) => _onNav(i, context),
       ),

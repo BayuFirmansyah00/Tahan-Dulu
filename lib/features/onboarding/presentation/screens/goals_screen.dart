@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/glass.dart';
 
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
@@ -109,7 +110,8 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
     final showAmountError = _touched && !state.isAmountValid;
 
     return Scaffold(
-      appBar: AppBar(),
+      extendBodyBehindAppBar: GlassDesignTokens.isDarkGlass(context),
+      appBar: const AppAdaptiveAppBar(),
       body: GlassBackdrop(child: SafeArea(
         child: Center(
           child: ConstrainedBox(

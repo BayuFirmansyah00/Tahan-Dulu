@@ -7,9 +7,11 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/glass.dart';
 
 import '../../../../core/constants/app_assets.dart';
+import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_icons.dart';
@@ -234,18 +236,19 @@ class _TransactionScanScreenState extends ConsumerState<TransactionScanScreen> {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
+    final useDarkGlass = GlassDesignTokens.isDarkGlass(context);
+
     return Scaffold(
       backgroundColor: context.canvasColor,
-      appBar: AppBar(
-        backgroundColor: context.canvasColor,
-        elevation: 0,
-        scrolledUnderElevation: 0,
+      extendBodyBehindAppBar: useDarkGlass,
+      appBar: AppAdaptiveAppBar(
+        backgroundColor: useDarkGlass ? null : context.canvasColor,
         centerTitle: true,
         leading: AppBackButton(onPressed: () => context.pop()),
         title: Text(
           'Scan Struk',
           style: TextStyle(
-            color: context.palette.onSurface,
+            color: useDarkGlass ? Colors.white : context.palette.onSurface,
             fontSize: 17.5,
             fontWeight: FontWeight.w600,
           ),

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
+    hide GlassQuality;
 
+import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/theme/glass.dart';
 
 import '../../../../core/constants/app_assets.dart';
@@ -10,6 +13,7 @@ import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/utils/goal_math.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_icons.dart';
 import '../../../../core/widgets/app_states.dart';
@@ -30,12 +34,16 @@ class GoalDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final goals = ref.watch(goalsListProvider);
 
+    final useDarkGlass = GlassDesignTokens.isDarkGlass(context);
+
     return Scaffold(
-      appBar: AppBar(
+      extendBody: useDarkGlass,
+      extendBodyBehindAppBar: useDarkGlass,
+      appBar: AppAdaptiveAppBar(
         leading: const AppBackButton(),
         title: const Text(AppStrings.goalDetailTitle),
         actions: [
-          IconButton(
+          AppAdaptiveIconButton(
             icon: const AppImageIcon(
               assetPath: AppAssets.actionDelete,
               size: 22,
@@ -46,28 +54,47 @@ class GoalDetailScreen extends ConsumerWidget {
               final items = goals.asData?.value;
               final match = items?.where((e) => e.id == goalId).firstOrNull;
               if (match == null) return;
-              final confirmed = await showDialog<bool>(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text('Hapus target ini?'),
-                  content: Text(
-                    '“${match.name}” akan dihapus. Riwayat transaksi pengeluaran aktual dan saldo akun kamu tetap utuh.',
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(false),
-                      child: const Text(AppStrings.cancel),
-                    ),
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(true),
-                      style: TextButton.styleFrom(
-                        foregroundColor: Theme.of(context).colorScheme.error,
+              final message =
+                  '“${match.name}” akan dihapus. Riwayat transaksi pengeluaran aktual dan saldo akun kamu tetap utuh.';
+              final confirmed = useDarkGlass
+                  ? await GlassDialog.show<bool>(
+                      context: context,
+                      title: 'Hapus target ini?',
+                      message: message,
+                      settings: GlassDesignTokens.darkOverlaySettings(context),
+                      actions: [
+                        GlassDialogAction(
+                          label: AppStrings.cancel,
+                          onPressed: () => Navigator.of(context).pop(false),
+                        ),
+                        GlassDialogAction(
+                          label: 'Hapus',
+                          isDestructive: true,
+                          onPressed: () => Navigator.of(context).pop(true),
+                        ),
+                      ],
+                    )
+                  : await showDialog<bool>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Hapus target ini?'),
+                        content: Text(message),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(false),
+                            child: const Text(AppStrings.cancel),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(true),
+                            style: TextButton.styleFrom(
+                              foregroundColor:
+                                  Theme.of(context).colorScheme.error,
+                            ),
+                            child: const Text('Hapus'),
+                          ),
+                        ],
                       ),
-                      child: const Text('Hapus'),
-                    ),
-                  ],
-                ),
-              );
+                    );
               if (confirmed != true || !context.mounted) return;
               try {
                 final ok = await ref
@@ -107,6 +134,7 @@ class GoalDetailScreen extends ConsumerWidget {
         onTap: (i) => goalsBottomNavTap(context, i),
       ),
       body: GlassBackdrop(child: SafeArea(
+        bottom: !useDarkGlass,
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),

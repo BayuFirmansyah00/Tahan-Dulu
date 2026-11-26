@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/glass.dart';
 
 import '../../../../core/constants/app_assets.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_image_icon.dart';
 import '../../../../data/models/api_bank.dart';
 import '../../../../data/providers/app_providers.dart';
@@ -161,7 +162,7 @@ class _BankPickerSheetState extends ConsumerState<BankPickerSheet> {
                       ],
                     ),
                   ),
-                  IconButton(
+                  AppAdaptiveIconButton(
                     icon: const Icon(Icons.close),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
@@ -172,37 +173,10 @@ class _BankPickerSheetState extends ConsumerState<BankPickerSheet> {
             // Kolom Pencarian
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
-              child: TextField(
+              child: AppAdaptiveSearchBar(
                 controller: _searchController,
-                decoration: InputDecoration(
-                  hintText: _searchHint,
-                  hintStyle: textTheme.bodyMedium?.copyWith(
-                    color: context.palette.onSurfaceVariant,
-                  ),
-                  prefixIcon: Icon(
-                    Icons.search,
-                    color: context.palette.onSurfaceVariant,
-                  ),
-                  suffixIcon: _searchQuery.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear, size: 18),
-                          onPressed: () {
-                            _searchController.clear();
-                            setState(() => _searchQuery = '');
-                          },
-                        )
-                      : null,
-                  filled: true,
-                  fillColor: context.palette.surfaceContainerHighest,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
+                hintText: _searchHint,
+                query: _searchQuery,
                 onChanged: (val) {
                   setState(() => _searchQuery = val.trim().toLowerCase());
                 },

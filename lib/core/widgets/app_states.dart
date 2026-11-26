@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../theme/glass.dart';
 
 import '../constants/app_strings.dart';
+import 'app_adaptive_controls.dart';
 import 'app_image_icon.dart';
 
 /// State kosong generik (dipakai semua fitur).
@@ -105,10 +106,10 @@ class AppErrorState extends StatelessWidget {
             ),
             if (onRetry != null) ...[
               const SizedBox(height: 12),
-              OutlinedButton.icon(
+              AppAdaptiveOutlinedButton(
                 onPressed: onRetry,
                 icon: const Icon(Icons.refresh_outlined, size: 18),
-                label: const Text(AppStrings.retry),
+                label: AppStrings.retry,
               ),
             ],
           ],

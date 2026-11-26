@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
+    hide GlassQuality;
 
+import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/theme/glass.dart';
 
 import '../../../../core/constants/app_strings.dart';
@@ -108,6 +111,25 @@ class _OnboardingInvitationDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+
+    if (GlassDesignTokens.isDarkGlass(context)) {
+      return GlassDialog(
+        title: AppStrings.onboardingPopupTitle,
+        message: AppStrings.onboardingPopupDescription,
+        settings: GlassDesignTokens.darkOverlaySettings(context),
+        actions: [
+          GlassDialogAction(
+            label: AppStrings.onboardingPopupLater,
+            onPressed: onLater,
+          ),
+          GlassDialogAction(
+            label: AppStrings.onboardingPopupCompleteNow,
+            isPrimary: true,
+            onPressed: onComplete,
+          ),
+        ],
+      );
+    }
 
     return AlertDialog(
       backgroundColor: context.palette.surface,

@@ -6,8 +6,10 @@ import '../../../../core/theme/glass.dart';
 
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_icons.dart';
@@ -48,11 +50,15 @@ class _AccountsScreenState extends ConsumerState<AccountsScreen> {
     final overview = ref.watch(accountsOverviewProvider);
     final total = ref.watch(accountsTotalProvider);
 
+    final useDarkGlass = GlassDesignTokens.isDarkGlass(context);
+
     return Scaffold(
-      appBar: AppBar(
+      extendBody: useDarkGlass,
+      extendBodyBehindAppBar: useDarkGlass,
+      appBar: AppAdaptiveAppBar(
         title: const Text(AppStrings.accountsTitle),
         actions: [
-          IconButton(
+          AppAdaptiveIconButton(
             icon: const AppImageIcon(
               assetPath: AppAssets.statusInfo,
               size: 22,
@@ -66,6 +72,7 @@ class _AccountsScreenState extends ConsumerState<AccountsScreen> {
       ),
       bottomNavigationBar: DashboardBottomNav(onTap: _onNav),
       body: GlassBackdrop(child: SafeArea(
+        bottom: !useDarkGlass,
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
