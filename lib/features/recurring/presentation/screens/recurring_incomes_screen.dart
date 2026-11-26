@@ -9,7 +9,6 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/app_adaptive_controls.dart';
-import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_states.dart';
 import '../../../../data/models/api_recurring_transaction.dart';
 import '../../../dashboard/presentation/widgets/dashboard_bottom_nav.dart';
@@ -231,11 +230,6 @@ class _EmptyList extends StatelessWidget {
           title: AppStrings.emptyRecurringIncomes,
           subtitle: AppStrings.emptyRecurringIncomesHint,
           icon: Icons.schedule_outlined,
-        ),
-        AppButton(
-          label: AppStrings.addRecurringIncome,
-          icon: Icons.add,
-          onPressed: () {},
         ),
       ],
     );

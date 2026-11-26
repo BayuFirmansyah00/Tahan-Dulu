@@ -15,9 +15,9 @@ import '../providers/tahandulu_controller.dart';
 import '../utils/tahandulu_ui.dart';
 import '../widgets/tahandulu_widgets.dart';
 
-/// Informasi Produk: nama, harga, kategori, link, catatan.
+/// Informasi Produk: nama, harga, kategori, catatan.
 ///
-/// Tahap 46: ringkasan produk (bila dari link), grid kategori 3D,
+/// Tahap 46: ringkasan produk, grid kategori 3D,
 /// field berlabel jelas, CTA kuning. Formatter Rupiah, validasi,
 /// dan state draf tidak diubah.
 class TahanDuluFormScreen extends ConsumerStatefulWidget {
@@ -31,7 +31,6 @@ class TahanDuluFormScreen extends ConsumerStatefulWidget {
 class _TahanDuluFormScreenState extends ConsumerState<TahanDuluFormScreen> {
   late final TextEditingController _nameController;
   late final TextEditingController _priceController;
-  late final TextEditingController _urlController;
   late final TextEditingController _noteController;
   bool _attempted = false;
   bool _saving = false;
@@ -44,7 +43,6 @@ class _TahanDuluFormScreenState extends ConsumerState<TahanDuluFormScreen> {
     _priceController = TextEditingController(
       text: draft.price > 0 ? RupiahInputFormatter.format(draft.price) : '',
     );
-    _urlController = TextEditingController(text: draft.productUrl);
     _noteController = TextEditingController(text: draft.note);
   }
 
@@ -52,7 +50,6 @@ class _TahanDuluFormScreenState extends ConsumerState<TahanDuluFormScreen> {
   void dispose() {
     _nameController.dispose();
     _priceController.dispose();
-    _urlController.dispose();
     _noteController.dispose();
     super.dispose();
   }
@@ -196,7 +193,6 @@ class _TahanDuluFormScreenState extends ConsumerState<TahanDuluFormScreen> {
     final notifier = ref.read(tahanDuluControllerProvider.notifier);
     notifier.setName(_nameController.text);
     notifier.setPriceText(_priceController.text);
-    notifier.setUrl(_urlController.text);
     notifier.setNote(_noteController.text);
     if (!ref.read(tahanDuluControllerProvider).isComplete) {
       setState(() => _attempted = true);
@@ -225,7 +221,6 @@ class _TahanDuluFormScreenState extends ConsumerState<TahanDuluFormScreen> {
     final textTheme = Theme.of(context).textTheme;
     final showNameError = _attempted && !draft.isNameValid;
     final showPriceError = _attempted && !draft.isPriceValid;
-    final showUrlError = _attempted && !draft.isUrlValid;
 
     return TahanDuluScaffold(
       title: AppStrings.addItemTitle,
@@ -241,7 +236,7 @@ class _TahanDuluFormScreenState extends ConsumerState<TahanDuluFormScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Preview Foto Produk (jika ada foto dari Link atau Kamera/Galeri)
+            // Preview Foto Produk (jika ada foto dari Kamera/Galeri)
             if (draft.imageRef != null && draft.imageRef!.isNotEmpty) ...[
               Stack(
                 children: [
@@ -460,18 +455,6 @@ class _TahanDuluFormScreenState extends ConsumerState<TahanDuluFormScreen> {
               },
             ),
             const SizedBox(height: 16),
-            AppTextField(
-              controller: _urlController,
-              label: '${AppStrings.productUrlLabel} (opsional)',
-              hint: AppStrings.productUrlHint,
-              prefixIcon: Icons.link_outlined,
-              keyboardType: TextInputType.url,
-            ),
-            if (showUrlError) ...[
-              const SizedBox(height: 6),
-              _FieldError(text: AppStrings.productUrlInvalid),
-            ],
-            const SizedBox(height: 12),
             AppTextField(
               controller: _noteController,
               label: AppStrings.productNoteLabel,

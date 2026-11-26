@@ -11,7 +11,6 @@ import 'package:tahan_dulu/features/tahandulu/data/services/product_ocr_service.
 import 'package:tahan_dulu/features/tahandulu/presentation/providers/tahandulu_controller.dart';
 import 'package:tahan_dulu/features/tahandulu/presentation/screens/tahandulu_add_screen.dart';
 import 'package:tahan_dulu/features/tahandulu/presentation/screens/tahandulu_form_screen.dart';
-import 'package:tahan_dulu/features/tahandulu/presentation/screens/tahandulu_link_screen.dart';
 
 class _FakePurchaseDecisionRepository implements PurchaseDecisionRepository {
   final List<PurchaseConsideration> _items = [];
@@ -111,10 +110,6 @@ Widget _buildTestApp({
         builder: (context, state) => const TahanDuluFormScreen(),
       ),
       GoRoute(
-        path: AppRoutes.tahanDuluLink,
-        builder: (context, state) => const TahanDuluLinkScreen(),
-      ),
-      GoRoute(
         path: '${AppRoutes.tahanDulu}/:id',
         builder: (context, state) => Scaffold(
           body: Text('Analysis Screen for ${state.pathParameters['id']}'),
@@ -134,108 +129,11 @@ Widget _buildTestApp({
 }
 
 void main() {
-  group('Tahan Dulu Link Produk & Upload Foto Tests', () {
+  group('Tahan Dulu Upload Foto Tests', () {
     late _FakePurchaseDecisionRepository fakeRepo;
 
     setUp(() {
       fakeRepo = _FakePurchaseDecisionRepository();
-    });
-
-    testWidgets('LINK-01: Metadata tersedia -> prefill otomatis ke form screen', (
-      tester,
-    ) async {
-      fakeRepo.mockMetadata = {
-        'title': 'Sepatu Sneakers Running Pro',
-        'price': 350000.0,
-        'image_url': 'https://example.com/shoes.jpg',
-        'original_url': 'https://tokopedia.com/product/shoes',
-        'extracted': true,
-      };
-
-      await tester.pumpWidget(
-        _buildTestApp(
-          child: const TahanDuluLinkScreen(),
-          repository: fakeRepo,
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      // Masukkan URL produk
-      final urlField = find.byType(TextField);
-      expect(urlField, findsOneWidget);
-      await tester.enterText(urlField, 'https://tokopedia.com/product/shoes');
-      await tester.pumpAndSettle();
-
-      // Tap Lanjutkan
-      final continueButton = find.text(AppStrings.continueAction);
-      expect(continueButton, findsOneWidget);
-      await tester.tap(continueButton);
-      await tester.pumpAndSettle();
-
-      // Harus berpindah ke form screen dan metadata terisi
-      expect(fakeRepo.extractMetadataCalled, isTrue);
-      expect(find.text(AppStrings.addItemTitle), findsOneWidget);
-      expect(find.text('Sepatu Sneakers Running Pro'), findsOneWidget);
-      expect(find.text('350.000'), findsOneWidget);
-      expect(find.text('https://tokopedia.com/product/shoes'), findsOneWidget);
-    });
-
-    testWidgets('LINK-02: Metadata gagal -> fallback manual dengan URL tetap terisi', (
-      tester,
-    ) async {
-      fakeRepo.mockMetadata = {
-        'title': null,
-        'price': null,
-        'image_url': null,
-        'original_url': 'https://shopee.co.id/unknown-product',
-        'extracted': false,
-      };
-
-      await tester.pumpWidget(
-        _buildTestApp(
-          child: const TahanDuluLinkScreen(),
-          repository: fakeRepo,
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      final urlField = find.byType(TextField);
-      await tester.enterText(urlField, 'https://shopee.co.id/unknown-product');
-      await tester.pumpAndSettle();
-
-      final continueButton = find.text(AppStrings.continueAction);
-      await tester.tap(continueButton);
-      await tester.pumpAndSettle();
-
-      // Halaman form tetap terbuka (tidak buntu) dan URL tetap tersimpan
-      expect(find.text(AppStrings.addItemTitle), findsOneWidget);
-      expect(find.text('https://shopee.co.id/unknown-product'), findsOneWidget);
-      // Nama dan harga kosong siap diisi manual oleh user
-      expect(find.text(AppStrings.productNameHint), findsOneWidget);
-    });
-
-    testWidgets('LINK-03: Validasi URL tidak valid mencegah navigasi', (
-      tester,
-    ) async {
-      await tester.pumpWidget(
-        _buildTestApp(
-          child: const TahanDuluLinkScreen(),
-          repository: fakeRepo,
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      final urlField = find.byType(TextField);
-      await tester.enterText(urlField, 'bukan-url-valid');
-      await tester.pumpAndSettle();
-
-      final continueButton = find.text(AppStrings.continueAction);
-      await tester.tap(continueButton);
-      await tester.pumpAndSettle();
-
-      // Muncul pesan error dan tetap di layar link
-      expect(find.text(AppStrings.productUrlInvalid), findsOneWidget);
-      expect(find.text('Tempel link produk'), findsOneWidget);
     });
 
     testWidgets('PHOTO-01: Form menampilkan preview foto dan memungkinkan ganti/hapus', (
@@ -349,87 +247,6 @@ void main() {
       expect(find.textContaining('Analysis Screen for'), findsOneWidget);
     });
 
-    testWidgets('LINK-04: Metadata lengkap dengan marketplace dan diskon -> banner toko & harga muncul di form', (
-      tester,
-    ) async {
-      fakeRepo.mockMetadata = {
-        'title': 'Sepatu Sneakers Running Pro',
-        'price': 350000.0,
-        'original_price': 500000.0,
-        'is_discount': true,
-        'image_url': 'https://example.com/shoes.jpg',
-        'marketplace': 'Tokopedia',
-        'store_name': 'Official Store',
-        'description': 'Sepatu sneakers original nyaman dipakai.',
-        'canonical_url': 'https://www.tokopedia.com/product/shoes',
-        'original_url': 'https://tokopedia.link/shoes',
-        'status': 'complete',
-        'extracted': true,
-      };
-
-      await tester.pumpWidget(
-        _buildTestApp(
-          child: const TahanDuluLinkScreen(),
-          repository: fakeRepo,
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      final urlField = find.byType(TextField);
-      await tester.enterText(urlField, 'https://tokopedia.link/shoes');
-      await tester.pumpAndSettle();
-
-      final continueButton = find.text(AppStrings.continueAction);
-      await tester.tap(continueButton);
-      await tester.pumpAndSettle();
-
-      expect(find.text(AppStrings.addItemTitle), findsOneWidget);
-      expect(find.text('Sepatu Sneakers Running Pro'), findsOneWidget);
-      expect(find.text('350.000'), findsOneWidget);
-      expect(find.text('Tokopedia'), findsOneWidget);
-      expect(find.textContaining('Harga Asli: Rp 500.000 (Diskon Terdeteksi)'), findsOneWidget);
-    });
-
-    testWidgets('LINK-05: Metadata sebagian dengan rentang harga -> banner konfirmasi harga muncul dan harga kosong', (
-      tester,
-    ) async {
-      fakeRepo.mockMetadata = {
-        'title': 'Kemeja Flannel Pria Aneka Ukuran',
-        'price': null,
-        'price_min': 129000.0,
-        'price_max': 199000.0,
-        'is_price_range': true,
-        'price_requires_confirmation': true,
-        'image_url': 'https://example.com/flannel.jpg',
-        'marketplace': 'Shopee',
-        'canonical_url': 'https://shopee.co.id/kemeja-flannel',
-        'status': 'partial',
-        'extracted': true,
-        'missing_fields': ['price_confirmation'],
-      };
-
-      await tester.pumpWidget(
-        _buildTestApp(
-          child: const TahanDuluLinkScreen(),
-          repository: fakeRepo,
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      final urlField = find.byType(TextField);
-      await tester.enterText(urlField, 'https://shopee.co.id/kemeja-flannel');
-      await tester.pumpAndSettle();
-
-      final continueButton = find.text(AppStrings.continueAction);
-      await tester.tap(continueButton);
-      await tester.pumpAndSettle();
-
-      expect(find.text(AppStrings.addItemTitle), findsOneWidget);
-      expect(find.text('Kemeja Flannel Pria Aneka Ukuran'), findsOneWidget);
-      expect(find.text('Shopee'), findsOneWidget);
-      expect(find.textContaining('Produk memiliki varian / rentang harga'), findsNWidgets(2));
-    });
-
     test('OCR-01: NativeProductOcrService.parseProductText mengenali teks screenshot Shopee', () {
       const mockRawText = '''
 Shopee Mall
@@ -488,7 +305,6 @@ MADE IN INDONESIA
 
         expect(find.text(AppStrings.addItemTitle), findsOneWidget);
         expect(find.text(AppStrings.methodManual), findsOneWidget);
-        expect(find.text(AppStrings.methodLink), findsOneWidget);
         expect(find.text(AppStrings.methodPhoto), findsOneWidget);
         expect(tester.takeException(), isNull);
       });

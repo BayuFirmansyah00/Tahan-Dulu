@@ -42,7 +42,6 @@ abstract final class AppRoutes {
   static const String tahanDulu = '/tahan-dulu';
   static const String tahanDuluAdd = '/tahan-dulu/add';
   static const String tahanDuluForm = '/tahan-dulu/form';
-  static const String tahanDuluLink = '/tahan-dulu/link';
   static const String reports = '/reports';
   static const String reportsExport = '/reports/export';
   static const String reportsExpenses = '/reports/expenses';

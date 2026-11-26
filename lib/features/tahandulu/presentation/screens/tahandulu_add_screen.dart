@@ -20,8 +20,7 @@ import '../widgets/tahandulu_widgets.dart';
 ///
 /// Menyediakan pilihan metode penambahan barang:
 /// 1. Masukkan manual — mengisi detail barang sendiri melalui formulir.
-/// 2. Masukkan link produk — menempel tautan barang dari toko online.
-/// 3. Upload foto — menambahkan barang melalui foto (segera hadir).
+/// 2. Upload foto — menambahkan barang melalui foto (segera hadir).
 class TahanDuluAddScreen extends ConsumerWidget {
   const TahanDuluAddScreen({super.key});
 
@@ -74,20 +73,7 @@ class TahanDuluAddScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 12),
 
-                  // Card 2: Masukkan Link Produk
-                  AppMethodTile(
-                    title: AppStrings.methodLink,
-                    subtitle: 'Tempel tautan barang dari toko online',
-                    assetPath: AppAssets.tambahBarangLink,
-                    accent: context.palette.primary,
-                    onTap: () {
-                      ref.read(tahanDuluControllerProvider.notifier).reset();
-                      context.push(AppRoutes.tahanDuluLink);
-                    },
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Card 3: Upload Foto
+                  // Card 2: Upload Foto
                   AppMethodTile(
                     title: AppStrings.methodPhoto,
                     subtitle: 'Tambahkan barang melalui foto',

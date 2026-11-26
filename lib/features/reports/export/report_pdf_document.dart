@@ -128,22 +128,6 @@ Future<List<int>> buildReportPdf(
                 children: [
                   pw.Text('ID Laporan', style: _s(8, color: _grey)),
                   pw.Text(data.reportId, style: _s(10, bold: true)),
-                  pw.SizedBox(height: 4),
-                  pw.BarcodeWidget(
-                    barcode: pw.Barcode.qrCode(),
-                    data: data.qrPayload,
-                    width: 72,
-                    height: 72,
-                  ),
-                  pw.SizedBox(height: 2),
-                  pw.SizedBox(
-                    width: 84,
-                    child: pw.Text(
-                      'Scan untuk melihat informasi laporan',
-                      textAlign: pw.TextAlign.center,
-                      style: _s(7, color: _grey),
-                    ),
-                  ),
                 ],
               ),
             ],
@@ -161,16 +145,37 @@ Future<List<int>> buildReportPdf(
           pw.Row(
             mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
             children: [
-              pw.Text(
-                'TahanDulu - ${data.periodLabel}',
-                style: _s(8, color: _grey),
+              pw.Expanded(
+                child: pw.Text(
+                  'TahanDulu - ${data.periodLabel}',
+                  style: _s(8, color: _grey),
+                ),
               ),
-              pw.Text(
-                'Halaman ${context.pageNumber} dari ${context.pagesCount}',
-                style: _s(8, color: _grey),
+              pw.Column(
+                children: [
+                  pw.BarcodeWidget(
+                    barcode: pw.Barcode.qrCode(),
+                    data: data.qrPayload,
+                    width: 40,
+                    height: 40,
+                  ),
+                  pw.SizedBox(height: 2),
+                  pw.Text(
+                    'Scan untuk melihat informasi laporan',
+                    style: _s(6, color: _grey),
+                  ),
+                ],
+              ),
+              pw.Expanded(
+                child: pw.Text(
+                  'Halaman ${context.pageNumber} dari ${context.pagesCount}',
+                  textAlign: pw.TextAlign.right,
+                  style: _s(8, color: _grey),
+                ),
               ),
             ],
           ),
+          pw.SizedBox(height: 4),
         ],
       ),
       build: (context) => [

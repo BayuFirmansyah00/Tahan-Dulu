@@ -45,7 +45,6 @@ import 'package:tahan_dulu/features/tahandulu/presentation/screens/tahandulu_add
 import 'package:tahan_dulu/features/tahandulu/presentation/screens/tahandulu_analysis_screen.dart';
 import 'package:tahan_dulu/features/tahandulu/presentation/screens/tahandulu_decide_screen.dart';
 import 'package:tahan_dulu/features/tahandulu/presentation/screens/tahandulu_form_screen.dart';
-import 'package:tahan_dulu/features/tahandulu/presentation/screens/tahandulu_link_screen.dart';
 import 'package:tahan_dulu/features/tahandulu/presentation/screens/tahandulu_list_screen.dart';
 import 'package:tahan_dulu/features/tahandulu/presentation/screens/tahandulu_simulate_screen.dart';
 import 'package:tahan_dulu/features/tahandulu/presentation/screens/tahandulu_success_screen.dart';
@@ -413,10 +412,6 @@ GoRouter createAppRouter({AuthRouteNotifier? authNotifier}) {
           GoRoute(
             path: 'form',
             builder: (context, state) => const TahanDuluFormScreen(),
-          ),
-          GoRoute(
-            path: 'link',
-            builder: (context, state) => const TahanDuluLinkScreen(),
           ),
           GoRoute(
             path: ':id',

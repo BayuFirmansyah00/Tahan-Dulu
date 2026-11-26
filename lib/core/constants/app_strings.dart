@@ -36,7 +36,7 @@ abstract final class AppStrings {
   static const String registerSubtitle =
       'Buat akun untuk mulai mengatur keuanganmu.';
   static const String fullName = 'Nama Lengkap';
-  static const String fullNameHint = 'Bayu Firmansyah';
+  static const String fullNameHint = 'Masukkan nama lengkap';
   static const String email = 'Email';
   static const String emailHint = 'nama@email.com';
   static const String password = 'Password';
@@ -91,7 +91,7 @@ abstract final class AppStrings {
   static const String instrumentsSubtitle =
       'Pilih rekening atau instrumen yang kamu gunakan.';
   static const String initialBalance = 'Saldo awal';
-  static const String addInstrument = '+ Tambah instrumen';
+  static const String addInstrument = 'Tambah instrumen';
   static const String instrumentDetail = 'Detail instrumen';
   static const String adminFee = 'Biaya administrasi bulanan';
   static const String feeDay = 'Tanggal pemotongan';
@@ -445,9 +445,6 @@ abstract final class AppStrings {
   static const String methodManual = 'Masukkan manual';
   static const String methodManualDesc =
       'Isi nama, harga, dan kategori sendiri.';
-  static const String methodLink = 'Masukkan link produk';
-  static const String methodLinkDesc =
-      'Tempel link dari Tokopedia, Shopee, atau lainnya.';
   static const String methodPhoto = 'Upload foto';
   static const String methodPhotoDesc = 'Ambil foto atau pilih dari galeri.';
   static const String comingSoonBadge = 'Segera hadir';
@@ -459,9 +456,6 @@ abstract final class AppStrings {
   static const String productPriceLabel = 'Harga';
   static const String productPriceRequired = 'Masukkan harga yang valid.';
   static const String productCategoryLabel = 'Kategori';
-  static const String productUrlLabel = 'Link produk';
-  static const String productUrlHint = 'https://tokopedia.com/...';
-  static const String productUrlInvalid = 'Masukkan URL yang valid.';
   static const String productNoteLabel = 'Catatan atau alasan membeli';
   static const String productNoteHint = 'cth. Sepatu lama sudah rusak';
   static const String analyzeAction = 'Analisis Pembelian';
@@ -616,7 +610,7 @@ abstract final class AppStrings {
       'Kelola semua sumber uangmu dalam satu tempat.';
   static const String totalBalanceLabel = 'Total Saldo';
   static const String accountsListTitle = 'Daftar Akun';
-  static const String addAccount = '+ Tambah Akun';
+  static const String addAccount = 'Tambah Akun';
   static const String addAccountTitle = 'Tambah Akun';
   static const String chooseAccountType = 'Pilih jenis akun';
   static const String chooseInstrumentType = 'Pilih tipe instrumen';

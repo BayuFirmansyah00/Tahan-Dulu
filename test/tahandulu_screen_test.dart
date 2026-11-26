@@ -91,36 +91,6 @@ void main() {
     expect(find.text(AppStrings.reviewFirstTitle), findsNothing);
   });
 
-  testWidgets('Link method validates url and prefills form', (
-    WidgetTester tester,
-  ) async {
-    await _pumpToTahanDulu(tester);
-    await _tapVisible(tester, find.text(AppStrings.addItemAction));
-    await tester.pumpAndSettle();
-    await _tapVisible(tester, find.text(AppStrings.methodLink));
-    await tester.pumpAndSettle();
-
-    final fields = find.byType(TextFormField);
-    await tester.enterText(fields.at(0), 'bukan-url');
-    await tester.pump();
-    await _tapVisible(
-      tester,
-      find.widgetWithText(ElevatedButton, AppStrings.continueAction),
-    );
-    expect(find.text(AppStrings.productUrlInvalid), findsOneWidget);
-
-    await tester.enterText(fields.at(0), 'https://tokopedia.com/x');
-    await tester.pump();
-    await _tapVisible(
-      tester,
-      find.widgetWithText(ElevatedButton, AppStrings.continueAction),
-    );
-    await tester.pumpAndSettle();
-
-    // Form terbuka dengan URL terbawa.
-    expect(find.text('https://tokopedia.com/x'), findsOneWidget);
-  });
-
   testWidgets('Photo method opens source selection bottom sheet', (
     WidgetTester tester,
   ) async {

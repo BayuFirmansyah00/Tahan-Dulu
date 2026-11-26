@@ -16,11 +16,6 @@ Widget _createTestApp({required Widget child}) {
         builder: (context, state) =>
             const Scaffold(body: Text('TahanDulu Form Screen')),
       ),
-      GoRoute(
-        path: AppRoutes.tahanDuluLink,
-        builder: (context, state) =>
-            const Scaffold(body: Text('TahanDulu Link Screen')),
-      ),
     ],
   );
 
@@ -64,12 +59,6 @@ void main() {
       expect(find.text(AppStrings.methodManual), findsOneWidget);
       expect(find.text('Isi detail barang sendiri'), findsOneWidget);
 
-      expect(find.text(AppStrings.methodLink), findsOneWidget);
-      expect(
-        find.text('Tempel tautan barang dari toko online'),
-        findsOneWidget,
-      );
-
       expect(find.text(AppStrings.methodPhoto), findsOneWidget);
       expect(find.text('Tambahkan barang melalui foto'), findsOneWidget);
 
@@ -92,18 +81,6 @@ void main() {
 
       await _tapVisible(tester, find.text(AppStrings.methodManual));
       expect(find.text('TahanDulu Form Screen'), findsOneWidget);
-    });
-
-    testWidgets('Tapping Masukkan link produk navigates to Link screen', (
-      tester,
-    ) async {
-      await tester.pumpWidget(
-        _createTestApp(child: const TahanDuluAddScreen()),
-      );
-      await tester.pumpAndSettle();
-
-      await _tapVisible(tester, find.text(AppStrings.methodLink));
-      expect(find.text('TahanDulu Link Screen'), findsOneWidget);
     });
 
     testWidgets('Tapping Upload foto displays source selection bottom sheet', (
