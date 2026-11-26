@@ -233,6 +233,19 @@ class TahanDuluController extends Notifier<ConsiderationDraft> {
       ? state.copyWith(clearImageRef: true)
       : state.copyWith(imageRef: v);
 
+  /// Muat item yang ada ke draf untuk diedit (URL, nama, harga, dll.).
+  void loadForEdit(PurchaseConsideration item) {
+    state = state.copyWith(
+      id: item.id,
+      itemName: item.itemName,
+      price: item.price,
+      category: item.category,
+      productUrl: item.productUrl ?? '',
+      note: item.reason ?? '',
+      imageRef: item.imageRef,
+    );
+  }
+
   /// Mengisi data draf produk secara selektif (misal dari hasil ekstraksi link atau foto).
   void prefillDraft({
     String? itemName,
@@ -355,8 +368,12 @@ class TahanDuluController extends Notifier<ConsiderationDraft> {
     }
   }
 
-  /// Mulai masa tunggu: simpan jam + timestamp eksplisit.
-  Future<bool> startWait(String id, int hours, {DateTime? now}) async {
+  /// Mulai masa tunggu: simpan jam + timestamp eksplisit beserta jawaban refleksi.
+  Future<bool> startWait(String id, int hours,
+      {DateTime? now,
+      bool? reflectionNeedIt,
+      bool? reflectionHasSimilar,
+      String? reflectionUsageFrequency}) async {
     if (_saving || hours <= 0) return false;
     _saving = true;
     try {
@@ -373,6 +390,9 @@ class TahanDuluController extends Notifier<ConsiderationDraft> {
               waitHours: hours,
               waitStartedAt: started,
               waitEndsAt: started.add(Duration(hours: hours)),
+              reflectionNeedIt: reflectionNeedIt,
+              reflectionHasSimilar: reflectionHasSimilar,
+              reflectionUsageFrequency: reflectionUsageFrequency,
             ),
           );
       _refreshAll();

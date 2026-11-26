@@ -53,6 +53,13 @@ class RemotePurchaseDecisionRepository implements PurchaseDecisionRepository {
         'image_ref': item.imageRef,
       if (item.reason != null && item.reason!.isNotEmpty)
         'reason': item.reason,
+      if (item.reflectionNeedIt != null)
+        'reflection_need_it': item.reflectionNeedIt,
+      if (item.reflectionHasSimilar != null)
+        'reflection_has_similar': item.reflectionHasSimilar,
+      if (item.reflectionUsageFrequency != null &&
+          item.reflectionUsageFrequency!.isNotEmpty)
+        'reflection_usage_frequency': item.reflectionUsageFrequency,
       if (item.waitHours != null && item.waitHours! > 0)
         'wait_hours': item.waitHours,
       if (item.waitStartedAt != null)
@@ -80,6 +87,9 @@ class RemotePurchaseDecisionRepository implements PurchaseDecisionRepository {
       'product_url': item.productUrl,
       'image_ref': item.imageRef,
       'reason': item.reason,
+      'reflection_need_it': item.reflectionNeedIt,
+      'reflection_has_similar': item.reflectionHasSimilar,
+      'reflection_usage_frequency': item.reflectionUsageFrequency,
       'wait_hours': item.waitHours,
       'wait_started_at': item.waitStartedAt?.toIso8601String(),
       'wait_ends_at': item.waitEndsAt?.toIso8601String(),

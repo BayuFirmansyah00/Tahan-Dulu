@@ -458,6 +458,10 @@ abstract final class AppStrings {
   static const String productCategoryLabel = 'Kategori';
   static const String productNoteLabel = 'Catatan atau alasan membeli';
   static const String productNoteHint = 'cth. Sepatu lama sudah rusak';
+  static const String productUrlLabel = 'Link Produk (Opsional)';
+  static const String productUrlHint = 'cth. https://tokopedia.com/...';
+  static const String productUrlInvalid =
+      'Masukkan URL produk yang valid (diawali http atau https).';
   static const String analyzeAction = 'Analisis Pembelian';
   static const String reviewFirstTitle = 'Pertimbangkan dulu';
   static const String reviewFirstSubtitle =
@@ -546,6 +550,10 @@ abstract final class AppStrings {
   static const String wait24 = '24 Jam';
   static const String wait48 = '48 Jam';
   static const String wait7d = '7 Hari';
+  static const String waitCustom = 'Atur Sendiri';
+  static const String waitCustomHoursLabel = 'Durasi tunggu (jam)';
+  static const String waitCustomHoursHint = 'cth. 1';
+  static const String waitCustomHoursInvalid = 'Masukkan durasi tunggu yang valid (lebih dari 0 jam).';
   static const String waitCountdownTitle = 'Masih dalam masa tunggu';
   static const String waitReflectTitle = 'Pertanyaan untuk direnungkan';
   static const String waitReflectQ1 = 'Apakah kamu benar-benar membutuhkannya?';
@@ -568,6 +576,10 @@ abstract final class AppStrings {
   static const String decideWishlistDesc = 'Simpan untuk nanti.';
   static const String decideCancel = 'Tidak Jadi';
   static const String decideCancelDesc = 'Hapus dari daftar.';
+  static const String bukaLinkProduk = 'Buka Link Produk';
+  static const String editBarang = 'Edit Barang';
+  static const String editBarangDesc = 'Ubah nama, harga, link, dan catatan barang.';
+  static const String urlOpenFailed = 'Tidak dapat membuka link produk.';
   static const String decideImpactTitle = 'Dampak jika beli sekarang';
   static const String boughtBadge = 'Sudah dibeli';
   static const String cancelledBadge = 'Dibatalkan';

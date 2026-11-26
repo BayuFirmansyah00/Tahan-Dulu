@@ -37,6 +37,9 @@ class PurchaseConsideration extends Equatable {
     this.waitHours,
     this.waitStartedAt,
     this.waitEndsAt,
+    this.reflectionNeedIt,
+    this.reflectionHasSimilar,
+    this.reflectionUsageFrequency,
   });
 
   final String id;
@@ -58,7 +61,11 @@ class PurchaseConsideration extends Equatable {
   final DateTime? waitStartedAt;
   final DateTime? waitEndsAt;
 
-  /// Status final: keputusan sudah diambil.
+  /// Jawaban refleksi masa tunggu (disimpan ke backend, dihidrate ulang saat dibuka).
+  final bool? reflectionNeedIt;        // Apakah benar-benar membutuhkannya?
+  final bool? reflectionHasSimilar;    // Sudah punya barang yang serupa?
+  final String? reflectionUsageFrequency; // daily / weekly / rarely
+
   bool get isFinal =>
       status == ConsiderationStatus.bought ||
       status == ConsiderationStatus.cancelled;
@@ -80,6 +87,9 @@ class PurchaseConsideration extends Equatable {
     int? waitHours,
     DateTime? waitStartedAt,
     DateTime? waitEndsAt,
+    bool? reflectionNeedIt,
+    bool? reflectionHasSimilar,
+    String? reflectionUsageFrequency,
   }) {
     return PurchaseConsideration(
       id: id ?? this.id,
@@ -94,6 +104,10 @@ class PurchaseConsideration extends Equatable {
       waitHours: waitHours ?? this.waitHours,
       waitStartedAt: waitStartedAt ?? this.waitStartedAt,
       waitEndsAt: waitEndsAt ?? this.waitEndsAt,
+      reflectionNeedIt: reflectionNeedIt ?? this.reflectionNeedIt,
+      reflectionHasSimilar: reflectionHasSimilar ?? this.reflectionHasSimilar,
+      reflectionUsageFrequency:
+          reflectionUsageFrequency ?? this.reflectionUsageFrequency,
     );
   }
 
@@ -111,5 +125,8 @@ class PurchaseConsideration extends Equatable {
         waitHours,
         waitStartedAt,
         waitEndsAt,
+        reflectionNeedIt,
+        reflectionHasSimilar,
+        reflectionUsageFrequency,
       ];
 }

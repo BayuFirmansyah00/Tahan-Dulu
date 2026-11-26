@@ -22,6 +22,9 @@ class ApiWishlist extends Equatable {
     this.waitEndsAt,
     this.isWaiting,
     this.remainingWaitSeconds,
+    this.reflectionNeedIt,
+    this.reflectionHasSimilar,
+    this.reflectionUsageFrequency,
     this.createdAt,
     this.updatedAt,
   });
@@ -44,6 +47,9 @@ class ApiWishlist extends Equatable {
   final String? waitEndsAt;
   final bool? isWaiting;
   final int? remainingWaitSeconds;
+  final bool? reflectionNeedIt;
+  final bool? reflectionHasSimilar;
+  final String? reflectionUsageFrequency;
   final String? createdAt;
   final String? updatedAt;
 
@@ -80,6 +86,10 @@ class ApiWishlist extends Equatable {
       waitStartedAt: json['wait_started_at'] as String?,
       waitEndsAt: json['wait_ends_at'] as String?,
       isWaiting: json['is_waiting'] as bool?,
+      reflectionNeedIt: json['reflection_need_it'] as bool?,
+      reflectionHasSimilar: json['reflection_has_similar'] as bool?,
+      reflectionUsageFrequency:
+          json['reflection_usage_frequency'] as String?,
       remainingWaitSeconds: json['remaining_wait_seconds'] is int
           ? json['remaining_wait_seconds'] as int
           : int.tryParse('${json['remaining_wait_seconds']}'),
@@ -106,6 +116,9 @@ class ApiWishlist extends Equatable {
       'wait_hours': waitHours,
       'wait_started_at': waitStartedAt,
       'wait_ends_at': waitEndsAt,
+      'reflection_need_it': reflectionNeedIt,
+      'reflection_has_similar': reflectionHasSimilar,
+      'reflection_usage_frequency': reflectionUsageFrequency,
       'is_waiting': isWaiting,
       'remaining_wait_seconds': remainingWaitSeconds,
       'created_at': createdAt,
@@ -190,6 +203,9 @@ class ApiWishlist extends Equatable {
       waitHours: waitHours,
       waitStartedAt: parsedWaitStartedAt,
       waitEndsAt: parsedWaitEndsAt,
+      reflectionNeedIt: reflectionNeedIt,
+      reflectionHasSimilar: reflectionHasSimilar,
+      reflectionUsageFrequency: reflectionUsageFrequency,
     );
   }
 
@@ -213,6 +229,9 @@ class ApiWishlist extends Equatable {
         waitEndsAt,
         isWaiting,
         remainingWaitSeconds,
+        reflectionNeedIt,
+        reflectionHasSimilar,
+        reflectionUsageFrequency,
         createdAt,
         updatedAt,
       ];

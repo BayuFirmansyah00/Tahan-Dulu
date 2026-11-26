@@ -12,6 +12,7 @@ import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_icons.dart';
 import '../../../../core/widgets/app_states.dart';
+import '../../../../core/widgets/app_text_field.dart';
 import '../../../../data/providers/app_providers.dart';
 import '../providers/tahandulu_controller.dart';
 import '../utils/tahandulu_ui.dart';
@@ -35,16 +36,35 @@ class TahanDuluWaitScreen extends ConsumerStatefulWidget {
 
 class _TahanDuluWaitScreenState extends ConsumerState<TahanDuluWaitScreen> {
   int _hours = 24;
-  final Map<String, bool?> _reflections = {};
-  String? _frequency;
+  bool _useCustom = false;
+  int? _customHours;
+  bool _reflectionNeedIt = false;
+  bool _reflectionHasSimilar = false;
+  String? _reflectionFrequency;
   bool _saving = false;
+  bool _hydrated = false;
+
+  int get _effectiveHours => _useCustom ? (_customHours ?? 0) : _hours;
 
   Future<void> _save(String id) async {
+    final hours = _effectiveHours;
+    if (hours <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text(AppStrings.waitCustomHoursInvalid)),
+      );
+      return;
+    }
     setState(() => _saving = true);
     try {
       final ok = await ref
           .read(tahanDuluControllerProvider.notifier)
-          .startWait(id, _hours);
+          .startWait(
+            id,
+            hours,
+            reflectionNeedIt: _reflectionNeedIt,
+            reflectionHasSimilar: _reflectionHasSimilar,
+            reflectionUsageFrequency: _reflectionFrequency,
+          );
       if (!mounted) return;
       if (ok) {
         context.go(AppRoutes.tahanDulu);
@@ -80,6 +100,12 @@ class _TahanDuluWaitScreenState extends ConsumerState<TahanDuluWaitScreen> {
             return const Center(child: Text(AppStrings.accountNotFound));
           }
           final item = matches.first;
+          if (!_hydrated) {
+            _reflectionNeedIt = item.reflectionNeedIt ?? false;
+            _reflectionHasSimilar = item.reflectionHasSimilar ?? false;
+            _reflectionFrequency = item.reflectionUsageFrequency;
+            _hydrated = true;
+          }
           final now = DateTime.now();
           final active = item.isWaitingAt(now);
           return SingleChildScrollView(
@@ -169,22 +195,46 @@ class _TahanDuluWaitScreenState extends ConsumerState<TahanDuluWaitScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Row(
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
                   children: [
-                    for (var i = 0; i < waitOptionsHours.length; i++) ...[
-                      Expanded(
-                        child: _DurationChip(
-                          label: waitHoursLabel(waitOptionsHours[i]),
-                          selected: _hours == waitOptionsHours[i],
-                          onTap: () =>
-                              setState(() => _hours = waitOptionsHours[i]),
-                        ),
+                    for (final h in waitOptionsHours) ...[
+                      _DurationChip(
+                        label: waitHoursLabel(h),
+                        selected: !_useCustom && _hours == h,
+                        onTap: () {
+                          setState(() {
+                            _useCustom = false;
+                            _hours = h;
+                          });
+                        },
                       ),
-                      if (i < waitOptionsHours.length - 1)
-                        const SizedBox(width: 8),
                     ],
+                    _DurationChip(
+                      label: AppStrings.waitCustom,
+                      selected: _useCustom,
+                      onTap: () => setState(() => _useCustom = true),
+                    ),
                   ],
                 ),
+                if (_useCustom) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    AppStrings.waitCustomHoursLabel,
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: context.palette.onSurface,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  AppTextField(
+                    keyboardType: TextInputType.number,
+                    onChanged: (v) {
+                      _customHours = int.tryParse(v.trim());
+                    },
+                  ),
+                ],
                 const SizedBox(height: 12),
                 if (active) ...[
                   _CountdownCard(endsAt: item.waitEndsAt!),
@@ -202,16 +252,16 @@ class _TahanDuluWaitScreenState extends ConsumerState<TahanDuluWaitScreen> {
                   assetPath: AppAssets.txInvestment,
                   icon: Icons.eco_outlined,
                   question: AppStrings.waitReflectQ1,
-                  value: _reflections['q1'],
-                  onPick: (v) => setState(() => _reflections['q1'] = v),
+                  value: _reflectionNeedIt,
+                  onPick: (v) => setState(() => _reflectionNeedIt = v),
                 ),
                 const SizedBox(height: 8),
                 _ReflectCard(
                   assetPath: AppAssets.goalHouse,
                   icon: Icons.home_outlined,
                   question: AppStrings.waitReflectQ2,
-                  value: _reflections['q2'],
-                  onPick: (v) => setState(() => _reflections['q2'] = v),
+                  value: _reflectionHasSimilar,
+                  onPick: (v) => setState(() => _reflectionHasSimilar = v),
                 ),
                 const SizedBox(height: 8),
                 TdCard(
@@ -239,7 +289,7 @@ class _TahanDuluWaitScreenState extends ConsumerState<TahanDuluWaitScreen> {
                       ),
                       const SizedBox(height: 8),
                       AppAdaptiveDropdown<String>(
-                        value: _frequency,
+                        value: _reflectionFrequency,
                         hint: AppStrings.waitFrequencyDaily,
                         items: const [
                           DropdownMenuItem(
@@ -255,7 +305,8 @@ class _TahanDuluWaitScreenState extends ConsumerState<TahanDuluWaitScreen> {
                             child: Text('Jarang'),
                           ),
                         ],
-                        onChanged: (v) => setState(() => _frequency = v),
+                        onChanged: (v) =>
+                            setState(() => _reflectionFrequency = v),
                       ),
                     ],
                   ),

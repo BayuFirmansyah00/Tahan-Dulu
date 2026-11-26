@@ -11,17 +11,20 @@ import '../../../../core/utils/rupiah_input_formatter.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../data/models/purchase_consideration.dart';
+import '../../../../data/providers/app_providers.dart';
 import '../providers/tahandulu_controller.dart';
 import '../utils/tahandulu_ui.dart';
 import '../widgets/tahandulu_widgets.dart';
 
-/// Informasi Produk: nama, harga, kategori, catatan.
+/// Informasi Produk: nama, harga, kategori, catatan, dan link produk.
 ///
 /// Tahap 46: ringkasan produk, grid kategori 3D,
 /// field berlabel jelas, CTA kuning. Formatter Rupiah, validasi,
 /// dan state draf tidak diubah.
 class TahanDuluFormScreen extends ConsumerStatefulWidget {
-  const TahanDuluFormScreen({super.key});
+  const TahanDuluFormScreen({super.key, this.editItemId});
+
+  final String? editItemId;
 
   @override
   ConsumerState<TahanDuluFormScreen> createState() =>
@@ -32,8 +35,10 @@ class _TahanDuluFormScreenState extends ConsumerState<TahanDuluFormScreen> {
   late final TextEditingController _nameController;
   late final TextEditingController _priceController;
   late final TextEditingController _noteController;
+  late final TextEditingController _urlController;
   bool _attempted = false;
   bool _saving = false;
+  bool _loaded = false;
 
   @override
   void initState() {
@@ -44,6 +49,7 @@ class _TahanDuluFormScreenState extends ConsumerState<TahanDuluFormScreen> {
       text: draft.price > 0 ? RupiahInputFormatter.format(draft.price) : '',
     );
     _noteController = TextEditingController(text: draft.note);
+    _urlController = TextEditingController(text: draft.productUrl);
   }
 
   @override
@@ -51,6 +57,7 @@ class _TahanDuluFormScreenState extends ConsumerState<TahanDuluFormScreen> {
     _nameController.dispose();
     _priceController.dispose();
     _noteController.dispose();
+    _urlController.dispose();
     super.dispose();
   }
 
@@ -194,6 +201,7 @@ class _TahanDuluFormScreenState extends ConsumerState<TahanDuluFormScreen> {
     notifier.setName(_nameController.text);
     notifier.setPriceText(_priceController.text);
     notifier.setNote(_noteController.text);
+    notifier.setUrl(_urlController.text);
     if (!ref.read(tahanDuluControllerProvider).isComplete) {
       setState(() => _attempted = true);
       return;
@@ -219,6 +227,29 @@ class _TahanDuluFormScreenState extends ConsumerState<TahanDuluFormScreen> {
     final draft = ref.watch(tahanDuluControllerProvider);
     final notifier = ref.read(tahanDuluControllerProvider.notifier);
     final textTheme = Theme.of(context).textTheme;
+    final considerations = ref.watch(considerationsProvider);
+
+    // Saat diedit: muat item dari backend ke draf sekali saja.
+    if (widget.editItemId != null && !_loaded && considerations.hasValue) {
+      PurchaseConsideration? item;
+      for (final e in considerations.value!) {
+        if (e.id == widget.editItemId) {
+          item = e;
+          break;
+        }
+      }
+      if (item != null) {
+        notifier.loadForEdit(item);
+        _nameController.text = item.itemName;
+        _priceController.text = item.price > 0
+            ? RupiahInputFormatter.format(item.price)
+            : '';
+        _noteController.text = item.reason ?? '';
+        _urlController.text = item.productUrl ?? '';
+        _loaded = true;
+      }
+    }
+
     final showNameError = _attempted && !draft.isNameValid;
     final showPriceError = _attempted && !draft.isPriceValid;
 
@@ -460,6 +491,20 @@ class _TahanDuluFormScreenState extends ConsumerState<TahanDuluFormScreen> {
               label: AppStrings.productNoteLabel,
               hint: AppStrings.productNoteHint,
               maxLines: 3,
+            ),
+            const SizedBox(height: 16),
+            AppTextField(
+              controller: _urlController,
+              label: AppStrings.productUrlLabel,
+              hint: AppStrings.productUrlHint,
+              keyboardType: TextInputType.url,
+              validator: (value) {
+                final v = (value ?? '').trim();
+                if (v.isNotEmpty && !isValidProductUrl(v)) {
+                  return AppStrings.productUrlInvalid;
+                }
+                return null;
+              },
             ),
           ],
         ),
