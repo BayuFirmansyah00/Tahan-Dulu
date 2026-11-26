@@ -186,7 +186,7 @@ void main() {
     test('MockBankRepository provides search & fallback', () async {
       final mockRepo = MockBankRepository();
       final all = await mockRepo.getBanks();
-      expect(all.length, greaterThanOrEqualTo(170));
+      expect(all.length, greaterThanOrEqualTo(169));
 
       final filtered = await mockRepo.getBanks(search: 'jago');
       expect(filtered.length, 1);

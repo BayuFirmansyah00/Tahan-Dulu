@@ -33,9 +33,20 @@ class MockBankRepository implements BankRepository {
 
   @override
   Future<ApiBank> getBank(String idOrSlug) async {
-    return _sampleBanks.firstWhere(
-      (b) => b.id.toString() == idOrSlug || b.slug == idOrSlug,
-      orElse: () => throw Exception('Bank tidak ditemukan'),
-    );
+    final clean = idOrSlug.trim();
+    try {
+      // 1. Coba cocokkan berdasarkan ID atau slug kanonik
+      return _sampleBanks.firstWhere(
+        (b) => b.id.toString() == clean || b.slug == clean,
+        orElse: () => throw Exception('Bank tidak ditemukan'),
+      );
+    } catch (_) {
+      // 2. Fallback: cari melalui alias untuk kompatibilitas mundur dengan
+      // slug duplikat yang telah dinonaktifkan (contoh: bri-alt, btn-old)
+      return _sampleBanks.firstWhere(
+        (b) => b.aliases.any((a) => a.toLowerCase() == clean.toLowerCase()),
+        orElse: () => throw Exception('Bank tidak ditemukan'),
+      );
+    }
   }
 }

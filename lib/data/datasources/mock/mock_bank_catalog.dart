@@ -2,9 +2,9 @@
 // Generated from TahanDulu_Laravel/database/data/banks.json
 // Catalog Version: 2.0.0
 // Catalog Hash: f4545706987f4f16
-// Generated At: 2026-11-16
+// Generated At: 2026-11-26
 // Master Source of Truth: Laravel BankCatalogService & banks.json
-// Total Entries: 188 (Active: 175)
+// Total Entries: 188 (Active: 169)
 
 import '../../models/api_bank.dart';
 
@@ -1177,7 +1177,7 @@ final List<ApiBank> kMasterBankCatalog = [
     category: 'bank',
     logoRef: 'bri',
     logoUrl: 'https://cdn.jsdelivr.net/npm/idn-finlogos@2/dist/icons/bri.svg',
-    aliases: const ['002', 'bank-rakyat-indonesia', 'bri-new', 'brinidja'],
+    aliases: const ['002', 'bank-rakyat-indonesia', 'bri-new', 'brinidja', 'BRI (Alt)', 'BRI (Old)', 'BRI (Vertical)', 'bri-alt', 'bri-old', 'bri-vertical'],
     isActive: true,
   ),
   ApiBank(
@@ -1188,7 +1188,7 @@ final List<ApiBank> kMasterBankCatalog = [
     logoRef: 'bri-alt',
     logoUrl: 'https://cdn.jsdelivr.net/npm/idn-finlogos@2/dist/icons/bri-alt.svg',
     aliases: const [],
-    isActive: true,
+    isActive: false,
   ),
   ApiBank(
     id: 118,
@@ -1198,7 +1198,7 @@ final List<ApiBank> kMasterBankCatalog = [
     logoRef: 'bri-old',
     logoUrl: 'https://cdn.jsdelivr.net/npm/idn-finlogos@2/dist/icons/bri-old.svg',
     aliases: const [],
-    isActive: true,
+    isActive: false,
   ),
   ApiBank(
     id: 119,
@@ -1208,7 +1208,7 @@ final List<ApiBank> kMasterBankCatalog = [
     logoRef: 'bri-vertical',
     logoUrl: 'https://cdn.jsdelivr.net/npm/idn-finlogos@2/dist/icons/bri-vertical.svg',
     aliases: const [],
-    isActive: true,
+    isActive: false,
   ),
   ApiBank(
     id: 120,
@@ -1247,7 +1247,7 @@ final List<ApiBank> kMasterBankCatalog = [
     category: 'bank',
     logoRef: 'btn',
     logoUrl: 'https://cdn.jsdelivr.net/npm/idn-finlogos@2/dist/icons/btn.svg',
-    aliases: const ['200', 'bank-tabungan-negara', 'btanidja', 'btn-new'],
+    aliases: const ['200', 'bank-tabungan-negara', 'btanidja', 'btn-new', 'BTN (Alt)', 'BTN (Old)', 'btn-alt', 'btn-old'],
     isActive: true,
   ),
   ApiBank(
@@ -1258,7 +1258,7 @@ final List<ApiBank> kMasterBankCatalog = [
     logoRef: 'btn-alt',
     logoUrl: 'https://cdn.jsdelivr.net/npm/idn-finlogos@2/dist/icons/btn-alt.svg',
     aliases: const [],
-    isActive: true,
+    isActive: false,
   ),
   ApiBank(
     id: 125,
@@ -1268,7 +1268,7 @@ final List<ApiBank> kMasterBankCatalog = [
     logoRef: 'btn-old',
     logoUrl: 'https://cdn.jsdelivr.net/npm/idn-finlogos@2/dist/icons/btn-old.svg',
     aliases: const [],
-    isActive: true,
+    isActive: false,
   ),
   ApiBank(
     id: 126,
@@ -1277,7 +1277,7 @@ final List<ApiBank> kMasterBankCatalog = [
     category: 'bank',
     logoRef: 'btn-syariah',
     logoUrl: 'https://cdn.jsdelivr.net/npm/idn-finlogos@2/dist/icons/btn-syariah.svg',
-    aliases: const ['btn-syariah-new'],
+    aliases: const ['BTN Syariah (Old)', 'btn-syariah-old', 'btn-syariah-new'],
     isActive: true,
   ),
   ApiBank(
@@ -1288,7 +1288,7 @@ final List<ApiBank> kMasterBankCatalog = [
     logoRef: 'btn-syariah-old',
     logoUrl: 'https://cdn.jsdelivr.net/npm/idn-finlogos@2/dist/icons/btn-syariah-old.svg',
     aliases: const [],
-    isActive: true,
+    isActive: false,
   ),
   ApiBank(
     id: 128,
