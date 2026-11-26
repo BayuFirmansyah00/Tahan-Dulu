@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/theme/glass.dart';
 
@@ -140,7 +141,13 @@ class _TahanDuluWaitScreenState extends ConsumerState<TahanDuluWaitScreen> {
                 TdCard(
                   child: Row(
                     children: [
-                      TdCategoryIcon(category: item.category, size: 52),
+                      ProductImage(
+                        imageRef: item.imageRef,
+                        category: item.category,
+                        height: 56,
+                        width: 56,
+                        borderRadius: 12,
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
@@ -187,6 +194,72 @@ class _TahanDuluWaitScreenState extends ConsumerState<TahanDuluWaitScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
+                if (item.productUrl != null && isValidProductUrl(item.productUrl!)) ...[
+                  Text(
+                    AppStrings.linkProduk,
+                    style: textTheme.titleMedium?.copyWith(
+                      color: context.palette.onSurface,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: context.palette.surface,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: context.palette.outlineVariant),
+                          ),
+                          child: Text(
+                            item.productUrl!,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: textTheme.bodyMedium?.copyWith(
+                              color: context.palette.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Material(
+                        color: context.palette.tertiaryContainer,
+                        shape: const CircleBorder(),
+                        child: IconButton(
+                          tooltip: AppStrings.bukaLinkProduk,
+                          icon: Icon(
+                            Icons.open_in_new,
+                            size: 20,
+                            color: context.palette.onSurface,
+                          ),
+                          onPressed: () async {
+                            final url = Uri.parse(item.productUrl!);
+                            bool launched = false;
+                            if (await canLaunchUrl(url)) {
+                              launched = await launchUrl(
+                                url,
+                                mode: LaunchMode.externalApplication,
+                              );
+                            }
+                            if (!context.mounted) return;
+                            if (!launched) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(AppStrings.urlOpenFailed),
+                                  backgroundColor: TdColors.danger,
+                                ),
+                              );
+                            }
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
                 Text(
                   'Pilih periode masa tunggu',
                   style: textTheme.titleMedium?.copyWith(

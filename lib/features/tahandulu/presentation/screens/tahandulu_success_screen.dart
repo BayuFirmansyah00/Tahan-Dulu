@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/theme/glass.dart';
 
@@ -14,6 +15,7 @@ import '../../../../core/widgets/app_icons.dart';
 import '../../../../core/widgets/app_states.dart';
 import '../../../../data/providers/app_providers.dart';
 import '../../../dashboard/presentation/widgets/dashboard_bottom_nav.dart';
+import '../providers/tahandulu_controller.dart';
 import '../utils/tahandulu_ui.dart';
 import '../widgets/tahandulu_widgets.dart';
 
@@ -89,7 +91,13 @@ class TahanDuluSuccessScreen extends ConsumerWidget {
                       TdCard(
                         child: Row(
                           children: [
-                            TdCategoryIcon(category: item.category, size: 52),
+                            ProductImage(
+                              imageRef: item.imageRef,
+                              category: item.category,
+                              height: 52,
+                              width: 52,
+                              borderRadius: 12,
+                            ),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Column(
@@ -122,6 +130,73 @@ class TahanDuluSuccessScreen extends ConsumerWidget {
                           ],
                         ),
                       ),
+                      if (item.productUrl != null && isValidProductUrl(item.productUrl!)) ...[
+                        const SizedBox(height: 16),
+                        Text(
+                          AppStrings.linkProduk,
+                          style: textTheme.titleMedium?.copyWith(
+                            color: context.palette.onSurface,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: context.palette.surface,
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(color: context.palette.outlineVariant),
+                                ),
+                                child: Text(
+                                  item.productUrl!,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: textTheme.bodyMedium?.copyWith(
+                                    color: context.palette.primary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Material(
+                              color: context.palette.tertiaryContainer,
+                              shape: const CircleBorder(),
+                              child: IconButton(
+                                tooltip: AppStrings.bukaLinkProduk,
+                                icon: Icon(
+                                  Icons.open_in_new,
+                                  size: 20,
+                                  color: context.palette.onSurface,
+                                ),
+                                onPressed: () async {
+                                  final url = Uri.parse(item.productUrl!);
+                                  bool launched = false;
+                                  if (await canLaunchUrl(url)) {
+                                    launched = await launchUrl(
+                                      url,
+                                      mode: LaunchMode.externalApplication,
+                                    );
+                                  }
+                                  if (!context.mounted) return;
+                                  if (!launched) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(AppStrings.urlOpenFailed),
+                                        backgroundColor: TdColors.danger,
+                                      ),
+                                    );
+                                  }
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                       const SizedBox(height: 24),
                       AppButton(
                         label: AppStrings.seeTransactionsAction,

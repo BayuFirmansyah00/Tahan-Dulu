@@ -175,7 +175,7 @@ String waitHoursLabel(int hours) {
 }
 
 /// Teks sisa masa tunggu dari timestamp eksplisit.
-/// "18:42:15" bila < 1 hari, "X hari lagi", atau "Selesai".
+/// >= 1 jam: "HH:MM:SS"; < 1 jam: "MM:SS"; < 1 menit: "X detik"; "Selesai" bila habis.
 String formatWaitRemaining(DateTime endsAt, DateTime now) {
   final remaining = endsAt.difference(now);
   if (remaining.isNegative || remaining == Duration.zero) {
@@ -185,13 +185,21 @@ String formatWaitRemaining(DateTime endsAt, DateTime now) {
     final days = remaining.inHours ~/ 24;
     return '$days ${AppStrings.waitRemainingDays}';
   }
-  final h = remaining.inHours.toString().padLeft(2, '0');
-  final m = (remaining.inMinutes % 60).toString().padLeft(2, '0');
-  final s = (remaining.inSeconds % 60).toString().padLeft(2, '0');
-  return '$h:$m:$s';
+  if (remaining.inHours >= 1) {
+    final h = remaining.inHours.toString().padLeft(2, '0');
+    final m = (remaining.inMinutes % 60).toString().padLeft(2, '0');
+    final s = (remaining.inSeconds % 60).toString().padLeft(2, '0');
+    return '$h:$m:$s';
+  }
+  if (remaining.inMinutes >= 1) {
+    final m = remaining.inMinutes.toString().padLeft(2, '0');
+    final s = (remaining.inSeconds % 60).toString().padLeft(2, '0');
+    return '$m:$s';
+  }
+  return '${remaining.inSeconds} ${AppStrings.waitRemainingSeconds}';
 }
 
-/// Teks "Menunggu X" ringkas untuk kartu (jam/hari).
+/// Teks "Menunggu X" ringkas untuk kartu (jam/hari/menit).
 String formatWaitShort(DateTime endsAt, DateTime now) {
   final remaining = endsAt.difference(now);
   if (remaining.isNegative || remaining == Duration.zero) {
@@ -200,5 +208,11 @@ String formatWaitShort(DateTime endsAt, DateTime now) {
   if (remaining.inHours >= 24) {
     return 'Menunggu ${remaining.inHours ~/ 24} hari';
   }
-  return 'Menunggu ${remaining.inHours} jam';
+  if (remaining.inHours >= 1) {
+    return 'Menunggu ${remaining.inHours} jam';
+  }
+  if (remaining.inMinutes >= 1) {
+    return 'Menunggu ${remaining.inMinutes} menit';
+  }
+  return 'Menunggu ${remaining.inSeconds} detik';
 }

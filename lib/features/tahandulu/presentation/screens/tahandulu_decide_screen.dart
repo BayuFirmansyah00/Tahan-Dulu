@@ -519,7 +519,13 @@ class _TahanDuluDecideScreenState extends ConsumerState<TahanDuluDecideScreen> {
                 TdCard(
                   child: Row(
                     children: [
-                      TdCategoryIcon(category: item.category, size: 52),
+                      ProductImage(
+                        imageRef: item.imageRef,
+                        category: item.category,
+                        height: 56,
+                        width: 56,
+                        borderRadius: 12,
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
@@ -557,7 +563,7 @@ class _TahanDuluDecideScreenState extends ConsumerState<TahanDuluDecideScreen> {
                 if (item.productUrl != null && isValidProductUrl(item.productUrl!)) ...[
                   const SizedBox(height: 16),
                   Text(
-                    'Link Produk',
+                    AppStrings.linkProduk,
                     style: textTheme.titleMedium?.copyWith(
                       color: context.palette.onSurface,
                       fontWeight: FontWeight.w700,

@@ -577,6 +577,7 @@ abstract final class AppStrings {
   static const String decideCancel = 'Tidak Jadi';
   static const String decideCancelDesc = 'Hapus dari daftar.';
   static const String bukaLinkProduk = 'Buka Link Produk';
+  static const String linkProduk = 'Link Produk';
   static const String editBarang = 'Edit Barang';
   static const String editBarangDesc = 'Ubah nama, harga, link, dan catatan barang.';
   static const String urlOpenFailed = 'Tidak dapat membuka link produk.';
@@ -597,6 +598,7 @@ abstract final class AppStrings {
   static const String seeTransactionsAction = 'Lihat Transaksi';
   static const String waitRemainingHours = 'jam lagi';
   static const String waitRemainingDays = 'hari lagi';
+  static const String waitRemainingSeconds = 'detik';
   static const String waitExpired = 'Selesai';
   static const String productCatFashion = 'Fashion';
   static const String productCatElectronics = 'Elektronik';

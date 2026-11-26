@@ -161,7 +161,13 @@ class TahanDuluAnalysisScreen extends ConsumerWidget {
                 TdCard(
                   child: Row(
                     children: [
-                      TdCategoryIcon(category: a.item.category, size: 56),
+                      ProductImage(
+                        imageRef: a.item.imageRef,
+                        category: a.item.category,
+                        height: 56,
+                        width: 56,
+                        borderRadius: 12,
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(

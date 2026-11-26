@@ -67,6 +67,14 @@ class TahanDuluSimulateScreen extends ConsumerWidget {
                   style: textTheme.bodyMedium?.copyWith(color: context.palette.onSurfaceVariant),
                 ),
                 const SizedBox(height: 12),
+                ProductImage(
+                  imageRef: a.item.imageRef,
+                  category: a.item.category,
+                  height: 64,
+                  width: 64,
+                  borderRadius: 12,
+                ),
+                const SizedBox(height: 12),
                 Text(
                   AppStrings.currentStateTitle,
                   style: textTheme.titleMedium?.copyWith(
