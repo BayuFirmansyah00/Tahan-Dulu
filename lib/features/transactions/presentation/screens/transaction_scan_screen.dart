@@ -12,6 +12,7 @@ import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/utils/rupiah_input_formatter.dart';
+import '../../../../data/datasources/remote/api_config.dart';
 import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_card.dart';
@@ -83,11 +84,37 @@ class _TransactionScanScreenState extends ConsumerState<TransactionScanScreen> {
   bool _isEditingText = false;
   bool _isEditingFields = false;
   bool _allowVisionFallback = false;
+  bool _confirmUncertainTotal = false;
+  bool _manualTotalCorrected = false;
 
   // Editable overrides applied before moving to TransactionFormScreen
   String? _editedMerchant;
   double? _editedTotal;
   DateTime? _editedDate;
+
+  bool get _hasBlockedTotalWarning =>
+      _hybridResult?.validationWarnings.any(
+        (w) =>
+            w.code == 'TOTAL_EQUALS_CASH_WITH_CHANGE' ||
+            w.code == 'CASH_SUBSTITUTION_PREVENTED' ||
+            w.code == 'MISSING_GRAND_TOTAL',
+      ) ??
+      false;
+
+  bool get _hasUncertainTotal {
+    final hybrid = _hybridResult;
+    final parsed = _parsedReceipt;
+    if (hybrid == null || parsed == null) return false;
+    final effective = _editedTotal ?? parsed.total;
+    if (effective <= 0 || _hasBlockedTotalWarning || parsed.hasMultipleTotals) {
+      return true;
+    }
+    return hybrid.validationWarnings.any(
+      (w) =>
+          w.code == 'TOTAL_RECONCILIATION_MISMATCH' ||
+          w.code == 'MULTIPLE_TOTAL_CANDIDATES',
+    );
+  }
 
   @override
   void initState() {
@@ -235,13 +262,20 @@ class _TransactionScanScreenState extends ConsumerState<TransactionScanScreen> {
     final hasMultiTotal = hybrid.validationWarnings.any(
       (w) => w.code == 'MULTIPLE_TOTAL_CANDIDATES',
     );
+    final hasBlockedTotal = hybrid.validationWarnings.any(
+      (w) =>
+          w.code == 'TOTAL_EQUALS_CASH_WITH_CHANGE' ||
+          w.code == 'CASH_SUBSTITUTION_PREVENTED' ||
+          w.code == 'MISSING_GRAND_TOTAL',
+    );
+    final safeTotal = hasBlockedTotal ? 0.0 : (hybrid.grandTotal ?? 0);
 
     final parsed = ParsedReceipt(
       rawText: hybrid.rawText,
       merchantName: hybrid.merchantName,
       date: hybrid.receiptDate,
       time: hybrid.receiptTime,
-      total: hybrid.grandTotal ?? 0,
+      total: safeTotal,
       subtotal: hybrid.subtotal,
       discount: hybrid.discount,
       tax: hybrid.tax,
@@ -257,6 +291,11 @@ class _TransactionScanScreenState extends ConsumerState<TransactionScanScreen> {
       _parsedReceipt = parsed;
       _receiptTextController.text = hybrid.rawText;
       _isProcessingOcr = false;
+      _confirmUncertainTotal = false;
+      _manualTotalCorrected = false;
+      if (hasBlockedTotal || safeTotal <= 0) {
+        _isEditingFields = true;
+      }
     });
   }
 
@@ -297,6 +336,21 @@ class _TransactionScanScreenState extends ConsumerState<TransactionScanScreen> {
     final effectiveMerchant = (_editedMerchant ?? receipt.merchantName)?.trim();
     final effectiveTotal = _editedTotal ?? receipt.total;
     final effectiveDate = _editedDate ?? receipt.date;
+
+    if (_hybridResult != null &&
+        _hasUncertainTotal &&
+        (effectiveTotal <= 0 ||
+            (!_manualTotalCorrected && !_confirmUncertainTotal))) {
+      setState(() {
+        _errorMessage = effectiveTotal <= 0
+            ? 'Total pembayaran belum pasti. Harap isi total akhir yang benar lalu simpan perubahan.'
+            : 'Total pembayaran ditandai perlu verifikasi. Edit nominal atau centang konfirmasi total terlebih dahulu.';
+        if (effectiveTotal <= 0) {
+          _isEditingFields = true;
+        }
+      });
+      return;
+    }
 
     final notifier = ref.read(transactionFormProvider.notifier);
 
@@ -735,6 +789,8 @@ class _TransactionScanScreenState extends ConsumerState<TransactionScanScreen> {
                                           );
                                       if (parsedAmt > 0) {
                                         _editedTotal = parsedAmt;
+                                        _manualTotalCorrected = true;
+                                        _errorMessage = null;
                                       }
                                       _isEditingFields = false;
                                     });
@@ -901,8 +957,33 @@ class _TransactionScanScreenState extends ConsumerState<TransactionScanScreen> {
                                     )
                                   : 'Belum terbaca (isi manual)',
                               isHighlight: true,
-                              highlightColor: context.palette.primary,
+                              highlightColor: _hasUncertainTotal && !_manualTotalCorrected
+                                  ? context.warningInk
+                                  : context.palette.primary,
                             ),
+                            if (_hasUncertainTotal &&
+                                (_editedTotal ?? _parsedReceipt!.total) > 0 &&
+                                !_manualTotalCorrected) ...[
+                              const SizedBox(height: 8),
+                              CheckboxListTile(
+                                value: _confirmUncertainTotal,
+                                onChanged: (v) => setState(() {
+                                  _confirmUncertainTotal = v ?? false;
+                                  if (_confirmUncertainTotal) {
+                                    _errorMessage = null;
+                                  }
+                                }),
+                                dense: true,
+                                contentPadding: EdgeInsets.zero,
+                                title: const Text(
+                                  'Saya sudah memastikan total akhir pembayaran sesuai struk',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ],
                           if (_hybridResult != null &&
                               _hybridResult!.validationWarnings.isNotEmpty) ...[
@@ -1071,7 +1152,8 @@ class _TransactionScanScreenState extends ConsumerState<TransactionScanScreen> {
                     const SizedBox(height: 12),
                   ],
 
-                  if (ref.watch(hybridReceiptScannerServiceProvider).isEnabled) ...[
+                  if (ref.watch(hybridReceiptScannerServiceProvider).isEnabled &&
+                      ApiConfig.allowExternalReceiptAi) ...[
                     CheckboxListTile(
                       value: _allowVisionFallback,
                       onChanged: (v) =>
@@ -1310,27 +1392,36 @@ class _HowItWorksCard extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildStep(context,
-            asset: AppAssets.scanStepCamera,
-            label: 'Ambil foto',
+          Expanded(
+            child: _buildStep(
+              context,
+              asset: AppAssets.scanStepCamera,
+              label: 'Ambil foto',
+            ),
           ),
           Icon(
             Icons.arrow_forward_ios_rounded,
             size: 13,
             color: context.palette.outlineVariant,
           ),
-          _buildStep(context,
-            asset: AppAssets.scanStepRead,
-            label: 'Baca data',
+          Expanded(
+            child: _buildStep(
+              context,
+              asset: AppAssets.scanStepRead,
+              label: 'Baca data',
+            ),
           ),
           Icon(
             Icons.arrow_forward_ios_rounded,
             size: 13,
             color: context.palette.outlineVariant,
           ),
-          _buildStep(context,
-            asset: AppAssets.scanStepReview,
-            label: 'Periksa hasil',
+          Expanded(
+            child: _buildStep(
+              context,
+              asset: AppAssets.scanStepReview,
+              label: 'Periksa hasil',
+            ),
           ),
         ],
       ),
@@ -1350,6 +1441,9 @@ class _HowItWorksCard extends StatelessWidget {
         const SizedBox(height: 6),
         Text(
           label,
+          textAlign: TextAlign.center,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
           style: TextStyle(
             color: context.palette.onSurface,
             fontSize: 11.5,

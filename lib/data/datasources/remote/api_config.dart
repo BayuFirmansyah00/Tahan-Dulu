@@ -52,6 +52,12 @@ abstract final class ApiConfig {
     defaultValue: false,
   );
 
+  /// true = tampilkan opsi izin AI eksternal di UI (default false: pure self-hosted RapidOCR).
+  static const bool allowExternalReceiptAi = bool.fromEnvironment(
+    'ALLOW_EXTERNAL_RECEIPT_AI',
+    defaultValue: false,
+  );
+
   /// Status apakah aplikasi sedang terhubung ke VPS production.
   static bool get isProduction => baseUrl.contains('tahandulu.kreasikan.site');
 

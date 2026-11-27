@@ -272,10 +272,94 @@ void main() {
 
         expect(fakeOcr.recognizeCalls, 1);
         expect(find.text('INDOMARET POINT'), findsOneWidget);
+        expect(find.text('Gunakan Data Struk di Form'), findsOneWidget);
         expect(
           find.textContaining('Menggunakan OCR perangkat sebagai cadangan'),
           findsOneWidget,
         );
+      },
+    );
+
+    testWidgets(
+      'Uncertain/cash-substituted total clears amount, opens edit mode, and blocks navigation until corrected or confirmed',
+      (tester) async {
+        final fakeOcr = _FakeReceiptOcrService(
+          pickedPath: 'C:/fake/receipt_uncertain.jpg',
+        );
+        final fakeHybrid = _FakeHybridScannerService(
+          isEnabled: true,
+          result: const HybridReceiptScanResult(
+            rawText: 'WARUNG MAJU\nKOPI 15.000\nTUNAI 50.000\nKEMBALIAN 35.000',
+            merchantName: 'WARUNG MAJU',
+            items: [
+              HybridReceiptItem(name: 'KOPI', lineTotal: 15000),
+            ],
+            grandTotal: 50000,
+            cashPaid: 50000,
+            change: 35000,
+            validationWarnings: [
+              ReceiptValidationWarning(
+                code: 'TOTAL_EQUALS_CASH_WITH_CHANGE',
+                severity: 'error',
+                message: 'Total akhir terdeteksi sama dengan uang tunai padahal terdapat kembalian.',
+                field: 'grand_total',
+              ),
+            ],
+            requiresReview: true,
+          ),
+        );
+
+        await tester.pumpWidget(
+          _wrapRouter(
+            overrides: [
+              receiptOcrServiceProvider.overrideWithValue(fakeOcr),
+              hybridReceiptScannerServiceProvider.overrideWithValue(fakeHybrid),
+            ],
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final kamera = find.text('Kamera');
+        await tester.ensureVisible(kamera);
+        await tester.tap(kamera);
+        await tester.pumpAndSettle();
+
+        // Cash-substituted grandTotal (50000) is cleared, inline edit auto-opens
+        expect(find.widgetWithText(TextField, 'Total Akhir Pembayaran'), findsOneWidget);
+        expect(find.text('Belum terbaca (isi manual)'), findsNothing); // because edit mode is open
+        expect(find.text('Form Add Screen'), findsNothing);
+
+        // Attempting to proceed with 0 / uncorrected total is blocked
+        final saveEditBtn = find.text('Simpan');
+        await tester.ensureVisible(saveEditBtn);
+        await tester.tap(saveEditBtn);
+        await tester.pumpAndSettle();
+        final confirmBtn = find.text('Gunakan Data Struk di Form');
+        await tester.ensureVisible(confirmBtn);
+        await tester.tap(confirmBtn);
+        await tester.pumpAndSettle();
+        expect(find.text('Form Add Screen'), findsNothing);
+        expect(
+          find.textContaining('Total pembayaran belum pasti'),
+          findsOneWidget,
+        );
+
+        // Edit mode stays open cleanly; entering valid total and saving allows proceeding
+        await tester.ensureVisible(
+          find.widgetWithText(TextField, 'Total Akhir Pembayaran'),
+        );
+        await tester.enterText(
+          find.widgetWithText(TextField, 'Total Akhir Pembayaran'),
+          '15000',
+        );
+        await tester.ensureVisible(find.text('Simpan'));
+        await tester.tap(find.text('Simpan'));
+        await tester.pumpAndSettle();
+        await tester.ensureVisible(confirmBtn);
+        await tester.tap(confirmBtn);
+        await tester.pumpAndSettle();
+
+        expect(find.text('Form Add Screen'), findsOneWidget);
       },
     );
   });
