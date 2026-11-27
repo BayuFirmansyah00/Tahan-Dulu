@@ -11,10 +11,12 @@ import '../../../../core/constants/glass_design_tokens.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
+import '../../../../core/utils/rupiah_input_formatter.dart';
 import '../../../../core/widgets/app_adaptive_controls.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_icons.dart';
+import '../../data/services/hybrid_receipt_scanner_service.dart';
 import '../../data/services/receipt_ocr_service.dart';
 import '../../domain/receipt_parser.dart';
 import '../providers/native_input_providers.dart';
@@ -68,24 +70,39 @@ BCA DEBIT           65.000''';
 class _TransactionScanScreenState extends ConsumerState<TransactionScanScreen> {
   final _parser = const ReceiptParser();
   late final TextEditingController _receiptTextController;
+  late final TextEditingController _merchantEditController;
+  late final TextEditingController _totalEditController;
   ReceiptOcrService? _ocrService;
 
   String? _imagePath;
   bool _isProcessingOcr = false;
   String? _errorMessage;
+  String? _hybridFallbackNotice;
   ParsedReceipt? _parsedReceipt;
+  HybridReceiptScanResult? _hybridResult;
   bool _isEditingText = false;
+  bool _isEditingFields = false;
+  bool _allowVisionFallback = false;
+
+  // Editable overrides applied before moving to TransactionFormScreen
+  String? _editedMerchant;
+  double? _editedTotal;
+  DateTime? _editedDate;
 
   @override
   void initState() {
     super.initState();
     _receiptTextController = TextEditingController();
+    _merchantEditController = TextEditingController();
+    _totalEditController = TextEditingController();
     _ocrService = ref.read(receiptOcrServiceProvider);
   }
 
   @override
   void dispose() {
     _receiptTextController.dispose();
+    _merchantEditController.dispose();
+    _totalEditController.dispose();
     if (_imagePath != null) {
       _ocrService?.deleteTempImage(_imagePath);
     }
@@ -144,7 +161,32 @@ class _TransactionScanScreenState extends ConsumerState<TransactionScanScreen> {
       _imagePath = path;
       _isProcessingOcr = true;
       _errorMessage = null;
+      _hybridFallbackNotice = null;
+      _hybridResult = null;
+      _isEditingFields = false;
+      _editedMerchant = null;
+      _editedTotal = null;
+      _editedDate = null;
     });
+
+    final hybridScanner = ref.read(hybridReceiptScannerServiceProvider);
+    if (hybridScanner.isEnabled) {
+      try {
+        final hybrid = await hybridScanner.scanReceiptImage(
+          path,
+          allowVisionFallback: _allowVisionFallback,
+        );
+        if (!mounted) return;
+        _applyHybridResult(hybrid);
+        return;
+      } catch (e) {
+        if (!mounted) return;
+        setState(() {
+          _hybridFallbackNotice =
+              'Mode hybrid tidak tersedia ($e). Menggunakan OCR perangkat sebagai cadangan.';
+        });
+      }
+    }
 
     try {
       final ocrService = ref.read(receiptOcrServiceProvider);
@@ -177,11 +219,63 @@ class _TransactionScanScreenState extends ConsumerState<TransactionScanScreen> {
     }
   }
 
+  void _applyHybridResult(HybridReceiptScanResult hybrid) {
+    final parsedItems = hybrid.items
+        .where((i) => (i.lineTotal ?? i.unitPrice ?? 0) > 0)
+        .map(
+          (i) => ReceiptItem(
+            name: i.name,
+            price: i.lineTotal ?? i.unitPrice ?? 0,
+            quantity: (i.quantity ?? 1).round(),
+          ),
+        )
+        .toList(growable: false);
+
+    final hasMultiTotal = hybrid.validationWarnings.any(
+      (w) => w.code == 'MULTIPLE_TOTAL_CANDIDATES',
+    );
+
+    final parsed = ParsedReceipt(
+      rawText: hybrid.rawText,
+      merchantName: hybrid.merchantName,
+      date: hybrid.receiptDate,
+      time: hybrid.receiptTime,
+      total: hybrid.grandTotal ?? 0,
+      subtotal: hybrid.subtotal,
+      discount: hybrid.discount,
+      tax: hybrid.tax,
+      serviceFee: hybrid.serviceCharge,
+      paymentMethod: hybrid.paymentMethod,
+      items: parsedItems,
+      hasMultipleTotals: hasMultiTotal,
+    );
+
+    _syncEditControllers(parsed);
+    setState(() {
+      _hybridResult = hybrid;
+      _parsedReceipt = parsed;
+      _receiptTextController.text = hybrid.rawText;
+      _isProcessingOcr = false;
+    });
+  }
+
+  void _syncEditControllers(ParsedReceipt parsed) {
+    _editedMerchant = parsed.merchantName;
+    _editedTotal = parsed.total > 0 ? parsed.total : null;
+    _editedDate = parsed.date;
+    _merchantEditController.text = parsed.merchantName ?? '';
+    _totalEditController.text =
+        parsed.total > 0 ? RupiahInputFormatter.format(parsed.total) : '';
+  }
+
   /// Programmatic helper untuk pengujian
   void loadSampleReceipt(String sample) {
     setState(() {
       _imagePath = null;
       _errorMessage = null;
+      _hybridFallbackNotice = null;
+      _hybridResult = null;
+      _isEditingFields = false;
       _receiptTextController.text = sample;
     });
     _extractReceipt(sample);
@@ -189,6 +283,7 @@ class _TransactionScanScreenState extends ConsumerState<TransactionScanScreen> {
 
   void _extractReceipt(String text) {
     final parsed = _parser.parse(text);
+    _syncEditControllers(parsed);
     setState(() {
       _parsedReceipt = parsed;
     });
@@ -197,6 +292,10 @@ class _TransactionScanScreenState extends ConsumerState<TransactionScanScreen> {
   void _confirmAndNavigateToForm() {
     final receipt = _parsedReceipt;
     if (receipt == null) return;
+
+    final effectiveMerchant = (_editedMerchant ?? receipt.merchantName)?.trim();
+    final effectiveTotal = _editedTotal ?? receipt.total;
+    final effectiveDate = _editedDate ?? receipt.date;
 
     final notifier = ref.read(transactionFormProvider.notifier);
 
@@ -211,17 +310,19 @@ class _TransactionScanScreenState extends ConsumerState<TransactionScanScreen> {
     }
 
     String? notice;
-    if (receipt.hasMultipleTotals) {
+    if (_hybridResult != null && _hybridResult!.validationWarnings.isNotEmpty) {
+      notice = _hybridResult!.validationWarnings.first.message;
+    } else if (receipt.hasMultipleTotals) {
       notice = 'Struk memiliki beberapa kemungkinan nominal. Harap pastikan total akhir pembayaran.';
-    } else if (receipt.total <= 0) {
+    } else if (effectiveTotal <= 0) {
       notice = 'Nominal struk belum terdeteksi. Silakan masukkan nominal pembayaran secara manual.';
     }
 
     notifier.prefillFromScan(
-      amount: receipt.total,
-      date: receipt.date,
-      title: (receipt.hasMerchant && receipt.merchantName!.trim().isNotEmpty)
-          ? receipt.merchantName!.trim()
+      amount: effectiveTotal,
+      date: effectiveDate,
+      title: (effectiveMerchant != null && effectiveMerchant.isNotEmpty)
+          ? effectiveMerchant
           : null,
       note: noteParts.isNotEmpty ? noteParts.join(' - ') : null,
       notice: notice,
@@ -301,6 +402,41 @@ class _TransactionScanScreenState extends ConsumerState<TransactionScanScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
+                  ],
+
+                  // Notice bila hybrid scanner fallback ke OCR perangkat
+                  if (_hybridFallbackNotice != null) ...[
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: context.warningFill,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.info_outline_rounded,
+                            size: 18,
+                            color: context.warningInk,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              _hybridFallbackNotice!,
+                              style: TextStyle(
+                                color: context.warningInk,
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
                   ],
 
                   // Loading indicator saat memproses OCR
@@ -574,26 +710,95 @@ class _TransactionScanScreenState extends ConsumerState<TransactionScanScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'Informasi Struk yang Dikenali',
-                            style: textTheme.titleSmall?.copyWith(
-                              color: context.palette.onSurface,
-                              fontWeight: FontWeight.w700,
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  'Informasi Struk yang Dikenali',
+                                  style: textTheme.titleSmall?.copyWith(
+                                    color: context.palette.onSurface,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                              TextButton.icon(
+                                onPressed: () {
+                                  if (_isEditingFields) {
+                                    setState(() {
+                                      _editedMerchant =
+                                          _merchantEditController.text.trim();
+                                      final parsedAmt =
+                                          RupiahInputFormatter.parse(
+                                            _totalEditController.text,
+                                          );
+                                      if (parsedAmt > 0) {
+                                        _editedTotal = parsedAmt;
+                                      }
+                                      _isEditingFields = false;
+                                    });
+                                  } else {
+                                    setState(() {
+                                      _isEditingFields = true;
+                                    });
+                                  }
+                                },
+                                icon: Icon(
+                                  _isEditingFields
+                                      ? Icons.check_rounded
+                                      : Icons.edit_outlined,
+                                  size: 16,
+                                ),
+                                label: Text(
+                                  _isEditingFields ? 'Simpan' : 'Edit',
+                                  style: const TextStyle(fontSize: 12),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          if (_isEditingFields) ...[
+                            TextField(
+                              controller: _merchantEditController,
+                              decoration: const InputDecoration(
+                                labelText: 'Nama Toko / Merchant',
+                                border: OutlineInputBorder(),
+                                isDense: true,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 12),
-                          _ReceiptRow(
-                            label: 'Nama Toko / Merchant',
-                            value: _parsedReceipt!.merchantName ??
-                                'Belum terbaca (isi di form)',
-                            isHighlight: true,
-                          ),
+                            const SizedBox(height: 10),
+                            TextField(
+                              controller: _totalEditController,
+                              keyboardType: TextInputType.number,
+                              inputFormatters: [RupiahInputFormatter()],
+                              decoration: const InputDecoration(
+                                labelText: 'Total Akhir Pembayaran',
+                                prefixText: 'Rp ',
+                                border: OutlineInputBorder(),
+                                isDense: true,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                          ] else ...[
+                            _ReceiptRow(
+                              label: 'Nama Toko / Merchant',
+                              value: ((_editedMerchant ??
+                                          _parsedReceipt!.merchantName)
+                                      ?.trim()
+                                      .isNotEmpty ==
+                                  true)
+                                  ? (_editedMerchant ??
+                                      _parsedReceipt!.merchantName!)
+                                  : 'Belum terbaca (isi di form)',
+                              isHighlight: true,
+                            ),
+                          ],
                           const Divider(height: 16),
                           _ReceiptRow(
                             label: 'Tanggal Transaksi',
-                            value: _parsedReceipt!.date != null
+                            value: (_editedDate ?? _parsedReceipt!.date) != null
                                 ? DateFormatter.dayMonthYear(
-                                    _parsedReceipt!.date!,
+                                    (_editedDate ?? _parsedReceipt!.date)!,
                                   )
                                 : 'Hari ini (dapat diubah di form)',
                           ),
@@ -602,6 +807,20 @@ class _TransactionScanScreenState extends ConsumerState<TransactionScanScreen> {
                             _ReceiptRow(
                               label: 'Waktu / Jam Transaksi',
                               value: _parsedReceipt!.time!,
+                            ),
+                          ],
+                          if (_parsedReceipt!.paymentMethod != null) ...[
+                            const Divider(height: 16),
+                            _ReceiptRow(
+                              label: 'Metode Pembayaran',
+                              value: _parsedReceipt!.paymentMethod!,
+                            ),
+                          ],
+                          if (_hybridResult?.suggestedCategory != null) ...[
+                            const Divider(height: 16),
+                            _ReceiptRow(
+                              label: 'Saran Kategori',
+                              value: _hybridResult!.suggestedCategory!,
                             ),
                           ],
                           if (_parsedReceipt!.subtotal != null) ...[
@@ -643,18 +862,80 @@ class _TransactionScanScreenState extends ConsumerState<TransactionScanScreen> {
                               ),
                             ),
                           ],
-                          const Divider(height: 16),
-                          _ReceiptRow(
-                            label: 'Total Akhir Pembayaran',
-                            value: _parsedReceipt!.total > 0
-                                ? CurrencyFormatter.format(
-                                    _parsedReceipt!.total,
-                                  )
-                                : 'Belum terbaca (isi manual)',
-                            isHighlight: true,
-                            highlightColor: context.palette.primary,
-                          ),
-                          if (_parsedReceipt!.hasMultipleTotals) ...[
+                          if (_hybridResult?.rounding != null &&
+                              _hybridResult!.rounding != 0) ...[
+                            const Divider(height: 16),
+                            _ReceiptRow(
+                              label: 'Pembulatan',
+                              value: CurrencyFormatter.format(
+                                _hybridResult!.rounding!,
+                              ),
+                            ),
+                          ],
+                          if (_hybridResult?.cashPaid != null) ...[
+                            const Divider(height: 16),
+                            _ReceiptRow(
+                              label: 'Tunai Dibayar',
+                              value: CurrencyFormatter.format(
+                                _hybridResult!.cashPaid!,
+                              ),
+                            ),
+                          ],
+                          if (_hybridResult?.change != null) ...[
+                            const Divider(height: 16),
+                            _ReceiptRow(
+                              label: 'Kembalian',
+                              value: CurrencyFormatter.format(
+                                _hybridResult!.change!,
+                              ),
+                            ),
+                          ],
+                          if (!_isEditingFields) ...[
+                            const Divider(height: 16),
+                            _ReceiptRow(
+                              label: 'Total Akhir Pembayaran',
+                              value: (_editedTotal ?? _parsedReceipt!.total) > 0
+                                  ? CurrencyFormatter.format(
+                                      _editedTotal ?? _parsedReceipt!.total,
+                                    )
+                                  : 'Belum terbaca (isi manual)',
+                              isHighlight: true,
+                              highlightColor: context.palette.primary,
+                            ),
+                          ],
+                          if (_hybridResult != null &&
+                              _hybridResult!.validationWarnings.isNotEmpty) ...[
+                            const SizedBox(height: 10),
+                            ..._hybridResult!.validationWarnings.map(
+                              (w) => Container(
+                                margin: const EdgeInsets.only(bottom: 6),
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: context.warningFill,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.warning_amber_rounded,
+                                      size: 16,
+                                      color: context.warningInk,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Expanded(
+                                      child: Text(
+                                        w.message,
+                                        style: textTheme.bodySmall?.copyWith(
+                                          color: context.warningInk,
+                                          fontSize: 11,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ] else if (_parsedReceipt!.hasMultipleTotals) ...[
                             const SizedBox(height: 10),
                             Container(
                               padding: const EdgeInsets.all(8),
@@ -696,34 +977,83 @@ class _TransactionScanScreenState extends ConsumerState<TransactionScanScreen> {
                               ),
                             ),
                             const SizedBox(height: 6),
-                            ..._parsedReceipt!.items.map(
-                              (item) => Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 2),
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        '• ${item.name}',
-                                        style: textTheme.bodySmall?.copyWith(
-                                          color: context.palette.onSurface,
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
+                            ...(_hybridResult != null &&
+                                    _hybridResult!.items.isNotEmpty
+                                ? _hybridResult!.items.map(
+                                    (item) => Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 2,
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              item.quantity != null &&
+                                                      item.unitPrice != null
+                                                  ? '• ${item.name} (${item.quantity!.toStringAsFixed(item.quantity! % 1 == 0 ? 0 : 1)}x ${CurrencyFormatter.format(item.unitPrice!)})'
+                                                  : '• ${item.name}',
+                                              style:
+                                                  textTheme.bodySmall?.copyWith(
+                                                color:
+                                                    context.palette.onSurface,
+                                              ),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          Text(
+                                            item.lineTotal != null
+                                                ? CurrencyFormatter.format(
+                                                    item.lineTotal!,
+                                                  )
+                                                : '-',
+                                            style:
+                                                textTheme.bodySmall?.copyWith(
+                                              fontWeight: FontWeight.w600,
+                                              color: context
+                                                  .palette.onSurfaceVariant,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                    Text(
-                                      CurrencyFormatter.format(item.price),
-                                      style: textTheme.bodySmall?.copyWith(
-                                        fontWeight: FontWeight.w600,
-                                        color: context.palette.onSurfaceVariant,
+                                  )
+                                : _parsedReceipt!.items.map(
+                                    (item) => Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 2,
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              '• ${item.name}',
+                                              style:
+                                                  textTheme.bodySmall?.copyWith(
+                                                color:
+                                                    context.palette.onSurface,
+                                              ),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          Text(
+                                            CurrencyFormatter.format(
+                                              item.price,
+                                            ),
+                                            style:
+                                                textTheme.bodySmall?.copyWith(
+                                              fontWeight: FontWeight.w600,
+                                              color: context
+                                                  .palette.onSurfaceVariant,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                  ],
-                                ),
-                              ),
-                            ),
+                                  )),
                           ],
                         ],
                       ),
@@ -738,6 +1068,25 @@ class _TransactionScanScreenState extends ConsumerState<TransactionScanScreen> {
                       onPressed: _confirmAndNavigateToForm,
                     ),
                     const SizedBox(height: 12),
+                  ],
+
+                  if (ref.watch(hybridReceiptScannerServiceProvider).isEnabled) ...[
+                    CheckboxListTile(
+                      value: _allowVisionFallback,
+                      onChanged: (v) =>
+                          setState(() => _allowVisionFallback = v ?? false),
+                      dense: true,
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text(
+                        'Izinkan Vision AI fallback jika struk buram',
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                      ),
+                      subtitle: const Text(
+                        'Opsional: kirim gambar struk hanya jika OCR gagal membaca.',
+                        style: TextStyle(fontSize: 11),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
                   ],
 
                   // --- Section: Informasi Privasi ---

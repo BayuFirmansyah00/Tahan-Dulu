@@ -44,6 +44,14 @@ abstract final class ApiConfig {
     defaultValue: true,
   );
 
+  /// true = Scan Struk memakai pipeline backend hybrid (OpenCV + RapidOCR + validasi keuangan).
+  /// Nonaktif secara default agar fallback on-device tetap aman; aktifkan via:
+  /// --dart-define=USE_HYBRID_RECEIPT_SCANNER=true
+  static const bool useHybridReceiptScanner = bool.fromEnvironment(
+    'USE_HYBRID_RECEIPT_SCANNER',
+    defaultValue: false,
+  );
+
   /// Status apakah aplikasi sedang terhubung ke VPS production.
   static bool get isProduction => baseUrl.contains('tahandulu.kreasikan.site');
 
