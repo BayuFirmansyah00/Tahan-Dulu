@@ -165,6 +165,7 @@ abstract class HybridReceiptScannerService {
 
   Future<HybridReceiptScanResult> scanReceiptImage(
     String imagePath, {
+    bool allowExternalAi = false,
     bool allowVisionFallback = false,
   });
 }
@@ -192,6 +193,7 @@ class RemoteHybridReceiptScannerService implements HybridReceiptScannerService {
   @override
   Future<HybridReceiptScanResult> scanReceiptImage(
     String imagePath, {
+    bool allowExternalAi = false,
     bool allowVisionFallback = false,
   }) async {
     if (!isEnabled) {
@@ -213,6 +215,7 @@ class RemoteHybridReceiptScannerService implements HybridReceiptScannerService {
         fileField: 'image',
         filePath: imagePath,
         fields: {
+          'allow_external_ai': allowExternalAi ? '1' : '0',
           'allow_vision_fallback': allowVisionFallback ? '1' : '0',
           'preprocess': '1',
         },

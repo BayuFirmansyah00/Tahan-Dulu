@@ -55,6 +55,7 @@ class _FakeHybridScannerService implements HybridReceiptScannerService {
   @override
   Future<HybridReceiptScanResult> scanReceiptImage(
     String imagePath, {
+    bool allowExternalAi = false,
     bool allowVisionFallback = false,
   }) async {
     lastAllowVisionFallback = allowVisionFallback;

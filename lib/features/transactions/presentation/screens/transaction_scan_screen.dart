@@ -174,6 +174,7 @@ class _TransactionScanScreenState extends ConsumerState<TransactionScanScreen> {
       try {
         final hybrid = await hybridScanner.scanReceiptImage(
           path,
+          allowExternalAi: _allowVisionFallback,
           allowVisionFallback: _allowVisionFallback,
         );
         if (!mounted) return;
@@ -1078,11 +1079,11 @@ class _TransactionScanScreenState extends ConsumerState<TransactionScanScreen> {
                       dense: true,
                       contentPadding: EdgeInsets.zero,
                       title: const Text(
-                        'Izinkan Vision AI fallback jika struk buram',
+                        'Izinkan AI eksternal (teks & Vision fallback)',
                         style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
                       ),
                       subtitle: const Text(
-                        'Opsional: kirim gambar struk hanya jika OCR gagal membaca.',
+                        'Opsional: kirim teks OCR atau gambar struk ke AI eksternal hanya jika diperlukan.',
                         style: TextStyle(fontSize: 11),
                       ),
                     ),
