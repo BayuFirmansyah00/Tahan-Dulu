@@ -209,14 +209,16 @@ class ApiClient {
     }
   }
 
-  /// Unggah file menggunakan MultipartRequest (misal untuk gambar wishlist).
+  /// Unggah file menggunakan MultipartRequest (misal untuk gambar wishlist atau scan struk).
   Future<Map<String, dynamic>> postMultipart(
     String path, {
     required String fileField,
     required String filePath,
     Map<String, String>? fields,
     String? token,
+    Duration? requestTimeout,
   }) async {
+    final effectiveTimeout = requestTimeout ?? timeout;
     try {
       final uri = _buildUri(path);
       final request = http.MultipartRequest('POST', uri);
@@ -231,8 +233,12 @@ class ApiClient {
       request.files.add(
         await http.MultipartFile.fromPath(fileField, filePath),
       );
-      final streamedResponse = await _http.send(request).timeout(timeout);
-      final res = await http.Response.fromStream(streamedResponse);
+      final streamedResponse = await _http
+          .send(request)
+          .timeout(effectiveTimeout);
+      final res = await http.Response.fromStream(
+        streamedResponse,
+      ).timeout(effectiveTimeout);
       return _decode(res);
     } catch (e) {
       _handleError(e);

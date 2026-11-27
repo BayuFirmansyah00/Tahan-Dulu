@@ -220,6 +220,7 @@ class RemoteHybridReceiptScannerService implements HybridReceiptScannerService {
           'preprocess': '1',
         },
         token: token,
+        requestTimeout: const Duration(seconds: 30),
       );
 
       final data = res['data'];
