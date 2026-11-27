@@ -191,7 +191,11 @@ class _TransactionReviewScreenState
                         ),
                         _Row(
                           label: AppStrings.reviewSource,
-                          value: AppStrings.reviewSourceManual,
+                          value: switch (draft.source) {
+                            TransactionInputSource.scan => 'Scan Struk',
+                            TransactionInputSource.voice => 'Input Suara',
+                            TransactionInputSource.manual => AppStrings.reviewSourceManual,
+                          },
                         ),
                         if (draft.note.trim().isNotEmpty)
                           _Row(
